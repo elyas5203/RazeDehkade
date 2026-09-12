@@ -266,6 +266,31 @@ function setupSocketIO(io) {
       });
     });
 
+    /**
+     * رویداد trigger_hack_sequence: تریگر سکانس هک توسط ادمین برای یک جلسه خاص
+     */
+    socket.on('trigger_hack_sequence', async (data) => {
+      if (user.role !== 'admin') {
+        return socket.emit('error_message', { message: 'تنها ادمین مجاز به اجرای سکانس هک است.' });
+      }
+
+      const sessionId = parseInt(data.sessionId, 10);
+      if (!sessionId) return;
+
+      const roomName = `session_${sessionId}`;
+      console.log(`☠️ سکانس هک مزداک برای جلسه ${sessionId} توسط ادمین فعال شد.`);
+
+      // ثبت در لاگ‌های سیستم
+      await SessionLog.log(sessionId, 'hack_triggered', `سکانس هک مزداک برای جلسه ${sessionId} تریگر شد.`);
+
+      // انتشار رویداد به تمام کلاینت‌های موجود در اتاق جلسه
+      io.to(roomName).emit('hack_sequence_triggered', {
+        sessionId,
+        triggeredAt: Date.now(),
+        hackerName: data.hackerName || 'مزداک',
+      });
+    });
+
     socket.on('disconnect', () => {
       console.log(`🔌 سوکت قطع شد: Socket ID = ${socket.id}`);
     });

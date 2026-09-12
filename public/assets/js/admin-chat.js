@@ -253,3 +253,21 @@ async function promptNewCanned() {
     console.error('Error creating canned response:', err);
   }
 }
+
+function triggerHackSequence() {
+  if (!activeSessionId) {
+    alert('لطفاً ابتدا یک جلسه را انتخاب کنید.');
+    return;
+  }
+
+  const confirmHack = confirm(`آیا مطمئن هستید که می‌خواهید سکانس هک سنگین مزداک را برای جلسه ${activeSessionId} تریگر کنید؟`);
+  if (!confirmHack) return;
+
+  if (socket) {
+    socket.emit('trigger_hack_sequence', {
+      sessionId: activeSessionId,
+      hackerName: 'مزداک',
+    });
+    alert(`⚡ سکانس هک مزداک برای جلسه ${activeSessionId} با موفقیت ارسال گردید.`);
+  }
+}

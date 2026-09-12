@@ -73,6 +73,13 @@ function initSocket() {
   socket.on('error_message', (data) => {
     alert(data.message);
   });
+
+  socket.on('hack_sequence_triggered', (data) => {
+    console.log('🚨 رویداد سکانس هک مزداک دریافت شد:', data);
+    if (typeof hackEngine !== 'undefined') {
+      hackEngine.start();
+    }
+  });
 }
 
 // نمایش پیام در چت‌باکس

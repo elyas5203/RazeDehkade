@@ -202,3 +202,171 @@ body::before {
   display: flex;
   justify-content: space-between;
 }
+
+/* ==========================================================================
+   سکانس هک مزداک (MAZDAK HACK SEQUENCE STYLES)
+   ========================================================================== */
+
+/* لرزش و گلیچ شدید کل صفحه */
+@keyframes heavyScreenShake {
+  0% { transform: translate(0, 0) rotate(0deg); filter: hue-rotate(0deg); }
+  10% { transform: translate(-8px, 6px) rotate(-1deg); filter: hue-rotate(90deg) invert(0.2); }
+  20% { transform: translate(7px, -5px) rotate(1.5deg); filter: hue-rotate(180deg); }
+  30% { transform: translate(-6px, -7px) rotate(-1deg); filter: hue-rotate(270deg) contrast(200%); }
+  40% { transform: translate(8px, 4px) rotate(1deg); filter: invert(0.8); }
+  50% { transform: translate(-4px, 8px) rotate(-0.5deg); filter: hue-rotate(45deg); }
+  60% { transform: translate(6px, -4px) rotate(1deg); filter: contrast(300%); }
+  70% { transform: translate(-8px, -4px) rotate(-1.5deg); filter: invert(0.5); }
+  80% { transform: translate(5px, 7px) rotate(0.5deg); filter: hue-rotate(300deg); }
+  90% { transform: translate(-3px, -5px) rotate(-1deg); filter: contrast(150%); }
+  100% { transform: translate(0, 0) rotate(0deg); filter: hue-rotate(0deg); }
+}
+
+.hack-glitch-active {
+  animation: heavyScreenShake 0.15s infinite !important;
+  overflow: hidden !important;
+}
+
+/* بلک‌اوت و تاریکی صفحه */
+.hack-blackout {
+  background: #000000 !important;
+}
+.hack-blackout .chat-container {
+  opacity: 0.05 !important;
+  pointer-events: none !important;
+  transition: opacity 0.5s ease;
+}
+
+/* هشدار قرمز هک */
+#hack-hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99995;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: var(--font-code);
+}
+
+.hack-alert-hidden {
+  display: none;
+}
+
+.hack-alert-visible {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 0, 50, 0.95);
+  color: #ffffff;
+  padding: 24px 40px;
+  border: 3px solid #ff0055;
+  box-shadow: 0 0 50px rgba(255, 0, 85, 0.9);
+  border-radius: 8px;
+  text-align: center;
+  animation: alertPulse 0.4s infinite alternate;
+}
+
+@keyframes alertPulse {
+  from { transform: scale(1); box-shadow: 0 0 30px rgba(255, 0, 85, 0.7); }
+  to { transform: scale(1.06); box-shadow: 0 0 70px rgba(255, 0, 85, 1); }
+}
+
+.hack-alert-title {
+  font-size: 26px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.hack-alert-body {
+  font-size: 16px;
+  color: #ffeedd;
+}
+
+/* ترمینال سیاه نفوذ */
+.hack-terminal-hidden {
+  display: none;
+}
+
+.hack-terminal-visible {
+  display: flex;
+  flex-direction: column;
+  width: 80%;
+  max-width: 700px;
+  height: 380px;
+  background: rgba(5, 5, 10, 0.98);
+  border: 2px solid #ff0055;
+  box-shadow: 0 0 40px rgba(255, 0, 85, 0.6);
+  border-radius: 6px;
+  padding: 16px;
+  color: #ff0055;
+  direction: ltr;
+  text-align: left;
+}
+
+.hack-terminal-header {
+  font-weight: bold;
+  border-bottom: 1px solid rgba(255, 0, 85, 0.4);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.hack-terminal-body {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.term-line {
+  margin-bottom: 4px;
+  text-shadow: 0 0 5px rgba(255, 0, 85, 0.5);
+}
+
+.hack-progress-bar-wrap {
+  height: 12px;
+  background: #1a000a;
+  border: 1px solid #ff0055;
+  margin-top: 12px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.hack-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ff0055, #ff5500);
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px #ff0055;
+}
+
+/* پوسته پایدار چت هک‌شده (Hacked Theme) */
+body.hacked-theme {
+  --bg-dark: #0a0005;
+  --bg-card: #14020a;
+  --neon-cyan: #ff0055;
+  --neon-magenta: #ff5500;
+  --text-main: #ffcccc;
+  --border-neon: rgba(255, 0, 85, 0.4);
+}
+
+body.hacked-theme .cyber-card {
+  border-color: #ff0055 !important;
+  box-shadow: 0 0 25px rgba(255, 0, 85, 0.3) !important;
+}
+
+body.hacked-theme .chat-header {
+  background: rgba(30, 0, 15, 0.95) !important;
+  border-bottom-color: #ff0055 !important;
+}
+
+body.hacked-theme .cyber-title {
+  color: #ff0055 !important;
+  text-shadow: 0 0 12px rgba(255, 0, 85, 0.8) !important;
+}
