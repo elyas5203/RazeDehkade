@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>داشبورد نظارت ادمین | NEXUS CONTROL</title>
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/cyber.css">
+  <link rel="stylesheet" href="/assets/css/admin.css">
+  <style>
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--bg-card);
+      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+    }
+    .grid-sessions {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+      padding: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-header">
+    <div>
+      <h1 class="cyber-title" style="font-size: 18px;">مرکز نظارت و کنترل جلسات (NEXUS)</h1>
+      <span class="cyber-subtitle" id="admin-name-display">&gt; ADMIN: ---</span>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center;">
+      <button onclick="openCreateModal()" class="cyber-btn cyber-btn-green" style="font-size: 13px;">
+        ➕ ساخت جلسه جدید
+      </button>
+      <button onclick="logoutAdmin()" class="cyber-btn cyber-btn-magenta" style="font-size: 13px;">
+        خروج
+      </button>
+    </div>
+  </div>
+
+  <div class="grid-sessions" id="sessions-grid"></div>
+
+  <script src="/assets/js/admin-dashboard.js"></script>
+</body>
+</html>

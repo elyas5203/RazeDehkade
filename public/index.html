@@ -3,523 +3,94 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تست چت تعاملی بازی کارآگاهی - پنل موقت</title>
-  <script src="/socket.io/socket.io.js"></script>
+  <title>شبکه محرمانه دستیاران کارآگاه | ورود به سیستم</title>
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/cyber.css">
   <style>
-    * { box-sizing: border-box; font-family: Tahoma, Arial, sans-serif; }
-    body { background-color: #1a1a2e; color: #e0e0e0; margin: 0; padding: 20px; }
-    h1, h2, h3 { color: #e94560; text-align: center; }
-    .container { display: flex; gap: 20px; max-width: 1300px; margin: 0 auto; flex-wrap: wrap; }
-    .panel { flex: 1; min-width: 320px; background: #0f3460; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-    input, button, select, textarea { width: 100%; padding: 10px; margin-top: 8px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #16213e; font-size: 14px; }
-    button { background-color: #e94560; color: white; font-weight: bold; cursor: pointer; border: none; transition: background 0.3s; }
-    button:hover { background-color: #c0392b; }
-    .chat-box { height: 320px; overflow-y: auto; background: #16213e; padding: 12px; border-radius: 8px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
-    .msg { padding: 8px 12px; border-radius: 8px; max-width: 80%; word-break: break-word; }
-    .msg.user { background: #0f3460; border-right: 4px solid #00fff5; align-self: flex-start; }
-    .msg.admin { background: #e94560; color: white; align-self: flex-end; }
-    .msg.system { background: #333; color: #ffeb3b; align-self: center; font-size: 12px; }
-    .msg.hacker { background: #27ae60; color: black; align-self: flex-start; font-weight: bold; }
-    .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; background: #333; color: #fff; margin-bottom: 10px; }
-    .session-item { background: #16213e; padding: 10px; border-radius: 6px; margin-bottom: 8px; cursor: pointer; border: 2px solid transparent; }
-    .session-item.active { border-color: #e94560; }
-    .badge { background: #e94560; color: white; padding: 2px 6px; border-radius: 10px; font-size: 11px; }
-    .canned-btn { background: #16213e; color: #00fff5; border: 1px solid #00fff5; margin: 4px 0; font-size: 12px; text-align: right; }
-    .canned-btn:hover { background: #00fff5; color: #16213e; }
-    .audio-controls { border: 1px dashed #00fff5; padding: 10px; border-radius: 6px; margin-top: 10px; }
+    .landing-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at center, #0c102b 0%, #05050a 100%);
+    }
+
+    .login-box {
+      width: 100%;
+      max-width: 440px;
+      padding: 36px 28px;
+      text-align: center;
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+      padding-bottom: 12px;
+      margin-bottom: 24px;
+    }
+
+    .code-input-group {
+      margin: 24px 0;
+    }
+
+    .code-input-group input {
+      width: 100%;
+      font-family: var(--font-code);
+      font-size: 24px;
+      letter-spacing: 8px;
+      text-align: center;
+      color: var(--neon-cyan);
+      background: rgba(0, 0, 0, 0.6);
+      border: 2px solid var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+    }
+
+    .error-msg {
+      color: var(--neon-magenta);
+      font-size: 13px;
+      margin-top: 10px;
+      min-height: 20px;
+      text-shadow: 0 0 5px rgba(255, 0, 85, 0.5);
+    }
   </style>
 </head>
 <body>
 
-  <h1>🔍 سیستم Realtime بازی تعاملی کارآگاهی</h1>
-  <p style="text-align: center; color: #aaa;">پنل موقت تست REST API و Socket.io برای کاربر (دستیاران کارآگاه) و ادمین</p>
+  <div class="landing-wrapper">
+    <div class="cyber-card login-box">
 
-  <div class="container">
-
-    <!-- بخش کاربر (دستیاران کارآگاه) -->
-    <div class="panel">
-      <h2>🕵️‍♂️ پنل کاربر (دستیاران کارآگاه)</h2>
-      <div id="user-login-section">
-        <label>کد ۶ یا ۸ رقمی ورود جلسه:</label>
-        <input type="text" id="user-code-input" placeholder="مثلاً: 123456" value="123456">
-        <button onclick="userJoin()">ورود به جلسه با کد</button>
+      <div class="terminal-header">
+        <span class="cyber-subtitle">&gt; SECURE_GATEWAY_v2.4</span>
+        <span class="status-indicator online">
+          <span class="status-dot"></span> شبکه آنلاین
+        </span>
       </div>
 
-      <div id="user-chat-section" style="display: none;">
-        <div>
-          وضعیت: <span id="user-status" class="status-badge">غیرمتصل</span> |
-          کد جلسه: <b id="user-session-code"></b> |
-          شناسه جلسه: <b id="user-session-id"></b>
+      <h1 class="cyber-title" style="font-size: 22px; margin-bottom: 8px;">دستیاران کارآگاه</h1>
+      <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 20px;">جهت اتصال به کانال رمزنگاری‌شده، کد جلسه را وارد کنید</p>
+
+      <form id="join-form" onsubmit="handleJoin(event)">
+        <div class="code-input-group">
+          <input type="text" id="session-code" maxlength="8" placeholder="=======" autocomplete="off" required autofocus>
         </div>
 
-        <div class="chat-box" id="user-chat-box"></div>
-        <div id="user-typing-indicator" style="font-size: 11px; color: #888; height: 18px;"></div>
+        <div id="error-message" class="error-msg"></div>
 
-        <input type="text" id="user-msg-input" placeholder="پیام خود را بنویسید..." oninput="sendUserTyping()">
-        <div style="display: flex; gap: 8px;">
-          <select id="user-msg-type" style="width: 30%;">
-            <option value="text">متن</option>
-            <option value="image">عکس (URL)</option>
-            <option value="voice">ویس (URL)</option>
-            <option value="file">فایل (URL)</option>
-          </select>
-          <button onclick="sendUserMessage()" style="width: 70%;">ارسال پیام</button>
-        </div>
+        <button type="submit" class="cyber-btn" style="width: 100%; margin-top: 10px;">
+          ⚡ اتصال به ترمینال عملیاتی
+        </button>
+      </form>
 
-        <!-- اسکلت استریم صدا -->
-        <div class="audio-controls">
-          <label>🎙️ استریم صدای میکروفون لپ‌تاپ جلسه (اسکلت):</label>
-          <button id="mic-btn" onclick="toggleAudioStream()" style="background: #27ae60;">شروع استریم ویس لایو</button>
-        </div>
+      <div style="margin-top: 28px; font-size: 11px; color: #475569; font-family: var(--font-code);">
+        ENCRYPTED END-TO-END // DETECTIVE NET 2025
       </div>
+
     </div>
-
-    <!-- بخش ادمین -->
-    <div class="panel">
-      <h2>🛡️ پنل مدیریت (ادمین)</h2>
-      <div id="admin-login-section">
-        <label>نام کاربری:</label>
-        <input type="text" id="admin-username" value="admin">
-        <label>رمز عبور:</label>
-        <input type="password" id="admin-password" value="admin123">
-        <button onclick="adminLogin()">ورود ادمین</button>
-      </div>
-
-      <div id="admin-dashboard" style="display: none;">
-        <div>
-          خوش آمدید <b id="admin-display-name"></b> |
-          وضعیت سوکت: <span id="admin-status" class="status-badge">غیرمتصل</span>
-        </div>
-
-        <button onclick="createSession()" style="background-color: #27ae60;">➕ ساخت جلسه جدید + تولید کد</button>
-
-        <h3>لیست جلسات همزمان (حداکثر ۱۰ جلسه):</h3>
-        <div id="sessions-list" style="max-height: 180px; overflow-y: auto;"></div>
-
-        <div id="admin-chat-area" style="display: none; margin-top: 15px;">
-          <hr style="border-color: #16213e;">
-          <h3>چت لایو با جلسه انتخاب شده: <span id="current-active-session-title" style="color: #00fff5;"></span></h3>
-          <div class="chat-box" id="admin-chat-box"></div>
-          <div id="admin-typing-indicator" style="font-size: 11px; color: #888; height: 18px;"></div>
-
-          <input type="text" id="admin-msg-input" placeholder="پاسخ ادمین به دستیاران..." oninput="sendAdminTyping()">
-
-          <div style="display: flex; gap: 8px;">
-            <select id="admin-sender-type" style="width: 30%;">
-              <option value="admin">ادمین</option>
-              <option value="system">سیستم</option>
-              <option value="hacker">هکر</option>
-            </select>
-            <button onclick="sendAdminMessage()" style="width: 70%;">ارسال پاسخ</button>
-          </div>
-
-          <!-- پیام‌های آماده (Canned Responses) -->
-          <div style="margin-top: 15px;">
-            <h4>📋 پیام‌های آماده (Canned Responses):</h4>
-            <div id="canned-responses-list"></div>
-            <button onclick="promptCreateCanned()" style="background: #16213e; border: 1px dashed #00fff5; margin-top: 8px;">+ ساخت پیام آماده جدید</button>
-          </div>
-
-        </div>
-
-      </div>
-    </div>
-
   </div>
 
-  <script>
-    // متغیرهای عمومی کاربر
-    let userToken = null;
-    let userSocket = null;
-    let userSessionData = null;
-    let isStreamingAudio = false;
-
-    // متغیرهای عمومی ادمین
-    let adminToken = null;
-    let adminSocket = null;
-    let activeAdminSessionId = null;
-    let sessionsMap = {};
-
-    // ==========================================
-    // کد و توابع بخش کاربر (دستیاران کارآگاه)
-    // ==========================================
-    async function userJoin() {
-      const code = document.getElementById('user-code-input').value.trim();
-      if (!code) return alert('لطفاً کد ورود را وارد کنید.');
-
-      try {
-        const res = await fetch('/api/auth/user/join', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ code })
-        });
-        const data = await res.json();
-        if (!data.success) {
-          return alert(data.message);
-        }
-
-        userToken = data.data.token;
-        userSessionData = data.data.session;
-
-        document.getElementById('user-login-section').style.display = 'none';
-        document.getElementById('user-chat-section').style.display = 'block';
-        document.getElementById('user-session-code').innerText = userSessionData.code;
-        document.getElementById('user-session-id').innerText = userSessionData.id;
-
-        // دریافت تاریخچه پیام‌های قبلی
-        loadUserMessages();
-
-        // اتصال Socket.io کاربر
-        connectUserSocket();
-
-      } catch (err) {
-        console.error(err);
-        alert('خطا در ارتباط با سرور.');
-      }
-    }
-
-    async function loadUserMessages() {
-      const res = await fetch(`/api/sessions/${userSessionData.id}/messages`, {
-        headers: { 'Authorization': `Bearer ${userToken}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        const box = document.getElementById('user-chat-box');
-        box.innerHTML = '';
-        data.data.forEach(renderUserMessage);
-      }
-    }
-
-    function connectUserSocket() {
-      userSocket = io({
-        auth: { token: userToken }
-      });
-
-      userSocket.on('connect', () => {
-        document.getElementById('user-status').innerText = 'متصل';
-        document.getElementById('user-status').style.background = '#27ae60';
-        userSocket.emit('join_session', { sessionId: userSessionData.id });
-      });
-
-      userSocket.on('new_message', (msg) => {
-        renderUserMessage(msg);
-      });
-
-      userSocket.on('user_typing', (data) => {
-        if (data.senderType === 'admin') {
-          const el = document.getElementById('user-typing-indicator');
-          el.innerText = data.isTyping ? 'ادمین در حال تایپ است...' : '';
-        }
-      });
-
-      userSocket.on('disconnect', () => {
-        document.getElementById('user-status').innerText = 'قطع شد';
-        document.getElementById('user-status').style.background = '#e94560';
-      });
-    }
-
-    function renderUserMessage(msg) {
-      const box = document.getElementById('user-chat-box');
-      const div = document.createElement('div');
-      div.className = `msg ${msg.sender_type}`;
-
-      let contentHtml = msg.content;
-      if (msg.message_type === 'image') {
-        contentHtml = `<div>${msg.content}</div><img src="${msg.file_url || msg.content}" style="max-width:100%; border-radius:4px; margin-top:5px;">`;
-      } else if (msg.message_type === 'voice') {
-        contentHtml = `<div>🔊 ویس: ${msg.content}</div><audio controls src="${msg.file_url || msg.content}" style="width:100%; margin-top:5px;"></audio>`;
-      } else if (msg.message_type === 'file') {
-        contentHtml = `<div>📁 فایل: <a href="${msg.file_url || '#'}" target="_blank" style="color:#00fff5">${msg.file_name || 'دانلود فایل'}</a></div><div>${msg.content}</div>`;
-      }
-
-      div.innerHTML = `<small style="font-size:10px; color:#ccc;">${msg.sender_type.toUpperCase()}</small><br>${contentHtml}`;
-      box.appendChild(div);
-      box.scrollTop = box.scrollHeight;
-    }
-
-    function sendUserMessage() {
-      const input = document.getElementById('user-msg-input');
-      const content = input.value.trim();
-      const messageType = document.getElementById('user-msg-type').value;
-
-      if (!content) return;
-
-      userSocket.emit('send_message', {
-        sessionId: userSessionData.id,
-        content: content,
-        messageType: messageType,
-        fileUrl: messageType !== 'text' ? content : null,
-      });
-
-      input.value = '';
-      sendUserTyping(false);
-    }
-
-    let userTypingTimeout = null;
-    function sendUserTyping(forceState) {
-      if (!userSocket) return;
-      const isTyping = forceState !== undefined ? forceState : true;
-      userSocket.emit('typing', { sessionId: userSessionData.id, isTyping });
-
-      clearTimeout(userTypingTimeout);
-      if (isTyping) {
-        userTypingTimeout = setTimeout(() => {
-          userSocket.emit('typing', { sessionId: userSessionData.id, isTyping: false });
-        }, 3000);
-      }
-    }
-
-    // اسکلت استریم صدا
-    function toggleAudioStream() {
-      if (!userSocket) return;
-      const btn = document.getElementById('mic-btn');
-      if (!isStreamingAudio) {
-        isStreamingAudio = true;
-        btn.innerText = '🔴 توقف استریم ویس لایو';
-        btn.style.background = '#e94560';
-        userSocket.emit('start_audio_stream', { sessionId: userSessionData.id });
-        alert('استریم آزمایشی ویس شروع شد (ارسال چنک‌های داده تاچ سوکت).');
-      } else {
-        isStreamingAudio = false;
-        btn.innerText = 'شروع استریم ویس لایو';
-        btn.style.background = '#27ae60';
-        userSocket.emit('stop_audio_stream', { sessionId: userSessionData.id });
-      }
-    }
-
-
-    // ==========================================
-    // کد و توابع بخش ادمین (Admin)
-    // ==========================================
-    async function adminLogin() {
-      const username = document.getElementById('admin-username').value;
-      const password = document.getElementById('admin-password').value;
-
-      try {
-        const res = await fetch('/api/auth/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
-        const data = await res.json();
-        if (!data.success) return alert(data.message);
-
-        adminToken = data.data.token;
-        document.getElementById('admin-login-section').style.display = 'none';
-        document.getElementById('admin-dashboard').style.display = 'block';
-        document.getElementById('admin-display-name').innerText = data.data.admin.display_name;
-
-        // دریافت لیست جلسات و پیام‌های آماده
-        loadAdminSessions();
-        loadCannedResponses();
-
-        // اتصال Socket ادمین
-        connectAdminSocket();
-
-      } catch (err) {
-        console.error(err);
-        alert('خطا در ورود ادمین');
-      }
-    }
-
-    async function loadAdminSessions() {
-      const res = await fetch('/api/sessions', {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        renderSessionsList(data.data);
-      }
-    }
-
-    async function createSession() {
-      const name = prompt('نام جلسه را وارد کنید:', 'دستیاران کارآگاه - جلسه جدید');
-      if (!name) return;
-
-      const res = await fetch('/api/sessions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminToken}`
-        },
-        body: JSON.stringify({ name, codeLength: 6 })
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(`جلسه با کد ${data.data.code} با موفقیت ساخته شد.`);
-        loadAdminSessions();
-      } else {
-        alert(data.message);
-      }
-    }
-
-    function renderSessionsList(sessions) {
-      const container = document.getElementById('sessions-list');
-      container.innerHTML = '';
-      sessions.forEach(s => {
-        sessionsMap[s.id] = s;
-        const div = document.createElement('div');
-        div.className = `session-item ${activeAdminSessionId === s.id ? 'active' : ''}`;
-        div.onclick = () => switchAdminSession(s.id);
-        div.innerHTML = `
-          <b>${s.name}</b> (کد: <code style="color:#00fff5">${s.code}</code>)
-          - وضعیت: <span class="badge">${s.status}</span>
-          ${s.unread_count > 0 ? `<span class="badge" style="background:#00fff5; color:#1a1a2e;">${s.unread_count} جدید</span>` : ''}
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    function connectAdminSocket() {
-      adminSocket = io({
-        auth: { token: adminToken }
-      });
-
-      adminSocket.on('connect', () => {
-        document.getElementById('admin-status').innerText = 'متصل';
-        document.getElementById('admin-status').style.background = '#27ae60';
-      });
-
-      adminSocket.on('new_message', (msg) => {
-        if (msg.session_id === activeAdminSessionId) {
-          renderAdminMessage(msg);
-        }
-        loadAdminSessions();
-      });
-
-      adminSocket.on('user_typing', (data) => {
-        if (data.sessionId === activeAdminSessionId && data.senderType === 'user') {
-          const el = document.getElementById('admin-typing-indicator');
-          el.innerText = data.isTyping ? 'کاربر در حال تایپ است...' : '';
-        }
-      });
-
-      adminSocket.on('audio_stream_started', (data) => {
-        if (data.sessionId === activeAdminSessionId) {
-          alert(`🎙️ کاربر جلسه ${data.sessionId} استریم صدا را آغاز نمود.`);
-        }
-      });
-    }
-
-    async function switchAdminSession(sessionId) {
-      const prevId = activeAdminSessionId;
-      activeAdminSessionId = sessionId;
-      const s = sessionsMap[sessionId];
-
-      document.getElementById('admin-chat-area').style.display = 'block';
-      document.getElementById('current-active-session-title').innerText = `${s.name} (کد ${s.code})`;
-
-      // سوئیچ روم سوکت
-      adminSocket.emit('admin_switch_session', {
-        previousSessionId: prevId,
-        nextSessionId: sessionId
-      });
-
-      // بارگذاری پیام‌های این جلسه
-      const res = await fetch(`/api/sessions/${sessionId}/messages`, {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        const box = document.getElementById('admin-chat-box');
-        box.innerHTML = '';
-        data.data.forEach(renderAdminMessage);
-      }
-
-      loadAdminSessions();
-    }
-
-    function renderAdminMessage(msg) {
-      const box = document.getElementById('admin-chat-box');
-      const div = document.createElement('div');
-      div.className = `msg ${msg.sender_type}`;
-
-      let contentHtml = msg.content;
-      if (msg.message_type === 'image') {
-        contentHtml = `<div>${msg.content}</div><img src="${msg.file_url || msg.content}" style="max-width:100%; border-radius:4px; margin-top:5px;">`;
-      }
-
-      div.innerHTML = `<small style="font-size:10px; opacity:0.8;">فرستنده: ${msg.sender_type.toUpperCase()}</small><br>${contentHtml}`;
-      box.appendChild(div);
-      box.scrollTop = box.scrollHeight;
-    }
-
-    function sendAdminMessage() {
-      if (!activeAdminSessionId) return;
-      const input = document.getElementById('admin-msg-input');
-      const content = input.value.trim();
-      const senderType = document.getElementById('admin-sender-type').value;
-
-      if (!content) return;
-
-      adminSocket.emit('send_message', {
-        sessionId: activeAdminSessionId,
-        content: content,
-        senderType: senderType,
-        messageType: 'text'
-      });
-
-      input.value = '';
-      sendAdminTyping(false);
-    }
-
-    let adminTypingTimeout = null;
-    function sendAdminTyping(forceState) {
-      if (!adminSocket || !activeAdminSessionId) return;
-      const isTyping = forceState !== undefined ? forceState : true;
-      adminSocket.emit('typing', { sessionId: activeAdminSessionId, isTyping });
-
-      clearTimeout(adminTypingTimeout);
-      if (isTyping) {
-        adminTypingTimeout = setTimeout(() => {
-          adminSocket.emit('typing', { sessionId: activeAdminSessionId, isTyping: false });
-        }, 3000);
-      }
-    }
-
-    // ==========================================
-    // کد و توابع پیام‌های آماده (Canned Responses)
-    // ==========================================
-    async function loadCannedResponses() {
-      const res = await fetch('/api/canned-responses', {
-        headers: { 'Authorization': `Bearer ${adminToken}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        const list = document.getElementById('canned-responses-list');
-        list.innerHTML = '';
-        data.data.forEach(item => {
-          const btn = document.createElement('button');
-          btn.className = 'canned-btn';
-          btn.innerText = `📌 ${item.title}`;
-          btn.onclick = () => {
-            document.getElementById('admin-msg-input').value = item.content;
-          };
-          list.appendChild(btn);
-        });
-      }
-    }
-
-    async function promptCreateCanned() {
-      const title = prompt('عنوان کوتاه پیام آماده:');
-      if (!title) return;
-      const content = prompt('متن کامل پیام آماده:');
-      if (!content) return;
-
-      const res = await fetch('/api/canned-responses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminToken}`
-        },
-        body: JSON.stringify({ title, content })
-      });
-      const data = await res.json();
-      if (data.success) {
-        loadCannedResponses();
-      }
-    }
-
-  </script>
+  <script src="/assets/js/user-landing.js"></script>
 </body>
 </html>

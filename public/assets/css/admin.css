@@ -1,0 +1,129 @@
+/* public/assets/css/admin.css - استایل‌های مخصوص پنل مدیریت ادمین */
+
+.admin-layout {
+  display: flex;
+  height: calc(100vh - 70px);
+  gap: 16px;
+  padding: 16px;
+}
+
+.sidebar-sessions {
+  width: 340px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sessions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+}
+
+.session-cards-container {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.session-card {
+  padding: 14px;
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.session-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(0, 240, 255, 0.4);
+}
+
+.session-card.active {
+  border-color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.08);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+}
+
+.session-code-badge {
+  font-family: var(--font-code);
+  font-size: 13px;
+  color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.unread-badge {
+  background: var(--neon-magenta);
+  color: white;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 7px;
+  border-radius: 10px;
+  box-shadow: 0 0 8px var(--neon-magenta);
+}
+
+.admin-chat-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.admin-top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: rgba(12, 13, 24, 0.9);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.canned-drawer {
+  background: rgba(5, 5, 10, 0.95);
+  border-top: 1px solid rgba(0, 240, 255, 0.2);
+  padding: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.canned-chip {
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  color: var(--neon-cyan);
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.canned-chip:hover {
+  background: var(--neon-cyan);
+  color: black;
+  box-shadow: 0 0 10px var(--neon-cyan);
+}
+
+@media (max-width: 768px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+  .sidebar-sessions {
+    width: 100%;
+    height: 200px;
+  }
+}

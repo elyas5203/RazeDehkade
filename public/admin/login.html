@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>درگاه ورود مدیریت ارشد | NEXUS ADMIN</title>
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/cyber.css">
+  <style>
+    .admin-login-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: radial-gradient(circle at center, #1b0a2a 0%, #05050a 100%);
+    }
+
+    .admin-login-box {
+      width: 100%;
+      max-width: 420px;
+      padding: 36px 28px;
+      border-color: var(--neon-magenta);
+      box-shadow: 0 0 20px rgba(255, 0, 85, 0.2);
+    }
+
+    .input-field {
+      margin-bottom: 18px;
+      text-align: right;
+    }
+
+    .input-field label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      font-family: var(--font-code);
+    }
+
+    .input-field input {
+      width: 100%;
+    }
+
+    .error-msg {
+      color: var(--neon-magenta);
+      font-size: 13px;
+      margin-bottom: 12px;
+      min-height: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="admin-login-wrapper">
+    <div class="cyber-card admin-login-box">
+
+      <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,0,85,0.3); padding-bottom: 10px; margin-bottom: 24px;">
+        <span class="cyber-subtitle" style="color: var(--neon-magenta);">&gt; NEXUS_CORE_AUTH</span>
+        <span class="status-indicator offline"><span class="status-dot"></span> RESTRICTED</span>
+      </div>
+
+      <h1 class="cyber-title" style="font-size: 20px; margin-bottom: 20px; text-shadow: 0 0 10px var(--neon-magenta);">پنل نظارت و هدایت سیستم</h1>
+
+      <form id="admin-login-form" onsubmit="handleAdminLogin(event)">
+        <div class="input-field">
+          <label>نام کاربری ادمین (ADMIN_USER):</label>
+          <input type="text" id="admin-username" required autocomplete="off" autofocus>
+        </div>
+
+        <div class="input-field">
+          <label>کلمه عبور (SECURITY_PASS):</label>
+          <input type="password" id="admin-password" required>
+        </div>
+
+        <div id="error-message" class="error-msg"></div>
+
+        <button type="submit" class="cyber-btn cyber-btn-magenta" style="width: 100%; margin-top: 10px;">
+          🔑 ورود به مرکز نظارت
+        </button>
+      </form>
+
+      <div style="margin-top: 24px; text-align: center; font-size: 11px; color: #475569; font-family: var(--font-code);">
+        RESTRICTED ACCESS // AUTHORIZED PERSONNEL ONLY
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/assets/js/admin-login.js"></script>
+</body>
+</html>

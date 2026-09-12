@@ -1,0 +1,62 @@
+/* public/assets/css/main.css - پایه و لایه‌بندی عمومی */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Vazirmatn:wght@300;400;700&display=swap');
+
+:root {
+  --bg-primary: #05050a;
+  --bg-card: #0c0d18;
+  --bg-card-hover: #121426;
+  --neon-cyan: #00f0ff;
+  --neon-magenta: #ff0055;
+  --neon-green: #00ff66;
+  --neon-yellow: #ffe600;
+  --text-main: #e2e8f0;
+  --text-muted: #64748b;
+  --font-persian: 'Vazirmatn', Tahoma, sans-serif;
+  --font-code: 'Fira Code', monospace;
+  --border-radius: 8px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-persian);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  direction: rtl;
+}
+
+a {
+  color: var(--neon-cyan);
+  text-decoration: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+input, select, textarea {
+  outline: none;
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: var(--border-radius);
+  padding: 12px 16px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+}

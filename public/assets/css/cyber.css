@@ -1,0 +1,204 @@
+/* public/assets/css/cyber.css - استایل‌های سایبرپانک، نئون، گلیچ و ترمینال */
+
+/* افکت CRT Scanline روی کل صفحه */
+body::before {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  z-index: 999;
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* کارت‌های سایبری با لبه‌های نئونی */
+.cyber-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.1), inset 0 0 15px rgba(0, 240, 255, 0.05);
+  border-radius: var(--border-radius);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.cyber-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 25px; height: 2px;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 10px var(--neon-cyan);
+}
+
+.cyber-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 25px; height: 2px;
+  background: var(--neon-magenta);
+  box-shadow: 0 0 10px var(--neon-magenta);
+}
+
+/* دکمه‌های نئونی سایبری */
+.cyber-btn {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(255, 0, 85, 0.15));
+  border: 1px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  font-weight: bold;
+  padding: 12px 24px;
+  border-radius: var(--border-radius);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cyber-btn:hover {
+  background: var(--neon-cyan);
+  color: var(--bg-primary);
+  box-shadow: 0 0 20px var(--neon-cyan);
+  transform: translateY(-2px);
+}
+
+.cyber-btn-magenta {
+  border-color: var(--neon-magenta);
+  color: var(--neon-magenta);
+  box-shadow: 0 0 10px rgba(255, 0, 85, 0.2);
+}
+
+.cyber-btn-magenta:hover {
+  background: var(--neon-magenta);
+  color: white;
+  box-shadow: 0 0 20px var(--neon-magenta);
+}
+
+.cyber-btn-green {
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+}
+
+.cyber-btn-green:hover {
+  background: var(--neon-green);
+  color: black;
+  box-shadow: 0 0 20px var(--neon-green);
+}
+
+/* تایتل با استایل گلیچ و نئون */
+.cyber-title {
+  color: #fff;
+  text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.cyber-subtitle {
+  color: var(--neon-magenta);
+  font-family: var(--font-code);
+  font-size: 13px;
+  text-shadow: 0 0 8px rgba(255, 0, 85, 0.6);
+}
+
+/* نشانگر وضعیت سوکت */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #666;
+}
+
+.status-indicator.online .status-dot {
+  background: var(--neon-green);
+  box-shadow: 0 0 10px var(--neon-green);
+}
+
+.status-indicator.offline .status-dot {
+  background: var(--neon-magenta);
+  box-shadow: 0 0 10px var(--neon-magenta);
+}
+
+/* استایل کادرهای پیام چت */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 160px);
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.messages-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.message-bubble {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  position: relative;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.message-bubble.user {
+  align-self: flex-start;
+  background: rgba(0, 240, 255, 0.1);
+  border: 1px solid var(--neon-cyan);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.15);
+  border-top-right-radius: 2px;
+}
+
+.message-bubble.admin {
+  align-self: flex-end;
+  background: rgba(255, 0, 85, 0.15);
+  border: 1px solid var(--neon-magenta);
+  box-shadow: 0 0 8px rgba(255, 0, 85, 0.2);
+  border-top-left-radius: 2px;
+}
+
+.message-bubble.system {
+  align-self: center;
+  background: rgba(255, 230, 0, 0.1);
+  border: 1px solid var(--neon-yellow);
+  color: var(--neon-yellow);
+  font-size: 12px;
+  text-align: center;
+  max-width: 90%;
+}
+
+.message-bubble.hacker {
+  align-self: flex-start;
+  background: rgba(0, 255, 102, 0.1);
+  border: 1px solid var(--neon-green);
+  color: var(--neon-green);
+  font-family: var(--font-code);
+}
+
+.message-sender {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+}

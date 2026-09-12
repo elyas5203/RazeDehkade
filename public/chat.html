@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ترمینال ارتباطی دستیاران کارآگاه</title>
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/cyber.css">
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      background: rgba(12, 13, 24, 0.9);
+      border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+    }
+    .input-bar {
+      display: flex;
+      gap: 10px;
+      padding: 14px 20px;
+      background: rgba(12, 13, 24, 0.95);
+      border-top: 1px solid rgba(0, 240, 255, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="chat-container">
+    <div class="cyber-card" style="display: flex; flex-direction: column; height: 100%; border-radius: 0;">
+
+      <!-- هدر چت -->
+      <div class="chat-header">
+        <div>
+          <h2 class="cyber-title" id="session-title" style="font-size: 16px;">دستیاران کارآگاه</h2>
+          <span class="cyber-subtitle" id="session-code-display">&gt; CODE: ------</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span id="socket-status" class="status-indicator offline">
+            <span class="status-dot"></span> قطع اتصال
+          </span>
+          <button onclick="toggleAudioStream()" id="audio-btn" class="cyber-btn cyber-btn-green" style="padding: 6px 12px; font-size: 12px;">
+            🎙️ ویس لایو
+          </button>
+          <button onclick="logoutUser()" class="cyber-btn cyber-btn-magenta" style="padding: 6px 12px; font-size: 12px;">
+            خروج
+          </button>
+        </div>
+      </div>
+
+      <!-- لیست پیام‌ها -->
+      <div class="messages-list" id="messages-box"></div>
+
+      <!-- وضعیت تایپینگ -->
+      <div id="typing-indicator" style="padding: 0 20px 4px; font-size: 12px; color: var(--neon-cyan); height: 18px; font-family: var(--font-code);"></div>
+
+      <!-- نوار ورود پیام -->
+      <div class="input-bar">
+        <select id="msg-type-select" style="width: 110px;">
+          <option value="text">💬 متن</option>
+          <option value="image">🖼️ عکس</option>
+          <option value="voice">🔊 ویس</option>
+          <option value="file">📁 فایل</option>
+        </select>
+        <input type="text" id="msg-input" placeholder="پیام یا لینک فایل خود را بنویسید..." style="flex: 1;" oninput="handleTyping()">
+        <button onclick="sendMessage()" class="cyber-btn" style="padding: 0 24px;">ارسال</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="/assets/js/user-chat.js"></script>
+</body>
+</html>

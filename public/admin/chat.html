@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پنل چت چند جلسه‌ای ادمین | NEXUS CHAT</title>
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/cyber.css">
+  <link rel="stylesheet" href="/assets/css/admin.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+  <div class="admin-top-bar">
+    <div>
+      <a href="/admin/dashboard.html" class="cyber-btn" style="padding: 4px 10px; font-size: 12px; margin-left: 12px;">
+        ⬅ بازگشت به داشبورد
+      </a>
+      <span class="cyber-title" id="active-session-title" style="font-size: 15px;">جلسه‌ای انتخاب نشده است</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span id="admin-socket-status" class="status-indicator offline">
+        <span class="status-dot"></span> قطع اتصال
+      </span>
+      <button onclick="promptNewCanned()" class="cyber-btn cyber-btn-green" style="padding: 4px 10px; font-size: 12px;">
+        + ساخت پیام آماده
+      </button>
+    </div>
+  </div>
+
+  <div class="admin-layout">
+
+    <!-- سایبار لیست جلسات برای سوئیچ سریع -->
+    <div class="cyber-card sidebar-sessions">
+      <div class="sessions-header">
+        <span style="font-size: 13px; font-weight: bold; color: var(--neon-cyan);">جلسات همزمان</span>
+        <button onclick="loadAdminSessions()" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">🔄</button>
+      </div>
+      <div class="session-cards-container" id="admin-sessions-list"></div>
+    </div>
+
+    <!-- بخش چت جلسه انتخابی -->
+    <div class="cyber-card admin-chat-view">
+
+      <div class="messages-list" id="admin-messages-box"></div>
+
+      <!-- indicator تایپینگ -->
+      <div id="admin-typing-indicator" style="padding: 0 20px 4px; font-size: 12px; color: var(--neon-magenta); height: 18px; font-family: var(--font-code);"></div>
+
+      <!-- کشوی پیام‌های آماده -->
+      <div class="canned-drawer" id="canned-responses-container"></div>
+
+      <!-- نوار ورودی ادمین -->
+      <div style="display: flex; gap: 10px; padding: 12px; background: rgba(12, 13, 24, 0.95); border-top: 1px solid rgba(0, 240, 255, 0.2);">
+        <select id="admin-sender-type" style="width: 110px;">
+          <option value="admin">👨‍💼 ادمین</option>
+          <option value="system">⚙️ سیستم</option>
+          <option value="hacker">☠️ هکر</option>
+        </select>
+        <input type="text" id="admin-msg-input" placeholder="پاسخ را بنویسید یا روی پیام‌های آماده کلیک کنید..." style="flex: 1;" oninput="handleAdminTyping()">
+        <button onclick="sendAdminMessage()" class="cyber-btn cyber-btn-magenta" style="padding: 0 24px;">ارسال</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script src="/assets/js/admin-chat.js"></script>
+</body>
+</html>
