@@ -1,6 +1,6 @@
 /**
  * src/models/SessionLog.js
- * مدل لاگ‌های رویدادهای جلسه
+ * مدل لاگ‌های رویدادهای جلسه در MySQL
  */
 
 const { query } = require('../db/pool');
@@ -16,11 +16,12 @@ class SessionLog {
     const detailString = typeof details === 'object' ? JSON.stringify(details) : String(details);
     const res = await query(
       `INSERT INTO session_logs (session_id, event_type, details)
-       VALUES ($1, $2, $3)
-       RETURNING *`,
+       VALUES (?, ?, ?)`,
       [session_id, event_type, detailString]
     );
-    return res.rows[0];
+
+    const createdRes = await query('SELECT * FROM session_logs WHERE id = ?', [res.insertId]);
+    return createdRes.rows[0];
   }
 
   /**
@@ -28,7 +29,7 @@ class SessionLog {
    */
   static async findBySessionId(session_id) {
     const res = await query(
-      `SELECT * FROM session_logs WHERE session_id = $1 ORDER BY created_at DESC`,
+      `SELECT * FROM session_logs WHERE session_id = ? ORDER BY created_at DESC`,
       [session_id]
     );
     return res.rows;

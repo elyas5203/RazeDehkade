@@ -1,6 +1,6 @@
 /**
  * src/models/Session.js
- * مدل کار با دیتابیس برای جلسات (Sessions)
+ * مدل کار با دیتابیس برای جلسات (Sessions) در MySQL
  */
 
 const { query } = require('../db/pool');
@@ -16,7 +16,7 @@ class Session {
       `SELECT s.*, a.display_name as assigned_admin_name
        FROM sessions s
        LEFT JOIN admins a ON s.assigned_admin_id = a.id
-       WHERE s.id = $1`,
+       WHERE s.id = ?`,
       [id]
     );
     return res.rows[0] || null;
@@ -31,7 +31,7 @@ class Session {
       `SELECT s.*, a.display_name as assigned_admin_name
        FROM sessions s
        LEFT JOIN admins a ON s.assigned_admin_id = a.id
-       WHERE s.code = $1`,
+       WHERE s.code = ?`,
       [code]
     );
     return res.rows[0] || null;
@@ -45,9 +45,9 @@ class Session {
    * @param {number} [data.assigned_admin_id]
    */
   static async create({ name, codeLength = 6, assigned_admin_id = null }) {
-    // بررسی تعداد جلسات فعال جاری جهت رعایت سقف (مثلاً ۱۰ جلسه)
+    // بررسی تعداد جلسات فعال جاری جهت رعایت سقف
     const maxSessions = parseInt(process.env.MAX_CONCURRENT_SESSIONS || '10', 10);
-    const activeCountRes = await query("SELECT COUNT(*) FROM sessions WHERE status IN ('waiting', 'active')");
+    const activeCountRes = await query("SELECT COUNT(*) as count FROM sessions WHERE status IN ('waiting', 'active')");
     const activeCount = parseInt(activeCountRes.rows[0].count, 10);
 
     if (activeCount >= maxSessions) {
@@ -61,12 +61,11 @@ class Session {
 
     const res = await query(
       `INSERT INTO sessions (code, name, status, assigned_admin_id)
-       VALUES ($1, $2, 'waiting', $3)
-       RETURNING *`,
+       VALUES (?, ?, 'waiting', ?)`,
       [code, sessionName, assigned_admin_id]
     );
 
-    return res.rows[0];
+    return await Session.findById(res.insertId);
   }
 
   /**
@@ -75,7 +74,7 @@ class Session {
   static async findAll() {
     const res = await query(
       `SELECT s.*, a.display_name as assigned_admin_name,
-              (SELECT COUNT(*) FROM messages m WHERE m.session_id = s.id AND m.is_read = false AND m.sender_type = 'user') as unread_count
+              (SELECT COUNT(*) FROM messages m WHERE m.session_id = s.id AND m.is_read = 0 AND m.sender_type = 'user') as unread_count
        FROM sessions s
        LEFT JOIN admins a ON s.assigned_admin_id = a.id
        ORDER BY s.last_activity_at DESC`
@@ -89,14 +88,13 @@ class Session {
    * @param {string} status ('waiting' | 'active' | 'completed' | 'archived')
    */
   static async updateStatus(id, status) {
-    const res = await query(
+    await query(
       `UPDATE sessions
-       SET status = $1, updated_at = CURRENT_TIMESTAMP, last_activity_at = CURRENT_TIMESTAMP
-       WHERE id = $2
-       RETURNING *`,
+       SET status = ?, updated_at = CURRENT_TIMESTAMP, last_activity_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
       [status, id]
     );
-    return res.rows[0] || null;
+    return await Session.findById(id);
   }
 
   /**
@@ -107,7 +105,7 @@ class Session {
     await query(
       `UPDATE sessions
        SET last_activity_at = CURRENT_TIMESTAMP
-       WHERE id = $1`,
+       WHERE id = ?`,
       [id]
     );
   }
@@ -118,14 +116,13 @@ class Session {
    * @param {number} adminId
    */
   static async assignAdmin(sessionId, adminId) {
-    const res = await query(
+    await query(
       `UPDATE sessions
-       SET assigned_admin_id = $1, status = 'active', updated_at = CURRENT_TIMESTAMP
-       WHERE id = $2
-       RETURNING *`,
+       SET assigned_admin_id = ?, status = 'active', updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
       [adminId, sessionId]
     );
-    return res.rows[0] || null;
+    return await Session.findById(sessionId);
   }
 }
 

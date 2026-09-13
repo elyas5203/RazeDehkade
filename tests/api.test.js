@@ -53,9 +53,11 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     });
   });
 
-  after(function (done) {
-    io.close();
-    server.close(done);
+  after(async function () {
+    if (io) io.close();
+    if (server) {
+      await new Promise((resolve) => server.close(resolve));
+    }
   });
 
   let adminToken = '';

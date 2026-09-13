@@ -1,37 +1,43 @@
 /**
  * src/db/migrate.js
- * اسکریپت اجرای مایگریشن‌های دیتابیس و ایجاد ادمین پیش‌فرض
+ * اسکریپت اجرای مایگریشن‌های دیتابیس MySQL و ایجاد ادمین پیش‌فرض
  */
 
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcryptjs');
-const { pool, query } = require('./pool');
+const { pool, query, isMemoryDb } = require('./pool');
 
 async function runMigrations() {
-  console.log('🚀 شروع اجرای مایگریشن‌های دیتابیس...');
+  console.log('🚀 شروع اجرای مایگریشن‌های دیتابیس MySQL...');
 
   try {
-    // خواندن فایل‌های migration
     const migrationFilePath = path.join(__dirname, 'migrations', '001_initial_schema.sql');
-    const sql = fs.readFileSync(migrationFilePath, 'utf8');
+    const sqlContent = fs.readFileSync(migrationFilePath, 'utf8');
 
-    // اجرای اسکریپت مایگریشن
-    await query(sql);
-    console.log('✅ جدول‌های دیتابیس با موفقیت ساخته شدند.');
+    // جداسازی دستورات با سمیکالن
+    const statements = sqlContent
+      .split(';')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    for (const statement of statements) {
+      await query(statement);
+    }
+    console.log('✅ جدول‌های دیتابیس با موفقیت در MySQL ساخته شدند.');
 
     // ساخت ادمین اولیه در صورت عدم وجود
     const defaultAdminUsername = process.env.ADMIN_USERNAME || 'admin';
     const defaultAdminPassword = process.env.ADMIN_PASSWORD || 'admin123';
     const defaultDisplayName = process.env.ADMIN_DISPLAY_NAME || 'مدیر سیستم';
 
-    const existingAdmin = await query('SELECT * FROM admins WHERE username = $1', [defaultAdminUsername]);
+    const existingAdmin = await query('SELECT * FROM admins WHERE username = ?', [defaultAdminUsername]);
 
     if (existingAdmin.rows.length === 0) {
       const passwordHash = await bcrypt.hash(defaultAdminPassword, 10);
       await query(
         `INSERT INTO admins (username, password_hash, display_name, is_active)
-         VALUES ($1, $2, $3, true)`,
+         VALUES (?, ?, ?, 1)`,
         [defaultAdminUsername, passwordHash, defaultDisplayName]
       );
       console.log(`👤 ادمین پیش‌فرض ساخت شد: یوزرنیم = ${defaultAdminUsername} / پسورد = ${defaultAdminPassword}`);
@@ -44,7 +50,7 @@ async function runMigrations() {
     console.error('❌ خطا در اجرای مایگریشن‌ها:', error);
     process.exit(1);
   } finally {
-    if (!pool.isMemoryDb) {
+    if (!isMemoryDb && pool && typeof pool.end === 'function') {
       await pool.end();
     }
   }

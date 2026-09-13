@@ -1,6 +1,6 @@
 /**
  * src/models/CannedResponse.js
- * مدل مدیریت پیام‌های آماده (Canned Responses)
+ * مدل مدیریت پیام‌های آماده (Canned Responses) در MySQL
  */
 
 const { query } = require('../db/pool');
@@ -12,22 +12,23 @@ class CannedResponse {
   static async create({ admin_id, title, content, sort_order = 0 }) {
     const res = await query(
       `INSERT INTO canned_responses (admin_id, title, content, sort_order)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
+       VALUES (?, ?, ?, ?)`,
       [admin_id, title, content, sort_order]
     );
-    return res.rows[0];
+
+    const createdRes = await query('SELECT * FROM canned_responses WHERE id = ?', [res.insertId]);
+    return createdRes.rows[0];
   }
 
   /**
    * دریافت تمام پیام‌های آماده
-   * @param {number} [adminId] - اختیاری (پیام‌های ادمین خاص یا عمومی)
+   * @param {number} [adminId]
    */
   static async findAll(adminId = null) {
     let sql = 'SELECT c.*, a.display_name as admin_name FROM canned_responses c LEFT JOIN admins a ON c.admin_id = a.id';
     const params = [];
     if (adminId) {
-      sql += ' WHERE c.admin_id = $1 OR c.admin_id IS NULL';
+      sql += ' WHERE c.admin_id = ? OR c.admin_id IS NULL';
       params.push(adminId);
     }
     sql += ' ORDER BY c.sort_order ASC, c.created_at DESC';
@@ -40,15 +41,16 @@ class CannedResponse {
    * بروزرسانی پیام آماده
    */
   static async update(id, { title, content, sort_order }) {
-    const res = await query(
+    await query(
       `UPDATE canned_responses
-       SET title = COALESCE($1, title),
-           content = COALESCE($2, content),
-           sort_order = COALESCE($3, sort_order)
-       WHERE id = $4
-       RETURNING *`,
+       SET title = COALESCE(?, title),
+           content = COALESCE(?, content),
+           sort_order = COALESCE(?, sort_order)
+       WHERE id = ?`,
       [title, content, sort_order, id]
     );
+
+    const res = await query('SELECT * FROM canned_responses WHERE id = ?', [id]);
     return res.rows[0] || null;
   }
 
@@ -56,8 +58,12 @@ class CannedResponse {
    * حذف پیام آماده
    */
   static async delete(id) {
-    const res = await query('DELETE FROM canned_responses WHERE id = $1 RETURNING *', [id]);
-    return res.rows[0] || null;
+    const recordRes = await query('SELECT * FROM canned_responses WHERE id = ?', [id]);
+    const record = recordRes.rows[0];
+    if (!record) return null;
+
+    await query('DELETE FROM canned_responses WHERE id = ?', [id]);
+    return record;
   }
 }
 

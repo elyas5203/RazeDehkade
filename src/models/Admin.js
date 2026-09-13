@@ -1,6 +1,6 @@
 /**
  * src/models/Admin.js
- * مدل کار با دیتابیس برای ادمین‌ها
+ * مدل کار با دیتابیس برای ادمین‌ها (MySQL)
  */
 
 const { query } = require('../db/pool');
@@ -12,7 +12,7 @@ class Admin {
    * @param {string} username
    */
   static async findByUsername(username) {
-    const res = await query('SELECT * FROM admins WHERE username = $1', [username]);
+    const res = await query('SELECT * FROM admins WHERE username = ?', [username]);
     return res.rows[0] || null;
   }
 
@@ -21,7 +21,7 @@ class Admin {
    * @param {number} id
    */
   static async findById(id) {
-    const res = await query('SELECT id, username, display_name, is_active, created_at FROM admins WHERE id = $1', [id]);
+    const res = await query('SELECT id, username, display_name, is_active, created_at FROM admins WHERE id = ?', [id]);
     return res.rows[0] || null;
   }
 
@@ -41,11 +41,11 @@ class Admin {
     const password_hash = await bcrypt.hash(password, 10);
     const res = await query(
       `INSERT INTO admins (username, password_hash, display_name, is_active)
-       VALUES ($1, $2, $3, true)
-       RETURNING id, username, display_name, is_active, created_at`,
+       VALUES (?, ?, ?, 1)`,
       [username, password_hash, display_name]
     );
-    return res.rows[0];
+
+    return await Admin.findById(res.insertId);
   }
 }
 
