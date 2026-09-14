@@ -73,11 +73,20 @@ class InMemoryDatabase {
 
     // 4. INSERT INTO sessions
     if (/^INSERT INTO sessions/i.test(cleanSql)) {
-      const [code, name, assigned_admin_id] = params;
+      let code, order_code, chat_code, name, assigned_admin_id;
+      if (params.length === 5) {
+        [code, order_code, chat_code, name, assigned_admin_id] = params;
+      } else {
+        [code, name, assigned_admin_id] = params;
+        order_code = code;
+        chat_code = code;
+      }
       const id = this.autoIds.sessions++;
       const record = {
         id,
-        code,
+        code: chat_code || code,
+        order_code: order_code || code,
+        chat_code: chat_code || code,
         name,
         status: 'waiting',
         assigned_admin_id,
@@ -102,8 +111,8 @@ class InMemoryDatabase {
         const admin = this.tables.admins.find(a => a.id == s.assigned_admin_id);
         return [[{ ...s, assigned_admin_name: admin ? admin.display_name : null }], []];
       }
-      if (/WHERE s\.code = \?/i.test(cleanSql) || /WHERE code = \?/i.test(cleanSql)) {
-        const s = this.tables.sessions.find(x => x.code == params[0]);
+      if (/WHERE s\.chat_code = \?/i.test(cleanSql) || /WHERE s\.order_code = \?/i.test(cleanSql) || /WHERE s\.code = \?/i.test(cleanSql) || /WHERE code = \?/i.test(cleanSql)) {
+        const s = this.tables.sessions.find(x => x.chat_code == params[0] || x.order_code == params[0] || x.code == params[0]);
         if (!s) return [[], []];
         const admin = this.tables.admins.find(a => a.id == s.assigned_admin_id);
         return [[{ ...s, assigned_admin_name: admin ? admin.display_name : null }], []];

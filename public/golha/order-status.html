@@ -177,12 +177,12 @@
   <script>
     const orderData = JSON.parse(localStorage.getItem('golha_last_order') || '{}');
 
-    if (!orderData || !orderData.packageCode) {
+    if (!orderData || (!orderData.chatCode && !orderData.packageCode)) {
       alert('سفارشی یافت نشد.');
       window.location.href = '/golha/index.html';
     }
 
-    document.getElementById('deliveredCodeDisplay').textContent = orderData.packageCode;
+    document.getElementById('deliveredCodeDisplay').textContent = orderData.chatCode || orderData.packageCode;
 
     // ۱. تایمر ۳۰ ثانیه‌ای
     let secondsLeft = 30;

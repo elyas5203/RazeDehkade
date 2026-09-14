@@ -79,6 +79,11 @@
 
     <form id="checkoutForm">
       <div class="form-group">
+        <label for="discountCode">کد تخفیف / کد سفارش (الزامی):</label>
+        <input type="text" id="discountCode" placeholder="کد تخفیف ۶ رقمی دریافت شده از گروه" style="font-size: 1.2rem; font-weight: bold; border-color: var(--accent-gold);" required>
+      </div>
+
+      <div class="form-group">
         <label for="customerName">نام و نام خانوادگی تحویل‌گیرنده:</label>
         <input type="text" id="customerName" placeholder="مثلاً: دستیاران کارآگاه" required>
       </div>
@@ -126,10 +131,11 @@
       submitBtn.textContent = 'در حال ثبت سفارش...';
 
       const payload = {
-        customerName: document.getElementById('customerName').value,
-        phone: document.getElementById('phone').value,
-        address: document.getElementById('address').value,
-        notes: document.getElementById('notes').value,
+        discountCode: document.getElementById('discountCode').value.trim(),
+        customerName: document.getElementById('customerName').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        notes: document.getElementById('notes').value.trim(),
         items: cart,
       };
 

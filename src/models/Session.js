@@ -23,7 +23,7 @@ class Session {
   }
 
   /**
-   * یافتن جلسه با کد ورود ۶ یا ۸ رقمی
+   * یافتن جلسه با کد ورود چت (chat_code یا code قدیمی)
    * @param {string} code
    */
   static async findByCode(code) {
@@ -31,8 +31,23 @@ class Session {
       `SELECT s.*, a.display_name as assigned_admin_name
        FROM sessions s
        LEFT JOIN admins a ON s.assigned_admin_id = a.id
-       WHERE s.code = ?`,
-      [code]
+       WHERE s.chat_code = ? OR s.code = ?`,
+      [code, code]
+    );
+    return res.rows[0] || null;
+  }
+
+  /**
+   * یافتن جلسه با کد سفارش/تخفیف (order_code)
+   * @param {string} orderCode
+   */
+  static async findByOrderCode(orderCode) {
+    const res = await query(
+      `SELECT s.*, a.display_name as assigned_admin_name
+       FROM sessions s
+       LEFT JOIN admins a ON s.assigned_admin_id = a.id
+       WHERE s.order_code = ? OR s.code = ?`,
+      [orderCode, orderCode]
     );
     return res.rows[0] || null;
   }
@@ -56,13 +71,14 @@ class Session {
       throw error;
     }
 
-    const code = await generateUniqueSessionCode(codeLength);
-    const sessionName = name || `دستیاران کارآگاه - جلسه ${code}`;
+    const orderCode = await generateUniqueSessionCode(codeLength);
+    const chatCode = await generateUniqueSessionCode(codeLength);
+    const sessionName = name || `دستیاران کارآگاه - جلسه ${orderCode}`;
 
     const res = await query(
-      `INSERT INTO sessions (code, name, status, assigned_admin_id)
-       VALUES (?, ?, 'waiting', ?)`,
-      [code, sessionName, assigned_admin_id]
+      `INSERT INTO sessions (code, order_code, chat_code, name, status, assigned_admin_id)
+       VALUES (?, ?, ?, ?, 'waiting', ?)`,
+      [chatCode, orderCode, chatCode, sessionName, assigned_admin_id]
     );
 
     return await Session.findById(res.insertId);

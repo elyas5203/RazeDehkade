@@ -110,10 +110,22 @@ function renderSessions(sessions) {
     card.className = 'cyber-card session-card';
     card.onclick = () => selectSession(s.id);
 
+    const orderCode = s.order_code || s.code;
+    const chatCode = s.chat_code || s.code;
+
     card.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
         <h3 style="font-size:15px; color:#fff;">${s.name}</h3>
-        <span class="session-code-badge">${s.code}</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px; background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.1);">
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+          <span>🏷️ کد تخفیف/سفارش: <strong style="color:var(--neon-gold); font-family:monospace;">${orderCode}</strong></span>
+          <button onclick="event.stopPropagation(); copyText('${orderCode}')" style="background:#2d3748; color:#fff; border:none; padding:2px 6px; border-radius:4px; cursor:pointer; font-size:11px;">کپی</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+          <span>🔑 کد چت روی بسته: <strong style="color:var(--neon-cyan); font-family:monospace;">${chatCode}</strong></span>
+          <button onclick="event.stopPropagation(); copyText('${chatCode}')" style="background:#2d3748; color:#fff; border:none; padding:2px 6px; border-radius:4px; cursor:pointer; font-size:11px;">کپی</button>
+        </div>
       </div>
       <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
         وضعیت: <span style="color:var(--neon-cyan);">${s.status}</span> |
@@ -158,6 +170,14 @@ async function openCreateModal() {
 function selectSession(sessionId) {
   sessionStorage.setItem('activeAdminSessionId', sessionId);
   window.location.href = '/admin/chat.html';
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    alert(`کد ${text} در حافظه کپی شد.`);
+  }).catch(() => {
+    prompt('کد جهت کپی:', text);
+  });
 }
 
 function logoutAdmin() {

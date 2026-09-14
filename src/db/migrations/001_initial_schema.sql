@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS admins (
 CREATE TABLE IF NOT EXISTS sessions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(10) UNIQUE NOT NULL,
+    order_code VARCHAR(10) UNIQUE NULL,
+    chat_code VARCHAR(10) UNIQUE NULL,
     name VARCHAR(150) NOT NULL DEFAULT 'دستیاران کارآگاه',
     status VARCHAR(20) NOT NULL DEFAULT 'waiting',
     assigned_admin_id INT NULL,
