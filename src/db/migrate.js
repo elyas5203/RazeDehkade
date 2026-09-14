@@ -12,6 +12,21 @@ async function runMigrations() {
   console.log('🚀 شروع اجرای مایگریشن‌های دیتابیس MySQL...');
 
   try {
+    // ایجاد خودکار دیتابیس در صورت عدم وجود (اگر به MySQL واقعی متصل باشد)
+    if (!isMemoryDb) {
+      const mysql = require('mysql2/promise');
+      const tempConn = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '3306', 10),
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+      });
+      const dbName = process.env.DB_NAME || 'detective_game';
+      await tempConn.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
+      await tempConn.end();
+      console.log(`📦 دیتابیس '${dbName}' بررسی/ایجاد گردید.`);
+    }
+
     const migrationFilePath = path.join(__dirname, 'migrations', '001_initial_schema.sql');
     const sqlContent = fs.readFileSync(migrationFilePath, 'utf8');
 
@@ -50,7 +65,8 @@ async function runMigrations() {
     console.error('❌ خطا در اجرای مایگریشن‌ها:', error);
     process.exit(1);
   } finally {
-    if (!isMemoryDb && pool && typeof pool.end === 'function') {
+    // هنگام اجرای مستقل اسکریپت مایگریشن اتصال را می‌بندیم
+    if (require.main === module && !isMemoryDb && pool && typeof pool.end === 'function') {
       await pool.end();
     }
   }
