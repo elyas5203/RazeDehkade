@@ -233,27 +233,14 @@ function setupSocketIO(io) {
     });
 
     /**
-     * اسکلت استریم صدای میکروفون لپ‌تاپ جلسه به ادمین (Audio Streaming Skeleton)
-     * جهت قابلیت بعدی استریم لایو ویس کارآگاهان به ادمین
+     * سیستم کامل Signaling استریم صدای WebRTC کم‌تأخیر (میکروفون کاربر → ادمین)
      */
     socket.on('start_audio_stream', (data) => {
       const sessionId = parseInt(data.sessionId || user.sessionId, 10);
       const roomName = `session_${sessionId}`;
-      io.to(roomName).emit('audio_stream_started', {
+      socket.to(roomName).emit('audio_stream_started', {
         sessionId,
-        startedBy: user.role,
-      });
-    });
-
-    socket.on('audio_stream_chunk', (data) => {
-      // data شامل { sessionId, audioChunk (ArrayBuffer / Base64) }
-      const sessionId = parseInt(data.sessionId || user.sessionId, 10);
-      const roomName = `session_${sessionId}`;
-      // ارسال چنک صدا به بقیه کاربران حاضر در روم (مثل ادمین)
-      socket.to(roomName).emit('audio_stream_chunk_received', {
-        sessionId,
-        chunk: data.chunk,
-        timestamp: Date.now(),
+        adminSocketId: socket.id,
       });
     });
 
@@ -262,8 +249,64 @@ function setupSocketIO(io) {
       const roomName = `session_${sessionId}`;
       io.to(roomName).emit('audio_stream_stopped', {
         sessionId,
-        stoppedBy: user.role,
       });
+    });
+
+    // تبادل Offer از سمت Peer
+    socket.on('webrtc_offer', (data) => {
+      const { sessionId, offer, targetSocketId } = data;
+      const roomName = `session_${sessionId}`;
+      if (targetSocketId) {
+        io.to(targetSocketId).emit('webrtc_offer', {
+          sessionId,
+          offer,
+          senderSocketId: socket.id,
+        });
+      } else {
+        socket.to(roomName).emit('webrtc_offer', {
+          sessionId,
+          offer,
+          senderSocketId: socket.id,
+        });
+      }
+    });
+
+    // تبادل Answer از سمت Peer
+    socket.on('webrtc_answer', (data) => {
+      const { sessionId, answer, targetSocketId } = data;
+      if (targetSocketId) {
+        io.to(targetSocketId).emit('webrtc_answer', {
+          sessionId,
+          answer,
+          senderSocketId: socket.id,
+        });
+      } else {
+        const roomName = `session_${sessionId}`;
+        socket.to(roomName).emit('webrtc_answer', {
+          sessionId,
+          answer,
+          senderSocketId: socket.id,
+        });
+      }
+    });
+
+    // تبادل ICE Candidates
+    socket.on('webrtc_ice_candidate', (data) => {
+      const { sessionId, candidate, targetSocketId } = data;
+      if (targetSocketId) {
+        io.to(targetSocketId).emit('webrtc_ice_candidate', {
+          sessionId,
+          candidate,
+          senderSocketId: socket.id,
+        });
+      } else {
+        const roomName = `session_${sessionId}`;
+        socket.to(roomName).emit('webrtc_ice_candidate', {
+          sessionId,
+          candidate,
+          senderSocketId: socket.id,
+        });
+      }
     });
 
     /**

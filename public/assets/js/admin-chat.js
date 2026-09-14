@@ -9,6 +9,12 @@ const adminUser = JSON.parse(localStorage.getItem('adminUser') || '{}');
 let activeSessionId = parseInt(sessionStorage.getItem('activeAdminSessionId'), 10) || null;
 let sessionsMap = {};
 
+let adminPeerConnection = null;
+let isAudioListening = false;
+const rtcConfig = {
+  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+};
+
 if (!adminToken) {
   window.location.href = '/admin/login.html';
 }
@@ -53,9 +59,26 @@ function initAdminSocket() {
     }
   });
 
-  socket.on('audio_stream_started', (data) => {
+  // دریافت Offer لایو از سمت کاربر جلسه
+  socket.on('webrtc_offer', async (data) => {
+    if (data.sessionId === activeSessionId && isAudioListening) {
+      await handleUserOffer(data.offer, data.senderSocketId);
+    }
+  });
+
+  socket.on('webrtc_ice_candidate', async (data) => {
+    if (adminPeerConnection && data.candidate && isAudioListening) {
+      try {
+        await adminPeerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+      } catch (e) {
+        console.error('Error adding ICE candidate on admin:', e);
+      }
+    }
+  });
+
+  socket.on('audio_stream_stopped', (data) => {
     if (data.sessionId === activeSessionId) {
-      alert(`🎙️ ویس لایو از سمت کاربر جلسه ${data.sessionId} آغاز گردید.`);
+      stopAdminAudioListening();
     }
   });
 }
@@ -109,6 +132,9 @@ async function switchSession(nextSessionId) {
   const prevSessionId = activeSessionId;
   activeSessionId = nextSessionId;
   sessionStorage.setItem('activeAdminSessionId', nextSessionId);
+
+  // هنگام سوئیچ ادمین بین جلسات، استریم صدای جلسه قبلی حتماً قطع می‌شود
+  stopAdminAudioListening();
 
   updateActiveHeader();
   renderSessionsSidebar(Object.values(sessionsMap));
@@ -251,6 +277,96 @@ async function promptNewCanned() {
     }
   } catch (err) {
     console.error('Error creating canned response:', err);
+  }
+}
+
+function toggleAdminAudioStream() {
+  if (!activeSessionId) {
+    alert('لطفا ابتدا یک جلسه را برای شنود انتخاب کنید.');
+    return;
+  }
+
+  if (!isAudioListening) {
+    startAdminAudioListening();
+  } else {
+    stopAdminAudioListening();
+  }
+}
+
+function startAdminAudioListening() {
+  isAudioListening = true;
+  const btn = document.getElementById('admin-audio-toggle-btn');
+  if (btn) {
+    btn.innerText = '🛑 قطع شنود صدا';
+    btn.className = 'cyber-btn cyber-btn-magenta';
+  }
+
+  if (socket && activeSessionId) {
+    socket.emit('start_audio_stream', { sessionId: activeSessionId });
+  }
+}
+
+function stopAdminAudioListening() {
+  if (isAudioListening && socket && activeSessionId) {
+    socket.emit('stop_audio_stream', { sessionId: activeSessionId });
+  }
+
+  isAudioListening = false;
+  const btn = document.getElementById('admin-audio-toggle-btn');
+  if (btn) {
+    btn.innerText = '🎙️ شروع شنود صدا';
+    btn.className = 'cyber-btn cyber-btn-cyan';
+  }
+
+  if (adminPeerConnection) {
+    adminPeerConnection.close();
+    adminPeerConnection = null;
+  }
+
+  const audioPlayer = document.getElementById('remote-audio-player');
+  if (audioPlayer) {
+    audioPlayer.srcObject = null;
+  }
+}
+
+async function handleUserOffer(offer, userSocketId) {
+  if (adminPeerConnection) {
+    adminPeerConnection.close();
+  }
+
+  adminPeerConnection = new RTCPeerConnection(rtcConfig);
+
+  // دریافت track صدای کاربر
+  adminPeerConnection.ontrack = (event) => {
+    const audioPlayer = document.getElementById('remote-audio-player');
+    if (audioPlayer && event.streams && event.streams[0]) {
+      audioPlayer.srcObject = event.streams[0];
+      audioPlayer.play().catch(e => console.log('Audio autoplay prevented:', e));
+    }
+  };
+
+  adminPeerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+      socket.emit('webrtc_ice_candidate', {
+        sessionId: activeSessionId,
+        candidate: event.candidate,
+        targetSocketId: userSocketId,
+      });
+    }
+  };
+
+  try {
+    await adminPeerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+    const answer = await adminPeerConnection.createAnswer();
+    await adminPeerConnection.setLocalDescription(answer);
+
+    socket.emit('webrtc_answer', {
+      sessionId: activeSessionId,
+      answer: answer,
+      targetSocketId: userSocketId,
+    });
+  } catch (err) {
+    console.error('Error handling WebRTC offer on admin:', err);
   }
 }
 

