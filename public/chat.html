@@ -57,13 +57,20 @@
 
       <!-- نوار ورود پیام -->
       <div class="input-bar">
-        <select id="msg-type-select" style="width: 110px;">
+        <!-- ورودی‌های مخفی انتخاب فایل -->
+        <input type="file" id="user-file-input" style="display: none;" onchange="handleUserFileUpload(event)">
+
+        <button onclick="triggerFileInput('*')" class="cyber-btn cyber-btn-cyan" style="padding: 0 10px; font-size: 14px;" title="پیوست عکس، ویس یا فایل">
+          📎
+        </button>
+
+        <select id="msg-type-select" style="width: 100px;">
           <option value="text">💬 متن</option>
           <option value="image">🖼️ عکس</option>
           <option value="voice">🔊 ویس</option>
           <option value="file">📁 فایل</option>
         </select>
-        <input type="text" id="msg-input" placeholder="پیام یا لینک فایل خود را بنویسید..." style="flex: 1;" oninput="handleTyping()">
+        <input type="text" id="msg-input" placeholder="پیام خود را بنویسید..." style="flex: 1;" oninput="handleTyping()">
         <button onclick="sendMessage()" class="cyber-btn" style="padding: 0 24px;">ارسال</button>
       </div>
 

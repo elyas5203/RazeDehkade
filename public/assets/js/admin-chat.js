@@ -181,7 +181,14 @@ function renderAdminMessage(msg) {
 
   let bodyContent = msg.content;
   if (msg.message_type === 'image') {
-    bodyContent = `<div>${msg.content}</div><img src="${msg.file_url || msg.content}" style="max-width:100%; border-radius:6px; margin-top:8px;">`;
+    const imageUrl = msg.file_url || msg.content;
+    bodyContent = `${msg.content && msg.content !== imageUrl ? `<div>${msg.content}</div>` : ''}<a href="${imageUrl}" target="_blank"><img src="${imageUrl}" style="max-width:100%; max-height:250px; border-radius:6px; margin-top:8px; border:1px solid var(--neon-magenta); object-fit:cover;"></a>`;
+  } else if (msg.message_type === 'voice') {
+    const voiceUrl = msg.file_url || msg.content;
+    bodyContent = `${msg.content && msg.content !== voiceUrl ? `<div>${msg.content}</div>` : ''}<audio controls src="${voiceUrl}" style="width:100%; margin-top:8px;"></audio>`;
+  } else if (msg.message_type === 'file') {
+    const fileUrl = msg.file_url || '#';
+    bodyContent = `<div>📁 فایل پیوست: <a href="${fileUrl}" download target="_blank" style="color:var(--neon-magenta); font-weight:bold; text-decoration:underline;">${msg.file_name || 'دانلود فایل'}</a></div>${msg.content && msg.content !== fileUrl ? `<div style="margin-top:4px;">${msg.content}</div>` : ''}`;
   }
 
   div.innerHTML = `
@@ -367,6 +374,59 @@ async function handleUserOffer(offer, userSocketId) {
     });
   } catch (err) {
     console.error('Error handling WebRTC offer on admin:', err);
+  }
+}
+
+function triggerAdminFileInput(acceptType) {
+  const fileInput = document.getElementById('admin-file-input');
+  if (fileInput) {
+    fileInput.accept = acceptType || '*';
+    fileInput.click();
+  }
+}
+
+async function handleAdminFileUpload(event) {
+  if (!activeSessionId) {
+    alert('لطفا ابتدا یک جلسه را انتخاب کنید.');
+    return;
+  }
+
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+      },
+      body: formData,
+    });
+
+    const data = await res.json();
+    if (data.success) {
+      const { fileUrl, fileName, messageType } = data.data;
+      const senderTypeSelect = document.getElementById('admin-sender-type');
+
+      socket.emit('send_message', {
+        sessionId: activeSessionId,
+        content: fileName,
+        senderType: senderTypeSelect ? senderTypeSelect.value : 'admin',
+        messageType: messageType,
+        fileUrl: fileUrl,
+        fileName: fileName,
+      });
+
+      event.target.value = '';
+    } else {
+      alert('خطا در آپلود فایل: ' + data.message);
+    }
+  } catch (err) {
+    console.error('Error uploading admin file:', err);
+    alert('خطا در برقراری ارتباط با سرور هنگام آپلود.');
   }
 }
 

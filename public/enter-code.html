@@ -243,9 +243,9 @@
 
         const data = await res.json();
         if (data.success) {
-          // ذخیره توکن و مشخصات جلسه
-          localStorage.setItem('userToken', data.token);
-          localStorage.setItem('sessionData', JSON.stringify(data.session));
+          // ذخیره توکن و مشخصات جلسه در sessionStorage یکسان با user-chat.js
+          sessionStorage.setItem('userToken', data.token);
+          sessionStorage.setItem('userSession', JSON.stringify(data.session));
 
           // اجرای انتقال حماسی سایبرپانک
           startEpicCyberTransition();

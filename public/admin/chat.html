@@ -60,6 +60,13 @@
 
       <!-- نوار ورودی ادمین -->
       <div style="display: flex; gap: 10px; padding: 12px; background: rgba(12, 13, 24, 0.95); border-top: 1px solid rgba(0, 240, 255, 0.2);">
+        <!-- ورودی مخفی انتخاب فایل ادمین -->
+        <input type="file" id="admin-file-input" style="display: none;" onchange="handleAdminFileUpload(event)">
+
+        <button onclick="triggerAdminFileInput('*')" class="cyber-btn cyber-btn-cyan" style="padding: 0 10px; font-size: 14px;" title="پیوست عکس، ویس یا فایل">
+          📎
+        </button>
+
         <select id="admin-sender-type" style="width: 110px;">
           <option value="admin">👨‍💼 ادمین</option>
           <option value="system">⚙️ سیستم</option>
