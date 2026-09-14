@@ -10,10 +10,69 @@ if (!adminToken) {
   window.location.href = '/admin/login.html';
 }
 
+let dashboardSocket = null;
+
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('admin-name-display').innerText = `> ADMIN: ${adminUser.display_name || adminUser.username}`;
   loadSessions();
+  initDashboardSocket();
 });
+
+function initDashboardSocket() {
+  if (typeof io !== 'undefined') {
+    dashboardSocket = io({
+      auth: { token: adminToken },
+    });
+
+    dashboardSocket.on('new_store_order', (data) => {
+      // ایجاد اعلان ساده و واضح برای ادمین
+      showOrderNotification(data);
+      loadSessions();
+    });
+
+    dashboardSocket.on('session_updated', () => {
+      loadSessions();
+    });
+  }
+}
+
+function showOrderNotification(data) {
+  // پخش صدای بیپ آلارم ساده
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    osc.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.3);
+  } catch (e) {}
+
+  const banner = document.createElement('div');
+  banner.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #e63946;
+    color: #fff;
+    padding: 16px 28px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(230,57,70,0.6);
+    z-index: 99999;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    border: 2px solid #fff;
+    animation: bounceIn 0.5s ease;
+  `;
+  banner.innerHTML = `🚨 سفارش جدید ثبت شد! <br><span style="font-size:15px; font-weight:normal;">خریدار: ${data.customerName} | کد جلسه: <strong style="color:#ffea00; font-size:18px;">${data.session.code}</strong></span>`;
+
+  document.body.appendChild(banner);
+  setTimeout(() => {
+    banner.remove();
+  }, 8000);
+}
 
 async function loadSessions() {
   try {

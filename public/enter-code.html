@@ -3,94 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ورود کد پیگیری روی بسته | سامانه محرمانه</title>
+  <title>ورود کد روی بسته | سامانه کارآگاه</title>
   <link rel="stylesheet" href="/assets/css/main.css">
   <link rel="stylesheet" href="/assets/css/cyber.css">
   <style>
     body {
       background-color: #0b0c10;
-      color: #c5c6c7;
+      color: #f8f9fa;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
       margin: 0;
-      overflow: hidden;
       font-family: 'Vazirmatn', sans-serif;
     }
 
-    .enter-code-card {
+    .enter-card {
       background: #1f2833;
-      border: 2px solid #45a29e;
-      border-radius: 16px;
-      padding: 2.5rem;
-      width: 420px;
+      border: 3px solid #66fcf1;
+      border-radius: 20px;
+      padding: 3rem;
+      width: 480px;
       max-width: 90%;
       text-align: center;
-      box-shadow: 0 0 25px rgba(69, 162, 158, 0.3);
-      position: relative;
-      z-index: 10;
+      box-shadow: 0 0 35px rgba(102, 252, 241, 0.4);
     }
 
-    .enter-code-card h2 {
+    .enter-card h1 {
+      font-size: 2.2rem;
       color: #66fcf1;
       margin-bottom: 0.8rem;
+      font-weight: 800;
     }
 
-    .enter-code-card p {
+    .enter-card p {
+      font-size: 1.2rem;
       color: #c5c6c7;
-      font-size: 0.95rem;
-      margin-bottom: 1.8rem;
-      line-height: 1.5;
+      margin-bottom: 2rem;
     }
 
-    .code-input-group {
+    .digits-group {
       display: flex;
       justify-content: center;
-      gap: 0.5rem;
-      margin-bottom: 1.5rem;
+      gap: 0.6rem;
+      margin-bottom: 2rem;
       direction: ltr;
     }
 
-    .code-digit-input {
-      width: 48px;
-      height: 58px;
-      font-size: 1.8rem;
+    .digit-input {
+      width: 55px;
+      height: 65px;
+      font-size: 2.2rem;
       font-weight: 800;
       text-align: center;
       background: #0b0c10;
       border: 2px solid #45a29e;
-      border-radius: 8px;
+      border-radius: 12px;
       color: #66fcf1;
       outline: none;
       transition: all 0.3s;
     }
 
-    .code-digit-input:focus {
+    .digit-input:focus {
       border-color: #66fcf1;
-      box-shadow: 0 0 12px #66fcf1;
-    }
-
-    .verify-btn {
-      width: 100%;
-      padding: 1rem;
-      background: #45a29e;
-      color: #0b0c10;
-      border: none;
-      border-radius: 8px;
-      font-size: 1.1rem;
-      font-weight: 800;
-      cursor: pointer;
-      font-family: inherit;
-      transition: all 0.3s;
-    }
-
-    .verify-btn:hover {
-      background: #66fcf1;
       box-shadow: 0 0 15px #66fcf1;
     }
 
-    /* صفحه سیاه انیمیشن نفوذ سایبری */
+    .submit-btn {
+      width: 100%;
+      padding: 1.2rem;
+      background: #45a29e;
+      color: #0b0c10;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.4rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+
+    .submit-btn:hover {
+      background: #66fcf1;
+      box-shadow: 0 0 20px #66fcf1;
+      transform: scale(1.02);
+    }
+
+    /* اورلی انیمیشن نفوذ سایبری */
     #cyberHackOverlay {
       position: fixed;
       inset: 0;
@@ -100,7 +99,6 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      overflow: hidden;
     }
 
     #matrixCanvas {
@@ -117,91 +115,45 @@
       z-index: 2;
       text-align: center;
       max-width: 600px;
-      padding: 2rem;
-      background: rgba(10, 10, 15, 0.85);
-      border: 2px solid #ff0055;
-      box-shadow: 0 0 40px #ff0055;
-      border-radius: 12px;
-      animation: glitchBox 0.2s infinite alternate;
-    }
-
-    @keyframes glitchBox {
-      0% { transform: translate(0, 0); }
-      50% { transform: translate(-2px, 2px); }
-      100% { transform: translate(2px, -1px); }
-    }
-
-    .hack-title {
-      color: #ff0055;
-      font-size: 2rem;
-      font-weight: 800;
-      margin-bottom: 1rem;
-      text-shadow: 0 0 10px #ff0055;
-    }
-
-    .hack-log {
-      font-family: monospace;
-      color: #00ff66;
-      font-size: 1.1rem;
-      text-align: left;
-      direction: ltr;
-      height: 120px;
-      overflow: hidden;
-      margin-bottom: 1rem;
-      line-height: 1.5;
-    }
-
-    .progress-bar-bg {
-      width: 100%;
-      height: 12px;
-      background: #111;
-      border: 1px solid #ff0055;
-      border-radius: 6px;
-      overflow: hidden;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      width: 0%;
-      background: #ff0055;
-      box-shadow: 0 0 15px #ff0055;
-      transition: width 0.1s linear;
+      padding: 2.5rem;
+      background: rgba(10, 10, 15, 0.9);
+      border: 3px solid #ff0055;
+      box-shadow: 0 0 45px #ff0055;
+      border-radius: 16px;
     }
   </style>
 </head>
 <body>
 
-  <div class="enter-code-card" id="codeCard">
-    <h2>🔑 ورود به سامانه چت</h2>
-    <p>کد ۶ رقمی محرمانه درج‌شده روی کارت همراه بسته گل را وارد کنید:</p>
+  <main class="enter-card">
+    <h1>🔑 ورود کد بسته گل</h1>
+    <p>کد ۶ رقمی روی کارت همراه گل را وارد کنید:</p>
 
-    <div class="code-input-group" id="digitsContainer">
-      <input type="text" class="code-digit-input" maxlength="1" data-index="0" autofocus>
-      <input type="text" class="code-digit-input" maxlength="1" data-index="1">
-      <input type="text" class="code-digit-input" maxlength="1" data-index="2">
-      <input type="text" class="code-digit-input" maxlength="1" data-index="3">
-      <input type="text" class="code-digit-input" maxlength="1" data-index="4">
-      <input type="text" class="code-digit-input" maxlength="1" data-index="5">
+    <div class="digits-group">
+      <input type="text" class="digit-input" maxlength="1" autofocus>
+      <input type="text" class="digit-input" maxlength="1">
+      <input type="text" class="digit-input" maxlength="1">
+      <input type="text" class="digit-input" maxlength="1">
+      <input type="text" class="digit-input" maxlength="1">
+      <input type="text" class="digit-input" maxlength="1">
     </div>
 
-    <button class="verify-btn" id="submitCodeBtn">تأیید و اتصال به کانال محرمانه</button>
-  </div>
+    <button class="submit-btn" id="verifyBtn">🚀 ورود به اتاق چت کارآگاه</button>
+  </main>
 
-  <!-- اورلی انیمیشن سنگین هک سایبری -->
   <div id="cyberHackOverlay">
     <canvas id="matrixCanvas"></canvas>
     <div class="hack-hud">
-      <div class="hack-title">⚠️ SYSTEM INFILTRATION DETECTED ⚠️</div>
-      <div class="hack-log" id="hackLog"></div>
-      <div class="progress-bar-bg">
-        <div class="progress-bar-fill" id="progressFill"></div>
+      <div style="color:#ff0055; font-size:2.2rem; font-weight:800; margin-bottom:1rem;">⚠️ SYSTEM INFILTRATION DETECTED ⚠️</div>
+      <div style="color:#00ff66; font-size:1.2rem; font-family:monospace; margin-bottom:1rem;" id="hackLog">&gt; ACCESS GRANTED: SECRET DETECTIVE CHANNEL</div>
+      <div style="width:100%; height:12px; background:#111; border:1px solid #ff0055; border-radius:6px; overflow:hidden;">
+        <div style="height:100%; width:0%; background:#ff0055; transition:width 0.1s linear;" id="progressFill"></div>
       </div>
     </div>
   </div>
 
   <script>
-    // مدیریت ۵ باکس ورودی کد
-    const inputs = document.querySelectorAll('.code-digit-input');
+    const inputs = document.querySelectorAll('.digit-input');
     inputs.forEach((input, index) => {
       input.addEventListener('input', (e) => {
         if (e.target.value.length === 1 && index < inputs.length - 1) {
@@ -216,7 +168,7 @@
       });
     });
 
-    // پر کردن خودکار کد در صورت وجود سفارش قبلی
+    // پر کردن اتوماتیک کد در صورت وجود سفارش قبلی
     const lastOrder = JSON.parse(localStorage.getItem('golha_last_order') || '{}');
     if (lastOrder && lastOrder.packageCode && lastOrder.packageCode.length === 6) {
       const chars = lastOrder.packageCode.split('');
@@ -225,12 +177,12 @@
       });
     }
 
-    document.getElementById('submitCodeBtn').addEventListener('click', verifyCodeAndTransition);
+    document.getElementById('verifyBtn').addEventListener('click', verifyCode);
 
-    async function verifyCodeAndTransition() {
+    async function verifyCode() {
       const code = Array.from(inputs).map(i => i.value.trim()).join('');
       if (code.length < 6) {
-        alert('لطفا کد ۶ رقمی کامل را وارد کنید.');
+        alert('لطفا کد ۶ رقمی را کامل وارد کنید.');
         return;
       }
 
@@ -243,43 +195,22 @@
 
         const data = await res.json();
         if (data.success) {
-          // ذخیره توکن و مشخصات جلسه در sessionStorage یکسان با user-chat.js
           sessionStorage.setItem('userToken', data.token);
           sessionStorage.setItem('userSession', JSON.stringify(data.session));
 
-          // اجرای انتقال حماسی سایبرپانک
-          startEpicCyberTransition();
+          startTransition();
         } else {
-          alert('کد وارد شده معتبر نیست: ' + data.message);
+          alert('کد اشتباه است: ' + data.message);
         }
       } catch (err) {
-        console.error('Error verifying code:', err);
-        alert('خطای ارتباط با سرور.');
+        alert('خطا در ارتباط با سرور.');
       }
     }
 
-    // انیمیشن حماسی و سنگین نفوذ سایبری (کدهای ماتریکس + افکت صدای ویب / بیپ + گلیچ + لوگ‌های نفوذ)
-    function startEpicCyberTransition() {
+    function startTransition() {
       const overlay = document.getElementById('cyberHackOverlay');
       overlay.style.display = 'flex';
 
-      // افکت صوتی صوتی ویب صوتی با Web Audio API
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 3);
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 3.5);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 3.5);
-      } catch (e) { console.log('Audio not supported'); }
-
-      // ماتریکس کانواس
       const canvas = document.getElementById('matrixCanvas');
       const ctx = canvas.getContext('2d');
       canvas.width = window.innerWidth;
@@ -307,35 +238,16 @@
       }
 
       const matrixInterval = setInterval(drawMatrix, 33);
-
-      // پیشرفت هک و تایپ لوگ‌ها
-      const logs = [
-        "> DECRYPTING FLOWER SHOP COVER...",
-        "> BREAKING AES-256 ENCRYPTION...",
-        "> ACCESS GRANTED: SECRET DETECTIVE CHANNEL",
-        "> INITIALIZING REALTIME SOCKET HANDSHAKE...",
-        "> REDIRECTING TO SECURE TERMINAL..."
-      ];
-
-      const hackLogEl = document.getElementById('hackLog');
       const progressFill = document.getElementById('progressFill');
-      let currentLog = 0;
       let progress = 0;
 
       const progressInterval = setInterval(() => {
-        progress += 2;
+        progress += 4;
         progressFill.style.width = progress + '%';
-
-        if (progress % 20 === 0 && currentLog < logs.length) {
-          hackLogEl.innerHTML += logs[currentLog] + '<br>';
-          hackLogEl.scrollTop = hackLogEl.scrollHeight;
-          currentLog++;
-        }
 
         if (progress >= 100) {
           clearInterval(progressInterval);
           clearInterval(matrixInterval);
-          // ریدایرکت نهایی به چت
           window.location.href = '/chat.html';
         }
       }, 50);

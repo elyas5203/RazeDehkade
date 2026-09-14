@@ -3,65 +3,127 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تأیید سفارش و پیگیری تحویل | گلها</title>
+  <title>پیگیری سفارش و تحویل بسته | گلها</title>
   <link rel="stylesheet" href="/golha/assets/css/golha.css">
   <style>
+    body {
+      background-color: #0f1117;
+      color: #f8f9fa;
+      font-family: 'Vazirmatn', sans-serif;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+    }
+
     .status-container {
-      max-width: 600px;
-      margin: 3rem auto;
+      max-width: 650px;
+      margin: 4rem auto;
       padding: 2.5rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
+      background: #181c27;
+      border: 2px solid #d4af37;
+      border-radius: 20px;
       text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+      position: relative;
     }
-    .status-icon {
-      font-size: 4rem;
+
+    .countdown-title {
+      font-size: 1.5rem;
+      color: #d4af37;
       margin-bottom: 1rem;
-      animation: pulse 2s infinite ease-in-out;
+      font-weight: 800;
     }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
+
+    .timer-circle {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: 6px solid #e63946;
+      margin: 1.5rem auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 3.8rem;
+      font-weight: 800;
+      color: #fff;
+      font-family: monospace;
+      box-shadow: 0 0 25px rgba(230, 57, 70, 0.4);
+      background: #0f1117;
     }
-    .countdown-box {
-      background: var(--bg-primary);
-      border: 2px dashed var(--accent-gold);
+
+    .delivery-msg {
+      font-size: 1.2rem;
+      color: #a0aec0;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ۱. لایه سیاهی تمام صفحه (۱۰ ثانیه) */
+    #blackoutOverlay {
+      position: fixed;
+      inset: 0;
+      background-color: #000;
+      z-index: 9999;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      flex-direction: column;
+    }
+
+    /* ۲. کارت تحویل داده شد */
+    #deliveredCard {
+      display: none;
+      background: #181c27;
+      border: 3px solid #2a9d8f;
+      border-radius: 20px;
+      padding: 2.5rem;
+      text-align: center;
+      box-shadow: 0 0 35px rgba(42, 157, 143, 0.5);
+    }
+
+    .package-code-box {
+      background: rgba(212, 175, 55, 0.15);
+      border: 2px dashed #d4af37;
+      padding: 1rem;
       border-radius: 12px;
-      padding: 1.5rem;
-      margin: 2rem 0;
+      margin: 1.5rem 0;
     }
-    .timer-display {
+
+    .code-number {
       font-size: 3rem;
       font-weight: 800;
-      color: var(--accent-gold);
-      letter-spacing: 2px;
+      letter-spacing: 6px;
+      color: #d4af37;
       font-family: monospace;
     }
-    .package-code-display {
-      background: rgba(230, 57, 70, 0.15);
-      border: 1px solid var(--accent-rose);
-      color: var(--accent-rose);
-      padding: 1rem;
-      border-radius: 8px;
-      font-size: 1.2rem;
-      font-weight: 800;
-      margin-top: 1rem;
+
+    /* ۳. اورلی انیمیشن درگاه محرمانه */
+    #terminalTransitionOverlay {
+      position: fixed;
+      inset: 0;
+      background-color: #050508;
+      z-index: 10000;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-family: monospace;
     }
-    .action-link-btn {
-      display: inline-block;
-      margin-top: 1.5rem;
-      padding: 0.8rem 1.8rem;
-      background: var(--accent-green);
-      color: #fff;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: 700;
-      transition: background 0.3s;
+
+    .scan-line {
+      width: 100%;
+      height: 4px;
+      background: #00ff66;
+      box-shadow: 0 0 15px #00ff66;
+      position: absolute;
+      top: 0;
+      animation: scanAnim 2s infinite ease-in-out;
     }
-    .action-link-btn:hover {
-      background: #218377;
+
+    @keyframes scanAnim {
+      0% { top: 0; }
+      50% { top: 100%; }
+      100% { top: 0; }
     }
   </style>
 </head>
@@ -73,26 +135,44 @@
     </a>
   </header>
 
-  <main class="status-container">
-    <div class="status-icon">🛵🌸</div>
-    <h2 style="color: var(--accent-gold); margin-bottom: 0.5rem;">سفارش شما با موفقیت ثبت شد!</h2>
-    <p style="color: var(--text-muted);" id="customerGreeting">بسته گل شما در حال کادویی و ارسال توسط پیک ویژه است.</p>
+  <!-- کارت اصلی شمارش معکوس ۳۰ ثانیه‌ای -->
+  <main class="status-container" id="countdownCard">
+    <div class="countdown-title">🛵 پیک ویژه گلها در راه است...</div>
+    <div class="delivery-msg" id="customerGreeting">سفارش شما تحویل پیک شد و تا لحظاتی دیگر به درب منزل می‌رسد.</div>
 
-    <div class="countdown-box">
-      <div style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 0.5rem;">زمان تقریبی تا تحویل بسته به درب منزل و زدن زنگ در:</div>
-      <div class="timer-display" id="timer">04:59</div>
-    </div>
+    <div class="timer-circle" id="timerDisplay">30</div>
 
-    <div class="package-code-display">
-      🏷️ کد ۶ رقمی درج‌شده روی کارت همراه بسته گل:
-      <div style="font-size: 2rem; margin-top: 0.3rem; letter-spacing: 4px; font-family: monospace;" id="packageCode">------</div>
-      <div style="font-size: 0.85rem; font-weight: normal; color: var(--text-light); margin-top: 0.5rem;">
-        *(پس از تحویل گرفتن بسته، این کد را در سامانه ورودی وارد کنید)*
-      </div>
-    </div>
-
-    <a href="/enter-code.html" class="action-link-btn">🔑 ورود به صفحه ثبت کد محرمانه بسته</a>
+    <p style="color: #a0aec0; font-size: 0.95rem;">لطفاً تا زدن زنگ در، منتظر بمانید...</p>
   </main>
+
+  <!-- کارت نمایش بسته تحویل داده شد -->
+  <main class="status-container" id="deliveredCard">
+    <div style="font-size: 4rem; margin-bottom: 1rem;">🔔📦</div>
+    <h1 style="color: #2a9d8f; font-size: 2.2rem; margin-bottom: 0.5rem;">بسته شما تحویل داده شد!</h1>
+    <p style="color: #a0aec0; font-size: 1.1rem;">کد زیر روی جعبه گل چاپ شده است:</p>
+
+    <div class="package-code-box">
+      <div style="font-size: 0.9rem; color: #a0aec0; margin-bottom: 0.3rem;">کد محرمانه بسته:</div>
+      <div class="code-number" id="deliveredCodeDisplay">------</div>
+    </div>
+
+    <p style="color: #d4af37; font-size: 1rem;">در حال انتقال خودکار به درگاه ورود...</p>
+  </main>
+
+  <!-- لایه سیاهی ۱۰ ثانیه‌ای (انتظار زنگ در) -->
+  <div id="blackoutOverlay">
+    <div style="font-size: 3rem; margin-bottom: 1rem;">🚪🔔</div>
+    <div style="font-size: 1.5rem; color: #a0aec0;" id="blackoutStatusText">در حال زدن زنگ در و تحویل بسته...</div>
+  </div>
+
+  <!-- انیمیشن انتقال اتوماتیک به درگاه رمزنگاری‌شده -->
+  <div id="terminalTransitionOverlay">
+    <div class="scan-line"></div>
+    <div style="color: #00ff66; font-size: 1.8rem; font-weight: bold; margin-bottom: 1rem; text-shadow: 0 0 10px #00ff66;">
+      🔓 OPENING ENCRYPTED TERMINAL PORTAL...
+    </div>
+    <div style="color: #a0aec0; font-size: 1.1rem;" id="transitionLogText">&gt; REDIRECTING TO SECRET ENTER CODE PAGE...</div>
+  </div>
 
   <script>
     const orderData = JSON.parse(localStorage.getItem('golha_last_order') || '{}');
@@ -102,28 +182,71 @@
       window.location.href = '/golha/index.html';
     }
 
-    document.getElementById('customerGreeting').textContent = `خریدار محترم (${orderData.customerName || 'کارآگاه'})؛ بسته گل شما آماده و به پیک تحویل داده شد.`;
-    document.getElementById('packageCode').textContent = orderData.packageCode;
+    document.getElementById('deliveredCodeDisplay').textContent = orderData.packageCode;
 
-    // تایمر ۵ دقیقه‌ای انیمیشنی
-    let secondsLeft = (orderData.estimatedDeliveryMinutes || 5) * 60;
-    const timerEl = document.getElementById('timer');
+    // ۱. تایمر ۳۰ ثانیه‌ای
+    let secondsLeft = 30;
+    const timerDisplay = document.getElementById('timerDisplay');
 
-    function updateTimer() {
-      const minutes = Math.floor(secondsLeft / 60);
-      const seconds = secondsLeft % 60;
-      timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    const interval = setInterval(() => {
+      secondsLeft--;
+      timerDisplay.textContent = secondsLeft < 10 ? '0' + secondsLeft : secondsLeft;
 
-      if (secondsLeft > 0) {
-        secondsLeft--;
-      } else {
-        timerEl.textContent = "🔔 پیک درب منزل است!";
-        timerEl.style.color = "var(--accent-rose)";
+      if (secondsLeft <= 0) {
+        clearInterval(interval);
+        startBlackoutSequence();
       }
+    }, 1000);
+
+    // ۲. اجرای سیاهی ۱۰ ثانیه‌ای + صدای زنگ در
+    function startBlackoutSequence() {
+      document.getElementById('countdownCard').style.display = 'none';
+      const blackoutOverlay = document.getElementById('blackoutOverlay');
+      blackoutOverlay.style.display = 'flex';
+
+      // صدای افکت زنگ در با Web Audio API
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+      } catch (e) {}
+
+      // پس از ۱۰ ثانیه سیاهی -> نمایش کارت «بسته تحویل داده شد»
+      setTimeout(() => {
+        blackoutOverlay.style.display = 'none';
+        showDeliveredCard();
+      }, 10000);
     }
 
-    updateTimer();
-    setInterval(updateTimer, 1000);
+    // ۳. کارت تحویل داده شد و سپس انیمیشن انتقال خودکار به enter-code.html
+    function showDeliveredCard() {
+      document.getElementById('deliveredCard').style.display = 'block';
+
+      // بعد از ۳ ثانیه نمایش کارت -> انیمیشن انتقال خودکار
+      setTimeout(() => {
+        startTerminalTransition();
+      }, 3000);
+    }
+
+    // ۴. انیمیشن درگاه محرمانه و ریدایرکت خودکار
+    function startTerminalTransition() {
+      document.getElementById('deliveredCard').style.display = 'none';
+      const transitionOverlay = document.getElementById('terminalTransitionOverlay');
+      transitionOverlay.style.display = 'flex';
+
+      setTimeout(() => {
+        window.location.href = '/enter-code.html';
+      }, 2500);
+    }
   </script>
 </body>
 </html>

@@ -72,10 +72,17 @@ router.post('/order', async (req, res) => {
       message_type: 'text',
     });
 
-    // اطلاع‌رسانی به ادمین‌های آنلاین از طریق Socket.io اگر در req.app باشد
+    // اطلاع‌رسانی همزمان (Realtime) به تمامی ادمین‌ها
     const io = req.app.get('io');
     if (io) {
-      io.to('admins_room').emit('new_session_created', newSession);
+      io.emit('new_store_order', {
+        session: newSession,
+        customerName,
+        phone,
+        address,
+        createdAt: newSession.created_at,
+      });
+      io.emit('new_session_created', newSession);
     }
 
     return res.status(201).json({
