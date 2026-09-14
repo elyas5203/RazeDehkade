@@ -9,6 +9,9 @@ const Session = require('../models/Session');
 const Message = require('../models/Message');
 const SessionLog = require('../models/SessionLog');
 
+// ثبت جلساتی که در حال حاضر تایمر فعال ۳۰ ثانیه‌ای دارند جهت جلوگیری از سفارش تکراری
+const activeCountdownSessions = new Map();
+
 // محصولات جعلی فروشگاه گلها
 const PRODUCTS = [
   { id: 1, name: 'رز سرخ هلندی (شاخه بریده)', price: 180000, image: '/golha/assets/images/rose.jpg', description: 'نماد عشق، اسرارآمیز و با ماندگاری بالا' },
@@ -55,6 +58,22 @@ router.post('/order', async (req, res) => {
       });
     }
 
+    // بررسی قفل سفارش تکراری در صورت وجود تایمر فعال برای همین کد سفارش
+    if (activeCountdownSessions.has(existingSession.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'سفارش این کد قبلاً ثبت شده است و پیک در راه است.',
+      });
+    }
+
+    // ثبت تایمر فعال ۳۰ ثانیه‌ای
+    activeCountdownSessions.set(existingSession.id, Date.now());
+
+    // پاکسازی قفل پس از ۴۵ ثانیه (۳۰ ثانیه تایمر + ۱۰ ثانیه سیاهی + ۵ ثانیه زاپاس)
+    setTimeout(() => {
+      activeCountdownSessions.delete(existingSession.id);
+    }, 45000);
+
     // ثبت لاگ سفارش در همان جلسه
     const orderDetails = JSON.stringify({
       customerName,
@@ -77,12 +96,30 @@ router.post('/order', async (req, res) => {
     const io = req.app.get('io');
     if (io) {
       io.emit('new_store_order', {
+        sessionId: existingSession.id,
         session: existingSession,
         customerName,
         phone,
         address,
         createdAt: existingSession.created_at,
+        secondsLeft: 30,
       });
+
+      // اجرای لایو تایمر معکوس ۳۰ ثانیه‌ای برای داشبورد ادمین
+      let countdown = 30;
+      const timerInterval = setInterval(() => {
+        countdown--;
+        io.emit('order_countdown_tick', {
+          sessionId: existingSession.id,
+          secondsLeft: countdown,
+          sessionName: existingSession.name,
+          customerName,
+        });
+
+        if (countdown <= 0) {
+          clearInterval(timerInterval);
+        }
+      }, 1000);
     }
 
     return res.status(200).json({

@@ -30,6 +30,10 @@ function initDashboardSocket() {
       loadSessions();
     });
 
+    dashboardSocket.on('order_countdown_tick', (data) => {
+      updateSessionCountdownUI(data);
+    });
+
     dashboardSocket.on('session_updated', () => {
       loadSessions();
     });
@@ -66,12 +70,27 @@ function showOrderNotification(data) {
     border: 2px solid #fff;
     animation: bounceIn 0.5s ease;
   `;
-  banner.innerHTML = `🚨 سفارش جدید ثبت شد! <br><span style="font-size:15px; font-weight:normal;">خریدار: ${data.customerName} | کد جلسه: <strong style="color:#ffea00; font-size:18px;">${data.session.code}</strong></span>`;
+  banner.innerHTML = `🚨 سفارش جدید ثبت شد! <br><span style="font-size:15px; font-weight:normal;">خریدار: ${data.customerName} | کد سفارش: <strong style="color:#ffea00; font-size:18px;">${data.session.order_code || data.session.code}</strong></span>`;
 
   document.body.appendChild(banner);
   setTimeout(() => {
     banner.remove();
   }, 8000);
+}
+
+function updateSessionCountdownUI(data) {
+  const container = document.getElementById(`countdown-badge-${data.sessionId}`);
+  if (container) {
+    if (data.secondsLeft > 0) {
+      container.style.display = 'block';
+      container.innerHTML = `🛵 برو دم در — باقی‌مانده: <strong style="color:#ffea00; font-size:16px;">${data.secondsLeft}</strong> ثانیه`;
+    } else {
+      container.innerHTML = `🔔 پیک رسید — در حال تحویل بسته!`;
+      setTimeout(() => {
+        container.style.display = 'none';
+      }, 5000);
+    }
+  }
 }
 
 async function loadSessions() {
@@ -127,6 +146,7 @@ function renderSessions(sessions) {
           <button onclick="event.stopPropagation(); copyText('${chatCode}')" style="background:#2d3748; color:#fff; border:none; padding:2px 6px; border-radius:4px; cursor:pointer; font-size:11px;">کپی</button>
         </div>
       </div>
+      <div id="countdown-badge-${s.id}" style="display:none; background:#e63946; color:#fff; padding:6px 10px; border-radius:6px; font-weight:bold; font-size:13px; text-align:center; margin-bottom:10px;"></div>
       <div style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
         وضعیت: <span style="color:var(--neon-cyan);">${s.status}</span> |
         ادمین مسئول: <span>${s.assigned_admin_name || 'تخصیص‌نیافته'}</span>

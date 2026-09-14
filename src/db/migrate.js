@@ -41,6 +41,24 @@ async function runMigrations() {
     }
     console.log('✅ جدول‌های دیتابیس با موفقیت در MySQL ساخته شدند.');
 
+    // بررسی و اضافه کردن ستون‌های order_code و chat_code برای جلسات قدیمی‌تر در صورت نیاز
+    if (!isMemoryDb) {
+      try {
+        await query(`
+          ALTER TABLE sessions
+          ADD COLUMN order_code VARCHAR(10) UNIQUE NULL AFTER code,
+          ADD COLUMN chat_code VARCHAR(10) UNIQUE NULL AFTER order_code;
+        `);
+        console.log('➕ ستون‌های order_code و chat_code به جدول sessions اضافه شدند.');
+      } catch (e) {
+        // اگر ستون‌ها از قبل وجود داشته باشند خطا می‌دهد که نادیده می‌گیریم
+      }
+
+      // مقداردهی جلساتی که order_code یا chat_code آن‌ها نال است با مقدار code
+      await query(`UPDATE sessions SET order_code = code WHERE order_code IS NULL`);
+      await query(`UPDATE sessions SET chat_code = code WHERE chat_code IS NULL`);
+    }
+
     // ساخت ادمین اولیه در صورت عدم وجود
     const defaultAdminUsername = process.env.ADMIN_USERNAME || 'admin';
     const defaultAdminPassword = process.env.ADMIN_PASSWORD || 'admin123';
