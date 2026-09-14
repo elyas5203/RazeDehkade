@@ -35,7 +35,7 @@ async function generateUniqueSessionCode(length = 6) {
   while (!isUnique && attempts < maxAttempts) {
     attempts++;
     code = generateRandomCode(length);
-    const existing = await query('SELECT id FROM sessions WHERE code = ?', [code]);
+    const existing = await query('SELECT id FROM sessions WHERE code = ? OR order_code = ? OR chat_code = ?', [code, code, code]);
     if (existing.rows.length === 0) {
       isUnique = true;
     }

@@ -37,6 +37,10 @@ function initDashboardSocket() {
     dashboardSocket.on('session_updated', () => {
       loadSessions();
     });
+
+    dashboardSocket.on('disconnect', () => {
+      console.warn('⚠️ سوکت داشبورد قطع شد، در حال تلاش مجدد برای اتصال...');
+    });
   }
 }
 
@@ -177,10 +181,12 @@ async function openCreateModal() {
 
     const data = await res.json();
     if (data.success) {
-      alert(`جلسه با کد عددی ${data.data.code} با موفقیت ایجاد شد.`);
+      const orderCode = data.data.order_code || data.data.code;
+      const chatCode = data.data.chat_code || data.data.code;
+      alert(`✅ جلسه جدید با موفقیت ساخته شد!\n\n🏷️ کد تخفیف/سفارش (تلگرام): ${orderCode}\n🔑 کد چت روی بسته: ${chatCode}`);
       loadSessions();
     } else {
-      alert(data.message);
+      alert('خطا در ساخت جلسه: ' + (data.message || 'مشکلی پیش آمد'));
     }
   } catch (err) {
     console.error('Error creating session:', err);
