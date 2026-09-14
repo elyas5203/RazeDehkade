@@ -29,10 +29,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 const authRoutes = require('./src/routes/auth');
 const sessionRoutes = require('./src/routes/sessions');
 const cannedResponseRoutes = require('./src/routes/cannedResponses');
+const storeRoutes = require('./src/routes/store');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/canned-responses', cannedResponseRoutes);
+app.use('/api/store', storeRoutes);
 
 // مسیر تست سلامت API
 app.get('/api/health', (req, res) => {
@@ -51,6 +53,7 @@ const io = new Server(server, {
   },
 });
 
+app.set('io', io);
 setupSocketIO(io);
 
 const PORT = process.env.PORT || 3000;

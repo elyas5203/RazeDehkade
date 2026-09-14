@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ثبت و تسویه سفارش | فروشگاه گلها</title>
+  <link rel="stylesheet" href="/golha/assets/css/golha.css">
+  <style>
+    .checkout-container {
+      max-width: 800px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--accent-gold);
+    }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 0.8rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-light);
+      font-family: var(--font-main);
+      font-size: 1rem;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent-gold);
+    }
+    .order-summary {
+      background: var(--bg-primary);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border-color);
+    }
+    .submit-order-btn {
+      width: 100%;
+      padding: 1rem;
+      background: var(--accent-rose);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-main);
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .submit-order-btn:hover {
+      background: #c02835;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="golha-navbar">
+    <a href="/golha/index.html" class="brand-logo">
+      🌹 گل‌ها <span>Golha</span>
+    </a>
+  </header>
+
+  <main class="checkout-container">
+    <h2 style="margin-bottom: 1.5rem; color: var(--accent-gold); text-align: center;">🛒 فرم ثبت مشخصات تحویل سفارش</h2>
+
+    <div class="order-summary" id="orderSummary">
+      <!-- خلاصه سفارش -->
+    </div>
+
+    <form id="checkoutForm">
+      <div class="form-group">
+        <label for="customerName">نام و نام خانوادگی تحویل‌گیرنده:</label>
+        <input type="text" id="customerName" placeholder="مثلاً: دستیاران کارآگاه" required>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">شماره تماس جهت هماهنگی پیک:</label>
+        <input type="tel" id="phone" placeholder="۰۹۱۲0000000" required>
+      </div>
+
+      <div class="form-group">
+        <label for="address">آدرس تحویل گل:</label>
+        <textarea id="address" rows="3" placeholder="خیابان، پلاک، واحد..." required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="notes">توضیحات خاص یا پیام روی کارت همراه گل (اختیاری):</label>
+        <textarea id="notes" rows="2" placeholder="پیام دلخواه روی کارت..."></textarea>
+      </div>
+
+      <button type="submit" class="submit-order-btn" id="submitBtn">🌹 ثبت نهایی سفارش و ارسال پیک</button>
+    </form>
+  </main>
+
+  <script>
+    const cart = JSON.parse(localStorage.getItem('golha_cart') || '[]');
+
+    if (cart.length === 0) {
+      alert('سبد خرید شما خالی است!');
+      window.location.href = '/golha/index.html';
+    }
+
+    const orderSummaryEl = document.getElementById('orderSummary');
+    let total = 0;
+    orderSummaryEl.innerHTML = '<strong>اقلام سفارش:</strong><ul style="margin-top: 0.5rem; padding-right: 1.2rem; color: var(--text-muted);">' +
+      cart.map(item => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        return `<li>${item.name} (${item.quantity} عدد) - ${itemTotal.toLocaleString('fa-IR')} تومان</li>`;
+      }).join('') + `</ul><div style="margin-top: 0.8rem; font-weight: bold; color: var(--accent-gold);">جمع کل: ${total.toLocaleString('fa-IR')} تومان</div>`;
+
+    document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'در حال ثبت سفارش...';
+
+      const payload = {
+        customerName: document.getElementById('customerName').value,
+        phone: document.getElementById('phone').value,
+        address: document.getElementById('address').value,
+        notes: document.getElementById('notes').value,
+        items: cart,
+      };
+
+      try {
+        const res = await fetch('/api/store/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          // پاک کردن سبد خرید و ذخیره اطلاعات سفارش در localStorage
+          localStorage.removeItem('golha_cart');
+          localStorage.setItem('golha_last_order', JSON.stringify(data.data));
+          window.location.href = '/golha/order-status.html';
+        } else {
+          alert('خطا در ثبت سفارش: ' + data.message);
+          submitBtn.disabled = false;
+          submitBtn.textContent = '🌹 ثبت نهایی سفارش و ارسال پیک';
+        }
+      } catch (err) {
+        console.error('Error submitting order:', err);
+        alert('خطای ارتباط با سرور.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = '🌹 ثبت نهایی سفارش و ارسال پیک';
+      }
+    });
+  </script>
+</body>
+</html>

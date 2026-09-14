@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تأیید سفارش و پیگیری تحویل | گلها</title>
+  <link rel="stylesheet" href="/golha/assets/css/golha.css">
+  <style>
+    .status-container {
+      max-width: 600px;
+      margin: 3rem auto;
+      padding: 2.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+    .status-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      animation: pulse 2s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .countdown-box {
+      background: var(--bg-primary);
+      border: 2px dashed var(--accent-gold);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 2rem 0;
+    }
+    .timer-display {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--accent-gold);
+      letter-spacing: 2px;
+      font-family: monospace;
+    }
+    .package-code-display {
+      background: rgba(230, 57, 70, 0.15);
+      border: 1px solid var(--accent-rose);
+      color: var(--accent-rose);
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-top: 1rem;
+    }
+    .action-link-btn {
+      display: inline-block;
+      margin-top: 1.5rem;
+      padding: 0.8rem 1.8rem;
+      background: var(--accent-green);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 700;
+      transition: background 0.3s;
+    }
+    .action-link-btn:hover {
+      background: #218377;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="golha-navbar">
+    <a href="/golha/index.html" class="brand-logo">
+      🌹 گل‌ها <span>Golha</span>
+    </a>
+  </header>
+
+  <main class="status-container">
+    <div class="status-icon">🛵🌸</div>
+    <h2 style="color: var(--accent-gold); margin-bottom: 0.5rem;">سفارش شما با موفقیت ثبت شد!</h2>
+    <p style="color: var(--text-muted);" id="customerGreeting">بسته گل شما در حال کادویی و ارسال توسط پیک ویژه است.</p>
+
+    <div class="countdown-box">
+      <div style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 0.5rem;">زمان تقریبی تا تحویل بسته به درب منزل و زدن زنگ در:</div>
+      <div class="timer-display" id="timer">04:59</div>
+    </div>
+
+    <div class="package-code-display">
+      🏷️ کد ۶ رقمی درج‌شده روی کارت همراه بسته گل:
+      <div style="font-size: 2rem; margin-top: 0.3rem; letter-spacing: 4px; font-family: monospace;" id="packageCode">------</div>
+      <div style="font-size: 0.85rem; font-weight: normal; color: var(--text-light); margin-top: 0.5rem;">
+        *(پس از تحویل گرفتن بسته، این کد را در سامانه ورودی وارد کنید)*
+      </div>
+    </div>
+
+    <a href="/enter-code.html" class="action-link-btn">🔑 ورود به صفحه ثبت کد محرمانه بسته</a>
+  </main>
+
+  <script>
+    const orderData = JSON.parse(localStorage.getItem('golha_last_order') || '{}');
+
+    if (!orderData || !orderData.packageCode) {
+      alert('سفارشی یافت نشد.');
+      window.location.href = '/golha/index.html';
+    }
+
+    document.getElementById('customerGreeting').textContent = `خریدار محترم (${orderData.customerName || 'کارآگاه'})؛ بسته گل شما آماده و به پیک تحویل داده شد.`;
+    document.getElementById('packageCode').textContent = orderData.packageCode;
+
+    // تایمر ۵ دقیقه‌ای انیمیشنی
+    let secondsLeft = (orderData.estimatedDeliveryMinutes || 5) * 60;
+    const timerEl = document.getElementById('timer');
+
+    function updateTimer() {
+      const minutes = Math.floor(secondsLeft / 60);
+      const seconds = secondsLeft % 60;
+      timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+      if (secondsLeft > 0) {
+        secondsLeft--;
+      } else {
+        timerEl.textContent = "🔔 پیک درب منزل است!";
+        timerEl.style.color = "var(--accent-rose)";
+      }
+    }
+
+    updateTimer();
+    setInterval(updateTimer, 1000);
+  </script>
+</body>
+</html>

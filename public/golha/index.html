@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>فروشگاه گل و گیاه «گلها» | سفارش آنلاین گل</title>
+  <link rel="stylesheet" href="/golha/assets/css/golha.css">
+</head>
+<body>
+
+  <!-- هدر و ناوبری -->
+  <header class="golha-navbar">
+    <a href="/golha/index.html" class="brand-logo">
+      🌹 گل‌ها <span>Golha</span>
+    </a>
+    <div class="nav-actions">
+      <button class="cart-btn-trigger" id="openCartBtn">
+        🛒 سبد خرید
+        <span class="cart-badge" id="cartCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- بنر اصلی -->
+  <section class="hero-banner">
+    <h1>فروشگاه گل و گیاه گل‌ها</h1>
+    <p>عرضه‌کننده خاص‌ترین دسته‌گل‌ها و گیاهان آپارتمانی با ارسال رایگان و تحویل محرمانه درب منزل</p>
+  </section>
+
+  <!-- شبکه نمایش محصولات -->
+  <main class="products-container" id="productsGrid">
+    <!-- محصولات توسط JavaScript بارگذاری می‌شوند -->
+  </main>
+
+  <!-- کشوی سبد خرید -->
+  <div class="cart-drawer-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="cart-drawer-header">
+      <h3>🛒 سبد خرید شما</h3>
+      <button class="close-drawer-btn" id="closeCartBtn">&times;</button>
+    </div>
+    <div class="cart-items-list" id="cartItemsList">
+      <!-- آیتم‌های سبد خرید -->
+    </div>
+    <div class="cart-drawer-footer">
+      <div class="cart-total">
+        <span>مجموع کل:</span>
+        <span id="cartTotalPrice">۰ تومان</span>
+      </div>
+      <a href="/golha/checkout.html" class="checkout-btn" id="checkoutLink">تکمیل سفارش و تسویه</a>
+    </div>
+  </aside>
+
+  <script>
+    // مدیریت حالت سبد خرید
+    let cart = JSON.parse(localStorage.getItem('golha_cart') || '[]');
+
+    function saveCart() {
+      localStorage.setItem('golha_cart', JSON.stringify(cart));
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      const cartCountEl = document.getElementById('cartCount');
+      const cartItemsListEl = document.getElementById('cartItemsList');
+      const cartTotalPriceEl = document.getElementById('cartTotalPrice');
+
+      const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+      cartCountEl.textContent = totalCount;
+
+      if (cart.length === 0) {
+        cartItemsListEl.innerHTML = '<p style="text-align: center; color: var(--text-muted); margin-top: 2rem;">سبد خرید شما خالی است.</p>';
+        cartTotalPriceEl.textContent = '۰ تومان';
+        document.getElementById('checkoutLink').style.pointerEvents = 'none';
+        document.getElementById('checkoutLink').style.opacity = '0.5';
+        return;
+      }
+
+      document.getElementById('checkoutLink').style.pointerEvents = 'auto';
+      document.getElementById('checkoutLink').style.opacity = '1';
+
+      let total = 0;
+      cartItemsListEl.innerHTML = cart.map((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        return `
+          <div class="cart-item">
+            <div class="cart-item-info">
+              <h4>${item.name}</h4>
+              <span>${item.quantity} × ${item.price.toLocaleString('fa-IR')} تومان</span>
+            </div>
+            <button class="remove-item-btn" onclick="removeFromCart(${index})">🗑️</button>
+          </div>
+        `;
+      }).join('');
+
+      cartTotalPriceEl.textContent = `${total.toLocaleString('fa-IR')} تومان`;
+    }
+
+    function addToCart(product) {
+      const existingIndex = cart.findIndex(item => item.id === product.id);
+      if (existingIndex > -1) {
+        cart[existingIndex].quantity += 1;
+      } else {
+        cart.push({ ...product, quantity: 1 });
+      }
+      saveCart();
+      openCartDrawer();
+    }
+
+    function removeFromCart(index) {
+      cart.splice(index, 1);
+      saveCart();
+    }
+
+    function openCartDrawer() {
+      document.getElementById('cartOverlay').classList.add('active');
+      document.getElementById('cartDrawer').classList.add('active');
+    }
+
+    function closeCartDrawer() {
+      document.getElementById('cartOverlay').classList.remove('active');
+      document.getElementById('cartDrawer').classList.remove('active');
+    }
+
+    document.getElementById('openCartBtn').addEventListener('click', openCartDrawer);
+    document.getElementById('closeCartBtn').addEventListener('click', closeCartDrawer);
+    document.getElementById('cartOverlay').addEventListener('click', closeCartDrawer);
+
+    // دریافت محصولات از API
+    async function loadProducts() {
+      try {
+        const res = await fetch('/api/store/products');
+        const data = await res.json();
+        if (data.success) {
+          const grid = document.getElementById('productsGrid');
+          grid.innerHTML = data.data.map(p => `
+            <div class="product-card">
+              <div class="product-img-wrapper">
+                <div style="font-size: 3.5rem;">🌸</div>
+              </div>
+              <div class="product-info">
+                <h3 class="product-title">${p.name}</h3>
+                <p class="product-desc">${p.description}</p>
+                <div class="product-footer">
+                  <span class="product-price">${p.price.toLocaleString('fa-IR')} تومان</span>
+                  <button class="add-to-cart-btn" onclick='addToCart(${JSON.stringify(p)})'>+ افزودن به سبد</button>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('خطا در دریافت محصولات:', err);
+      }
+    }
+
+    loadProducts();
+    updateCartUI();
+  </script>
+</body>
+</html>
