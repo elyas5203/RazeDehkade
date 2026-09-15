@@ -182,7 +182,7 @@
     async function verifyCode() {
       const code = Array.from(inputs).map(i => i.value.trim()).join('');
       if (code.length < 6) {
-        alert('لطفا کد ۶ رقمی را کامل وارد کنید.');
+        alert('کد را کامل وارد کنید.');
         return;
       }
 
@@ -194,16 +194,24 @@
         });
 
         const data = await res.json();
-        if (data.success) {
-          sessionStorage.setItem('userToken', data.token);
-          sessionStorage.setItem('userSession', JSON.stringify(data.session));
+        if (data.success && data.data) {
+          // ذخیره‌سازی قطعی توکن و جلسه با الگوی data.data
+          sessionStorage.setItem('userToken', data.data.token);
+          sessionStorage.setItem('userSession', JSON.stringify(data.data.session));
 
           startTransition();
         } else {
-          alert('کد اشتباه است: ' + data.message);
+          const msg = data.message || '';
+          if (res.status === 404 || msg.includes('یافت نشد')) {
+            alert('کد روی بسته اشتباه است.');
+          } else if (msg.includes('پایان') || msg.includes('آرشیو')) {
+            alert('این جلسه تمام شده است.');
+          } else {
+            alert(msg || 'کد روی بسته اشتباه است.');
+          }
         }
       } catch (err) {
-        alert('خطا در ارتباط با سرور.');
+        alert('ارتباط با سرور برقرار نشد.');
       }
     }
 

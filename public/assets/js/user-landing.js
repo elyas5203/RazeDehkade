@@ -28,12 +28,19 @@ async function handleJoin(event) {
 
     const data = await res.json();
 
-    if (!data.success) {
-      errorDiv.innerText = data.message || 'خطا در احراز هویت کد جلسه.';
+    if (!data.success || !data.data) {
+      const msg = data.message || '';
+      if (res.status === 404 || msg.includes('یافت نشد')) {
+        errorDiv.innerText = 'کد روی بسته اشتباه است.';
+      } else if (msg.includes('پایان') || msg.includes('آرشیو')) {
+        errorDiv.innerText = 'این جلسه تمام شده است.';
+      } else {
+        errorDiv.innerText = msg || 'کد روی بسته اشتباه است.';
+      }
       return;
     }
 
-    // ذخیره اطلاعات جلسه و توکن کاربر در sessionStorage
+    // ذخیره اطلاعات جلسه و توکن کاربر در sessionStorage با ساختار یکسان data.data
     sessionStorage.setItem('userToken', data.data.token);
     sessionStorage.setItem('userSession', JSON.stringify(data.data.session));
 
