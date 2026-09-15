@@ -46,6 +46,11 @@ async function loadHistory() {
         'Authorization': `Bearer ${userToken}`,
       },
     });
+    if (res.status === 401 || res.status === 403) {
+      alert('اعتبار ورود شما به پایان رسیده است. لطفا مجدداً کد روی بسته را وارد کنید.');
+      logoutUser();
+      return;
+    }
     const data = await res.json();
     if (data.success) {
       const box = document.getElementById('messages-box');
@@ -67,13 +72,19 @@ function initSocket() {
 
   socket.on('connect', () => {
     statusEl.className = 'status-indicator online';
-    statusEl.innerHTML = '<span class="status-dot"></span> متصل به روم عملیاتی';
+    statusEl.innerHTML = '<span class="status-dot"></span> متصل به سیستم';
+    socket.emit('join_session', { sessionId: sessionData.id });
+  });
+
+  socket.io.on('reconnect', () => {
+    statusEl.className = 'status-indicator online';
+    statusEl.innerHTML = '<span class="status-dot"></span> اتصال مجدد برقرار شد';
     socket.emit('join_session', { sessionId: sessionData.id });
   });
 
   socket.on('disconnect', () => {
     statusEl.className = 'status-indicator offline';
-    statusEl.innerHTML = '<span class="status-dot"></span> قطع اتصال';
+    statusEl.innerHTML = '<span class="status-dot"></span> در حال وصل شدن مجدد...';
   });
 
   socket.on('new_message', (msg) => {

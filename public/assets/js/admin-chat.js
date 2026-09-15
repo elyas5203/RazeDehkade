@@ -40,9 +40,17 @@ function initAdminSocket() {
     }
   });
 
+  socket.io.on('reconnect', () => {
+    statusEl.className = 'status-indicator online';
+    statusEl.innerHTML = '<span class="status-dot"></span> اتصال مجدد برقرار شد';
+    if (activeSessionId) {
+      socket.emit('join_session', { sessionId: activeSessionId });
+    }
+  });
+
   socket.on('disconnect', () => {
     statusEl.className = 'status-indicator offline';
-    statusEl.innerHTML = '<span class="status-dot"></span> قطع اتصال';
+    statusEl.innerHTML = '<span class="status-dot"></span> در حال وصل شدن مجدد...';
   });
 
   socket.on('new_message', (msg) => {
@@ -151,6 +159,11 @@ async function switchSession(nextSessionId) {
     const res = await fetch(`/api/sessions/${activeSessionId}/messages`, {
       headers: { 'Authorization': `Bearer ${adminToken}` },
     });
+    if (res.status === 401 || res.status === 403) {
+      alert('نشست مدیریتی شما منقضی شده است. لطفا مجددا وارد شوید.');
+      window.location.href = '/admin/login.html';
+      return;
+    }
     const data = await res.json();
     if (data.success) {
       const box = document.getElementById('admin-messages-box');
