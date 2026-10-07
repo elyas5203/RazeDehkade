@@ -1,0 +1,419 @@
+/**
+ * public/assets/css/voice-player.css
+ * استایل‌های کامپوننت‌های ویس تلگرامی، نوار ضبط و بنر قفل چت
+ * تم کارآگاهی نوآر گرم با جلوه شیشه‌ای (Liquid Glass & Warm Amber)
+ */
+
+/* دکمه میکروفون ضبط ویس در کادر پیام */
+.voice-record-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 50%;
+  color: #fbbf24;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.voice-record-btn:hover {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: #f59e0b;
+  color: #fff;
+  transform: scale(1.05);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.35);
+}
+
+.voice-record-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* نوار وضعیت ضبط ویس */
+.voice-record-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: rgba(14, 23, 33, 0.95);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 28px;
+  padding: 8px 16px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 0 12px rgba(245, 158, 11, 0.08);
+  gap: 12px;
+  animation: recSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.voice-record-bar.hidden {
+  display: none !important;
+}
+
+@keyframes recSlideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.voice-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rec-dot {
+  width: 12px;
+  height: 12px;
+  background: #ef4444;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ef4444;
+  animation: recBlink 1s infinite alternate;
+}
+
+@keyframes recBlink {
+  0% { opacity: 0.3; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1.15); }
+}
+
+.rec-timer {
+  font-family: var(--font-code, monospace);
+  font-size: 15px;
+  font-weight: 700;
+  color: #fbbf24;
+  direction: ltr;
+  letter-spacing: 1px;
+}
+
+.rec-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+}
+
+.rec-wave i {
+  display: inline-block;
+  width: 3px;
+  background: #f59e0b;
+  border-radius: 2px;
+  animation: waveBar 0.8s ease-in-out infinite alternate;
+}
+
+.rec-wave i:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+.rec-wave i:nth-child(2) { height: 14px; animation-delay: 0.3s; }
+.rec-wave i:nth-child(3) { height: 8px; animation-delay: 0.2s; }
+.rec-wave i:nth-child(4) { height: 18px; animation-delay: 0.5s; }
+.rec-wave i:nth-child(5) { height: 11px; animation-delay: 0.15s; }
+.rec-wave i:nth-child(6) { height: 16px; animation-delay: 0.4s; }
+.rec-wave i:nth-child(7) { height: 7px; animation-delay: 0.25s; }
+.rec-wave i:nth-child(8) { height: 15px; animation-delay: 0.35s; }
+.rec-wave i:nth-child(9) { height: 9px; animation-delay: 0.1s; }
+
+@keyframes waveBar {
+  0% { transform: scaleY(0.4); opacity: 0.5; }
+  100% { transform: scaleY(1.3); opacity: 1; }
+}
+
+.voice-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.voice-act-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.voice-act-btn.cancel {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+.voice-act-btn.cancel:hover {
+  background: rgba(239, 68, 68, 0.3);
+  color: #fff;
+}
+
+.voice-act-btn.preview {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #fde68a;
+}
+.voice-act-btn.preview:hover {
+  background: rgba(245, 158, 11, 0.3);
+  color: #fff;
+}
+
+.voice-act-btn.send {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #0b131a;
+  font-weight: 800;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.4);
+}
+.voice-act-btn.send:hover {
+  filter: brightness(1.15);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   طراحی فوق‌العاده باریک، کامپکت و تلگرامی حباب ویس در هر دو سمت کاربر و ادمین
+   Telegram-Style Ultra-Compact Single-Row Voice Message Pill
+   ========================================================================== */
+
+/* استایل کانتینر حباب پیام صوتی در چت */
+.message-bubble.has-voice-message,
+.message-bubble.has-user-voice {
+  width: fit-content !important;
+  max-width: 240px !important;
+  min-width: 195px !important;
+  padding: 5px 8px 5px 7px !important;
+  border-radius: 14px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* حذف تایم‌استامپ بیرونی حباب چون درون پیل صوتی ادغام شده است */
+.message-bubble.has-voice-message > .message-time,
+.message-bubble.has-user-voice > .message-time {
+  display: none !important;
+}
+
+.message-bubble.has-voice-message .message-content,
+.message-bubble.has-user-voice .message-content {
+  white-space: normal !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* حباب صوتی در سمت کاربر دانش‌آموز */
+.terminal-page .message-bubble.user.has-voice-message,
+.terminal-page .message-bubble.user.has-user-voice {
+  background: #0e201b !important;
+  border: 1px solid rgba(16, 185, 129, 0.38) !important;
+  border-bottom-left-radius: 3px !important;
+}
+
+/* حباب صوتی ارسالی از ادمین درون چت کاربر */
+.terminal-page .message-bubble.admin.has-voice-message {
+  background: #1e1910 !important;
+  border: 1px solid rgba(245, 158, 11, 0.38) !important;
+  border-bottom-right-radius: 3px !important;
+}
+
+/* پلیر ویس تلگرامی درون حباب چت (کاملاً یکپارچه و بدون کادر تو در تو) */
+.tg-voice-bubble {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+/* دکمه دایره‌ای پخش/توقف - دقیقاً ۳۰ پیکسل شبیه تلگرام */
+.tg-voice-play-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  border-radius: 50% !important;
+  border: none !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  transition: transform 0.15s ease, filter 0.15s ease !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+}
+
+.tg-voice-play-btn:hover {
+  transform: scale(1.06) !important;
+  filter: brightness(1.1) !important;
+}
+
+.tg-voice-play-btn:active {
+  transform: scale(0.95) !important;
+}
+
+.tg-voice-play-btn .icon {
+  width: 12px !important;
+  height: 12px !important;
+  fill: currentColor !important;
+  stroke: none !important;
+}
+
+/* تراز بصری آیکون پلی در مثلث */
+.tg-voice-play-btn .play-icon {
+  transform: translateX(-1px);
+}
+
+html[dir="rtl"] .tg-voice-play-btn .play-icon {
+  transform: translateX(1px);
+}
+
+/* تم دکمه پلی برای پیام دانش‌آموز (سبز زمردی ملایم) */
+.message-bubble.user .tg-voice-play-btn {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  color: #022c22 !important;
+}
+
+/* تم دکمه پلی برای پیام ادمین / مرکز (کهربایی گرم) */
+.message-bubble.admin .tg-voice-play-btn {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #1a1103 !important;
+}
+
+/* تم دکمه پلی در پنل ادمین برای ویس کاربر دانش‌آموز (آبی فیروزه‌ای تیره) */
+.command-page .message-bubble.user .tg-voice-play-btn {
+  background: linear-gradient(135deg, #38bdf8, #0284c7) !important;
+  color: #042f2e !important;
+}
+
+/* بدنه امواج و اطلاعات صوتی */
+.tg-voice-waveform-wrap {
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  justify-content: center !important;
+}
+
+/* خط امواج صوتی تعاملی - دقیقاً ۱۴ پیکسل ارتفاع */
+.tg-voice-waves {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  height: 14px !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 2px !important;
+}
+
+.tg-voice-waves span {
+  display: block !important;
+  flex: 1 !important;
+  min-width: 2px !important;
+  max-width: 3px !important;
+  background: rgba(255, 255, 255, 0.28) !important;
+  border-radius: 1px !important;
+  pointer-events: none !important;
+  transition: background 0.15s !important;
+}
+
+/* نوار پیشرفت پخش صوت */
+.tg-voice-progress {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important; /* RTL alignment */
+  bottom: 0 !important;
+  pointer-events: none !important;
+  transition: width 0.08s linear !important;
+}
+
+/* خط پیشرفت برای کاربر */
+.message-bubble.user .tg-voice-progress {
+  background: rgba(16, 185, 129, 0.35) !important;
+  border-left: 2px solid #34d399 !important;
+}
+
+/* خط پیشرفت در پنل ادمین برای دانش‌آموز */
+.command-page .message-bubble.user .tg-voice-progress {
+  background: rgba(56, 189, 248, 0.35) !important;
+  border-left: 2px solid #38bdf8 !important;
+}
+
+/* خط پیشرفت برای ادمین */
+.message-bubble.admin .tg-voice-progress {
+  background: rgba(245, 158, 11, 0.35) !important;
+  border-left: 2px solid #fbbf24 !important;
+}
+
+/* ردیف متادیتا (مدت زمان و ساعت ارسال) */
+.tg-voice-meta {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+  padding: 0 1px !important;
+  margin-top: 1px !important;
+}
+
+.tg-voice-time {
+  font-family: var(--font-code, monospace) !important;
+  font-size: 10px !important;
+  font-weight: 600 !important;
+  direction: ltr !important;
+  letter-spacing: 0.3px !important;
+}
+
+.message-bubble.user .tg-voice-time {
+  color: #6ee7b7 !important;
+}
+
+.command-page .message-bubble.user .tg-voice-time {
+  color: #7dd3fc !important;
+}
+
+.message-bubble.admin .tg-voice-time {
+  color: #fde68a !important;
+}
+
+.tg-voice-stamp {
+  font-size: 9.5px !important;
+  font-family: var(--font-code, monospace) !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  direction: ltr !important;
+}
+
+.hidden-voice-audio {
+  display: none !important;
+}
+
+/* بنر هشدار قفل بودن چت */
+.chat-lock-banner {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(220, 38, 38, 0.18);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fecaca;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  animation: fadeInLock 0.3s ease;
+}
+
+@keyframes fadeInLock {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

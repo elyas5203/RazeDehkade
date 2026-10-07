@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>اتاق تحقیقات | راز دهکده</title>
+  <link rel="preload" href="/assets/scene/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/css/investigation.css">
+  <link rel="stylesheet" href="/assets/css/terminal.css">
+  <link rel="stylesheet" href="/assets/css/breach.css">
+  <link rel="stylesheet" href="/assets/css/voice-player.css">
+  <script src="/socket.io/socket.io.js" defer></script>
+  <script src="/assets/js/hack-sequence.js" defer></script>
+  <script src="/assets/js/voice-recorder.js" defer></script>
+  <script src="/assets/js/user-chat.js" defer></script>
+  <script src="/assets/js/terminal-stream.js" defer></script>
+  <script src="/assets/js/terminal.js" defer></script>
+</head>
+<body class="terminal-page">
+  <!-- نوار بالای صفحه (Header) -->
+  <header class="case-bar">
+    <div class="case-brand">
+      <span class="brand-symbol">N</span>
+      <div>
+        <small>مرکز تحقیقات نکسوس</small>
+        <strong id="active-case-title">راز دهکده</strong>
+      </div>
+      <span class="case-divider"></span>
+      <span class="technical" id="active-case-code">CASE / 02</span>
+    </div>
+
+    <div class="case-session">
+      <span id="session-title">دستیاران کارآگاه</span>
+      <code id="session-code-display">------</code>
+      <span id="socket-status" class="status-indicator offline">
+        <span class="status-dot"></span>در حال اتصال…
+      </span>
+    </div>
+
+    <a class="archive-back" href="/archive.html">
+      بایگانی پرونده‌ها 
+      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+    </a>
+  </header>
+
+  <!-- نوار وضعیت عملیات -->
+  <div class="operation-strip">
+    <span>
+      <i class="status-dot"></i> اتاق عملیات <b>/</b> <span>حقیقت در جزئیات پنهان است.</span>
+    </span>
+    <span class="operation-clock">
+      زمان حضور در اتاق <time id="session-clock">00:00:00</time>
+    </span>
+  </div>
+
+  <!-- فضای اصلی کار: چت در سمت راست (بزرگ‌تر) و ستون چپ دوگانه (مدارک + ترمینال) -->
+  <main class="case-workspace">
+    
+    <!-- ستون راست: چت تعاملی کارآگاهان (طراحی Liquid Glass با گزارش صوتی) -->
+    <section class="field-chat" aria-labelledby="chat-title">
+      <header>
+        <span class="radio-icon" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 13v7m-4 0h8M5 5a10 10 0 0 0 0 12M19 5a10 10 0 0 1 0 12M8 8a6 6 0 0 0 0 6m8-6a6 6 0 0 1 0 6"/><circle cx="12" cy="11" r="2"/></svg>
+        </span>
+        <div>
+          <span class="eyebrow">خط ارتباطی گروه</span>
+          <h2 id="chat-title">مرکز فرماندهی</h2>
+        </div>
+        <span class="channel-label technical">COMMS<br>01</span>
+      </header>
+
+      <div class="channel-notice">
+        <span class="status-dot"></span> گزارش‌ها، کشفیات و گفتگوهای زنده تیم کارآگاهی
+      </div>
+
+      <div class="messages-list" id="messages-box" role="log" aria-live="polite" aria-label="پیام‌ها"></div>
+      
+      <div id="typing-indicator" class="typing-line" aria-live="polite"></div>
+      <div id="chat-feedback" role="status" class="chat-feedback"></div>
+
+      <!-- کادر ارسال پیام و ویس -->
+      <form class="composer" id="message-form">
+        <label for="msg-input" class="sr-only">گزارش شما به مرکز</label>
+        
+        <div class="composer-controls">
+          <input type="file" id="user-file-input" hidden onchange="handleUserFileUpload(event)">
+          
+          <button type="button" class="attach-button" onclick="triggerFileInput('*')" aria-label="پیوست مدرک">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 12 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7l9-9m-6 12 8-8"/></svg>
+          </button>
+          
+          <textarea 
+            id="msg-input" 
+            rows="1"
+            autocomplete="off" 
+            placeholder="گزارش یا سرنخ خود را به مرکز فرماندهی مخابره کنید…" 
+            maxlength="10000"
+          ></textarea>
+
+          <!-- دکمه ضبط گزارش صوتی توسط voice-recorder.js تزریق می‌شود -->
+
+          <button type="submit" class="send-button" aria-label="ارسال گزارش">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m20 4-6 16-4-6-6-4 16-6ZM10 14 20 4"/></svg>
+          </button>
+        </div>
+
+        <span class="composer-hint">
+          <span>Enter برای ارسال · Shift+Enter خط جدید</span>
+          <span>🎙️ پیام صوتی به مرکز فرماندهی</span>
+        </span>
+      </form>
+    </section>
+
+    <!-- ستون چپ: نیمه بالا برد مدارک، نیمه پایین ترمینال لاگ زنده -->
+    <div class="left-operations-column">
+      
+      <!-- نیمه بالا: میز بررسی شواهد پرونده (Evidence Wall) -->
+      <section class="evidence-board" aria-labelledby="evidence-title">
+        <header>
+          <div>
+            <span class="eyebrow">میز بررسی / شواهد پرونده</span>
+            <h1 id="evidence-title">تکه‌های یک حقیقت</h1>
+          </div>
+          <span id="evidence-count" aria-live="polite">۰ مدرک</span>
+        </header>
+
+        <div class="board-toolbar">
+          <div class="board-stream-indicator">
+            <span class="status-dot"></span>
+            <span>جریان یکپارچه شواهد و سرنخ‌های پرونده (به ترتیب کشف)</span>
+          </div>
+          <span class="technical">EVIDENCE STREAM</span>
+        </div>
+
+        <div id="evidence-grid" class="evidence-grid">
+          <svg id="evidence-threads" class="evidence-threads" aria-hidden="true"></svg>
+          <div class="empty-evidence">
+            <div class="briefing-photo" aria-hidden="true">
+              <img src="/assets/scene/mill.jpg" alt="">
+              <span>فضای پرونده / راز دهکده</span>
+            </div>
+            <div class="briefing-note">
+              <span class="technical">FIELD NOTES / 001</span>
+              <h2>هر سرنخ، یک قدم نزدیک‌تر.</h2>
+              <p>میز تحقیقات آماده است. مدارکی که مرکز می‌فرستد اینجا پین می‌شوند.</p>
+              <span class="note-rule"></span>
+              <small>برای شروع، اولین گزارش را به مرکز ارسال کنید.</small>
+            </div>
+          </div>
+        </div>
+
+        <footer class="board-footer">
+          <span>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg> 
+            کلیک روی هر مدرک برای بررسی دقیق
+          </span>
+          <span class="technical">OBSERVE. CONNECT.</span>
+        </footer>
+      </section>
+
+      <!-- نیمه پایین: پایانه پایش زنده امنیتی (Live Streaming Cyber Terminal) -->
+      <section class="security-terminal" aria-labelledby="terminal-title">
+        <header class="terminal-bar">
+          <div class="term-title-box">
+            <span class="term-traffic-lights"><i></i><i></i><i></i></span>
+            <span id="terminal-title" class="term-heading">پایانه پایش زنده امنیتی // N-LOG-STREAM</span>
+          </div>
+          <div class="term-meta">
+            <span class="status-indicator online">
+              <span class="status-dot"></span> <span id="terminal-status-text">LIVE STREAM</span>
+            </span>
+            <span id="terminal-log-counter" class="terminal-counter technical">۰ LOGS</span>
+          </div>
+        </header>
+
+        <div class="terminal-body" id="live-terminal-content" role="log" aria-live="polite">
+          <!-- لاگ‌ها به صورت خودکار توسط terminal-stream.js با تاخیر تصادفی ۰.۵ تا ۱.۵ ثانیه چاپ می‌شوند -->
+        </div>
+
+        <footer class="terminal-controls-bar">
+          <span class="technical">RATE: 500ms-1500ms DYNAMIC</span>
+          <span class="term-blink-cursor">▮ RUNNING DIAGNOSTICS</span>
+        </footer>
+      </section>
+
+    </div>
+
+  </main>
+
+  <footer class="terminal-footer">
+    <span class="technical">SYSTEM / FIELD OPERATIONS</span>
+    <span>با دقت ببینید. با هم گفتگو و کشف کنید.</span>
+    <span class="technical">CLASSIFIED MATERIAL</span>
+  </footer>
+
+  <!-- مودال نمایش تمام‌صفحه مدرک -->
+  <dialog id="evidence-dialog" class="evidence-dialog">
+    <div class="dialog-heading">
+      <span class="eyebrow">میز بررسی مدرک</span>
+      <button class="dialog-close" type="button" onclick="closeEvidence()" aria-label="بستن مدرک">×</button>
+    </div>
+    <div id="evidence-dialog-content"></div>
+  </dialog>
+</body>
+</html>

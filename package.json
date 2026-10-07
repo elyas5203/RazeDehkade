@@ -1,0 +1,37 @@
+{
+  "name": "detective-game-realtime-chat",
+  "version": "1.0.0",
+  "description": "سیستم چت همزمان برای بازی تعاملی آموزشی - دستیاران کارآگاه و ادمین‌ها",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "migrate": "node src/db/migrate.js",
+    "seed": "node src/db/seed-classes.js",
+    "clean-chat": "node src/db/reset-chats.js",
+    "test": "node --test --test-concurrency=1 tests/**/*.test.js"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "socket.io",
+    "mysql",
+    "realtime"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.4.0",
+    "mysql2": "^3.24.4",
+    "qs": "^6.16.0",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.3"
+  }
+}

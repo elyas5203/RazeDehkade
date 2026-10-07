@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ثبت و تسویه سفارش | فروشگاه گلها</title>
+  <link rel="stylesheet" href="/golha/assets/css/golha.css">
+  <style>
+    .checkout-container {
+      max-width: 800px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--accent-gold);
+    }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 0.8rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-light);
+      font-family: var(--font-main);
+      font-size: 1rem;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent-gold);
+    }
+    .order-summary {
+      background: var(--bg-primary);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border-color);
+    }
+    .submit-order-btn {
+      width: 100%;
+      padding: 1rem;
+      background: var(--accent-rose);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-main);
+      font-size: 1.1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .submit-order-btn:hover {
+      background: #c02835;
+    }
+  </style>
+  <link rel="stylesheet" href="/golha/assets/css/atelier.css">
+</head>
+<body>
+
+  <header class="golha-navbar">
+    <a href="/golha/index.html" class="brand-logo">
+      گلها <span>FLORAL ATELIER</span>
+    </a>
+  </header>
+
+  <main class="checkout-container">
+    <h2 style="margin-bottom: 1.5rem; color: var(--accent-gold); text-align: center;">سفارش شما</h2>
+
+    <div class="order-summary" id="orderSummary">
+      <!-- خلاصه سفارش -->
+    </div>
+
+    <form id="checkoutForm">
+      <div class="form-group">
+        <label for="discountCode">کد تخفیف ویژه (۱۰۰٪):</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="discountCode" inputmode="numeric" maxlength="8" placeholder="کد تخفیف خود را وارد کنید" style="flex:1;" required>
+          <button type="button" id="applyDiscountBtn" style="padding:0.8rem 1.4rem;background:var(--accent-gold);color:#121a15;border:none;border-radius:8px;font-weight:bold;cursor:pointer;white-space:nowrap;transition:background 0.2s;">اعمال کد</button>
+        </div>
+        <div id="discountFeedback" style="margin-top:8px;font-size:0.9rem;min-height:22px;"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="customerName">نام و نام خانوادگی تحویل‌گیرنده:</label>
+        <input type="text" id="customerName" autocomplete="name" placeholder="نام تحویل‌گیرنده" required>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">شماره تماس جهت هماهنگی پیک:</label>
+        <input type="tel" id="phone" placeholder="۰۹۱۲0000000" required>
+      </div>
+
+      <div class="form-group">
+        <label for="address">آدرس تحویل گل:</label>
+        <textarea id="address" rows="3" placeholder="خیابان، پلاک، واحد..." required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="notes">توضیحات خاص یا پیام روی کارت همراه گل (اختیاری):</label>
+        <textarea id="notes" rows="2" placeholder="پیام دلخواه روی کارت..."></textarea>
+      </div>
+
+      <button type="submit" class="submit-order-btn" id="submitBtn">🌹 ثبت نهایی سفارش و ارسال پیک</button>
+    </form>
+  </main>
+
+  <script>
+    const cart = JSON.parse(localStorage.getItem('golha_cart') || '[]');
+
+    if (cart.length === 0) {
+      alert('سبد خرید شما خالی است!');
+      window.location.href = '/golha/index.html';
+    }
+
+    const orderSummaryEl = document.getElementById('orderSummary');
+    let subtotal = 0;
+    let appliedDiscount = 0;
+
+    cart.forEach(item => {
+      subtotal += item.price * item.quantity;
+    });
+
+    function renderOrderSummary() {
+      const discountAmount = appliedDiscount === 100 ? subtotal : 0;
+      const payable = subtotal - discountAmount;
+
+      orderSummaryEl.innerHTML = `
+        <strong>اقلام فاکتور خرید:</strong>
+        <ul style="margin-top: 0.5rem; padding-right: 1.2rem; color: var(--text-muted); line-height: 1.8;">
+          ${cart.map(item => {
+            const itemTotal = item.price * item.quantity;
+            return `<li>${item.name} (${item.quantity} عدد) - ${itemTotal.toLocaleString('fa-IR')} تومان</li>`;
+          }).join('')}
+        </ul>
+        <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px dashed var(--border-color); display: flex; flex-direction: column; gap: 6px;">
+          <div style="display:flex; justify-content:space-between; font-size: 0.95rem; color: var(--text-muted);">
+            <span>مجموع قیمت اقلام:</span>
+            <span>${subtotal.toLocaleString('fa-IR')} تومان</span>
+          </div>
+          ${appliedDiscount > 0 ? `
+            <div style="display:flex; justify-content:space-between; font-size: 0.95rem; color: #22c55e; font-weight: bold;">
+              <span>تخفیف ویژه سفارش (۱۰۰٪):</span>
+              <span>${discountAmount.toLocaleString('fa-IR')}- تومان</span>
+            </div>
+          ` : ''}
+          <div style="display:flex; justify-content:space-between; margin-top: 6px; font-weight: bold; font-size: 1.1rem; color: var(--accent-gold);">
+            <span>مبلغ قابل پرداخت:</span>
+            <span style="${appliedDiscount > 0 ? 'color: #22c55e;' : ''}">${appliedDiscount > 0 ? '۰ تومان (رایگان با کد تخفیف)' : `${payable.toLocaleString('fa-IR')} تومان`}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    renderOrderSummary();
+
+    try {
+      const reg = JSON.parse(sessionStorage.getItem('golha_registered_teacher') || localStorage.getItem('golha_registered_teacher') || 'null');
+      if (reg) {
+        if (reg.name && document.getElementById('customerName')) document.getElementById('customerName').value = reg.name;
+        if (reg.phone && document.getElementById('phone')) document.getElementById('phone').value = reg.phone;
+      }
+    } catch (_) {}
+
+    const discountInput = document.getElementById('discountCode');
+    const applyDiscountBtn = document.getElementById('applyDiscountBtn');
+    const discountFeedback = document.getElementById('discountFeedback');
+
+    function cleanDigits(val) {
+      return String(val || '')
+        .trim()
+        .replace(/[۰-۹]/g, digit => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)))
+        .replace(/[٠-٩]/g, digit => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)));
+    }
+
+    applyDiscountBtn.addEventListener('click', async () => {
+      const code = cleanDigits(discountInput.value);
+      if (!code) {
+        discountFeedback.style.color = '#ef4444';
+        discountFeedback.textContent = 'لطفاً کد تخفیف را وارد کنید.';
+        return;
+      }
+
+      applyDiscountBtn.disabled = true;
+      discountFeedback.style.color = 'var(--text-muted)';
+      discountFeedback.textContent = 'در حال اعتبارسنجی کد تخفیف…';
+
+      try {
+        const res = await fetch('/api/store/validate-discount', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ discountCode: code }),
+        });
+        const result = await res.json();
+        if (res.ok && result.success) {
+          appliedDiscount = 100;
+          renderOrderSummary();
+          discountFeedback.style.color = '#22c55e';
+          discountFeedback.innerHTML = `✅ <strong>کد تخفیف ۱۰۰ درصدی با موفقیت اعمال شد.</strong> مبلغ قابل پرداخت به ۰ تومان تغییر یافت.`;
+        } else {
+          appliedDiscount = 0;
+          renderOrderSummary();
+          discountFeedback.style.color = '#ef4444';
+          discountFeedback.textContent = `❌ ${result.message || 'کد تخفیف نامعتبر است.'}`;
+        }
+      } catch (err) {
+        discountFeedback.style.color = '#ef4444';
+        discountFeedback.textContent = 'خطا در بررسی کد تخفیف از سرور.';
+      } finally {
+        applyDiscountBtn.disabled = false;
+      }
+    });
+
+    document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'در حال ثبت سفارش...';
+
+      const payload = {
+        discountCode: cleanDigits(discountInput.value),
+        customerName: document.getElementById('customerName').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        notes: document.getElementById('notes').value.trim(),
+        items: cart,
+      };
+
+      try {
+        const res = await fetch('/api/store/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          // پاک کردن سبد خرید و ذخیره اطلاعات سفارش در localStorage
+          localStorage.removeItem('golha_cart');
+          localStorage.setItem('golha_last_order', JSON.stringify(data.data));
+          window.location.href = '/golha/order-status.html';
+        } else {
+          alert('خطا در ثبت سفارش: ' + data.message);
+          submitBtn.disabled = false;
+          submitBtn.textContent = '🌹 ثبت نهایی سفارش و ارسال پیک';
+        }
+      } catch (err) {
+        console.error('Error submitting order:', err);
+        alert('خطای ارتباط با سرور.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = '🌹 ثبت نهایی سفارش و ارسال پیک';
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>اتاق فرمان | SYSTEM</title>
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/cyber.css">
+  <link rel="stylesheet" href="/assets/css/admin.css">
+  <link rel="stylesheet" href="/assets/css/admin-polish.css">
+  <link rel="stylesheet" href="/assets/css/voice-player.css">
+  <script src="/socket.io/socket.io.js" defer></script>
+  <script src="/assets/js/voice-recorder.js" defer></script>
+  <script src="/assets/js/admin-chat.js" defer></script>
+</head>
+<body class="command-page">
+  <header class="command-bar">
+    <div class="command-identity">
+      <a href="/admin/dashboard.html">داشبورد</a>
+      <div>
+        <small>جلسه فعال</small>
+        <strong id="active-session-title">جلسه‌ای انتخاب نشده است</strong>
+      </div>
+    </div>
+    <div class="command-actions" id="admin-actions-bar">
+      <span id="admin-socket-status" class="status-indicator offline"><span class="status-dot"></span> در حال وصل شدن...</span>
+      <button id="admin-chat-lock-btn" onclick="toggleAdminChatLock()" class="command-button" title="قفل / باز کردن چت این جلسه">🔒 قفل چت جلسه</button>
+      <button id="admin-audio-toggle-btn" onclick="toggleAdminAudioStream()" class="command-button">شروع شنود صدا</button>
+      <button onclick="triggerHackSequence()" class="command-button danger">☠️ اجرای سکانس مزداک</button>
+      <audio id="remote-audio-player" autoplay hidden></audio>
+    </div>
+  </header>
+
+  <!-- نوار تب‌های اختصاصی موبایل -->
+  <nav class="mobile-nav-tabs" aria-label="ناوبری موبایل">
+    <button type="button" class="mobile-tab-btn active" id="tab-btn-sidebar" onclick="switchMobileTab('sidebar')">
+      📋 جلسه‌ها (<span id="mobile-sessions-count">۲۲</span>)
+    </button>
+    <button type="button" class="mobile-tab-btn" id="tab-btn-chat" onclick="switchMobileTab('chat')">
+      💬 اتاق گفتگو
+    </button>
+    <button type="button" class="mobile-tab-btn" id="tab-btn-media" onclick="switchMobileTab('media')">
+      📅 سناریو (۵ هفته)
+    </button>
+    <button type="button" class="mobile-tab-btn" id="tab-btn-tools" onclick="switchMobileTab('tools')">
+      ⚡ ابزارها
+    </button>
+  </nav>
+
+  <main class="command-layout" id="command-layout">
+    <!-- سایدبار راست: لیست جلسات -->
+    <aside class="command-sidebar" id="panel-sidebar">
+      <div class="panel-title">
+        <span>جلسه‌ها (سورت بلادرنگ)</span>
+        <button onclick="loadAdminSessions()" aria-label="تازه‌سازی">↻</button>
+      </div>
+      <div class="session-cards-container" id="admin-sessions-list"></div>
+    </aside>
+
+    <!-- بخش میانی: پیام‌ها و چت اصلی -->
+    <section class="command-chat" id="panel-chat">
+      <div class="mobile-chat-header">
+        <button type="button" onclick="switchMobileTab('sidebar')" class="mobile-back-btn">← بازگشت به لیست جلسه‌ها</button>
+        <span id="mobile-chat-session-title">انتخاب جلسه</span>
+      </div>
+      <div class="messages-list" id="admin-messages-box"></div>
+      <div id="admin-typing-indicator" class="admin-typing"></div>
+
+      <div class="admin-composer">
+        <input type="file" id="admin-file-input" hidden onchange="handleAdminFileUpload(event)">
+        <button type="button" onclick="triggerAdminFileInput('*')" class="command-button icon" title="آپلود فوری">پیوست</button>
+        <select id="admin-sender-type" aria-label="نقش فرستنده">
+          <option value="admin">مرکز</option>
+          <option value="system">سیستم</option>
+          <option value="hacker">مزداک</option>
+        </select>
+        <textarea id="admin-msg-input" rows="1" aria-label="متن پیام جلسه" placeholder="پیام جلسه را بنویسید… (Enter ارسال · Shift+Enter خط جدید)"></textarea>
+        <button type="button" onclick="sendAdminMessage()" class="command-button primary">ارسال پیام</button>
+      </div>
+    </section>
+
+    <!-- سایدبار چپ: سیستم جامع ۵ هفته‌ای سناریو (متن‌ها و فایل‌های آماده به ترتیب) -->
+    <aside class="media-library-panel" id="panel-media" aria-labelledby="weekly-scenario-title">
+      <div class="panel-title">
+        <div>
+          <small>اتاق کنترل سناریو</small>
+          <span id="weekly-scenario-title">سناریوی ۵ هفته‌ای</span>
+        </div>
+        <button onclick="loadWeeklyContent()" aria-label="تازه‌سازی محتوا">↻</button>
+      </div>
+
+      <!-- تب‌های ۵ هفته -->
+      <div class="weekly-tabs-container" style="display:flex;gap:4px;margin:10px 0 8px;padding-bottom:4px;overflow-x:auto;">
+        <button type="button" class="command-button week-tab-btn active" data-week="1" onclick="selectWeek(1)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۱</button>
+        <button type="button" class="command-button week-tab-btn" data-week="2" onclick="selectWeek(2)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۲</button>
+        <button type="button" class="command-button week-tab-btn" data-week="3" onclick="selectWeek(3)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۳</button>
+        <button type="button" class="command-button week-tab-btn" data-week="4" onclick="selectWeek(4)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۴</button>
+        <button type="button" class="command-button week-tab-btn" data-week="5" onclick="selectWeek(5)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۵</button>
+      </div>
+
+      <p class="media-help" style="font-size:11px;color:#8d9699;margin-bottom:8px;">
+        مراحل زیر به ترتیب سناریو چیده شده‌اند. با کلیک متن‌ها در کادر چت قرار می‌گیرند و فایل‌ها پس از تایید ارسال می‌شوند:
+      </p>
+
+      <div id="weekly-content-feedback" class="media-feedback" role="status" style="font-size:11px;min-height:18px;margin-bottom:6px;"></div>
+      
+      <!-- لیست به ترتیب مراحل این هفته -->
+      <div id="weekly-content-list" class="weekly-content-list" style="display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 280px);overflow-y:auto;padding-right:2px;"></div>
+
+      <button type="button" onclick="openAddStepDialog()" class="command-button" style="margin-top:10px;width:100%;font-size:11px;background:rgba(245,158,11,0.12);color:var(--command-amber);border:1px dashed var(--command-amber);">
+        ➕ افزودن مرحله جدید به این هفته
+      </button>
+    </aside>
+
+    <!-- پنل ابزارها در موبایل -->
+    <div class="mobile-tools-panel" id="panel-tools">
+      <div class="panel-title"><span>ابزارها و کنترل‌های سریع</span></div>
+      <div class="mobile-tools-actions">
+        <button id="mobile-admin-chat-lock-btn" onclick="toggleAdminChatLock()" class="command-button wide">🔒 قفل چت جلسه</button>
+        <button id="mobile-admin-audio-toggle-btn" onclick="toggleAdminAudioStream()" class="command-button wide">شروع شنود صدا</button>
+        <button onclick="triggerHackSequence()" class="command-button danger wide">☠️ اجرای سکانس مزداک</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- مودال افزودن مرحله سناریو جدید -->
+  <dialog id="add-step-dialog" style="margin:auto;padding:24px;background:#15191b;color:#e8e5dc;border:1px solid var(--command-amber);border-radius:6px;max-width:440px;width:92%;">
+    <h3 style="margin-bottom:14px;color:var(--command-amber);font-size:16px;">افزودن مرحله جدید به سناریو</h3>
+    <form id="add-step-form" onsubmit="handleAddStepSubmit(event)" style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label style="display:block;font-size:11px;color:#8d9699;margin-bottom:4px;">شماره هفته:</label>
+        <select id="step-week-select" style="width:100%;padding:8px;background:#0c1012;color:#fff;border:1px solid #34383a;border-radius:4px;">
+          <option value="1">هفته ۱</option>
+          <option value="2">هفته ۲</option>
+          <option value="3">هفته ۳</option>
+          <option value="4">هفته ۴</option>
+          <option value="5">هفته ۵</option>
+        </select>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;color:#8d9699;margin-bottom:4px;">شماره ترتیب (مرحله):</label>
+        <input type="number" id="step-order-input" value="1" min="1" max="99" style="width:100%;padding:8px;background:#0c1012;color:#fff;border:1px solid #34383a;border-radius:4px;">
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;color:#8d9699;margin-bottom:4px;">نوع مرحله:</label>
+        <select id="step-type-select" onchange="handleStepTypeChange()" style="width:100%;padding:8px;background:#0c1012;color:#fff;border:1px solid #34383a;border-radius:4px;">
+          <option value="text">💬 متن پیام آماده</option>
+          <option value="image">📷 تصویر</option>
+          <option value="video">🎬 ویدیو</option>
+          <option value="voice">🎙️ فایل صوتی (مدارک)</option>
+          <option value="file">📁 سند یا فایل</option>
+        </select>
+      </div>
+      <div>
+        <label style="display:block;font-size:11px;color:#8d9699;margin-bottom:4px;">عنوان مرحله (نمایش در دکمه):</label>
+        <input type="text" id="step-title-input" placeholder="مثلاً: پیام دوم بازپرس یا فیلم دوربین مداربسته" required style="width:100%;padding:8px;background:#0c1012;color:#fff;border:1px solid #34383a;border-radius:4px;">
+      </div>
+      <div id="step-text-group">
+        <label style="display:block;font-size:11px;color:#8d9699;margin-bottom:4px;">متن پیام:</label>
+        <textarea id="step-text-input" rows="3" placeholder="متنی که با کلیک روی دکمه در کادر چت قرار می‌گیرد..." style="width:100%;padding:8px;background:#0c1012;color:#fff;border:1px solid #34383a;border-radius:4px;"></textarea>
+      </div>
+      <div id="step-file-group" style="display:none;">
+        <label style="display:block;font-size:11px;color:#8d9699;margin-bottom:4px;">مسیر یا آدرس فایل در سرور:</label>
+        <input type="text" id="step-file-url-input" placeholder="/uploads/... یا /media-library/..." style="width:100%;padding:8px;background:#0c1012;color:#fff;border:1px solid #34383a;border-radius:4px;">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button type="submit" class="command-button primary" style="flex:1;">ذخیره مرحله</button>
+        <button type="button" onclick="closeAddStepDialog()" class="command-button" style="flex:1;">انصراف</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

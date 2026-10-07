@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بایگانی - SYSTEM</title>
+    <link rel="stylesheet" href="../public/archive-preview/css/style.css">
+</head>
+<body>
+
+    <div class="viewport">
+        <!-- Overlay for final black handoff -->
+        <div class="global-blackout"></div>
+
+        <div class="camera">
+            <div class="table">
+                <!-- Solved Folder: Syndrome -->
+                <div class="folder folder-syndrome solved">
+                    <div class="shadow"></div>
+                    <div class="folder-back">
+                        <div class="paper-stack"></div>
+                    </div>
+                    <div class="folder-inside-darkness"></div>
+                    <div class="folder-cover">
+                        <div class="cover-front">
+                            <div class="folder-texture"></div>
+                            <div class="folder-label">سندروم فراموشی</div>
+                            <div class="stamp-solved">حل‌شده</div>
+                        </div>
+                        <div class="cover-back"></div>
+                    </div>
+                </div>
+
+                <!-- Active Folder: Village -->
+                <div class="folder folder-village active">
+                    <div class="shadow"></div>
+                    <!-- The spotlight effect -->
+                    <div class="spotlight"></div>
+                    
+                    <div class="folder-back">
+                        <div class="paper-stack"></div>
+                    </div>
+                    <!-- The abnormal deep darkness inside -->
+                    <div class="folder-inside-darkness"></div>
+                    
+                    <div class="folder-cover">
+                        <div class="cover-front">
+                            <div class="folder-texture"></div>
+                            <div class="folder-label active-label">راز دهکده</div>
+                            <!-- Fastener / Rivet -->
+                            <div class="metal-rivet"></div>
+                        </div>
+                        <div class="cover-back"></div>
+                    </div>
+                </div>
+
+                <!-- Locked Folder: Court -->
+                <div class="folder folder-court locked">
+                    <div class="shadow"></div>
+                    <div class="folder-back">
+                        <div class="paper-stack"></div>
+                    </div>
+                    <div class="folder-inside-darkness"></div>
+                    <div class="folder-cover">
+                        <div class="cover-front">
+                            <div class="folder-texture"></div>
+                            <div class="folder-label">دادگاه عدالت</div>
+                            <div class="padlock">
+                                <!-- simple svg lock -->
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C9.243 2 7 4.243 7 7v3H6c-1.103 0-2 .897-2 2v8c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2v-8c0-1.103-.897-2-2-2h-1V7c0-2.757-2.243-5-5-5zm-3 5c0-1.654 1.346-3 3-3s3 1.346 3 3v3H9V7zm8 13H5v-8h14v8z"/>
+                                    <path d="M12 13c-1.103 0-2 .897-2 2s.897 2 2 2 2-.897 2-2-.897-2-2-2z"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="cover-back"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Overlay for debugging/retry -->
+    <div class="ui-overlay">
+        <div id="handoff-message" class="hidden">
+            <p>> ورود به ترمینال...</p>
+            <button id="retry-btn">اجرای دوباره پیش‌نمایش</button>
+        </div>
+    </div>
+
+    <script src="../public/archive-preview/js/app.js"></script>
+</body>
+</html>

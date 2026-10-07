@@ -1,0 +1,255 @@
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+
+body, html {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    background-color: #030303;
+    overflow: hidden;
+    font-family: 'Vazirmatn', system-ui, sans-serif;
+    user-select: none;
+}
+
+.viewport {
+    width: 100%; height: 100%;
+    perspective: 1000px;
+    transform-style: preserve-3d;
+    position: relative;
+    overflow: hidden;
+}
+
+.camera {
+    width: 100%; height: 100%;
+    position: absolute;
+    transform-style: preserve-3d;
+    /* Default camera angle: looking down at the table */
+    transform: translateZ(-300px) rotateX(55deg) translateY(-50px);
+    will-change: transform;
+}
+
+.table {
+    position: absolute;
+    top: -100%; left: -100%;
+    width: 300%; height: 300%;
+    background: url('../assets/table.jpg') center/cover;
+    transform-style: preserve-3d;
+}
+
+/* Add a dark vignette to the table */
+.table::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.8) 70%);
+    pointer-events: none;
+}
+
+.folder {
+    position: absolute;
+    width: 320px; height: 440px;
+    top: 50%; left: 50%;
+    transform-style: preserve-3d;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.folder-syndrome { transform: translate(-50%, -50%) translateX(400px) rotateZ(5deg); }
+.folder-village { transform: translate(-50%, -50%) rotateZ(-2deg); }
+.folder-court { transform: translate(-50%, -50%) translateX(-400px) rotateZ(-8deg); }
+
+/* Hover effects for interactive folders */
+.folder.active:hover {
+    transform: translate(-50%, -50%) rotateZ(-2deg) translateZ(5px);
+}
+.folder.locked:hover {
+    transform: translate(-50%, -50%) translateX(-400px) rotateZ(-8deg) translateZ(2px);
+}
+.folder.solved:hover {
+    transform: translate(-50%, -50%) translateX(400px) rotateZ(5deg) translateZ(2px);
+}
+
+.folder-back, .folder-cover, .shadow {
+    position: absolute;
+    width: 100%; height: 100%;
+    top: 0; left: 0;
+    border-radius: 4px;
+}
+
+.shadow {
+    background: rgba(0,0,0,0.9);
+    filter: blur(15px);
+    transform: translateZ(-2px);
+    will-change: transform, filter, opacity;
+}
+
+.folder-back {
+    background: #0a0a0a;
+    transform: translateZ(0px);
+}
+
+.folder-inside-darkness {
+    position: absolute;
+    inset: 2px;
+    background: #000;
+    transform: translateZ(1px);
+    box-shadow: inset 0 0 60px #000;
+}
+
+/* Paper edges */
+.paper-stack {
+    position: absolute;
+    top: 2px; right: 8px; bottom: 2px; left: -2px;
+    background: #e8dcc5;
+    transform: translateZ(0.5px);
+    box-shadow: inset 5px 0 10px rgba(0,0,0,0.5);
+    border-radius: 2px 0 0 2px;
+}
+
+.folder-cover {
+    transform-origin: right center; /* RTL spine is on right */
+    transform-style: preserve-3d;
+    transform: translateZ(4px) rotateY(0deg);
+    will-change: transform;
+}
+
+.cover-front, .cover-back {
+    position: absolute;
+    width: 100%; height: 100%;
+    backface-visibility: hidden;
+    border-radius: 4px;
+}
+
+.cover-front {
+    background-color: #c7a77b;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.7), 0 0 2px rgba(0,0,0,0.5);
+}
+
+.folder-texture {
+    position: absolute;
+    inset: 0;
+    background: url('../assets/folder.jpg') center/cover;
+    opacity: 0.85;
+    mix-blend-mode: multiply;
+    border-radius: 4px;
+}
+
+.cover-back {
+    background: #080808;
+    transform: rotateY(180deg);
+    box-shadow: inset 0 0 40px #000;
+}
+
+/* Decoratives */
+.metal-rivet {
+    position: absolute;
+    top: 30px; right: 20px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #999, #222);
+    box-shadow: 1px 1px 4px rgba(0,0,0,0.8), inset -1px -1px 2px rgba(0,0,0,0.5);
+}
+
+.folder-label {
+    position: absolute;
+    top: 80px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 26px;
+    font-weight: bold;
+    color: #111;
+    padding: 8px 24px;
+    border: 2px solid #333;
+    background: rgba(240, 235, 220, 0.85);
+    white-space: nowrap;
+    box-shadow: 1px 2px 5px rgba(0,0,0,0.5);
+}
+
+.active-label {
+    color: #000;
+    background: rgba(255, 250, 230, 0.95);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    border-color: #111;
+}
+
+.stamp-solved {
+    position: absolute;
+    bottom: 60px; left: 40px;
+    color: #2e7d32;
+    border: 5px solid #2e7d32;
+    font-size: 36px;
+    font-weight: 900;
+    padding: 10px 20px;
+    transform: rotate(-20deg);
+    border-radius: 6px;
+    opacity: 0.85;
+    filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.3));
+}
+
+.padlock {
+    position: absolute;
+    top: 50%; left: -25px; /* RTL, lock on the open edge */
+    transform: translateY(-50%);
+    width: 60px; height: 60px;
+    color: #8c734b;
+    filter: drop-shadow(4px 8px 6px rgba(0,0,0,0.8));
+}
+
+/* The subtle light on active folder */
+.spotlight {
+    position: absolute;
+    inset: -100px;
+    background: radial-gradient(circle at center, rgba(255, 235, 180, 0.15) 0%, transparent 65%);
+    opacity: 0.5; /* Always slightly illuminated to draw attention */
+    pointer-events: none;
+    transform: translateZ(5px);
+    transition: opacity 0.5s ease;
+}
+
+/* === Animation States & Helpers === */
+
+.global-blackout {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.ui-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+#handoff-message {
+    color: #0f0;
+    font-family: monospace;
+    font-size: 24px;
+    text-align: center;
+    pointer-events: auto;
+    background: rgba(0,0,0,0.8);
+    padding: 40px;
+    border: 1px solid #0f0;
+}
+#handoff-message.hidden {
+    display: none;
+}
+#handoff-message button {
+    display: block;
+    margin: 30px auto 0;
+    padding: 12px 24px;
+    background: #111;
+    color: #0f0;
+    border: 1px solid #0f0;
+    font-family: 'Vazirmatn', sans-serif;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+#handoff-message button:hover {
+    background: #0f0;
+    color: #000;
+}

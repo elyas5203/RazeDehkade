@@ -1,0 +1,352 @@
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/shabnam-font@v5.0.1/dist/font-face.css');
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&family=Cinzel:wght@500;700&family=Playfair+Display:ital,wght@0,500;0,700;1,400&display=swap');
+
+:root {
+  --bg-primary: #101713;
+  --bg-card: #17201a;
+  --bg-header: #101713ee;
+  --accent-rose: #bcbaa1;
+  --accent-gold: #d5c7a3;
+  --accent-green: #849478;
+  --text-light: #eee9de;
+  --text-muted: #a0a691;
+  --border-color: #354034;
+  --font-persian: 'Shabnam', 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-serif: 'Cinzel', 'Playfair Display', serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-persian);
+  background: var(--bg-primary);
+  color: var(--text-light);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+header.golha-navbar {
+  padding: 22px 5vw;
+}
+
+.brand-logo {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  font-weight: 700;
+  color: #eee9de;
+  gap: 20px;
+  letter-spacing: 2px;
+}
+
+.brand-logo span {
+  font: 9px monospace;
+  letter-spacing: 4px;
+  color: #a0a691;
+}
+
+.cart-btn-trigger {
+  border: 1px solid #4e5a45;
+  background: rgba(213, 199, 163, 0.08);
+  color: #d5c7a3;
+  font-size: 13px;
+  gap: 12px;
+  padding: 8px 16px;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cart-btn-trigger:hover {
+  background: rgba(213, 199, 163, 0.2);
+  border-color: #d5c7a3;
+}
+
+.cart-badge {
+  border: 1px solid #5a6551;
+  background: #253328;
+  color: #e0d8bb;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+.hero-banner {
+  height: 590px;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  text-align: right;
+  padding: 60px 8vw;
+  background: linear-gradient(270deg, #08110966, transparent 85%), url('/golha/assets/images/floral-editorial.png') center 58%/cover no-repeat;
+}
+
+.hero-copy {
+  width: 48%;
+  max-width: 560px;
+  animation: atelier-arrive 1.3s ease both;
+}
+
+.atelier-eyebrow {
+  font-family: var(--font-serif);
+  font-size: 11px;
+  color: #aeb398;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.hero-banner h1 {
+  font-size: clamp(32px, 4vw, 56px);
+  font-weight: 700;
+  line-height: 1.6;
+  color: #eee9de;
+  margin: 25px 0;
+  letter-spacing: -0.01em;
+}
+
+.hero-banner p {
+  font-size: 15px;
+  line-height: 2.2;
+  color: #c4c5b4;
+  margin: 0;
+  max-width: 370px;
+}
+
+.collection-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 170px;
+  border-bottom: 1px solid #b9b79b;
+  color: #e0dfca;
+  text-decoration: none;
+  padding: 22px 0 12px;
+  margin-top: 28px;
+  font-size: 14px;
+}
+
+.collection-link span {
+  transition: transform .3s;
+}
+
+.collection-link:hover span {
+  transform: translateY(5px);
+}
+
+.collection-heading {
+  max-width: 1280px;
+  margin: 70px auto 24px;
+  padding: 0 30px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+}
+
+.collection-heading h2 {
+  font-size: 28px;
+  font-weight: 700;
+  margin-top: 14px;
+  letter-spacing: -0.01em;
+}
+
+.collection-heading > span {
+  font-size: 12px;
+  color: #7f8a75;
+}
+
+.products-container {
+  max-width: 1280px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  margin: 30px auto 80px;
+  padding: 0 30px;
+  scroll-margin-top: 110px;
+}
+
+.product-card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.product-card:hover {
+  box-shadow: none;
+  transform: none;
+}
+
+.product-img-wrapper {
+  height: 300px;
+  background: #1d281c;
+  overflow: hidden;
+  border-radius: 4px;
+}
+
+.product-img-wrapper img {
+  transition: transform 1.2s ease, filter .8s;
+  filter: saturate(.85);
+  object-fit: cover;
+}
+
+.product-card:hover img {
+  transform: scale(1.06);
+  filter: saturate(1.05);
+}
+
+.product-info {
+  padding: 23px 0;
+  border-bottom: 1px solid #354034;
+}
+
+.product-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #eee9de;
+}
+
+.product-desc {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #87937c;
+  margin: 8px 0 24px;
+}
+
+.product-price {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent-gold);
+}
+
+.add-to-cart-btn {
+  background: transparent;
+  color: #e0d6b9;
+  border: 1px solid #4e5a45;
+  border-radius: 20px;
+  font-size: 12px;
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-to-cart-btn:hover {
+  background: #d5c7a3;
+  color: #101713;
+  border-color: #d5c7a3;
+}
+
+.cart-drawer {
+  background: #17201a;
+  padding: 30px;
+  width: 420px;
+}
+
+.cart-item {
+  border: 0;
+  border-bottom: 1px solid #354034;
+  border-radius: 0;
+  background: transparent;
+  padding: 18px 0;
+}
+
+.checkout-btn {
+  border-radius: 4px;
+  background: #d5c7a3;
+  font-weight: 700;
+}
+
+.checkout-btn:hover {
+  background: #ece0be;
+}
+
+.close-drawer-btn {
+  padding: 10px;
+}
+
+.checkout-container {
+  border-radius: 8px !important;
+  max-width: 900px !important;
+  padding: 40px !important;
+}
+
+.checkout-container h2 {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600 !important;
+}
+
+.form-group input, .form-group textarea {
+  border-radius: 4px !important;
+  padding: 14px !important;
+  font-family: inherit;
+}
+
+.order-summary {
+  border-radius: 6px !important;
+  font-size: 14px;
+  line-height: 2.2;
+  padding: 22px !important;
+}
+
+.submit-order-btn {
+  border-radius: 4px !important;
+  background: #d5c7a3 !important;
+  color: #101713 !important;
+  font-weight: 700 !important;
+  font-size: 15px;
+}
+
+.submit-order-btn:disabled {
+  opacity: .5;
+  cursor: wait;
+}
+
+button:focus-visible, a:focus-visible {
+  outline: 2px solid #d5c7a3;
+  outline-offset: 4px;
+}
+
+@keyframes atelier-arrive {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media(max-width: 850px) {
+  .hero-banner { height: 540px; padding: 40px 6vw; background-position: 35% center; }
+  .hero-copy { width: 58%; }
+  .products-container { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .product-img-wrapper { height: 250px; }
+  .collection-heading > span { display: none; }
+}
+
+@media(max-width: 520px) {
+  .brand-logo span { display: none; }
+  .hero-banner {
+    height: 580px;
+    align-items: flex-end;
+    background-image: linear-gradient(0deg, #081109f0, #08110911), url('/golha/assets/images/floral-editorial.png');
+    background-position: 20% center;
+  }
+  .hero-copy { width: 100%; }
+  .hero-banner h1 { font-size: 32px; margin: 10px 0; }
+  .hero-banner p { font-size: 13px; }
+  .collection-link { margin-top: 12px; }
+  .products-container { padding: 0 18px; gap: 22px 14px; }
+  .product-img-wrapper { height: 200px; }
+  .product-footer { flex-direction: column; gap: 15px; align-items: start; }
+  .product-title { font-size: 15px; }
+  .collection-heading { padding: 0 20px; margin-top: 40px; }
+  .collection-heading h2 { font-size: 22px; }
+  .checkout-container { padding: 24px !important; margin: 25px 12px !important; }
+  .brand-logo { font-size: 25px; }
+}
+
+@media(prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>مرکز فرماندهی | مدیریت جلسات راز دهکده</title>
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/admin-dashboard.css">
+  <script src="/socket.io/socket.io.js" defer></script>
+  <script src="/assets/js/admin-dashboard.js" defer></script>
+</head>
+<body class="dashboard-page">
+
+  <!-- نوار فرماندهی اصلی (Executive Command Deck Bar) -->
+  <header class="dashboard-bar">
+    <div class="dashboard-brand">
+      <div class="dashboard-mark" aria-hidden="true">RD</div>
+      <div class="dashboard-brand-info">
+        <small>مرکز عملیات راز دهکده</small>
+        <h1>مدیریت جلسات و پرونده‌ها</h1>
+      </div>
+    </div>
+
+    <div class="dashboard-operator">
+      <div class="operator-tag">
+        <span>👤 اپراتور:</span>
+        <strong id="admin-name-display">ادمین</strong>
+      </div>
+      <button type="button" class="dashboard-button primary" onclick="openSessionDialog()">
+        ＋ ساخت جلسه جدید
+      </button>
+      <button type="button" class="dashboard-button" onclick="openMediaManagerDialog()">
+        📂 مدیا سرور
+      </button>
+      <button type="button" class="dashboard-button" onclick="openCannedResponsesManager()">
+        💬 پیام‌های آماده
+      </button>
+      <a class="dashboard-button accent" href="/admin/chat.html">
+        ⚡ اتاق فرمان
+      </a>
+      <button type="button" class="dashboard-button danger" onclick="logoutAdmin()">
+        خروج
+      </button>
+    </div>
+  </header>
+
+  <main class="dashboard-main">
+
+
+
+    <!-- اعلان‌های سیستمی -->
+    <div id="notifications" class="dashboard-notifications" aria-live="polite"></div>
+
+    <!-- نوار ابزار جستجو و مدیریت جلسات -->
+    <div class="toolbar-strip">
+      <div class="toolbar-search-box">
+        <span class="toolbar-search-icon" aria-hidden="true">🔍</span>
+        <input 
+          type="search" 
+          id="sessionSearchInput" 
+          placeholder="جستجوی جلسه بر اساس نام، کد سفارش یا کد بسته…" 
+          aria-label="جستجوی جلسه"
+          oninput="handleSearch(this.value)"
+        >
+      </div>
+      <div class="toolbar-actions">
+        <button type="button" class="dashboard-button" onclick="loadSessions()">
+          🔄 به‌روزرسانی زنده
+        </button>
+      </div>
+    </div>
+
+    <!-- شبکه کارت‌های جلسات -->
+    <section>
+      <div class="grid-sessions" id="sessions-grid">
+        <!-- جلسات توسط جاوااسکریپت رندر می‌شوند -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- دیالوگ ساخت جلسه جدید -->
+  <dialog id="new-session-dialog" class="session-dialog">
+    <form id="new-session-form">
+      <button type="button" class="dialog-x" onclick="closeSessionDialog()" aria-label="بستن">×</button>
+      <span style="color:var(--gold);font-size:11px;font-weight:700;display:block;">جلسه جدید</span>
+      <h2>نام گروه را وارد کنید</h2>
+      <label for="new-session-name">نام جلسه یا گروه هدف:</label>
+      <input id="new-session-name" name="name" required maxlength="120" autocomplete="off" placeholder="مثلاً: گروه یاوری و ناصری">
+      <p id="new-session-error" role="alert" style="color:var(--danger);font-size:12px;margin-top:8px;min-height:18px;"></p>
+      <div class="dialog-actions">
+        <button type="submit" class="dashboard-button primary">تایید و ساخت جلسه</button>
+        <button type="button" class="dashboard-button" onclick="closeSessionDialog()">انصراف</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- دیالوگ ویرایش جلسه -->
+  <dialog id="edit-session-dialog" class="session-dialog">
+    <form id="edit-session-form" onsubmit="saveEditSession(event)">
+      <button type="button" class="dialog-x" onclick="closeEditSessionDialog()" aria-label="بستن">×</button>
+      <span style="color:var(--gold);font-size:11px;font-weight:700;display:block;">ویرایش جلسه</span>
+      <h2>تغییر مشخصات گروه</h2>
+      <input type="hidden" id="edit-session-id">
+      <label for="edit-session-name">نام جلسه یا گروه:</label>
+      <input id="edit-session-name" name="name" required maxlength="120" autocomplete="off">
+      <label for="edit-session-status" style="margin-top:14px;">وضعیت فعلی جلسه:</label>
+      <select id="edit-session-status">
+        <option value="waiting">در انتظار ورود (waiting)</option>
+        <option value="active">فعال و متصل (active)</option>
+        <option value="completed">پایان یافته (completed)</option>
+        <option value="archived">آرشیو شده (archived)</option>
+      </select>
+      <p id="edit-session-error" role="alert" style="color:var(--danger);font-size:12px;margin-top:8px;min-height:18px;"></p>
+      <div class="dialog-actions">
+        <button type="submit" class="dashboard-button primary">ذخیره تغییرات</button>
+        <button type="button" class="dashboard-button" onclick="closeEditSessionDialog()">انصراف</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- دیالوگ مدیریت پیام‌های آماده -->
+  <dialog id="canned-manager-dialog" class="session-dialog" style="width:min(600px, calc(100% - 24px));">
+    <div style="padding:26px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-subtle);padding-bottom:14px;margin-bottom:18px;">
+        <h3 style="margin:0;font-size:18px;color:#fff;">💬 مدیریت پیام‌های آماده (Canned Responses)</h3>
+        <button type="button" class="dialog-x" onclick="closeCannedResponsesManager()" aria-label="بستن">×</button>
+      </div>
+      <div id="canned-manager-list" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-bottom:20px;"></div>
+      <div style="border-top:1px solid var(--border-subtle);padding-top:16px;">
+        <h4 style="margin:0 0 10px;font-size:13px;color:var(--text-muted);">افزودن پیام آماده جدید:</h4>
+        <label for="new-canned-title" style="display:none;">عنوان پیام</label>
+        <input type="text" id="new-canned-title" placeholder="عنوان پیام (مثلاً: راهنمای سرنخ اول)" style="margin-bottom:10px;">
+        <label for="new-canned-content" style="display:none;">متن پیام</label>
+        <textarea id="new-canned-content" rows="3" placeholder="متن کامل پیام آماده…" style="margin-bottom:12px;"></textarea>
+        <button type="button" class="dashboard-button primary" style="width:100%;" onclick="submitNewCannedResponse()">＋ ثبت پیام آماده جدید</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- دیالوگ مدیریت فایل‌های رسانه‌ای سرور -->
+  <dialog id="media-manager-dialog" class="session-dialog" style="width:min(640px, calc(100% - 24px));">
+    <div style="padding:26px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border-subtle);padding-bottom:14px;margin-bottom:16px;">
+        <h3 style="margin:0;font-size:18px;color:#fff;">📂 مدیریت فایل‌های رسانه‌ای ادمین (مدیا بدون آپلود)</h3>
+        <button type="button" class="dialog-x" onclick="closeMediaManagerDialog()" aria-label="بستن">×</button>
+      </div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:18px;line-height:1.7;">فایل‌های قرار داده شده روی سرور را اینجا اضافه فرمایید تا در چت ادمین با یک کلیک قابل ارسال باشند.</p>
+      
+      <form id="dashboard-media-form" onsubmit="saveMediaFile(event)" style="padding:0;background:transparent;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div>
+            <label for="db-media-path">مسیر/نام فایل روی سرور:</label>
+            <input type="text" id="db-media-path" dir="ltr" placeholder="audio/clue-voice.mp3" required>
+          </div>
+          <div>
+            <label for="db-media-type">نوع فایل رسانه‌ای:</label>
+            <select id="db-media-type">
+              <option value="voice">ویس / فایل صوتی (voice)</option>
+              <option value="video">ویدیو (video)</option>
+              <option value="image">تصویر (image)</option>
+              <option value="file">سند / مدرک (file)</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label for="db-media-title">عنوان یا شرح فایل (اختیاری):</label>
+          <input type="text" id="db-media-title" placeholder="مثلاً: ویس شنود دفتر شهردار">
+        </div>
+        <button type="submit" class="dashboard-button primary" style="width:100%;">ثبت فایل در فهرست آماده</button>
+      </form>
+
+      <div style="border-top:1px solid var(--border-subtle);margin-top:22px;padding-top:16px;">
+        <h4 style="margin:0 0 10px;font-size:13px;color:var(--text-muted);">فایل‌های موجود در سیستم:</h4>
+        <div id="dashboard-media-list" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
+  </dialog>
+
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>پیگیری سفارش | فروشگاه گلها</title>
+  <link rel="stylesheet" href="/assets/css/delivery.css">
+  <script src="/assets/js/delivery.js" defer></script>
+</head>
+<body class="delivery-page" data-phase="countdown">
+
+  <header class="delivery-brand">
+    <span>گلها</span>
+    <small>GOLHA FLORAL ATELIER</small>
+  </header>
+
+  <main class="delivery-stage">
+    <div class="delivery-card-shell">
+      
+      <!-- نوار مراحل سفارش -->
+      <div class="delivery-stepper">
+        <div class="step-item done">
+          <div class="step-dot">✓</div>
+          <span>ثبت سفارش</span>
+        </div>
+        <div class="step-line done"></div>
+        <div class="step-item done">
+          <div class="step-dot">✓</div>
+          <span>گل‌آرایی و بسته‌بندی</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-item active" id="courierStep">
+          <div class="step-dot">🛵</div>
+          <span>ارسال با پیک</span>
+        </div>
+      </div>
+
+      <!-- فاز اول: شمارش معکوس ارسال پیک -->
+      <section class="delivery-countdown" id="countdownSection" aria-label="زمان تحویل سفارش">
+        <span class="delivery-label">پیک اکسپرس در مسیر تحویل است…</span>
+        
+        <div class="delivery-dial">
+          <svg viewBox="0 0 200 200" aria-hidden="true">
+            <circle class="bg" cx="100" cy="100" r="90" />
+            <circle class="bar" id="delivery-ring" cx="100" cy="100" r="90" />
+          </svg>
+          <div class="dial-center">
+            <span id="timerDisplay">۳۰</span>
+            <small>ثانیه تا رسیدن پیک</small>
+          </div>
+        </div>
+
+        <p class="delivery-status-note">
+          بسته گل دست‌چین شما آماده شده و پیک اختصاصی در راه است.<br>
+          لطفاً منتظر زنگ در باشید.
+        </p>
+
+        <button type="button" class="skip-timer-btn" onclick="triggerImmediateArrival()">
+          ⚡ تحویل فوری بسته (بدون انتظار)
+        </button>
+      </section>
+
+      <!-- فاز دوم: تحویل نهایی بسته -->
+      <section class="delivery-arrived" id="arrivedSection" aria-live="polite">
+        <div class="package-icon-wrap" aria-hidden="true">
+          📦
+        </div>
+        <h2>بسته شما تحویل داده شد!</h2>
+
+        <div class="package-details-box">
+          <p>
+            🌹 <strong>سفارش شما با احترام تقدیم گردید.</strong><br>
+            لطفاً پاکت نامه / کارت همراه گل را باز فرمایید.<br>
+            روی کارت، یک <strong>«کد اختصاصی محرمانه»</strong> جهت ورود به پایگاه درج شده است.
+          </p>
+        </div>
+
+        <a href="/enter-code.html" class="proceed-btn" id="enterCodeBtn">
+          <span>ورود به سامانه با کد بسته</span>
+          <span aria-hidden="true">➔</span>
+        </a>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="delivery-footer">
+    با مهر و احترام، آتلیه گلها
+  </footer>
+
+</body>
+</html>

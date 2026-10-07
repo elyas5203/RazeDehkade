@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>فروشگاه گل و گیاه «گلها» | سفارش آنلاین گل و هدیه</title>
+  <link rel="stylesheet" href="/golha/assets/css/golha.css">
+  <link rel="stylesheet" href="/golha/assets/css/atelier.css">
+  <style>
+    .floating-cart-btn {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      z-index: 99;
+      background: #1f3a2c;
+      color: #f1ebd9;
+      border: 1px solid #3e6d54;
+      padding: 12px 22px;
+      border-radius: 40px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .floating-cart-btn:hover {
+      background: #2b4f3d;
+      transform: translateY(-2px);
+    }
+    .floating-cart-badge {
+      background: #d6b579;
+      color: #121a15;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+    .qty-stepper {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f4efdf;
+      border: 1px solid #dcd4be;
+      border-radius: 4px;
+      padding: 2px;
+    }
+    .qty-btn {
+      width: 32px;
+      height: 32px;
+      background: #e6dec9;
+      border: 1px solid #c9be9f;
+      color: #2b2821;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 3px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+    }
+    .qty-btn:hover {
+      background: #dcd0b3;
+    }
+    .qty-count {
+      min-width: 24px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 14px;
+      color: #2b2821;
+    }
+    .account-btn {
+      background: rgba(213, 199, 163, 0.08);
+      border: 1px solid #4a544d;
+      color: #dcd4be;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .account-btn:hover {
+      background: rgba(213, 199, 163, 0.18);
+      border-color: #d5c7a3;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- هدر و ناوبری فروشگاه -->
+  <header class="golha-navbar">
+    <a href="/golha/index.html" class="brand-logo">
+      گلها <span>FLORAL ATELIER</span>
+    </a>
+    <div class="nav-actions" style="display:flex;align-items:center;gap:12px;">
+      <button type="button" class="account-btn" onclick="openLoginModal()">
+        👤 ورود به حساب
+      </button>
+      <button class="cart-btn-trigger" id="openCartBtn">
+        سبد خرید
+        <span class="cart-badge" id="cartCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- بنر اصلی -->
+  <section class="hero-banner">
+    <div class="hero-copy">
+      <span class="atelier-eyebrow">گل‌آرایی با حوصله، برای شما</span>
+      <h1>گاهی یک گل،<br>همه‌چیز را می‌گوید.</h1>
+      <p>گل‌های تازه، ترکیب‌های دست‌چین و هدیه‌ای که به یاد می‌ماند.</p>
+      <a class="collection-link" href="#productsGrid">مشاهده گل‌ها <span>↓</span></a>
+    </div>
+  </section>
+
+  <div class="collection-heading">
+    <div>
+      <span class="atelier-eyebrow">انتخاب‌های گلها</span>
+      <h2>برای یک لحظهٔ ماندگار</h2>
+    </div>
+    <span>گل و گیاه طبیعی · آمادهٔ ارسال</span>
+  </div>
+
+  <!-- شبکه نمایش محصولات -->
+  <main class="products-container" id="productsGrid">
+    <!-- محصولات توسط JavaScript بارگذاری می‌شوند -->
+  </main>
+
+  <!-- دکمه شناور سبد خرید -->
+  <button class="floating-cart-btn" id="floatingCartBtn" onclick="openCartDrawer()" aria-label="مشاهده سبد خرید">
+    🛒 سبد خرید
+    <span class="floating-cart-badge" id="floatingCartCount">0</span>
+  </button>
+
+  <!-- کشوی سبد خرید -->
+  <div class="cart-drawer-overlay" id="cartOverlay"></div>
+  <aside class="cart-drawer" id="cartDrawer">
+    <div class="cart-drawer-header">
+      <h3>سبد خرید شما</h3>
+      <button class="close-drawer-btn" id="closeCartBtn">&times;</button>
+    </div>
+    <div class="cart-items-list" id="cartItemsList">
+      <!-- آیتم‌های سبد خرید -->
+    </div>
+    <div class="cart-drawer-footer">
+      <div class="cart-total">
+        <span>مجموع کل:</span>
+        <span id="cartTotalPrice">۰ تومان</span>
+      </div>
+      <a href="/golha/checkout.html" class="checkout-btn" id="checkoutLink">تکمیل سفارش و تسویه</a>
+    </div>
+  </aside>
+
+  <!-- مودال ورود به حساب کاربری مشتریان / پیگیری سفارش -->
+  <div class="cart-drawer-overlay" id="loginModalOverlay" onclick="closeLoginModal()"></div>
+  <div class="login-modal" id="loginModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1000;background:#17201a;border:1px solid #4a544d;border-radius:10px;padding:32px 28px;max-width:420px;width:90%;box-shadow:0 25px 60px rgba(0,0,0,0.85);backdrop-filter:blur(14px);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <h3 style="margin:0;font-size:18px;color:#eee9de;">ورود به حساب کاربری</h3>
+      <button type="button" onclick="closeLoginModal()" style="background:none;border:none;color:#a0a691;font-size:24px;cursor:pointer;">&times;</button>
+    </div>
+    <p style="font-size:13px;color:#a0a691;line-height:1.8;margin-bottom:20px;">
+      جهت ورود یا پیگیری سفارش‌های قبلی، لطفاً شماره تلفن همراه خود را وارد فرمایید:
+    </p>
+    <form id="customerLoginForm" onsubmit="handleCustomerLogin(event)" style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label for="customerPhoneInput" style="display:block;font-size:12px;color:#d5c7a3;margin-bottom:6px;">شماره همراه:</label>
+        <input 
+          type="tel" 
+          id="customerPhoneInput" 
+          maxlength="11" 
+          inputmode="numeric" 
+          required 
+          placeholder="۰۹۱۲۳۴۵۶۷۸۹" 
+          style="width:100%;padding:12px;background:#101713;border:1px solid #354034;border-radius:4px;color:#eee9de;font-family:inherit;font-size:15px;outline:none;direction:ltr;text-align:right;"
+        >
+      </div>
+      <div id="loginFeedback" style="font-size:12px;min-height:20px;"></div>
+      <button type="submit" class="submit-order-btn" id="loginSubmitBtn" style="width:100%;padding:12px;border:none;border-radius:4px;background:#d5c7a3;color:#101713;font-weight:700;cursor:pointer;font-size:14px;">
+        ورود به حساب ➔
+      </button>
+    </form>
+  </div>
+
+  <script>
+    let cart = JSON.parse(localStorage.getItem('golha_cart') || '[]');
+    let rawProducts = [];
+
+    function cleanDigits(val) {
+      return String(val || '')
+        .trim()
+        .replace(/[۰-۹]/g, digit => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)))
+        .replace(/[٠-٩]/g, digit => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)))
+        .replace(/[^0-9]/g, '');
+    }
+
+    function openLoginModal() {
+      document.getElementById('loginModalOverlay').classList.add('active');
+      document.getElementById('loginModal').style.display = 'block';
+      setTimeout(() => {
+        const inp = document.getElementById('customerPhoneInput');
+        if (inp) inp.focus();
+      }, 50);
+    }
+
+    function closeLoginModal() {
+      document.getElementById('loginModalOverlay').classList.remove('active');
+      document.getElementById('loginModal').style.display = 'none';
+      const feedback = document.getElementById('loginFeedback');
+      if (feedback) feedback.textContent = '';
+    }
+
+    async function handleCustomerLogin(e) {
+      e.preventDefault();
+      const phoneInput = document.getElementById('customerPhoneInput');
+      const feedback = document.getElementById('loginFeedback');
+      const btn = document.getElementById('loginSubmitBtn');
+
+      const phone = cleanDigits(phoneInput.value);
+      if (phone.length < 10) {
+        feedback.style.color = '#ef4444';
+        feedback.textContent = 'لطفاً یک شماره تلفن همراه معتبر وارد فرمایید.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'در حال بررسی شماره…';
+      feedback.style.color = '#a0a691';
+      feedback.textContent = 'در حال استعلام از سامانه…';
+
+      try {
+        const res = await fetch('/api/auth/teacher/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success && data.registered) {
+          sessionStorage.setItem('teacherPhone', phone);
+          if (data.data && data.data.chatCode) {
+            sessionStorage.setItem('prefillCode', data.data.chatCode);
+          }
+          feedback.style.color = '#22c55e';
+          feedback.innerHTML = `✅ شماره تایید شد. در حال انتقال…`;
+          setTimeout(() => {
+            window.location.href = '/enter-code.html';
+          }, 1000);
+        } else {
+          feedback.style.color = '#eab308';
+          feedback.textContent = 'حساب فعالی با این شماره یافت نشد. می‌توانید با ثبت سفارش گل، حساب خود را فعال فرمایید.';
+          btn.disabled = false;
+          btn.textContent = 'ورود به حساب ➔';
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        feedback.style.color = '#ef4444';
+        feedback.textContent = 'خطا در برقراری ارتباط با سرور.';
+        btn.disabled = false;
+        btn.textContent = 'ورود به حساب ➔';
+      }
+    }
+
+    function saveCart() {
+      localStorage.setItem('golha_cart', JSON.stringify(cart));
+      updateCartUI();
+      renderProductsGrid();
+    }
+
+    function updateCartUI() {
+      const cartCountEl = document.getElementById('cartCount');
+      const floatingCartCountEl = document.getElementById('floatingCartCount');
+      const cartItemsListEl = document.getElementById('cartItemsList');
+      const cartTotalPriceEl = document.getElementById('cartTotalPrice');
+
+      const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+      if (cartCountEl) cartCountEl.textContent = totalCount;
+      if (floatingCartCountEl) floatingCartCountEl.textContent = totalCount;
+
+      if (cart.length === 0) {
+        cartItemsListEl.innerHTML = '<p style="text-align: center; color: var(--text-muted); margin-top: 2rem;">سبد خرید شما خالی است.</p>';
+        cartTotalPriceEl.textContent = '۰ تومان';
+        document.getElementById('checkoutLink').style.pointerEvents = 'none';
+        document.getElementById('checkoutLink').style.opacity = '0.5';
+        return;
+      }
+
+      document.getElementById('checkoutLink').style.pointerEvents = 'auto';
+      document.getElementById('checkoutLink').style.opacity = '1';
+
+      let total = 0;
+      cartItemsListEl.innerHTML = cart.map((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        return `
+          <div class="cart-item">
+            <div class="cart-item-info">
+              <h4>${item.name}</h4>
+              <span>${item.price.toLocaleString('fa-IR')} تومان</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="qty-stepper">
+                <button type="button" class="qty-btn" onclick="decreaseItemById('${item.id}')">-</button>
+                <span class="qty-count">${item.quantity}</span>
+                <button type="button" class="qty-btn" onclick="increaseItemById('${item.id}')">+</button>
+              </div>
+              <button class="remove-item-btn" onclick="removeFromCart(${index})" title="حذف کامل">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      cartTotalPriceEl.textContent = `${total.toLocaleString('fa-IR')} تومان`;
+    }
+
+    function increaseItemById(productId) {
+      const p = rawProducts.find(x => String(x.id) === String(productId));
+      const existing = cart.find(item => String(item.id) === String(productId));
+      if (existing) {
+        existing.quantity += 1;
+      } else if (p) {
+        cart.push({ ...p, quantity: 1 });
+      }
+      saveCart();
+    }
+
+    function decreaseItemById(productId) {
+      const existingIndex = cart.findIndex(item => String(item.id) === String(productId));
+      if (existingIndex > -1) {
+        if (cart[existingIndex].quantity > 1) {
+          cart[existingIndex].quantity -= 1;
+        } else {
+          cart.splice(existingIndex, 1);
+        }
+        saveCart();
+      }
+    }
+
+    function removeFromCart(index) {
+      cart.splice(index, 1);
+      saveCart();
+    }
+
+    function openCartDrawer() {
+      document.getElementById('cartOverlay').classList.add('active');
+      document.getElementById('cartDrawer').classList.add('active');
+    }
+
+    function closeCartDrawer() {
+      document.getElementById('cartOverlay').classList.remove('active');
+      document.getElementById('cartDrawer').classList.remove('active');
+    }
+
+    document.getElementById('openCartBtn').addEventListener('click', openCartDrawer);
+    document.getElementById('closeCartBtn').addEventListener('click', closeCartDrawer);
+    document.getElementById('cartOverlay').addEventListener('click', closeCartDrawer);
+
+    function renderProductsGrid() {
+      const grid = document.getElementById('productsGrid');
+      if (!grid || !rawProducts.length) return;
+
+      grid.innerHTML = rawProducts.map(p => {
+        const cartItem = cart.find(item => String(item.id) === String(p.id));
+        const qty = cartItem ? cartItem.quantity : 0;
+
+        let actionHtml = '';
+        if (qty === 0) {
+          actionHtml = `<button class="add-to-cart-btn" type="button" onclick="increaseItemById('${p.id}')">+ افزودن به سبد</button>`;
+        } else {
+          actionHtml = `
+            <div class="qty-stepper">
+              <button type="button" class="qty-btn" onclick="decreaseItemById('${p.id}')">-</button>
+              <span class="qty-count">${qty}</span>
+              <button type="button" class="qty-btn" onclick="increaseItemById('${p.id}')">+</button>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="product-card">
+            <div class="product-img-wrapper">
+              <img src="${p.image}" alt="${p.name}" loading="lazy" width="600" height="600">
+            </div>
+            <div class="product-info">
+              <h3 class="product-title">${p.name}</h3>
+              <p class="product-desc">${p.description}</p>
+              <div class="product-footer">
+                <span class="product-price">${p.price.toLocaleString('fa-IR')} تومان</span>
+                ${actionHtml}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadProducts() {
+      try {
+        const res = await fetch('/api/store/products');
+        const data = await res.json();
+        if (data.success) {
+          rawProducts = data.data;
+          renderProductsGrid();
+        }
+      } catch (err) {
+        console.error('خطا در دریافت محصولات:', err);
+      }
+    }
+
+    loadProducts();
+    updateCartUI();
+  </script>
+</body>
+</html>

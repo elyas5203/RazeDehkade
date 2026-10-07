@@ -1,0 +1,88 @@
+/**
+ * server.js
+ * فایل اصلی راه‌اندازی سرور Express و Socket.io
+ */
+
+const http = require('http');
+const express = require('express');
+const { Server } = require('socket.io');
+const cors = require('cors');
+const path = require('path');
+require('dotenv').config();
+
+const { runMigrations } = require('./src/db/migrate');
+const setupSocketIO = require('./src/socket');
+
+// ساخت اپلیکیشن Express و سرور HTTP
+const app = express();
+const server = http.createServer(app);
+
+// پیکربندی Middlewareها
+app.disable('x-powered-by');
+app.use(cors({ origin: process.env.CORS_ORIGIN || true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// سرو کردن فایل‌های استاتیک پوشه public برای تست موقت
+app.use(express.static(path.join(__dirname, 'public')));
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
+// مسیرهای API
+const authRoutes = require('./src/routes/auth');
+const sessionRoutes = require('./src/routes/sessions');
+const cannedResponseRoutes = require('./src/routes/cannedResponses');
+const storeRoutes = require('./src/routes/store');
+const uploadRoutes = require('./src/routes/upload');
+const mediaLibraryRoutes = require('./src/routes/mediaLibrary');
+const weeklyContentRoutes = require('./src/routes/weeklyContent');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/sessions', sessionRoutes);
+app.use('/api/canned-responses', cannedResponseRoutes);
+app.use('/api/store', storeRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/media-library', mediaLibraryRoutes);
+app.use('/api/weekly-content', weeklyContentRoutes);
+
+// مسیر تست سلامت API
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date(),
+    service: 'Detective Game Realtime Chat API',
+  });
+});
+
+// کانفیگ و راه‌اندازی Socket.io
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+  },
+});
+
+app.set('io', io);
+setupSocketIO(io);
+
+const PORT = process.env.PORT || 3000;
+
+// اجرای مایگریشن‌ها و سپس شروع سرور
+async function startServer() {
+  try {
+    await runMigrations();
+    server.listen(PORT, () => {
+      console.log(`==================================================`);
+      console.log(`🚀 سرور با موفقیت روی پورت ${PORT} اجرا شد.`);
+      console.log(`🌐 آدرس تست پنل: http://localhost:${PORT}`);
+      console.log(`==================================================`);
+    });
+  } catch (err) {
+    console.error('❌ خطا در راه‌اندازی سرور:', err);
+  }
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { app, server, io };

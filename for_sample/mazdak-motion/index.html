@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نفوذ زنده مزداک + تسخیر چت تعاملی کارآگاهان — راز دهکده</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #020203;
+      --cyan-hud: #06B6D4;
+      --cyan-bright: #4CD7F6;
+      --incursion-red: #FF263D;
+      --blood-red: #DB1032;
+      --burgundy: #390713;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #020203;
+      color: #E2E8F0;
+      font-family: 'Vazirmatn', sans-serif;
+      overflow-x: hidden;
+      user-select: none;
+    }
+    .font-mono-code { font-family: 'JetBrains Mono', monospace; }
+
+    /* HARDCORE CRT SCANLINES */
+    .crt-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 60;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.65) 50%),
+                  radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.8) 100%);
+      background-size: 100% 4px, 100% 100%;
+      opacity: 0.85;
+    }
+
+    /* VIOLENT CAMERA SHAKE */
+    .shake-hard {
+      animation: cameraShake 0.12s infinite;
+    }
+    @keyframes cameraShake {
+      0% { transform: translate(3px, 2px) rotate(0.4deg); }
+      25% { transform: translate(-3px, -3px) rotate(-0.5deg); }
+      50% { transform: translate(4px, -2px) rotate(0.3deg); }
+      75% { transform: translate(-4px, 3px) rotate(-0.3deg); }
+      100% { transform: translate(2px, -3px) rotate(0.2deg); }
+    }
+
+    /* RED ALARM KLAXON PULSE */
+    .alarm-flash {
+      animation: klaxonPulse 0.65s infinite alternate ease-in-out;
+    }
+    @keyframes klaxonPulse {
+      0% { box-shadow: inset 0 0 100px rgba(255, 38, 61, 0.4), 0 0 40px rgba(255, 38, 61, 0.3); }
+      100% { box-shadow: inset 0 0 250px rgba(255, 38, 61, 0.95), 0 0 80px rgba(219, 16, 50, 0.8); }
+    }
+
+    /* LASER SHUT FLASH */
+    .laser-line {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: #FFFFFF;
+      box-shadow: 0 0 40px #FF263D, 0 0 80px #FFF, 0 0 120px #FF263D;
+      transform: translateY(-50%) scaleX(1);
+      z-index: 70;
+      opacity: 0;
+      transition: opacity 0.05s linear;
+    }
+
+    /* TYPOGRAPHIC IMPACT SLAM */
+    .slam-impact {
+      animation: slamAnim 0.35s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+    }
+    @keyframes slamAnim {
+      0% { transform: scale(1.3) translateX(-25px); filter: blur(10px); opacity: 0; text-shadow: 12px 0 #FF263D, -12px 0 #06B6D4; }
+      50% { transform: scale(0.95) translateX(4px); filter: blur(0px); opacity: 1; text-shadow: 6px 0 #FF263D, -6px 0 #06B6D4; }
+      100% { transform: scale(1) translateX(0); opacity: 1; text-shadow: 3px 0 #FF263D, -3px 0 #06B6D4; }
+    }
+
+    /* 7-ROD AUDIO VISUALIZER */
+    .laser-rod {
+      width: 5px;
+      border-radius: 2px;
+      background: #FF263D;
+      box-shadow: 0 0 15px #FF263D, 0 0 30px rgba(255, 38, 61, 0.8);
+      transition: height 0.08s ease;
+    }
+
+    /* CORRUPTED TUMBLING LETTERS (The user's requested effect!) */
+    .corrupt-char {
+      display: inline-block;
+      transition: all 0.35s ease;
+    }
+    .corrupt-active {
+      animation: crazyTumble 0.8s infinite alternate ease-in-out;
+      color: #FF263D !important;
+      text-shadow: 0 0 12px #FF263D, 0 0 25px #DB1032;
+    }
+    @keyframes crazyTumble {
+      0% { transform: rotate(-25deg) translateY(-4px) scale(1.15); filter: blur(0.5px); }
+      30% { transform: rotate(45deg) translateY(6px) scale(0.9); }
+      60% { transform: rotate(-50deg) translateY(-8px) scale(1.3); }
+      100% { transform: rotate(35deg) translateY(5px) scale(1.1); }
+    }
+
+    /* GLITCH TEXT FLASH */
+    .glitch-flash {
+      animation: glitchSkew 0.25s infinite;
+    }
+    @keyframes glitchSkew {
+      0% { transform: skew(0deg); }
+      20% { transform: skew(-6deg) translateX(-3px); text-shadow: 4px 0 red, -4px 0 cyan; }
+      40% { transform: skew(8deg) translateX(3px); text-shadow: -4px 0 red, 4px 0 cyan; }
+      60% { transform: skew(-4deg); }
+      80% { transform: skew(5deg) translateX(-2px); }
+      100% { transform: skew(0deg); }
+    }
+
+    /* CUSTOM SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #05070B; }
+    ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #FF263D; }
+  </style>
+</head>
+<body class="bg-[#020203] text-slate-100 flex flex-col min-h-screen">
+
+  <!-- TOP HEADER -->
+  <header class="bg-[#05070B] border-b border-slate-800 px-4 py-2.5 flex items-center justify-between z-40 sticky top-0">
+    <div class="flex items-center gap-3">
+      <div class="w-3 h-3 rounded-full bg-red-500 animate-ping"></div>
+      <span class="font-bold text-sm tracking-wider text-red-400 font-mono-code">SYSTEM // RAZ DEHKADE</span>
+      <span class="text-xs px-2.5 py-0.5 rounded bg-red-950 border border-red-700 text-red-300 font-bold">
+        سکانس نفوذ سینمایی + شبیه‌ساز تسخیر چت زنده
+      </span>
+    </div>
+
+    <!-- QUICK SWITCH -->
+    <div class="flex items-center gap-2">
+      <button onclick="scrollToSection('cinema-container')" class="px-3 py-1.5 rounded text-xs font-bold bg-red-600 hover:bg-red-500 text-white transition">
+        🎬 سکانس نفوذ مزداک (۵۳.۵ ثانیه)
+      </button>
+      <button onclick="scrollToSection('interactive-chat-container')" class="px-3 py-1.5 rounded text-xs font-bold bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-cyan-800 transition">
+        💬 تست ارسال پیام و چرخش حروف در چت
+      </button>
+      <a href="../" class="px-3 py-1.5 rounded text-xs text-slate-400 hover:text-white border border-slate-800 hover:bg-slate-800 transition">
+        پوشه نمونه‌ها
+      </a>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <main class="flex-1 flex flex-col items-center p-3 sm:p-6 gap-8 max-w-6xl w-full mx-auto">
+
+    <!-- ========================================== -->
+    <!-- 1. FULL CINEMATIC SCREEN (53.5s Takeover) -->
+    <!-- ========================================== -->
+    <section id="cinema-container" class="w-full flex flex-col items-center">
+      
+      <div class="w-full flex items-center justify-between mb-2">
+        <h2 class="text-base sm:text-lg font-black text-slate-300 flex items-center gap-2">
+          <span>🎬 بخش ۱: نمایشگر اتاق کارآگاهان (پخش سینمایی ۵۳.۵ ثانیه‌ای روی تلویزیون/کلاس)</span>
+        </h2>
+        <span class="text-xs font-mono-code text-slate-400">FPS: 60 // 4K SIMULATION</span>
+      </div>
+
+      <!-- STAGE CONTAINER -->
+      <div id="cinema-stage" class="relative w-full aspect-video bg-[#05070B] rounded-xl border-2 border-slate-800 shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col justify-between p-6 transition-all duration-300">
+        <!-- CRT & VIGNETTE FILTERS -->
+        <div class="crt-overlay"></div>
+        <div id="vignette-layer" class="absolute inset-0 pointer-events-none z-30 transition-all duration-500"></div>
+        <div id="laser-line-element" class="laser-line"></div>
+
+        <!-- HEADER TELEMETRY (HUD) -->
+        <div id="hud-header" class="flex items-center justify-between text-xs font-mono-code text-cyan-400 z-20">
+          <div class="flex items-center gap-2">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-cyan-400" id="header-status-dot"></span>
+            <span id="header-channel-tag" class="tracking-widest">SYSTEM // MIL-NET CHANNEL 09 // VERIFIED</span>
+          </div>
+          <div class="flex items-center gap-4 text-slate-400">
+            <span>TIME: <b id="cinema-timecode" class="text-white">00:00.00</b></span>
+            <span>FRAME: <b id="cinema-frame" class="text-white">0000</b></span>
+            <span id="header-status-badge" class="text-emerald-400 font-bold bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40">امن</span>
+          </div>
+        </div>
+
+        <!-- MAIN STAGE DISPLAY -->
+        <div id="stage-viewport" class="relative flex-1 flex flex-col items-center justify-center z-20 my-4 text-center">
+
+          <!-- KLAXON HAZARD BANNER -->
+          <div id="hazard-banner" class="hidden flex-col items-center gap-1 mb-4">
+            <div class="text-5xl text-red-500 filter drop-shadow-[0_0_20px_#FF263D] animate-bounce">☠︎</div>
+            <div class="text-3xl font-black font-mono-code tracking-[0.4em] text-red-500 glitch-flash">DANGER</div>
+            <div class="w-40 h-1 bg-red-600 shadow-[0_0_15px_#FF263D]"></div>
+          </div>
+
+          <!-- 7-ROD AUDIO VECTOR VISUALIZER -->
+          <div id="audio-visualizer-container" class="hidden items-center justify-center gap-3.5 h-36 my-2">
+            <div class="laser-rod" style="height: 40px;"></div>
+            <div class="laser-rod" style="height: 85px;"></div>
+            <div class="laser-rod" style="height: 140px;"></div>
+            <div class="laser-rod" style="height: 200px;"></div>
+            <div class="laser-rod" style="height: 135px;"></div>
+            <div class="laser-rod" style="height: 75px;"></div>
+            <div class="laser-rod" style="height: 35px;"></div>
+          </div>
+
+          <!-- MAIN DYNAMIC TITLE -->
+          <h1 id="stage-title" class="text-3xl md:text-5xl lg:text-6xl font-black transition-all duration-200 text-cyan-300 drop-shadow-[0_0_25px_rgba(6,182,212,0.6)]">
+            سیستم ارتباطی مرکز فرماندهی
+          </h1>
+
+          <!-- MAIN DYNAMIC SUBTITLE -->
+          <p id="stage-subtitle" class="mt-3 text-sm md:text-xl text-slate-300 max-w-2xl font-medium transition-all duration-200">
+            کانال رمزنگاری‌شده برقرار است. منتظر تحلیل داده‌های هفته سوم…
+          </p>
+
+          <!-- TYPEWRITER BOX -->
+          <div id="transmission-box" class="hidden text-right w-full max-w-xl mx-auto mt-4 p-5 rounded-lg bg-black/85 border border-red-700 shadow-[0_0_40px_rgba(255,38,61,0.35)]">
+            <div class="text-xs font-mono-code text-red-400 mb-2 border-b border-red-900/60 pb-1.5 flex justify-between">
+              <span>INCOMING TRANSMISSION // MAZDAK</span>
+              <span class="animate-pulse text-red-400 font-bold">REC ● زنده</span>
+            </div>
+            <div id="transmission-text" class="text-xl md:text-2xl font-bold text-[#D1C8C4] leading-relaxed whitespace-pre-line"></div>
+          </div>
+
+          <!-- DIAGNOSTICS -->
+          <div id="stage-diagnostics" class="mt-6 flex flex-wrap items-center justify-center gap-3 text-xs font-mono-code text-slate-400">
+            <div class="px-3.5 py-1.5 rounded bg-slate-900/90 border border-slate-800 flex items-center gap-2">
+              <span>ارتباط با مرکز:</span>
+              <b id="diag-center-status" class="text-emerald-400">پایدار</b>
+            </div>
+            <div class="px-3.5 py-1.5 rounded bg-slate-900/90 border border-slate-800 flex items-center gap-2">
+              <span>مسیرهای امن:</span>
+              <b id="diag-paths-status" class="text-emerald-400">۱۲ / ۱۲</b>
+            </div>
+            <div class="px-3.5 py-1.5 rounded bg-slate-900/90 border border-slate-800 flex items-center gap-2">
+              <span>مسدودسازی ناشناس:</span>
+              <b id="diag-loss-status" class="text-slate-400">آماده</b>
+            </div>
+          </div>
+        </div>
+
+        <!-- FOOTER HUD -->
+        <div id="hud-footer" class="flex items-center justify-between text-xs text-slate-400 z-20 border-t border-slate-800/80 pt-2.5 font-mono-code">
+          <span id="footer-phase-name">PHASE 0: STANDBY</span>
+          <span id="footer-signature" class="tracking-widest">NEXUS COMMAND NODE // VERIFIED</span>
+        </div>
+      </div>
+
+      <!-- CONTROLLER BAR -->
+      <div class="w-full mt-3 bg-[#05070B] border border-slate-800 rounded-lg p-3 sm:p-4 flex flex-col gap-3 shadow-lg">
+        <!-- SCRUBBER -->
+        <div class="flex items-center gap-3">
+          <span class="text-xs font-mono-code text-cyan-400 w-12 text-left" id="scrub-time-label">00.0s</span>
+          <input type="range" id="timeline-scrubber" min="0" max="53.5" step="0.1" value="0" class="flex-1 accent-red-500 cursor-pointer h-2 bg-slate-800 rounded-lg appearance-none">
+          <span class="text-xs font-mono-code text-slate-400 w-12 text-right">53.5s</span>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <!-- BUTTONS -->
+          <div class="flex items-center gap-2">
+            <button id="play-btn" onclick="togglePlay()" class="px-4 py-2 rounded bg-red-600 hover:bg-red-500 font-bold text-xs flex items-center gap-2 shadow-[0_0_20px_rgba(255,38,61,0.5)] transition">
+              <span id="play-btn-icon">▶</span>
+              <span id="play-btn-label">پخش سکانس با صدای هالیوودی</span>
+            </button>
+            <button onclick="resetPlayback()" class="px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold transition">
+              بازنشانی ⟲
+            </button>
+            <button id="sound-btn" onclick="toggleAudio()" class="px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold transition">
+              🔊 صدا فعال
+            </button>
+          </div>
+
+          <!-- QUICK PHASE JUMP -->
+          <div class="flex items-center gap-1 overflow-x-auto py-1">
+            <span class="text-[11px] text-slate-400 ml-1 font-bold">پرش به فاز:</span>
+            <button onclick="jumpTo(0)" class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] hover:border-cyan-500 text-slate-300">۱. اختلال</button>
+            <button onclick="jumpTo(4.5)" class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] hover:border-red-500 text-slate-300">۲. نفوذ</button>
+            <button onclick="jumpTo(12.5)" class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] hover:border-red-500 text-slate-300">۳. سقوط</button>
+            <button onclick="jumpTo(19.5)" class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] hover:border-slate-500 text-slate-300">۴. سکوت</button>
+            <button onclick="jumpTo(23.0)" class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] hover:border-red-500 text-slate-300">۵. زمزمه</button>
+            <button onclick="jumpTo(30.5)" class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] hover:border-red-500 text-slate-300">۶. هویت</button>
+            <button onclick="jumpTo(37.5)" class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] hover:border-red-500 text-slate-300">۷. مخابره</button>
+            <button onclick="jumpTo(50.5)" class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[11px] hover:border-red-500 text-slate-300">۸. تسلط</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- 2. INTERACTIVE CHAT TAKEOVER (The Killer Feature!) -->
+    <!-- ========================================== -->
+    <section id="interactive-chat-container" class="w-full flex flex-col items-center mt-6">
+      
+      <!-- HERO BANNER -->
+      <div class="w-full bg-gradient-to-r from-red-950/80 via-slate-900 to-black border-2 border-red-600 rounded-xl p-5 mb-4 shadow-[0_0_35px_rgba(255,38,61,0.25)]">
+        <div class="flex items-center justify-between">
+          <div>
+            <span class="text-xs font-mono-code text-red-400 font-bold bg-red-950/80 px-2.5 py-0.5 rounded border border-red-800">
+              🔥 سناریوی هیجانی و اختصاصی بعد از نفوذ (درخواست شما)
+            </span>
+            <h2 class="text-xl sm:text-2xl font-black text-white mt-2">
+              بخش ۲: شبیه‌ساز زنده صفحه چت کارآگاهان و تسخیر جادویی حروف توسط مزداک
+            </h2>
+            <p class="text-slate-300 text-sm mt-1 leading-relaxed">
+              بچه‌ها در صفحه چت پیام خود را به مرکز فرماندهی تایپ می‌کنند. پیام به عنوان «ارسال‌شده» ظاهر می‌شود، اما <b>دقیقاً ۱ ثانیه بعد</b>، با یک صدای جیغ الکترونیکی، تمام حروف پیام شروع به لرزیدن، چرخش دیوانه‌وار و خونین شدن می‌کنند و ناگهان مزداک پاسخی رعب‌آور و شخصی به کارآگاهان می‌دهد!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAT INTERFACE MOCKUP (Styled like Nexus Terminal) -->
+      <div class="w-full max-w-3xl bg-[#090D16] border border-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col h-[520px]">
+        
+        <!-- CHAT HEADER -->
+        <div class="bg-[#0C121F] border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-cyan-950 border border-cyan-700 flex items-center justify-center font-bold text-cyan-400 font-mono-code">
+              N
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-sm text-white">خط ارتباطی کارآگاهان با مرکز فرماندهی</span>
+                <span id="chat-connection-status" class="text-[10px] px-2 py-0.2 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">
+                  متصل به نکسوس
+                </span>
+              </div>
+              <div class="text-[11px] text-slate-400 font-mono-code">CHANNEL // COMMS-01</div>
+            </div>
+          </div>
+          <div class="text-xs font-mono-code text-slate-500">
+            اتاق تحقیقات شماره ۰۲
+          </div>
+        </div>
+
+        <!-- MESSAGES BOX -->
+        <div id="chat-messages-box" class="flex-1 p-4 overflow-y-auto space-y-4 bg-[#05080F]/90">
+          
+          <!-- System initial message -->
+          <div class="flex items-start gap-3">
+            <div class="w-7 h-7 rounded bg-slate-800 text-cyan-400 flex items-center justify-center text-xs font-bold font-mono-code">
+              HQ
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-lg p-3 max-w-md text-xs text-slate-300">
+              <div class="text-[10px] font-mono-code text-cyan-400 mb-1">مرکز فرماندهی // 19:24:00</div>
+              دستیاران کارآگاه، اگر سرنخ یا پیامی از وضعیت هفته سوم دارید در همین کادر برای مرکز مخابره کنید.
+            </div>
+          </div>
+
+          <!-- Dynamic messages appear here -->
+
+        </div>
+
+        <!-- INPUT COMPOSER FORM -->
+        <div class="bg-[#0B101D] border-t border-slate-800 p-3">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs text-slate-400">پیشنهاد سریع برای تایپ:</span>
+            <button onclick="setFastPrompt('مرکز صدای ما رو داری؟ کمک لازم داریم!')" class="text-xs px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700">
+              «مرکز صدای ما رو داری؟»
+            </button>
+            <button onclick="setFastPrompt('مزداک تو کی هستی؟ از ما چی میخوای؟')" class="text-xs px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-red-300 border border-red-900/60">
+              «مزداک تو کی هستی؟»
+            </button>
+          </div>
+
+          <form id="detective-msg-form" onsubmit="handleDetectiveSubmit(event)" class="flex gap-2">
+            <input 
+              type="text" 
+              id="detective-input" 
+              placeholder="پیام یا گزارش خود را تایپ کنید و Enter بزنید..." 
+              autocomplete="off"
+              class="flex-1 bg-slate-900 border border-slate-700 focus:border-red-500 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none transition"
+            >
+            <button 
+              type="submit" 
+              id="send-detective-btn"
+              class="px-5 py-2.5 rounded-lg bg-red-600 hover:bg-red-500 font-bold text-sm text-white flex items-center gap-2 shadow-[0_0_15px_rgba(255,38,61,0.4)] transition"
+            >
+              <span>ارسال به مرکز</span>
+              <span>➔</span>
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- JAVASCRIPT LOGIC & HARDCORE WEB AUDIO ENGINE -->
+  <script>
+    // ----------------------------------------------------
+    // 1. HARDCORE AUDIO SYNTHESIS ENGINE (Web Audio API)
+    // ----------------------------------------------------
+    let audioCtx = null;
+    let audioEnabled = true;
+    let activeNodes = new Set();
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioClass) audioCtx = new AudioClass();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function stopAllAudio() {
+      for (const n of activeNodes) {
+        try { n.stop(); } catch(e){}
+      }
+      activeNodes.clear();
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      const btn = document.getElementById('sound-btn');
+      if (audioEnabled) {
+        btn.textContent = "🔊 صدا فعال";
+        btn.className = "px-3 py-2 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-semibold transition";
+      } else {
+        btn.textContent = "🔇 صدا قطع";
+        btn.className = "px-3 py-2 rounded bg-red-950/80 border border-red-800 text-xs text-red-400 font-semibold transition";
+        stopAllAudio();
+      }
+    }
+
+    // Heavy Tones & Drops
+    function playTone(freq, dur, vol = 0.08, endFreq = freq, type = 'sine', pulse = 0) {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, t);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(20, endFreq), t + dur);
+
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.linearRampToValueAtTime(vol, t + 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+        if (pulse > 0) {
+          const lfo = audioCtx.createOscillator();
+          const lfoGain = audioCtx.createGain();
+          lfo.frequency.value = pulse;
+          lfoGain.gain.value = freq * 0.4;
+          lfo.connect(lfoGain);
+          lfoGain.connect(osc.frequency);
+          lfo.start(t);
+          lfo.stop(t + dur);
+          activeNodes.add(lfo);
+        }
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + dur);
+        activeNodes.add(osc);
+        osc.onended = () => { activeNodes.delete(osc); };
+      } catch(e){}
+    }
+
+    // Screeching Glitch Distortion
+    function playGlitchScreech() {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(1400, t);
+        osc.frequency.exponentialRampToValueAtTime(180, t + 0.45);
+
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+
+        // Add filter distortion
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.value = 400;
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.45);
+      } catch(e){}
+    }
+
+    // Hollywood Braam Hit (Phase 6 & Mazdak Drop)
+    function playBraamHit() {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        const t = audioCtx.currentTime;
+        // Sawtooth drop
+        const saw = audioCtx.createOscillator();
+        const sawGain = audioCtx.createGain();
+        saw.type = 'sawtooth';
+        saw.frequency.setValueAtTime(160, t);
+        saw.frequency.exponentialRampToValueAtTime(26, t + 2.5);
+        sawGain.gain.setValueAtTime(0.25, t);
+        sawGain.gain.exponentialRampToValueAtTime(0.0001, t + 2.5);
+
+        // Sub bass foundation
+        const sub = audioCtx.createOscillator();
+        const subGain = audioCtx.createGain();
+        sub.type = 'triangle';
+        sub.frequency.setValueAtTime(65, t);
+        sub.frequency.exponentialRampToValueAtTime(22, t + 2.8);
+        subGain.gain.setValueAtTime(0.35, t);
+        subGain.gain.exponentialRampToValueAtTime(0.0001, t + 2.8);
+
+        saw.connect(sawGain);
+        sawGain.connect(audioCtx.destination);
+        sub.connect(subGain);
+        subGain.connect(audioCtx.destination);
+
+        saw.start(t); saw.stop(t + 2.5);
+        sub.start(t); sub.stop(t + 2.8);
+      } catch(e){}
+    }
+
+    // Crisp Terminal Key Click
+    function playTerminalClick() {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        const t = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(4500, t);
+        osc.frequency.exponentialRampToValueAtTime(700, t + 0.03);
+        gain.gain.setValueAtTime(0.04, t);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.03);
+      } catch(e){}
+    }
+
+
+    // ----------------------------------------------------
+    // 2. CINEMATIC 53.5s SEQUENCE SIMULATOR
+    // ----------------------------------------------------
+    let isPlaying = false;
+    let currentTime = 0;
+    const duration = 53.5;
+    let animFrame = null;
+    let lastTimestamp = 0;
+    let lastPhaseId = -1;
+    let lastCharCount = 0;
+
+    const phases = [
+      { id: 1, at: 0.0, name: 'interference' },
+      { id: 2, at: 4.5, name: 'fracture' },
+      { id: 3, at: 12.5, name: 'collapse' },
+      { id: 4, at: 19.5, name: 'silence' },
+      { id: 5, at: 23.0, name: 'presence' },
+      { id: 6, at: 30.5, name: 'identity' },
+      { id: 7, at: 37.5, name: 'transmission' },
+      { id: 8, at: 50.5, name: 'release' }
+    ];
+
+    const transmissionTextLines = [
+      "منتظر جواب مرکز نباشید.",
+      "از این لحظه…",
+      "پیام‌هاتون اول به من می‌رسه."
+    ];
+    const fullTransmissionStr = transmissionTextLines.join("\n");
+
+    const cinemaStage = document.getElementById('cinema-stage');
+    const stageTitle = document.getElementById('stage-title');
+    const stageSubtitle = document.getElementById('stage-subtitle');
+    const stageDiagnostics = document.getElementById('stage-diagnostics');
+    const hazardBanner = document.getElementById('hazard-banner');
+    const audioViz = document.getElementById('audio-visualizer-container');
+    const transmissionBox = document.getElementById('transmission-box');
+    const transmissionText = document.getElementById('transmission-text');
+    const vignetteLayer = document.getElementById('vignette-layer');
+    const laserLineEl = document.getElementById('laser-line-element');
+    const diagPaths = document.getElementById('diag-paths-status');
+    const diagCenter = document.getElementById('diag-center-status');
+    const timecodeEl = document.getElementById('cinema-timecode');
+    const frameEl = document.getElementById('cinema-frame');
+    const scrubber = document.getElementById('timeline-scrubber');
+    const scrubLabel = document.getElementById('scrub-time-label');
+    const footerPhase = document.getElementById('footer-phase-name');
+    const headerStatusBadge = document.getElementById('header-status-badge');
+    const headerChannel = document.getElementById('header-channel-tag');
+    const headerDot = document.getElementById('header-status-dot');
+
+    function renderCinema(time) {
+      currentTime = Math.max(0, Math.min(duration, time));
+      scrubber.value = currentTime;
+      scrubLabel.textContent = currentTime.toFixed(1) + 's';
+
+      const mins = Math.floor(currentTime / 60).toString().padStart(2, '0');
+      const secs = (currentTime % 60).toFixed(2).padStart(5, '0');
+      timecodeEl.textContent = `${mins}:${secs}`;
+      frameEl.textContent = Math.floor(currentTime * 60).toString().padStart(4, '0');
+
+      let currentPhase = phases[0];
+      for (let i = phases.length - 1; i >= 0; i--) {
+        if (currentTime >= phases[i].at) {
+          currentPhase = phases[i];
+          break;
+        }
+      }
+
+      if (currentPhase.id !== lastPhaseId && isPlaying) {
+        lastPhaseId = currentPhase.id;
+        triggerCinemaAudio(currentPhase.id);
+      }
+
+      switch(currentPhase.id) {
+        case 1: // Interference
+          cinemaStage.classList.remove('shake-hard');
+          cinemaStage.style.filter = 'none';
+          vignetteLayer.className = 'absolute inset-0 pointer-events-none z-30';
+          hazardBanner.classList.add('hidden');
+          audioViz.classList.add('hidden');
+          transmissionBox.classList.add('hidden');
+          stageDiagnostics.classList.remove('hidden');
+          laserLineEl.style.opacity = '0';
+          stageTitle.textContent = "ارتباط دچار اختلال شد";
+          stageTitle.className = "text-3xl md:text-5xl font-black text-cyan-300 drop-shadow-[0_0_20px_rgba(6,182,212,0.6)]";
+          stageSubtitle.textContent = "در حال بازیابی سیگنال مرکز…";
+          diagCenter.textContent = "در حال بررسی";
+          diagCenter.className = "text-yellow-400";
+          diagPaths.textContent = "۱۲ / ۱۲";
+          diagPaths.className = "text-emerald-400";
+          headerStatusBadge.textContent = "هشدار";
+          headerStatusBadge.className = "text-yellow-400 bg-yellow-950/40 px-2 py-0.5 rounded border border-yellow-800/40";
+          footerPhase.textContent = "PHASE 1: INTERFERENCE (00:00 - 00:04.5)";
+          break;
+
+        case 2: // Fracture (Camera Shake & Red Alarm)
+          cinemaStage.classList.add('shake-hard');
+          vignetteLayer.className = 'absolute inset-0 pointer-events-none z-30 alarm-flash';
+          hazardBanner.classList.remove('hidden');
+          audioViz.classList.add('hidden');
+          transmissionBox.classList.add('hidden');
+          stageDiagnostics.classList.remove('hidden');
+          laserLineEl.style.opacity = '0';
+          stageTitle.textContent = "نفوذ شناسایی شد";
+          stageTitle.className = "text-3xl md:text-5xl font-black text-red-500 drop-shadow-[0_0_35px_#FF263D] glitch-flash";
+          stageSubtitle.textContent = "تلاش برای مسدود کردن ارتباط ناشناس…";
+          diagCenter.textContent = "بدون پاسخ";
+          diagCenter.className = "text-red-500 font-bold animate-pulse";
+          
+          const fracP = (currentTime - 4.5) / (12.5 - 4.5);
+          let pCount = "۱۲ / ۱۲";
+          if (fracP > 0.8) pCount = "۰۳ / ۱۲";
+          else if (fracP > 0.5) pCount = "۰۵ / ۱۲";
+          else if (fracP > 0.25) pCount = "۰۸ / ۱۲";
+          else if (fracP > 0.1) pCount = "۱۰ / ۱۲";
+          diagPaths.textContent = pCount;
+          diagPaths.className = "text-red-500 font-bold";
+
+          headerStatusBadge.textContent = "نفوذ بحرانی";
+          headerStatusBadge.className = "text-red-400 bg-red-950 px-2 py-0.5 rounded border border-red-700 animate-pulse font-bold";
+          headerChannel.textContent = "SYSTEM // BREACH DETECTED // UNAUTHORIZED";
+          headerDot.className = "inline-block w-2.5 h-2.5 rounded-full bg-red-500 animate-ping";
+          footerPhase.textContent = "PHASE 2: FRACTURE (00:04.5 - 00:12.5)";
+          break;
+
+        case 3: // Collapse
+          cinemaStage.classList.add('shake-hard');
+          vignetteLayer.className = 'absolute inset-0 pointer-events-none z-30 alarm-flash';
+          hazardBanner.classList.remove('hidden');
+          audioViz.classList.add('hidden');
+          transmissionBox.classList.add('hidden');
+          stageDiagnostics.classList.remove('hidden');
+          diagPaths.textContent = "۰۰ / ۱۲ [سقوط کامل]";
+          stageTitle.textContent = "ارتباط از کنترل خارج شد";
+          stageSubtitle.textContent = "بازیابی ناموفق // قطع کامل دسترسی مرکز";
+          footerPhase.textContent = "PHASE 3: COLLAPSE (00:12.5 - 00:19.5)";
+          
+          if (currentTime >= 19.0) {
+            laserLineEl.style.opacity = '1';
+            cinemaStage.style.filter = 'brightness(3)';
+          } else {
+            laserLineEl.style.opacity = '0';
+            cinemaStage.style.filter = 'none';
+          }
+          break;
+
+        case 4: // Silence (0-Lux Complete Blackout)
+          cinemaStage.classList.remove('shake-hard');
+          vignetteLayer.className = 'absolute inset-0 pointer-events-none z-30';
+          hazardBanner.classList.add('hidden');
+          audioViz.classList.add('hidden');
+          transmissionBox.classList.add('hidden');
+          stageDiagnostics.classList.add('hidden');
+          laserLineEl.style.opacity = '0';
+          cinemaStage.style.filter = 'none';
+          stageTitle.textContent = "";
+          stageSubtitle.textContent = "";
+          footerPhase.textContent = "PHASE 4: VOID SILENCE (00:19.5 - 00:23.0) — 0 LUX";
+          headerStatusBadge.textContent = "خاموش / OFFLINE";
+          headerStatusBadge.className = "text-slate-600 bg-black px-2 py-0.5 rounded font-mono-code";
+          break;
+
+        case 5: // Presence
+          cinemaStage.classList.remove('shake-hard');
+          hazardBanner.classList.add('hidden');
+          audioViz.classList.remove('hidden');
+          audioViz.classList.add('flex');
+          transmissionBox.classList.add('hidden');
+          stageDiagnostics.classList.add('hidden');
+          stageTitle.textContent = "هنوز منتظرید؟";
+          stageTitle.className = "text-2xl md:text-4xl font-bold text-red-500 drop-shadow-[0_0_20px_rgba(255,38,61,0.7)]";
+          stageSubtitle.textContent = "";
+          headerChannel.textContent = "UNKNOWN SOURCE // CARRIER DETECTED";
+          headerDot.className = "inline-block w-2.5 h-2.5 rounded-full bg-red-500";
+          footerPhase.textContent = "PHASE 5: PRESENCE (00:23.0 - 00:30.5)";
+
+          const rods = audioViz.querySelectorAll('.laser-rod');
+          rods.forEach((rod, idx) => {
+            const h = 40 + Math.sin(currentTime * 9 + idx * 1.6) * 65 + Math.cos(currentTime * 6 + idx) * 40;
+            rod.style.height = Math.max(25, Math.min(210, h)) + 'px';
+          });
+          break;
+
+        case 6: // Identity Slam (Braam impact)
+          cinemaStage.classList.remove('shake-hard');
+          hazardBanner.classList.add('hidden');
+          audioViz.classList.add('hidden');
+          transmissionBox.classList.add('hidden');
+          stageDiagnostics.classList.add('hidden');
+          stageTitle.textContent = "مرکز صداتون رو نمیشنوه.";
+          stageTitle.className = "text-3xl md:text-5xl lg:text-6xl font-black text-white slam-impact drop-shadow-[0_0_30px_#FF263D]";
+          stageSubtitle.textContent = "ولی من میشنوم.";
+          stageSubtitle.className = "mt-4 text-2xl md:text-4xl font-black text-red-500 animate-pulse";
+          footerPhase.textContent = "PHASE 6: IDENTITY (00:30.5 - 00:37.5)";
+          break;
+
+        case 7: // Transmission
+          cinemaStage.classList.remove('shake-hard');
+          hazardBanner.classList.add('hidden');
+          audioViz.classList.add('hidden');
+          transmissionBox.classList.remove('hidden');
+          stageDiagnostics.classList.add('hidden');
+          stageTitle.textContent = "";
+          stageSubtitle.textContent = "";
+          headerChannel.textContent = "MAZDAK // ارتباط برقرار شد";
+          headerStatusBadge.textContent = "مخابره زنده";
+          footerPhase.textContent = "PHASE 7: TRANSMISSION (00:37.5 - 00:50.5)";
+
+          const elapsedType = currentTime - 37.5;
+          const charsPerSec = 11;
+          let targetChars = Math.floor(elapsedType * charsPerSec);
+          if (targetChars > fullTransmissionStr.length) targetChars = fullTransmissionStr.length;
+          
+          if (targetChars > lastCharCount && isPlaying) {
+            playTerminalClick();
+          }
+          lastCharCount = targetChars;
+
+          const visibleStr = fullTransmissionStr.substr(0, targetChars);
+          const cursorBlink = Math.sin(currentTime * 8) > 0 ? " <span class='text-red-500 animate-pulse font-mono-code'>▌</span>" : "  ";
+          transmissionText.innerHTML = visibleStr + cursorBlink;
+          break;
+
+        case 8: // Release
+          cinemaStage.classList.remove('shake-hard');
+          hazardBanner.classList.add('hidden');
+          audioViz.classList.add('hidden');
+          transmissionBox.classList.remove('hidden');
+          stageDiagnostics.classList.remove('hidden');
+          transmissionText.innerHTML = fullTransmissionStr;
+          diagCenter.textContent = "تسخیر شده";
+          diagCenter.className = "text-red-600 font-bold";
+          diagPaths.textContent = "تحت کنترل مزداک";
+          diagPaths.className = "text-red-500 font-bold";
+          headerChannel.textContent = "NODE TAKEOVER // MAZDAK TERMINAL";
+          headerStatusBadge.textContent = "مزداک وارد شد";
+          headerStatusBadge.className = "text-white bg-red-900 px-2 py-0.5 rounded font-bold border border-red-500";
+          footerPhase.textContent = "PHASE 8: RELEASE // COMPLETE TAKEOVER";
+          break;
+      }
+    }
+
+    function triggerCinemaAudio(phaseId) {
+      stopAllAudio();
+      switch(phaseId) {
+        case 1:
+          playTone(115, 4.5, 0.08, 48, 'triangle');
+          playTone(119, 4.5, 0.04, 53, 'sine');
+          break;
+        case 2:
+          playTone(360, 8.0, 0.12, 520, 'triangle', 0.65);
+          playTone(48, 8.0, 0.16, 44, 'sawtooth');
+          break;
+        case 3:
+          playTone(520, 7.0, 0.14, 180, 'triangle', 1.3);
+          playTone(58, 7.0, 0.20, 28, 'sawtooth');
+          break;
+        case 4:
+          // Silence vacuum
+          break;
+        case 5:
+          playTone(33, 7.5, 0.15, 62, 'triangle');
+          playTone(70, 7.5, 0.08, 127, 'sine');
+          break;
+        case 6:
+          playBraamHit();
+          break;
+        case 7:
+          playTone(42, 13.0, 0.08, 35, 'triangle');
+          playTone(85, 13.0, 0.04, 70, 'sine');
+          break;
+        case 8:
+          playTone(40, 3.0, 0.05, 30, 'sine');
+          break;
+      }
+    }
+
+    function cinemaLoop(now) {
+      if (!isPlaying) return;
+      if (!lastTimestamp) lastTimestamp = now;
+      const delta = (now - lastTimestamp) / 1000;
+      lastTimestamp = now;
+
+      currentTime += delta;
+      if (currentTime >= duration) {
+        currentTime = duration;
+        renderCinema(currentTime);
+        pausePlayback();
+        return;
+      }
+
+      renderCinema(currentTime);
+      animFrame = requestAnimationFrame(cinemaLoop);
+    }
+
+    function togglePlay() {
+      initAudio();
+      if (isPlaying) {
+        pausePlayback();
+      } else {
+        if (currentTime >= duration) currentTime = 0;
+        startPlayback();
+      }
+    }
+
+    function startPlayback() {
+      isPlaying = true;
+      lastTimestamp = 0;
+      lastPhaseId = -1;
+      document.getElementById('play-btn-label').textContent = "توقف شبیه‌ساز";
+      document.getElementById('play-btn-icon').textContent = "❚❚";
+      animFrame = requestAnimationFrame(cinemaLoop);
+    }
+
+    function pausePlayback() {
+      isPlaying = false;
+      document.getElementById('play-btn-label').textContent = "ادامه شبیه‌ساز";
+      document.getElementById('play-btn-icon').textContent = "▶";
+      if (animFrame) cancelAnimationFrame(animFrame);
+      stopAllAudio();
+      cinemaStage.classList.remove('shake-hard');
+    }
+
+    function resetPlayback() {
+      pausePlayback();
+      currentTime = 0;
+      lastPhaseId = -1;
+      lastCharCount = 0;
+      renderCinema(0);
+      document.getElementById('play-btn-label').textContent = "پخش سکانس با صدای هالیوودی";
+      document.getElementById('play-btn-icon').textContent = "▶";
+    }
+
+    function jumpTo(sec) {
+      initAudio();
+      currentTime = sec;
+      lastPhaseId = -1;
+      renderCinema(currentTime);
+      if (isPlaying) {
+        let pId = phases[0].id;
+        for (let i = phases.length - 1; i >= 0; i--) {
+          if (currentTime >= phases[i].at) { pId = phases[i].id; break; }
+        }
+        triggerCinemaAudio(pId);
+      }
+    }
+
+    scrubber.addEventListener('input', (e) => {
+      jumpTo(parseFloat(e.target.value));
+    });
+
+
+    // ----------------------------------------------------
+    // 3. INTERACTIVE CHAT TAKEOVER & TUMBLING LETTER CORRUPTION
+    // ----------------------------------------------------
+    function setFastPrompt(txt) {
+      document.getElementById('detective-input').value = txt;
+      document.getElementById('detective-input').focus();
+    }
+
+    function scrollToSection(id) {
+      document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function handleDetectiveSubmit(e) {
+      e.preventDefault();
+      initAudio();
+      const input = document.getElementById('detective-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = '';
+      input.blur();
+
+      const messagesBox = document.getElementById('chat-messages-box');
+      const nowStr = new Date().toLocaleTimeString('fa-IR');
+
+      // 1. Create Detective Message Bubble
+      const msgId = 'det-msg-' + Date.now();
+      const detectiveBubble = document.createElement('div');
+      detectiveBubble.id = msgId;
+      detectiveBubble.className = "flex items-start gap-3 justify-end transition-all duration-300";
+      
+      // Wrap each character in span for individual rotation/tumbling!
+      const wrappedChars = Array.from(text).map((char, index) => {
+        if (char === ' ') return ' ';
+        return `<span class="corrupt-char" style="transition-delay: ${index * 30}ms">${char}</span>`;
+      }).join('');
+
+      detectiveBubble.innerHTML = `
+        <div class="bg-cyan-950/80 border border-cyan-700/80 rounded-lg p-3 max-w-md text-xs text-white shadow-lg transition-all duration-500 bubble-content">
+          <div class="flex items-center justify-between text-[10px] font-mono-code text-cyan-400 mb-1">
+            <span class="status-tag">گزارش کارآگاهان // ارسال شد</span>
+            <span>${nowStr}</span>
+          </div>
+          <div class="text-sm font-semibold message-text leading-relaxed">${wrappedChars}</div>
+        </div>
+        <div class="w-7 h-7 rounded bg-cyan-700 text-white flex items-center justify-center text-xs font-bold font-mono-code">
+          YOU
+        </div>
+      `;
+
+      messagesBox.appendChild(detectiveBubble);
+      messagesBox.scrollTop = messagesBox.scrollHeight;
+      playTerminalClick();
+
+      // 2. EXACTLY 1.0 SECOND LATER: CORRUPTION & MAZDAK STRIKE!
+      setTimeout(() => {
+        triggerChatCorruption(msgId, text);
+      }, 1000);
+    }
+
+    function triggerChatCorruption(msgId, originalText) {
+      const bubbleEl = document.getElementById(msgId);
+      if (!bubbleEl) return;
+
+      // Sound Glitch Screech!
+      playGlitchScreech();
+
+      // Corrupt characters: Shake, rotate, turn red!
+      const chars = bubbleEl.querySelectorAll('.corrupt-char');
+      chars.forEach((c, idx) => {
+        setTimeout(() => {
+          c.classList.add('corrupt-active');
+        }, idx * 25);
+      });
+
+      // Change bubble styling to hostile red
+      const contentBox = bubbleEl.querySelector('.bubble-content');
+      contentBox.classList.remove('bg-cyan-950/80', 'border-cyan-700/80');
+      contentBox.classList.add('bg-red-950/90', 'border-red-600', 'shadow-[0_0_25px_rgba(255,38,61,0.6)]');
+      
+      const tag = bubbleEl.querySelector('.status-tag');
+      tag.textContent = "⚠️ خطای رهگیری // پیام تسخیر شد!";
+      tag.className = "status-tag text-red-400 font-bold animate-pulse";
+
+      // 1.5 seconds later: Mazdak sends hostile counter message!
+      setTimeout(() => {
+        playBraamHit();
+        sendMazdakChatResponse(originalText);
+      }, 1500);
+    }
+
+    function sendMazdakChatResponse(userText) {
+      const messagesBox = document.getElementById('chat-messages-box');
+      const nowStr = new Date().toLocaleTimeString('fa-IR');
+
+      // Update connection badge to Hacked
+      const statusBadge = document.getElementById('chat-connection-status');
+      statusBadge.textContent = "تسخیر شده توسط مزداک ☠︎";
+      statusBadge.className = "text-[10px] px-2 py-0.2 rounded bg-red-950 text-red-400 border border-red-700 font-bold animate-pulse";
+
+      const mazdakBubble = document.createElement('div');
+      mazdakBubble.className = "flex items-start gap-3 transition-all duration-300 slam-impact";
+
+      let replyQuote = "";
+      if (userText.includes("صدا") || userText.includes("کمک")) {
+        replyQuote = "صدا می‌زنی؟ مرکز سال‌هاست خوابه کارآگاه. صدات صاف اومد توی اتاق من…";
+      } else if (userText.includes("کی هستی") || userText.includes("مزداک")) {
+        replyQuote = "من همون کابوسی‌ام که مرکز فرماندهی جرات نکرد توی پرونده‌های هفته اول بهتون بگه.";
+      } else {
+        replyQuote = "پیام قشنگی فرستادی کارآگاه… ولی بهت گفته بودم از این لحظه پیام‌هاتون اول به من می‌رسه!";
+      }
+
+      mazdakBubble.innerHTML = `
+        <div class="w-8 h-8 rounded-lg bg-red-700 text-white flex items-center justify-center text-sm font-black font-mono-code shadow-[0_0_15px_#FF263D] border border-white">
+          M
+        </div>
+        <div class="bg-black/95 border-2 border-red-600 rounded-xl p-4 max-w-lg text-xs text-white shadow-[0_0_35px_rgba(255,38,61,0.5)]">
+          <div class="flex items-center justify-between text-[11px] font-mono-code text-red-400 mb-2 border-b border-red-900/60 pb-1">
+            <span class="font-bold flex items-center gap-1.5">
+              <span class="text-sm">☠︎</span>
+              <span>مزداک // نفوذگر غیرمجاز</span>
+            </span>
+            <span class="text-red-300 animate-pulse">${nowStr}</span>
+          </div>
+          <div class="text-sm sm:text-base font-black text-red-400 leading-relaxed drop-shadow-[0_0_8px_rgba(255,38,61,0.8)]">
+            «${replyQuote}»
+          </div>
+          <div class="mt-3 pt-2 border-t border-red-900/40 text-[10px] font-mono-code text-slate-400 flex justify-between">
+            <span>TERMINAL INTERCEPTED</span>
+            <span class="text-red-500 font-bold">فرکانس شما قطع شد ✕</span>
+          </div>
+        </div>
+      `;
+
+      messagesBox.appendChild(mazdakBubble);
+      messagesBox.scrollTop = messagesBox.scrollHeight;
+    }
+
+    // INITIAL RENDER
+    renderCinema(0);
+  </script>
+</body>
+</html>

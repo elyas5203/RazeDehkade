@@ -1,0 +1,372 @@
+/* public/assets/css/cyber.css - استایل‌های سایبرپانک، نئون، گلیچ و ترمینال */
+
+/* افکت CRT Scanline روی کل صفحه */
+body::before {
+  content: " ";
+  display: block;
+  position: fixed;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+  z-index: 999;
+  background-size: 100% 3px, 6px 100%;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* کارت‌های سایبری با لبه‌های نئونی */
+.cyber-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.1), inset 0 0 15px rgba(0, 240, 255, 0.05);
+  border-radius: var(--border-radius);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+}
+
+.cyber-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 25px; height: 2px;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 10px var(--neon-cyan);
+}
+
+.cyber-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 25px; height: 2px;
+  background: var(--neon-magenta);
+  box-shadow: 0 0 10px var(--neon-magenta);
+}
+
+/* دکمه‌های نئونی سایبری */
+.cyber-btn {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(255, 0, 85, 0.15));
+  border: 1px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  font-weight: bold;
+  padding: 12px 24px;
+  border-radius: var(--border-radius);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cyber-btn:hover {
+  background: var(--neon-cyan);
+  color: var(--bg-primary);
+  box-shadow: 0 0 20px var(--neon-cyan);
+  transform: translateY(-2px);
+}
+
+.cyber-btn-magenta {
+  border-color: var(--neon-magenta);
+  color: var(--neon-magenta);
+  box-shadow: 0 0 10px rgba(255, 0, 85, 0.2);
+}
+
+.cyber-btn-magenta:hover {
+  background: var(--neon-magenta);
+  color: white;
+  box-shadow: 0 0 20px var(--neon-magenta);
+}
+
+.cyber-btn-green {
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+}
+
+.cyber-btn-green:hover {
+  background: var(--neon-green);
+  color: black;
+  box-shadow: 0 0 20px var(--neon-green);
+}
+
+/* تایتل با استایل گلیچ و نئون */
+.cyber-title {
+  color: #fff;
+  text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.cyber-subtitle {
+  color: var(--neon-magenta);
+  font-family: var(--font-code);
+  font-size: 13px;
+  text-shadow: 0 0 8px rgba(255, 0, 85, 0.6);
+}
+
+/* نشانگر وضعیت سوکت */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #666;
+}
+
+.status-indicator.online .status-dot {
+  background: var(--neon-green);
+  box-shadow: 0 0 10px var(--neon-green);
+}
+
+.status-indicator.offline .status-dot {
+  background: var(--neon-magenta);
+  box-shadow: 0 0 10px var(--neon-magenta);
+}
+
+/* استایل کادرهای پیام چت */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 160px);
+  max-width: 1000px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.messages-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.message-bubble {
+  max-width: 75%;
+  padding: 7px 12px;
+  border-radius: 10px;
+  position: relative;
+  line-height: 1.45;
+  font-size: 13px;
+}
+
+.message-bubble.user {
+  align-self: flex-start;
+  background: rgba(14, 28, 38, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  border-top-right-radius: 2px;
+}
+
+.message-bubble.admin {
+  align-self: flex-end;
+  background: rgba(30, 24, 16, 0.95);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  border-top-left-radius: 2px;
+}
+
+.message-bubble.system {
+  align-self: center;
+  background: rgba(255, 230, 0, 0.1);
+  border: 1px solid var(--neon-yellow);
+  color: var(--neon-yellow);
+  font-size: 12px;
+  text-align: center;
+  max-width: 90%;
+}
+
+.message-bubble.hacker {
+  align-self: flex-start;
+  background: rgba(0, 255, 102, 0.1);
+  border: 1px solid var(--neon-green);
+  color: var(--neon-green);
+  font-family: var(--font-code);
+}
+
+.message-sender {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+}
+
+/* ==========================================================================
+   سکانس هک مزداک (MAZDAK HACK SEQUENCE STYLES)
+   ========================================================================== */
+
+/* لرزش و گلیچ شدید کل صفحه */
+@keyframes heavyScreenShake {
+  0% { transform: translate(0, 0) rotate(0deg); filter: hue-rotate(0deg); }
+  10% { transform: translate(-8px, 6px) rotate(-1deg); filter: hue-rotate(90deg) invert(0.2); }
+  20% { transform: translate(7px, -5px) rotate(1.5deg); filter: hue-rotate(180deg); }
+  30% { transform: translate(-6px, -7px) rotate(-1deg); filter: hue-rotate(270deg) contrast(200%); }
+  40% { transform: translate(8px, 4px) rotate(1deg); filter: invert(0.8); }
+  50% { transform: translate(-4px, 8px) rotate(-0.5deg); filter: hue-rotate(45deg); }
+  60% { transform: translate(6px, -4px) rotate(1deg); filter: contrast(300%); }
+  70% { transform: translate(-8px, -4px) rotate(-1.5deg); filter: invert(0.5); }
+  80% { transform: translate(5px, 7px) rotate(0.5deg); filter: hue-rotate(300deg); }
+  90% { transform: translate(-3px, -5px) rotate(-1deg); filter: contrast(150%); }
+  100% { transform: translate(0, 0) rotate(0deg); filter: hue-rotate(0deg); }
+}
+
+.hack-glitch-active {
+  animation: heavyScreenShake 0.15s infinite !important;
+  overflow: hidden !important;
+}
+
+/* بلک‌اوت و تاریکی صفحه */
+.hack-blackout {
+  background: #000000 !important;
+}
+.hack-blackout .chat-container {
+  opacity: 0.05 !important;
+  pointer-events: none !important;
+  transition: opacity 0.5s ease;
+}
+
+/* هشدار قرمز هک */
+#hack-hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99995;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-family: var(--font-code);
+}
+
+.hack-alert-hidden {
+  display: none;
+}
+
+.hack-alert-visible {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 0, 50, 0.95);
+  color: #ffffff;
+  padding: 24px 40px;
+  border: 3px solid #ff0055;
+  box-shadow: 0 0 50px rgba(255, 0, 85, 0.9);
+  border-radius: 8px;
+  text-align: center;
+  animation: alertPulse 0.4s infinite alternate;
+}
+
+@keyframes alertPulse {
+  from { transform: scale(1); box-shadow: 0 0 30px rgba(255, 0, 85, 0.7); }
+  to { transform: scale(1.06); box-shadow: 0 0 70px rgba(255, 0, 85, 1); }
+}
+
+.hack-alert-title {
+  font-size: 26px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  margin-bottom: 10px;
+}
+
+.hack-alert-body {
+  font-size: 16px;
+  color: #ffeedd;
+}
+
+/* ترمینال سیاه نفوذ */
+.hack-terminal-hidden {
+  display: none;
+}
+
+.hack-terminal-visible {
+  display: flex;
+  flex-direction: column;
+  width: 80%;
+  max-width: 700px;
+  height: 380px;
+  background: rgba(5, 5, 10, 0.98);
+  border: 2px solid #ff0055;
+  box-shadow: 0 0 40px rgba(255, 0, 85, 0.6);
+  border-radius: 6px;
+  padding: 16px;
+  color: #ff0055;
+  direction: ltr;
+  text-align: left;
+}
+
+.hack-terminal-header {
+  font-weight: bold;
+  border-bottom: 1px solid rgba(255, 0, 85, 0.4);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.hack-terminal-body {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.term-line {
+  margin-bottom: 4px;
+  text-shadow: 0 0 5px rgba(255, 0, 85, 0.5);
+}
+
+.hack-progress-bar-wrap {
+  height: 12px;
+  background: #1a000a;
+  border: 1px solid #ff0055;
+  margin-top: 12px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.hack-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #ff0055, #ff5500);
+  transition: width 0.3s ease;
+  box-shadow: 0 0 10px #ff0055;
+}
+
+/* پوسته پایدار چت هک‌شده (Hacked Theme) */
+body.hacked-theme {
+  --bg-dark: #0a0005;
+  --bg-card: #14020a;
+  --neon-cyan: #ff0055;
+  --neon-magenta: #ff5500;
+  --text-main: #ffcccc;
+  --border-neon: rgba(255, 0, 85, 0.4);
+}
+
+body.hacked-theme .cyber-card {
+  border-color: #ff0055 !important;
+  box-shadow: 0 0 25px rgba(255, 0, 85, 0.3) !important;
+}
+
+body.hacked-theme .chat-header {
+  background: rgba(30, 0, 15, 0.95) !important;
+  border-bottom-color: #ff0055 !important;
+}
+
+body.hacked-theme .cyber-title {
+  color: #ff0055 !important;
+  text-shadow: 0 0 12px rgba(255, 0, 85, 0.8) !important;
+}

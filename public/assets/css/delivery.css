@@ -1,0 +1,333 @@
+/* ==========================================================================
+   delivery.css - رهگیری هوشمند و تحویل بسته بوتیک «گلها»
+   طراحی لوکس، شیک و بدون کلمات عجیب مثل NEXUS یا بلک‌اوت‌های طولانی
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Vazirmatn:wght@300;400;500;600;700;800;900&family=Cinzel:wght@600;800&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+
+:root {
+  --bg: #0c1410;
+  --bg-card: #131e18;
+  --border-gold: rgba(212, 175, 55, 0.25);
+  --gold: #d4af37;
+  --gold-glow: rgba(212, 175, 55, 0.35);
+  --cream: #f4efdf;
+  --muted: #8d9a8e;
+  --emerald: #10b981;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body.delivery-page {
+  margin: 0;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: radial-gradient(circle at 50% 25%, #15241d 0%, #0c1410 60%, #060a08 100%);
+  color: var(--cream);
+  font-family: 'Vazirmatn', -apple-system, sans-serif;
+  direction: rtl;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Header */
+.delivery-brand {
+  text-align: center;
+  padding: 30px 20px 10px;
+}
+
+.delivery-brand span {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+
+.delivery-brand small {
+  display: block;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  margin-top: 4px;
+  color: var(--muted);
+}
+
+/* Main Container */
+.delivery-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.delivery-card-shell {
+  width: min(520px, 100%);
+  background: rgba(19, 30, 24, 0.85);
+  border: 1px solid var(--border-gold);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 36px 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 30px rgba(212, 175, 55, 0.08);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Stepper Bar */
+.delivery-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.step-item.active {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.step-item.done {
+  color: var(--emerald);
+}
+
+.step-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--muted);
+}
+
+.step-item.done .step-dot {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: var(--emerald);
+  color: var(--emerald);
+}
+
+.step-item.active .step-dot {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: var(--gold);
+  color: var(--gold);
+  box-shadow: 0 0 12px var(--gold-glow);
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0 8px 18px;
+}
+
+.step-line.done {
+  background: var(--emerald);
+}
+
+/* Phase 1: Countdown */
+.delivery-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.delivery-label {
+  font-size: 15px;
+  color: var(--gold);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.delivery-dial {
+  width: 190px;
+  height: 190px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: 16px auto 22px;
+}
+
+.delivery-dial svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  fill: none;
+}
+
+.delivery-dial circle.bg {
+  stroke: rgba(212, 175, 55, 0.1);
+  stroke-width: 6;
+}
+
+.delivery-dial circle.bar {
+  stroke: var(--gold);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 565.48;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.5s ease;
+  filter: drop-shadow(0 0 8px var(--gold-glow));
+}
+
+.dial-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dial-center #timerDisplay {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 54px;
+  font-weight: 800;
+  color: var(--cream);
+  line-height: 1;
+}
+
+.dial-center small {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.delivery-status-note {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.skip-timer-btn {
+  background: transparent;
+  border: 1px dashed rgba(212, 175, 55, 0.4);
+  color: var(--gold);
+  font-size: 12px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.skip-timer-btn:hover {
+  background: rgba(212, 175, 55, 0.1);
+  border-style: solid;
+}
+
+/* Phase 2: Arrived & Unboxing */
+.delivery-arrived {
+  display: none;
+  animation: fadeInScale 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.94); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.package-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.12);
+  border: 2px solid var(--emerald);
+  display: grid;
+  place-items: center;
+  font-size: 38px;
+  margin: 0 auto 20px;
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.3);
+}
+
+.delivery-arrived h2 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.package-details-box {
+  background: rgba(10, 16, 12, 0.7);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin: 18px 0 26px;
+  font-size: 13px;
+  color: #d8d2c2;
+  line-height: 1.9;
+  text-align: right;
+}
+
+.package-details-box p strong {
+  color: var(--gold);
+}
+
+.proceed-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #d4af37 0%, #b38f2a 100%);
+  color: #0c1410;
+  font-size: 15px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+  transition: all 0.25s;
+}
+
+.proceed-btn:hover {
+  background: linear-gradient(135deg, #e6c555 0%, #d4af37 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(212, 175, 55, 0.5);
+}
+
+/* Footer */
+.delivery-footer {
+  text-align: center;
+  padding: 24px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* State Switchers */
+body[data-phase="arrived"] .delivery-countdown {
+  display: none;
+}
+
+body[data-phase="arrived"] .delivery-arrived {
+  display: block;
+}
+
+body[data-phase="arrived"] .step-item:nth-child(3) {
+  color: var(--emerald);
+}
+
+body[data-phase="arrived"] .step-item:nth-child(3) .step-dot {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: var(--emerald);
+  color: var(--emerald);
+}

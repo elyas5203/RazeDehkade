@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>پیش‌نمایش سکانس مزداک</title><link rel="stylesheet" href="/assets/css/main.css"><link rel="stylesheet" href="/assets/css/breach.css"><style>
+body{margin:0;min-height:100dvh;background:#050709;color:#e8e1db;display:grid;place-items:center;font-family:var(--font-persian),sans-serif}main{width:min(560px,86vw);padding:45px 0;border-top:1px solid #682922}small{font:11px monospace;color:#cf6155;letter-spacing:4px}h1{font-size:42px;margin:22px 0}p{line-height:2;color:#a49f9c}label{display:flex;gap:10px;align-items:center;margin:25px 0}button{background:#ae382e;color:#fff;border:1px solid #f27564;padding:16px 30px;font:inherit;cursor:pointer;width:100%}button:focus-visible{outline:2px solid white;outline-offset:5px}.note{font-size:12px;color:#7e7975}
+</style></head><body><main><small>MAZDAK / SEQUENCE PREVIEW</small><h1>قطع ارتباط</h1><p>پیش‌نمایش مستقل سکانس ۵۳ ثانیه‌ای.<br>روی هیچ جلسه‌ای اجرا نمی‌شود.</p><label><input id="preview-sound" type="checkbox" checked> پخش صدا</label><button id="preview-start" type="button">اجرای سکانس مزداک</button><p class="note">ابتدا صدای دستگاه را پایین بگذارید. برای رد کردن، Escape بزنید.<br>حالت کاهش حرکت سیستم رعایت می‌شود.</p></main><script src="/assets/js/hack-sequence.js"></script><script>
+'use strict';
+document.getElementById('preview-start').addEventListener('click', () => { hackEngine.setSound(document.getElementById('preview-sound').checked); hackEngine.start(); });
+window.addEventListener('pagehide', () => hackEngine.stop());
+</script></body></html>

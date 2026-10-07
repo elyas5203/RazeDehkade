@@ -1,0 +1,1190 @@
+/* ==========================================================================
+   terminal.css - اتاق تحقیقات کارآگاهی (نسخه ۲.۱ - چت راست‌چین بزرگ و ستون چپ دوگانه)
+   پالت رنگی: Warm Detective Noir + Liquid Glass
+   ========================================================================== */
+
+.terminal-page {
+  min-width: 980px;
+  height: 100dvh;
+  min-height: 600px;
+  overflow: hidden;
+  background: radial-gradient(circle at 70% 15%, #132437 0%, #09121a 50%, #050a0f 100%);
+  color: var(--cream);
+  display: flex;
+  flex-direction: column;
+}
+
+/* نوار بالای صفحه (Header) */
+.case-bar {
+  flex: 0 0 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  gap: 20px;
+  background: rgba(9, 17, 26, 0.94);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  z-index: 10;
+}
+
+.case-brand {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.case-brand small {
+  display: block;
+  color: #94a3b8;
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+.case-brand strong {
+  font-size: 20px;
+  font-weight: 800;
+  color: #f8fafc;
+  letter-spacing: -0.3px;
+}
+
+.case-brand .technical {
+  color: var(--gold);
+  font-size: 10px;
+  background: rgba(245, 158, 11, 0.12);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.case-divider {
+  height: 28px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 0 8px;
+}
+
+.case-session {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: #cbd5e1;
+}
+
+.case-session code {
+  color: var(--gold);
+  letter-spacing: 2px;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.08);
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.archive-back {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 6px 14px;
+  font-size: 12px;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.archive-back:hover {
+  color: var(--gold);
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+/* نوار وضعیت عملیات */
+.operation-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 9px 28px;
+  gap: 20px;
+  font-size: 11px;
+  color: #94a3b8;
+  background: rgba(6, 12, 19, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.operation-strip .status-dot {
+  color: var(--gold);
+  margin-left: 6px;
+}
+
+.operation-strip b {
+  font-weight: normal;
+  color: #475569;
+  margin: 0 10px;
+}
+
+.operation-clock {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.operation-clock time {
+  font: 12px var(--font-code);
+  color: var(--gold);
+  direction: ltr;
+  letter-spacing: 2px;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   فضای کار اصلی: گرید دو ستونه (ستون راست چت، ستون چپ مدارک + ترمینال)
+   در حالت RTL: ستون اول راست‌چین است و ستون دوم سمت چپ قرار می‌گیرد
+   ========================================================================== */
+.case-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(360px, 1fr);
+  gap: 18px;
+  margin: 0 24px 12px;
+  flex: 1;
+  min-height: 0;
+  direction: rtl;
+}
+
+/* ==========================================================================
+   ستون راست: بخش چت (Liquid Glass Theme)
+   ========================================================================== */
+.field-chat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: rgba(13, 23, 36, 0.82);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.field-chat > header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(15, 26, 40, 0.95);
+}
+
+.radio-icon {
+  width: 42px;
+  height: 42px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  display: grid;
+  place-items: center;
+  color: var(--gold);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.field-chat h2 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.field-chat .eyebrow {
+  color: var(--gold);
+  font-size: 10px;
+  margin-bottom: 2px;
+}
+
+.channel-label {
+  margin-right: auto;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 10px;
+  line-height: 1.6;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.channel-notice {
+  padding: 8px 20px;
+  font-size: 11px;
+  color: #94a3b8;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(245, 158, 11, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.channel-notice .status-dot {
+  color: var(--gold);
+  width: 5px;
+  height: 5px;
+}
+
+.messages-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 158, 11, 0.25) transparent;
+}
+
+.messages-list:empty::before {
+  content: 'خط ارتباط رادیویی آماده است.\A اولین گزارش یا فرضیه را بنویسید یا ویس بفرستید.';
+  white-space: pre-line;
+  margin: auto;
+  text-align: center;
+  font-size: 13.5px;
+  line-height: 2;
+  color: #64748b;
+  max-width: 280px;
+}
+
+/* حباب‌های چت مدرن (Telegram-style fit-content messaging) */
+.message-bubble {
+  width: fit-content;
+  max-width: min(78%, 520px);
+  min-width: 75px;
+  padding: 7px 12px 5px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  position: relative;
+  border-radius: 14px;
+  white-space: normal;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+  animation: bubble-appear 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes bubble-appear {
+  from { opacity: 0; transform: translateY(4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.message-content {
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: inherit;
+}
+
+/* پیام کاربر دانش‌آموز (سمت چپ در چت راست‌چین) */
+.message-bubble.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(6, 95, 70, 0.38));
+  border: 1px solid rgba(16, 185, 129, 0.38);
+  border-bottom-left-radius: 3px;
+  color: #ecfdf5;
+}
+
+/* پیام ادمین / مرکز فرماندهی (سمت راست در چت راست‌چین) */
+.message-bubble.admin {
+  align-self: flex-start;
+  background: linear-gradient(135deg, rgba(26, 38, 56, 0.92), rgba(15, 23, 40, 0.96));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-bottom-right-radius: 3px;
+  color: #f8fafc;
+}
+
+.message-bubble.system {
+  align-self: center;
+  font-size: 11.5px;
+  text-align: center;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px dashed rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
+  border-radius: 8px;
+  max-width: 90%;
+  padding: 6px 14px;
+}
+
+.message-bubble.hacker {
+  background: linear-gradient(135deg, #3d141c, #260c12);
+  border: 1px solid #ef4444;
+  border-right: 3px solid #ef4444;
+  color: #fee2e2;
+  align-self: flex-start;
+  border-bottom-right-radius: 3px;
+}
+
+.message-sender {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--gold-light);
+  margin-bottom: 2px;
+  line-height: 1.3;
+}
+
+.message-time {
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: var(--font-code);
+  margin-top: 3px;
+  line-height: 1.2;
+  align-self: flex-end;
+  direction: ltr;
+}
+
+.message-bubble.user .message-time {
+  color: rgba(110, 231, 183, 0.65);
+}
+
+.message-bubble.admin .message-time {
+  color: rgba(253, 230, 138, 0.65);
+}
+
+.message-evidence-note {
+  font-size: 11px;
+  color: var(--gold-light);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.9;
+}
+
+.message-evidence-note::before {
+  content: '↗ ';
+  margin-left: 4px;
+}
+
+/* پیوست‌های رسانه‌ای درون حباب پیام‌های چت */
+.message-caption {
+  margin: 0 0 6px 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.chat-media-attachment {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chat-image-attachment .chat-media-link {
+  display: block;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: rgba(0, 0, 0, 0.35);
+  max-width: 320px;
+}
+
+.chat-image-attachment .chat-media-preview-img {
+  display: block;
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.chat-image-attachment .chat-media-preview-img:hover {
+  transform: scale(1.02);
+}
+
+.chat-video-attachment .chat-media-preview-video {
+  width: 100%;
+  max-width: 340px;
+  max-height: 220px;
+  border-radius: 8px;
+  background: #000;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.chat-voice-attachment .chat-media-preview-audio {
+  width: 100%;
+  min-width: 240px;
+  height: 36px;
+  border-radius: 6px;
+}
+
+.chat-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.chat-download-btn:hover {
+  background: rgba(245, 158, 11, 0.25);
+  color: var(--gold);
+}
+
+/* تایپینگ و بازخورد */
+.typing-line, .chat-feedback {
+  font-size: 12px;
+  color: var(--gold);
+  padding: 0 20px;
+  line-height: 1.8;
+}
+
+.typing-line:not(:empty), .chat-feedback:not(:empty) {
+  padding-block: 6px;
+}
+
+/* کادر ارسال پیام */
+.composer {
+  padding: 14px 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(9, 17, 26, 0.98);
+}
+
+.composer-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(18, 30, 46, 0.9);
+  border-radius: 8px;
+  padding: 6px 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.composer-controls:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.25);
+}
+
+.composer input[type=text], .composer input:not([type]), .composer textarea {
+  min-width: 0;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 8px 6px;
+  color: #f8fafc;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  outline: none;
+  resize: none;
+  max-height: 140px;
+  overflow-y: auto;
+}
+
+.composer input::placeholder, .composer textarea::placeholder {
+  color: #64748b;
+}
+
+.attach-button, .send-button {
+  min-width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+}
+
+.attach-button {
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+}
+
+.attach-button:hover {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--gold);
+}
+
+.send-button {
+  background: var(--gold);
+  color: #0c1520;
+  font-weight: 800;
+}
+
+.send-button:hover {
+  background: #fcd34d;
+  transform: translateY(-1px);
+}
+
+.send-button:disabled {
+  opacity: 0.4;
+  transform: none;
+}
+
+.composer-hint {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  color: #64748b;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+/* ==========================================================================
+   ستون چپ: ستون دوگانه (نیمه بالا برد مدارک + نیمه پایین ترمینال زنده)
+   ========================================================================== */
+.left-operations-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+/* 1. نیمه بالا: میز بررسی شواهد پرونده (Evidence Board - فضای بازتر و بزرگ‌تر) */
+.evidence-board {
+  flex: 1.5;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #141c15;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.evidence-board > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  gap: 12px;
+  background: rgba(18, 28, 20, 0.96);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.evidence-board h1 {
+  font-size: 15px;
+  font-weight: 800;
+  color: #f1ebd9;
+}
+
+.evidence-board header > span {
+  font-size: 10.5px;
+  color: var(--gold);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  font-weight: 700;
+}
+
+.board-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 14px;
+  gap: 10px;
+  background: rgba(16, 24, 18, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.board-stream-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--gold-light);
+  font-weight: 600;
+}
+
+.board-stream-indicator .status-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+  display: inline-block;
+}
+
+.board-toolbar > .technical {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: #64748b;
+}
+
+.evidence-grid {
+  position: relative;
+  isolation: isolate;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 12px 10px;
+  padding: 14px 12px 28px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: radial-gradient(ellipse at 50% 0, rgba(245, 158, 11, 0.12), transparent 70%),
+              linear-gradient(rgba(14, 20, 15, 0.94), rgba(14, 20, 15, 0.94)),
+              url('../scene/paper.jpg') center/400px;
+  box-shadow: inset 0 3px 20px rgba(0, 0, 0, 0.5);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 158, 11, 0.3) rgba(20, 28, 22, 0.8);
+}
+
+.evidence-grid::before {
+  content: 'EVIDENCE DESK / ACTIVE ARCHIVE';
+  position: absolute;
+  bottom: 8px;
+  left: 14px;
+  font: 8px var(--font-code);
+  letter-spacing: 2.5px;
+  color: rgba(245, 158, 11, 0.25);
+  pointer-events: none;
+}
+
+/* کارت‌های مینی پولاروید و اسناد کارآگاهی */
+.evidence-card {
+  position: relative;
+  z-index: 1;
+  align-self: start;
+  min-width: 0;
+  background: #ede6d6;
+  border: 1px solid #dfd5c0;
+  border-radius: 3px;
+  padding: 5px 5px 8px;
+  text-align: right;
+  color: #1e261f;
+  box-shadow: 1px 4px 12px rgba(0, 0, 0, 0.4);
+  transform: rotate(-1deg);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
+  animation: pin-evidence 0.35s ease-out;
+  cursor: pointer;
+}
+
+.evidence-card:nth-of-type(3n+1) {
+  transform: rotate(-1.5deg);
+}
+
+.evidence-card:nth-of-type(3n+2) {
+  transform: translateY(4px) rotate(1.2deg);
+}
+
+.evidence-card:nth-of-type(3n) {
+  transform: translateY(2px) rotate(-0.8deg);
+}
+
+/* پین قرمز پونز کارآگاهی */
+.evidence-card::before {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  top: -4px;
+  left: calc(50% - 4px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f87171, #b91c1c 70%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.evidence-card:hover, .evidence-card:focus-visible {
+  transform: translateY(-4px) scale(1.06) rotate(0deg);
+  z-index: 10;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.6);
+}
+
+.evidence-card img {
+  display: block;
+  width: 100%;
+  height: 68px;
+  object-fit: cover;
+  filter: saturate(0.85);
+  background: #2a3328;
+  border-radius: 2px;
+}
+
+.evidence-card h3 {
+  font-size: 10.5px;
+  line-height: 1.4;
+  margin: 4px 0 2px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.evidence-card small {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid rgba(100, 110, 90, 0.25);
+  padding-top: 3px;
+  color: #4b5548;
+  font-size: 9px;
+}
+
+.evidence-file-icon {
+  height: 68px;
+  background: repeating-linear-gradient(0deg, transparent 0 15px, rgba(100, 90, 60, 0.15) 15px 16px), #d5cbaf;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #3f4e3e;
+  border-radius: 2px;
+}
+
+.evidence-file-icon .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.evidence-file-icon span {
+  font-size: 9.5px;
+  font-weight: 600;
+}
+
+.evidence-threads {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.evidence-threads path {
+  fill: none;
+  stroke: #b91c1c;
+  stroke-width: 1.5;
+  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.7));
+}
+
+/* وضعیت اولیه میز مدارک (کارت‌های سرنخ جمع‌وجور) */
+.empty-evidence {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 150px;
+  padding: 10px;
+}
+
+.briefing-photo {
+  width: 38%;
+  max-width: 115px;
+  background: #ede6d6;
+  border: 1px solid #dfd5c0;
+  border-radius: 3px;
+  padding: 4px 4px 8px;
+  transform: rotate(-3deg);
+  box-shadow: 2px 6px 14px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+
+.briefing-photo::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: calc(50% - 4px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f87171, #b91c1c 70%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.briefing-photo img {
+  width: 100%;
+  height: 72px;
+  object-fit: cover;
+  filter: saturate(0.7);
+  display: block;
+  border-radius: 2px;
+}
+
+.briefing-photo span {
+  display: block;
+  color: #3e4438;
+  text-align: center;
+  font-size: 9px;
+  margin-top: 5px;
+  font-weight: 600;
+}
+
+.briefing-note {
+  width: 58%;
+  max-width: 150px;
+  padding: 8px 10px;
+  background: #e8e0c5;
+  color: #273123;
+  transform: rotate(2deg);
+  box-shadow: 2px 6px 14px rgba(0, 0, 0, 0.3);
+  border-radius: 3px;
+  border: 1px solid #d8cfb0;
+  position: relative;
+}
+
+.briefing-note::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: calc(50% - 4px);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f87171, #b91c1c 70%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.briefing-note .technical {
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+
+.briefing-note h2 {
+  font-size: 11.5px;
+  line-height: 1.4;
+  margin: 3px 0 3px;
+  font-weight: 800;
+}
+
+.briefing-note p {
+  font-size: 9.5px;
+  line-height: 1.5;
+  color: #3b4537;
+}
+
+.briefing-note small {
+  font-size: 8.5px;
+  color: #64748b;
+  display: block;
+  margin-top: 4px;
+}
+
+.note-rule {
+  display: block;
+  height: 1px;
+  background: rgba(80, 90, 70, 0.3);
+  margin: 6px 0;
+}
+
+.board-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 14px;
+  gap: 10px;
+  background: rgba(14, 22, 16, 0.98);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
+  font-size: 9.5px;
+}
+
+/* ==========================================================================
+   2. نیمه پایین: پایانه پایش زنده امنیتی (Live Cyber Terminal)
+   ========================================================================== */
+.security-terminal {
+  flex: 0.65;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: rgba(6, 11, 18, 0.96);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.terminal-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(11, 20, 32, 0.98);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  flex-shrink: 0;
+}
+
+.term-title-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.term-traffic-lights {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.term-traffic-lights i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.term-traffic-lights i:nth-child(1) {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+}
+
+.term-traffic-lights i:nth-child(2) {
+  background: #f59e0b;
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+}
+
+.term-traffic-lights i:nth-child(3) {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+}
+
+.term-heading {
+  font-size: 11px;
+  font-weight: 700;
+  color: #cbd5e1;
+  font-family: var(--font-code);
+  letter-spacing: 0.5px;
+}
+
+.term-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.terminal-counter {
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.12);
+  padding: 2px 7px;
+  border-radius: 3px;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.terminal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px 14px;
+  background: #04080e;
+  font-family: var(--font-code);
+  font-size: 11px;
+  line-height: 1.65;
+  direction: rtl;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.3) transparent;
+  display: flex;
+  flex-direction: column;
+}
+
+/* خطوط لاگ ترمینال */
+.term-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  animation: term-appear 0.2s ease-out;
+}
+
+@keyframes term-appear {
+  from { opacity: 0; transform: translateX(4px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.term-time {
+  color: #64748b;
+  font-size: 10px;
+  direction: ltr;
+  font-family: var(--font-code);
+  flex-shrink: 0;
+}
+
+.term-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  font-family: var(--font-code);
+  letter-spacing: 0.5px;
+}
+
+.term-msg {
+  color: #e2e8f0;
+  word-break: break-word;
+  flex: 1;
+}
+
+/* تم رنگی تگ‌های لاگ */
+.term-sys .term-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.term-net .term-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.term-sec .term-badge {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.term-det .term-badge {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.terminal-controls-bar {
+  padding: 6px 14px;
+  background: rgba(9, 16, 26, 0.98);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.term-blink-cursor {
+  color: #38bdf8;
+  font-weight: 700;
+  font-family: var(--font-code);
+  animation: term-cursor-blink 1.2s infinite;
+}
+
+@keyframes term-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+/* ==========================================================================
+   فوتر کلی صفحه چت
+   ========================================================================== */
+.terminal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 28px;
+  font-size: 10px;
+  color: #64748b;
+  background: rgba(5, 10, 16, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.terminal-footer .technical {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  color: #475569;
+}
+
+/* ==========================================================================
+   مودال نمایش مدارک
+   ========================================================================== */
+.evidence-dialog {
+  width: min(850px, 92vw);
+  max-height: 90dvh;
+  margin: auto;
+  background: rgba(14, 23, 36, 0.96);
+  color: #f8fafc;
+  border: 1px solid var(--glass-border);
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8);
+}
+
+.evidence-dialog::backdrop {
+  background: rgba(3, 7, 12, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+.dialog-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.dialog-close {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  font-size: 24px;
+  border-radius: 6px;
+}
+
+.evidence-dialog img, .evidence-dialog video {
+  display: block;
+  max-width: 100%;
+  max-height: 60dvh;
+  margin: auto;
+  object-fit: contain;
+  background: #000;
+  border-radius: 4px;
+}
+
+.evidence-dialog audio {
+  width: 100%;
+  margin: 16px 0;
+}
+
+.download-evidence {
+  display: inline-block;
+  padding: 10px 20px;
+  background: var(--gold);
+  color: #0c1520;
+  margin-top: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 4px;
+}
+
+@keyframes pin-evidence {
+  from { opacity: 0; transform: translateY(-10px) rotate(-3deg); }
+  to { opacity: 1; transform: translateY(0) rotate(-1.5deg); }
+}
+
+/* ==========================================================================
+   واکنش‌گرایی (Responsive)
+   ========================================================================== */
+@media (max-width: 1200px) {
+  .case-workspace {
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr);
+    margin: 0 16px 10px;
+    gap: 12px;
+  }
+}

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>درگاه ورود محرمانه | مرکز عملیات راز دهکده</title>
+  <link rel="stylesheet" href="/assets/css/gateway.css">
+  <script src="/assets/js/gateway.js" defer></script>
+</head>
+<body class="gateway-page">
+
+  <!-- پس‌زمینه شبکه‌ای سایبری و هاله نوری -->
+  <div class="gateway-grid-bg" aria-hidden="true"></div>
+  <div class="ambient-glow-ring" aria-hidden="true"></div>
+
+  <!-- نوار بالای صفحه -->
+  <header class="gateway-header">
+    <div class="gateway-brand">
+      <div class="brand-emblem" aria-hidden="true">RD</div>
+      <span>مرکز عملیات راز دهکده</span>
+    </div>
+    <div class="gateway-status-badge">
+      <span class="pulse-led" aria-hidden="true"></span>
+      <span>خط ارتباطی امن (AES-256)</span>
+    </div>
+  </header>
+
+  <!-- کارت اصلی ورود کد بسته -->
+  <main class="gateway-main">
+    <div class="gateway-card" id="gatewayCard">
+      <div class="card-top-icon" aria-hidden="true">
+        🔐
+      </div>
+
+      <h1>پایگاه ارتباط محرمانه</h1>
+      <p class="subtitle">لطفاً کد ۶ رقمی درج‌شده روی کارت همراه بسته را وارد فرمایید:</p>
+
+      <form id="access-form">
+        <label for="access-code" style="display:none;">کد ۶ رقمی روی بسته</label>
+        <div class="pin-input-wrap">
+          <input 
+            id="access-code" 
+            type="text"
+            inputmode="numeric" 
+            autocomplete="off" 
+            maxlength="8" 
+            placeholder="• • • • • •" 
+            dir="ltr" 
+            required 
+            autofocus
+          >
+        </div>
+
+        <p id="access-error" role="alert"></p>
+
+        <button id="access-submit" type="submit" class="gateway-submit-btn">
+          <span>برقراری ارتباط امن با مرکز</span>
+          <span aria-hidden="true">➔</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- انیمیشن موفقیت و اتصال -->
+    <div class="gateway-open" aria-live="polite">
+      <div class="success-check-badge">✓</div>
+      <span>کد تأیید شد. در حال بارگذاری اسناد پرونده…</span>
+    </div>
+  </main>
+
+  <footer class="gateway-footer">
+    SECRET PROTOCOL · ACCESS RESTRICTED TO AUTHORIZED INVESTIGATORS
+  </footer>
+
+</body>
+</html>

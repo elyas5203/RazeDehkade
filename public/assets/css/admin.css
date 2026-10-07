@@ -1,0 +1,763 @@
+/* public/assets/css/admin.css - استایل‌های کامل پنل مدیریت ادمین و اتاق فرمان */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+
+/* Base Command Page Theme */
+.command-page {
+  font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #080b0e;
+  color: #e8e5dc;
+  min-height: 100dvh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --command-line: #34383a;
+  --command-paper: #15191b;
+  --command-amber: #e7aa45;
+  --command-red: #b8473f;
+}
+
+/* Command Bar (Header) */
+.command-bar {
+  height: 76px;
+  padding: 12px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--command-line);
+  background: #0c1012;
+}
+
+.command-identity, .command-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.command-identity > a {
+  color: #16120d;
+  background: var(--command-amber);
+  padding: 10px 16px;
+  font-weight: 800;
+  text-decoration: none;
+  border-radius: 2px;
+}
+
+.command-identity small, .panel-title small {
+  display: block;
+  color: #8d9699;
+  font-size: 10px;
+}
+
+.command-identity strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 15px;
+}
+
+.command-button {
+  border: 1px solid #485055;
+  background: #171c1f;
+  color: #dbe1e2;
+  padding: 10px 13px;
+  border-radius: 2px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.command-button:hover, .command-button:focus-visible {
+  border-color: var(--command-amber);
+  color: #fff;
+}
+
+.command-button.primary {
+  background: var(--command-amber);
+  border-color: var(--command-amber);
+  color: #17110a;
+}
+
+.command-button.danger {
+  border-color: #7b3835;
+  color: #ec918b;
+}
+
+.command-button.wide {
+  width: 100%;
+  font-size: 15px;
+  padding: 13px;
+}
+
+.command-button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
+/* Command Layout (Desktop Grid: Sidebar 280px | Chat 1fr | Media Library 340px) */
+.command-layout {
+  height: calc(100dvh - 76px);
+  display: grid;
+  grid-template-columns: 280px minmax(360px, 1fr) 340px;
+  gap: 12px;
+  padding: 12px;
+  direction: rtl;
+}
+
+.command-sidebar, .command-chat, .media-library-panel {
+  background: var(--command-paper);
+  border: 1px solid var(--command-line);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.command-sidebar, .media-library-panel {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.command-chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--command-line);
+  font-weight: 900;
+}
+
+.panel-title button {
+  background: transparent;
+  color: var(--command-amber);
+  font-size: 20px;
+  border: none;
+  cursor: pointer;
+}
+
+.session-cards-container {
+  padding: 14px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.command-page .session-card {
+  border-radius: 4px;
+  background: #101416;
+  border: 1px solid #2a3033;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.command-page .session-card:hover {
+  border-color: var(--command-amber);
+  background: #191e21;
+}
+
+.command-page .session-card.active {
+  border-color: var(--command-amber);
+  background: #211d16;
+  box-shadow: 0 0 10px rgba(231, 170, 69, 0.15);
+}
+
+.command-page .session-code-badge {
+  color: var(--command-amber);
+  border-color: #725829;
+  background: #241e13;
+  font-family: var(--font-code);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.command-page .messages-list {
+  flex: 1;
+  padding: 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-typing {
+  height: 22px;
+  padding: 0 18px;
+  color: var(--command-amber);
+  font-size: 12px;
+}
+
+.canned-responses-wrapper {
+  background: #101416;
+  border-top: 1px solid var(--command-line);
+  padding: 8px 12px;
+}
+
+.canned-responses-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.canned-responses-header small {
+  color: #8d9699;
+  font-size: 11px;
+}
+
+.canned-manage-link {
+  background: none;
+  border: none;
+  color: var(--command-amber);
+  font-size: 11px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.command-page .canned-drawer {
+  background: #101416;
+  border-color: var(--command-line);
+  max-height: 78px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.command-page .canned-chip {
+  border-radius: 2px;
+  color: #cfd4d5;
+  border: 1px solid #42494c;
+  background: #1b2023;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.command-page .canned-chip:hover {
+  border-color: var(--command-amber);
+  color: var(--command-amber);
+}
+
+.admin-composer {
+  display: grid;
+  grid-template-columns: auto 90px 1fr auto;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid var(--command-line);
+  background: #0e1214;
+}
+
+.admin-composer input, .admin-composer select, .admin-composer textarea {
+  border-radius: 4px;
+  background: #15191b;
+  border: 1px solid #3a4043;
+  color: #e8e5dc;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  outline: none;
+  resize: none;
+  min-height: 40px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.admin-composer textarea:focus {
+  border-color: var(--command-amber);
+}
+
+/* ==========================================================================
+   طراحی مجدد و فوق‌العاده شیک و کامپکت حباب‌های چت ادمین (Compact Modern Chat)
+   ========================================================================== */
+.command-page .messages-list {
+  flex: 1;
+  padding: 14px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px !important;
+}
+
+.command-page .message-bubble {
+  width: fit-content !important;
+  max-width: min(72%, 460px) !important;
+  min-width: 85px !important;
+  padding: 6px 11px 5px !important;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35) !important;
+  margin: 0 !important;
+  position: relative;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+/* پیام کاربر دانش‌آموز (سمت راست چت فارسی با رنگ تیره مخملی و بردر ملایم فیروزه‌ای) */
+.command-page .message-bubble.user {
+  align-self: flex-start !important;
+  background: #141f27 !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  border-bottom-right-radius: 2px !important;
+  color: #f0f6fc !important;
+}
+
+/* پیام ادمین / مرکز (سمت چپ چت فارسی با رنگ کهربایی ملایم) */
+.command-page .message-bubble.admin {
+  align-self: flex-end !important;
+  background: #1f1b13 !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+  border-bottom-left-radius: 2px !important;
+  color: #f8fafc !important;
+}
+
+/* پیام سیستم */
+.command-page .message-bubble.system {
+  align-self: center !important;
+  background: rgba(245, 158, 11, 0.08) !important;
+  border: 1px dashed rgba(245, 158, 11, 0.35) !important;
+  color: #fbbf24 !important;
+  font-size: 11.5px !important;
+  padding: 4px 12px !important;
+  max-width: 85% !important;
+  text-align: center;
+}
+
+/* پیام مزداک / هکر */
+.command-page .message-bubble.hacker {
+  align-self: flex-start !important;
+  background: #250f14 !important;
+  border: 1px solid rgba(239, 68, 68, 0.5) !important;
+  border-right: 3px solid #ef4444 !important;
+  color: #fecaca !important;
+}
+
+.command-page .message-sender {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
+  font-size: 10.5px !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+  margin-bottom: 2px !important;
+  line-height: 1.2 !important;
+}
+
+.command-page .message-bubble.user .message-sender {
+  color: #38bdf8 !important;
+}
+
+.command-page .message-bubble.admin .message-sender {
+  color: var(--command-amber) !important;
+}
+
+.command-page .msg-time-badge {
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, 0.45);
+  font-family: var(--font-mono);
+  direction: ltr;
+}
+
+.command-page .msg-actions {
+  display: flex;
+  gap: 3px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.command-page .message-bubble:hover .msg-actions {
+  opacity: 1;
+}
+
+.command-page .msg-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 1px 3px;
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* محتوای متن */
+.command-page .message-content {
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+  color: #f1f5f9;
+}
+
+/* ویس فشرده، شیک و تلگرامی در چت ادمین (Compact Telegram-style Voice Pill) */
+.command-page .message-bubble.has-voice-message {
+  min-width: 195px !important;
+  max-width: 250px !important;
+  width: fit-content !important;
+  padding: 5px 8px 5px !important;
+}
+
+.command-page .message-bubble.has-voice-message .message-content {
+  white-space: normal !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.command-page .message-bubble.has-voice-message .tg-voice-stamp {
+  display: none !important;
+}
+
+/* تصاویر و فیلم‌های فشرده */
+.admin-media-thumb {
+  display: block;
+  margin-top: 4px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 260px;
+}
+
+.admin-thumb-img {
+  display: block;
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+.admin-thumb-img:hover {
+  transform: scale(1.02);
+}
+
+.admin-thumb-video {
+  width: 100%;
+  max-width: 280px;
+  max-height: 180px;
+  border-radius: 6px;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 4px;
+}
+
+.admin-file-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 5px;
+  text-decoration: none;
+  font-size: 11.5px;
+  margin-top: 3px;
+  transition: background 0.15s;
+}
+
+.admin-file-badge:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: var(--command-amber);
+  color: var(--command-amber);
+}
+
+.media-library-panel label {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  margin: 15px 0 7px;
+}
+
+.media-library-panel label span {
+  color: #778083;
+  font-weight: 400;
+}
+
+.media-library-panel input, .media-library-panel textarea {
+  width: 100%;
+  border-radius: 2px;
+  background: #0d1113;
+  border: 1px solid #3d4447;
+  color: #e8e5dc;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.media-help {
+  color: #9ca4a5;
+  font-size: 12px;
+  line-height: 1.8;
+  margin: 12px 0;
+}
+
+.media-feedback {
+  min-height: 22px;
+  margin: 10px 0;
+  font-size: 12px;
+  color: var(--command-amber);
+}
+
+.media-library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.media-item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  text-align: right;
+  background: #0e1214;
+  border: 1px solid #303638;
+  color: #dfe3e3;
+  padding: 9px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.media-item:hover, .media-item.selected {
+  border-color: var(--command-amber);
+  background: #211d16;
+}
+
+.media-item-kind {
+  color: var(--command-amber);
+  font-size: 10px;
+}
+
+.media-item-name {
+  direction: ltr;
+  text-align: left;
+  font: 11px var(--font-code);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.media-item-size {
+  color: #788184;
+  font-size: 10px;
+}
+
+/* Mobile Responsive Navigation & Styles */
+.mobile-nav-tabs {
+  display: none;
+  background: #0c1012;
+  border-bottom: 1px solid var(--command-line);
+  padding: 6px;
+  gap: 6px;
+}
+
+.mobile-tab-btn {
+  flex: 1;
+  background: #171c1f;
+  color: #9ca4a5;
+  border: 1px solid #34383a;
+  padding: 10px 6px;
+  font-size: 12px;
+  font-weight: bold;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.mobile-tab-btn.active {
+  background: var(--command-amber);
+  color: #0c1012;
+  border-color: var(--command-amber);
+}
+
+.mobile-chat-header {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #0e1214;
+  border-bottom: 1px solid var(--command-line);
+}
+
+.mobile-back-btn {
+  background: #211d16;
+  border: 1px solid var(--command-amber);
+  color: var(--command-amber);
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 3px;
+}
+
+.mobile-tools-panel {
+  display: none;
+  background: var(--command-paper);
+  border: 1px solid var(--command-line);
+  padding: 16px;
+}
+
+.mobile-tools-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* Medium screen adjustments (769px to 1150px) */
+@media(min-width: 769px) and (max-width: 1150px) {
+  .command-layout {
+    grid-template-columns: 220px 1fr 270px;
+    gap: 8px;
+    padding: 8px;
+  }
+  .media-library-panel {
+    display: flex;
+    padding: 10px;
+  }
+  .command-sidebar {
+    padding: 10px;
+  }
+  .weekly-step-card {
+    padding: 8px !important;
+  }
+}
+
+/* Smartphone screen adjustments (768px and below) */
+@media(max-width: 768px) {
+  .command-bar {
+    height: 56px;
+    min-height: 56px;
+    padding: 8px 14px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border-bottom: 1px solid var(--command-line);
+  }
+  
+  /* پنهان‌سازی دکمه‌های تکراری هدر در موبایل (این دکمه‌ها درون تب ابزارها قرار دارند) */
+  .command-actions {
+    display: none !important;
+  }
+  
+  .command-identity {
+    gap: 8px;
+  }
+  
+  .command-identity > a {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .command-identity strong {
+    font-size: 13px;
+    margin-top: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+  }
+  
+  .mobile-nav-tabs {
+    display: flex;
+    height: 48px;
+    min-height: 48px;
+    background: #0f1315;
+    border-bottom: 1px solid var(--command-line);
+    overflow-x: auto;
+  }
+  
+  .mobile-tab-btn {
+    flex: 1;
+    font-size: 11px;
+    padding: 8px 4px;
+    white-space: nowrap;
+    text-align: center;
+  }
+  
+  .command-layout {
+    height: calc(100dvh - 104px);
+    max-height: calc(100dvh - 104px);
+    grid-template-columns: 1fr;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  
+  .command-sidebar, .command-chat, .media-library-panel, .mobile-tools-panel {
+    display: none;
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+    border: none;
+  }
+  
+  /* نمایش تب فعال در موبایل */
+  body.mobile-tab-sidebar #panel-sidebar { display: flex; flex-direction: column; padding: 12px; }
+  body.mobile-tab-chat #panel-chat { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+  body.mobile-tab-media #panel-media { display: flex; flex-direction: column; padding: 12px; }
+  body.mobile-tab-tools #panel-tools { display: flex; flex-direction: column; padding: 16px; }
+
+  /* حالت پیش‌فرض اگر تبی تعیین نشده باشد */
+  body:not(.mobile-tab-chat):not(.mobile-tab-media):not(.mobile-tab-tools) #panel-sidebar {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+  }
+  
+  .mobile-chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #14191c;
+    border-bottom: 1px solid var(--command-line);
+    flex-shrink: 0;
+  }
+  
+  .mobile-chat-header .mobile-back-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  
+  #admin-messages-box {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px;
+  }
+  
+  .admin-composer {
+    flex-shrink: 0;
+    grid-template-columns: auto 1fr auto;
+    padding: 8px 10px;
+    gap: 6px;
+    background: #0c1012;
+    border-top: 1px solid var(--command-line);
+  }
+  
+  #admin-sender-type {
+    display: none;
+  }
+  
+  .admin-composer input, .admin-composer textarea {
+    font-size: 14px;
+    min-height: 40px;
+    max-height: 120px;
+  }
+  
+  .admin-composer .command-button {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}

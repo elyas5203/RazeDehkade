@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>درگاه ورود مدیریت ارشد | SYSTEM ADMIN</title>
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/gateway.css">
+  <style>
+    /* Override for admin theme if needed, but we keep the wow cinematic theme */
+    .gateway-card input {
+      font-size: 20px;
+      letter-spacing: 2px;
+      margin-bottom: 20px;
+    }
+    .gateway-card input::placeholder {
+      font-size: 16px;
+      letter-spacing: 1px;
+    }
+    .input-group {
+      text-align: right;
+      margin-bottom: 20px;
+    }
+    .input-group label {
+      display: block;
+      color: var(--neon-blue);
+      font-family: 'Orbitron', monospace;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body class="gateway-page">
+  <!-- Animated Grid Background -->
+  <div class="gateway-plane" aria-hidden="true"></div>
+  
+  <header class="gateway-header">
+    <span dir="ltr">AUTHORIZED PERSONNEL ONLY</span>
+    <span class="gateway-light" aria-hidden="true"></span>
+  </header>
+  
+  <main class="gateway-shell">
+    <!-- Futuristic Radar/Iris -->
+    <div class="gateway-iris" aria-hidden="true">
+      <i></i><i></i><i></i>
+    </div>
+    
+    <!-- Glassmorphism Login Card -->
+    <div class="gateway-card">
+      <div class="eyebrow">پنل نظارت و هدایت سیستم</div>
+      <h1 style="font-size:22px; margin-bottom: 30px;">ورود مدیریت ارشد</h1>
+      
+      <form id="admin-login-form" onsubmit="handleAdminLogin(event)">
+        <div class="input-group">
+          <label for="admin-username">ADMIN_ID :</label>
+          <input type="text" id="admin-username" required autocomplete="username" autofocus placeholder="نام کاربری" dir="ltr">
+        </div>
+
+        <div class="input-group">
+          <label for="admin-password">ACCESS_CODE :</label>
+          <input type="password" id="admin-password" required autocomplete="current-password" placeholder="••••••••" dir="ltr">
+        </div>
+        
+        <p id="error-message" style="color: #ff3366; font-size: 14px; min-height: 20px; margin-bottom: 10px;"></p>
+        
+        <button type="submit" id="access-submit">
+          تایید هویت <span aria-hidden="true">➔</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Success Animation Overlay -->
+    <div class="gateway-open" aria-live="polite">
+      <div class="gateway-open-line"></div>
+      <span>هویت تایید شد</span>
+    </div>
+  </main>
+  
+  <footer class="gateway-footer" dir="ltr">
+    SYSTEM_CORE_AUTH
+  </footer>
+
+  <script src="/assets/js/admin-login.js"></script>
+</body>
+</html>
