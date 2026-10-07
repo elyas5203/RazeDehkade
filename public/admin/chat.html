@@ -25,7 +25,11 @@
     <div class="command-actions" id="admin-actions-bar">
       <span id="admin-socket-status" class="status-indicator offline"><span class="status-dot"></span> در حال وصل شدن...</span>
       <button id="admin-chat-lock-btn" onclick="toggleAdminChatLock()" class="command-button" title="قفل / باز کردن چت این جلسه">🔒 قفل چت جلسه</button>
-      <button id="admin-audio-toggle-btn" onclick="toggleAdminAudioStream()" class="command-button">شروع شنود صدا</button>
+      <button id="admin-audio-toggle-btn" onclick="toggleAdminAudioStream()" class="command-button">🎙️ شروع شنود صدا</button>
+      <div id="audio-listening-indicator" style="display:none;align-items:center;gap:6px;padding:4px 10px;background:rgba(239,68,68,0.18);border:1px solid #ef4444;border-radius:14px;font-size:11px;color:#fca5a5;white-space:nowrap;">
+        <span class="live-dot" style="width:7px;height:7px;border-radius:50%;background:#ef4444;display:inline-block;box-shadow:0 0 6px #ef4444;"></span>
+        <span id="audio-listening-status-text">شنود فعال</span>
+      </div>
       <button onclick="triggerHackSequence()" class="command-button danger">☠️ اجرای سکانس مزداک</button>
       <audio id="remote-audio-player" autoplay hidden></audio>
     </div>
@@ -117,7 +121,11 @@
       <div class="panel-title"><span>ابزارها و کنترل‌های سریع</span></div>
       <div class="mobile-tools-actions">
         <button id="mobile-admin-chat-lock-btn" onclick="toggleAdminChatLock()" class="command-button wide">🔒 قفل چت جلسه</button>
-        <button id="mobile-admin-audio-toggle-btn" onclick="toggleAdminAudioStream()" class="command-button wide">شروع شنود صدا</button>
+        <button id="mobile-admin-audio-toggle-btn" onclick="toggleAdminAudioStream()" class="command-button wide">🎙️ شروع شنود صدا</button>
+        <div id="mobile-audio-listening-indicator" style="display:none;align-items:center;gap:6px;padding:6px 12px;background:rgba(239,68,68,0.18);border:1px solid #ef4444;border-radius:14px;font-size:12px;color:#fca5a5;justify-content:center;">
+          <span class="live-dot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;box-shadow:0 0 6px #ef4444;"></span>
+          <span id="mobile-audio-listening-status-text">شنود فعال</span>
+        </div>
         <button onclick="triggerHackSequence()" class="command-button danger wide">☠️ اجرای سکانس مزداک</button>
       </div>
     </div>

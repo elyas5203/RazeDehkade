@@ -16,20 +16,24 @@
   }
 
   const numberFormat = new Intl.NumberFormat('fa-IR');
-  const TOTAL_DURATION_MS = 25000; // 25 ثانیه برای تحویل
+  const TOTAL_DURATION_MS = 30000; // 30 ثانیه برای تحویل
   const CIRCLE_CIRCUMFERENCE = 565.48; // 2 * PI * 90
 
   let isArrived = false;
-  let animFrame;
+  let timerId = null;
+
+  const timerDisplay = document.getElementById('timerDisplay');
+  const ring = document.getElementById('delivery-ring');
 
   window.triggerImmediateArrival = function() {
     if (isArrived) return;
     isArrived = true;
-    cancelAnimationFrame(animFrame);
+    if (timerId) clearInterval(timerId);
     document.body.dataset.phase = 'arrived';
-    const ring = document.getElementById('delivery-ring');
     if (ring) ring.style.strokeDashoffset = '0';
   };
+
+  let lastSeconds = null;
 
   function update() {
     if (isArrived) return;
@@ -38,11 +42,11 @@
     const remaining = Math.max(0, TOTAL_DURATION_MS - elapsed);
     const seconds = Math.ceil(remaining / 1000);
 
-    const timerDisplay = document.getElementById('timerDisplay');
-    const ring = document.getElementById('delivery-ring');
-
-    if (timerDisplay) {
-      timerDisplay.textContent = numberFormat.format(seconds);
+    if (seconds !== lastSeconds) {
+      lastSeconds = seconds;
+      if (timerDisplay) {
+        timerDisplay.textContent = numberFormat.format(seconds);
+      }
     }
 
     if (ring) {
@@ -52,15 +56,13 @@
 
     if (remaining <= 0) {
       window.triggerImmediateArrival();
-      return;
     }
-
-    animFrame = requestAnimationFrame(update);
   }
 
   update();
+  timerId = setInterval(update, 100);
 
   window.addEventListener('pagehide', () => {
-    cancelAnimationFrame(animFrame);
+    if (timerId) clearInterval(timerId);
   }, { once: true });
 })();

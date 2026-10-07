@@ -32,8 +32,15 @@ let historyLoadedFor = null;
 
 let adminPeerConnection = null;
 let isAudioListening = false;
+let audioKeepAliveTimer = null;
 const rtcConfig = {
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  iceServers: [
+    { urls: 'stun:stun.cloudflare.com:3478' },
+    { urls: 'stun:stun.services.mozilla.com' },
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' }
+  ]
 };
 
 if (!adminToken) {
@@ -572,6 +579,89 @@ async function promptNewCanned() {
   }
 }
 
+function updateAudioUI(status) {
+  const btn = document.getElementById('admin-audio-toggle-btn');
+  const mobileBtn = document.getElementById('mobile-admin-audio-toggle-btn');
+  const badge = document.getElementById('audio-listening-indicator');
+  const badgeText = document.getElementById('audio-listening-status-text');
+  const mobileBadge = document.getElementById('mobile-audio-listening-indicator');
+  const mobileBadgeText = document.getElementById('mobile-audio-listening-status-text');
+
+  if (status === 'off') {
+    if (btn) {
+      btn.innerText = '🎙️ شروع شنود صدا';
+      btn.className = 'command-button';
+    }
+    if (mobileBtn) {
+      mobileBtn.innerText = '🎙️ شروع شنود صدا';
+      mobileBtn.className = 'command-button wide';
+    }
+    if (badge) badge.style.display = 'none';
+    if (mobileBadge) mobileBadge.style.display = 'none';
+  } else if (status === 'connecting') {
+    if (btn) {
+      btn.innerText = '⏹️ قطع شنود صدا';
+      btn.className = 'command-button danger';
+    }
+    if (mobileBtn) {
+      mobileBtn.innerText = '⏹️ قطع شنود صدا';
+      mobileBtn.className = 'command-button danger wide';
+    }
+    if (badge) {
+      badge.style.display = 'inline-flex';
+      badge.style.borderColor = '#f59e0b';
+      badge.style.color = '#fbbf24';
+      badge.style.background = 'rgba(245,158,11,0.15)';
+    }
+    if (badgeText) badgeText.innerText = '⏳ در حال اتصال به میکروفون…';
+    if (mobileBadge) {
+      mobileBadge.style.display = 'inline-flex';
+      mobileBadge.style.borderColor = '#f59e0b';
+      mobileBadge.style.color = '#fbbf24';
+      mobileBadge.style.background = 'rgba(245,158,11,0.15)';
+    }
+    if (mobileBadgeText) mobileBadgeText.innerText = '⏳ در حال اتصال به میکروفون…';
+  } else if (status === 'live') {
+    if (btn) {
+      btn.innerText = '⏹️ قطع شنود صدا';
+      btn.className = 'command-button danger';
+    }
+    if (mobileBtn) {
+      mobileBtn.innerText = '⏹️ قطع شنود صدا';
+      mobileBtn.className = 'command-button danger wide';
+    }
+    if (badge) {
+      badge.style.display = 'inline-flex';
+      badge.style.borderColor = '#ef4444';
+      badge.style.color = '#fca5a5';
+      badge.style.background = 'rgba(239,68,68,0.2)';
+    }
+    if (badgeText) badgeText.innerText = '🔴 شنود زنده فعال است';
+    if (mobileBadge) {
+      mobileBadge.style.display = 'inline-flex';
+      mobileBadge.style.borderColor = '#ef4444';
+      mobileBadge.style.color = '#fca5a5';
+      mobileBadge.style.background = 'rgba(239,68,68,0.2)';
+    }
+    if (mobileBadgeText) mobileBadgeText.innerText = '🔴 شنود زنده فعال است';
+  } else if (status === 'reconnecting') {
+    if (badge) {
+      badge.style.display = 'inline-flex';
+      badge.style.borderColor = '#f97316';
+      badge.style.color = '#fdba74';
+      badge.style.background = 'rgba(249,115,22,0.15)';
+    }
+    if (badgeText) badgeText.innerText = '⚠️ قطع موقت - در حال بازیابی اتصال…';
+    if (mobileBadge) {
+      mobileBadge.style.display = 'inline-flex';
+      mobileBadge.style.borderColor = '#f97316';
+      mobileBadge.style.color = '#fdba74';
+      mobileBadge.style.background = 'rgba(249,115,22,0.15)';
+    }
+    if (mobileBadgeText) mobileBadgeText.innerText = '⚠️ قطع موقت - در حال بازیابی اتصال…';
+  }
+}
+
 function toggleAdminAudioStream() {
   if (!activeSessionId) {
     alert('لطفا ابتدا یک جلسه را برای شنود انتخاب کنید.');
@@ -587,27 +677,38 @@ function toggleAdminAudioStream() {
 
 function startAdminAudioListening() {
   isAudioListening = true;
-  const btn = document.getElementById('admin-audio-toggle-btn');
-  if (btn) {
-    btn.innerText = 'قطع شنود صدا';
-    btn.className = 'cyber-btn cyber-btn-magenta';
-  }
+  updateAudioUI('connecting');
 
   if (socket && activeSessionId) {
     socket.emit('start_audio_stream', { sessionId: activeSessionId });
   }
+
+  // تایمر بازیابی و نگه‌داشت پایداری اتصال (هر ۶ ثانیه چک می‌کند)
+  if (audioKeepAliveTimer) clearInterval(audioKeepAliveTimer);
+  audioKeepAliveTimer = setInterval(() => {
+    if (!isAudioListening || !activeSessionId) return;
+    if (!adminPeerConnection || adminPeerConnection.connectionState !== 'connected') {
+      updateAudioUI('reconnecting');
+      if (socket) {
+        socket.emit('start_audio_stream', { sessionId: activeSessionId });
+      }
+    }
+  }, 6000);
 }
 
 function stopAdminAudioListening() {
-  if (isAudioListening && socket && activeSessionId) {
-    socket.emit('stop_audio_stream', { sessionId: activeSessionId });
+  if (!confirm('آیا از قطع شنود صدای زنده این کلاس مطمئن هستید؟')) {
+    return;
   }
 
   isAudioListening = false;
-  const btn = document.getElementById('admin-audio-toggle-btn');
-  if (btn) {
-    btn.innerText = 'شروع شنود صدا';
-    btn.className = 'cyber-btn cyber-btn-cyan';
+  if (audioKeepAliveTimer) {
+    clearInterval(audioKeepAliveTimer);
+    audioKeepAliveTimer = null;
+  }
+
+  if (socket && activeSessionId) {
+    socket.emit('stop_audio_stream', { sessionId: activeSessionId });
   }
 
   if (adminPeerConnection) {
@@ -619,26 +720,60 @@ function stopAdminAudioListening() {
   if (audioPlayer) {
     audioPlayer.srcObject = null;
   }
+
+  updateAudioUI('off');
 }
 
 async function handleUserOffer(offer, userSocketId) {
   if (adminPeerConnection) {
-    adminPeerConnection.close();
+    try { adminPeerConnection.close(); } catch (_) {}
   }
 
   adminPeerConnection = new RTCPeerConnection(rtcConfig);
 
-  // دریافت track صدای کاربر
+  // پایش وضعیت اتصال و وصل مجدد خودکار در صورت قطعی
+  adminPeerConnection.onconnectionstatechange = () => {
+    if (!adminPeerConnection) return;
+    const state = adminPeerConnection.connectionState;
+    console.log('WebRTC Connection state:', state);
+    if (state === 'connected') {
+      updateAudioUI('live');
+    } else if (state === 'disconnected' || state === 'failed') {
+      if (isAudioListening) {
+        updateAudioUI('reconnecting');
+        setTimeout(() => {
+          if (isAudioListening && socket && activeSessionId) {
+            socket.emit('start_audio_stream', { sessionId: activeSessionId });
+          }
+        }, 1500);
+      }
+    }
+  };
+
+  adminPeerConnection.oniceconnectionstatechange = () => {
+    if (!adminPeerConnection) return;
+    const ice = adminPeerConnection.iceConnectionState;
+    if (ice === 'connected' || ice === 'completed') {
+      updateAudioUI('live');
+    }
+  };
+
+  // دریافت استریم صدای میکروفون کاربر
   adminPeerConnection.ontrack = (event) => {
     const audioPlayer = document.getElementById('remote-audio-player');
     if (audioPlayer && event.streams && event.streams[0]) {
       audioPlayer.srcObject = event.streams[0];
-      audioPlayer.play().catch(e => console.log('Audio autoplay prevented:', e));
+      audioPlayer.play().then(() => {
+        updateAudioUI('live');
+      }).catch(e => {
+        console.log('Audio autoplay policy note:', e);
+        updateAudioUI('live');
+      });
     }
   };
 
   adminPeerConnection.onicecandidate = (event) => {
-    if (event.candidate) {
+    if (event.candidate && socket && activeSessionId) {
       socket.emit('webrtc_ice_candidate', {
         sessionId: activeSessionId,
         candidate: event.candidate,
@@ -652,13 +787,18 @@ async function handleUserOffer(offer, userSocketId) {
     const answer = await adminPeerConnection.createAnswer();
     await adminPeerConnection.setLocalDescription(answer);
 
-    socket.emit('webrtc_answer', {
-      sessionId: activeSessionId,
-      answer: answer,
-      targetSocketId: userSocketId,
-    });
+    if (socket && activeSessionId) {
+      socket.emit('webrtc_answer', {
+        sessionId: activeSessionId,
+        answer: answer,
+        targetSocketId: userSocketId,
+      });
+    }
   } catch (err) {
     console.error('Error handling WebRTC offer on admin:', err);
+    if (isAudioListening) {
+      updateAudioUI('reconnecting');
+    }
   }
 }
 
