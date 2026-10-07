@@ -393,8 +393,9 @@
         }
 
         return `
-          <div class="product-card">
+          <div class="product-card" id="product-${p.id}">
             <div class="product-img-wrapper">
+              <span class="product-badge">طبیعی و دست‌چین</span>
               <img src="${p.image || p.imageUrl || '/golha/assets/images/rose.png'}" alt="${p.name}" loading="lazy" width="600" height="600">
             </div>
             <div class="product-info">
