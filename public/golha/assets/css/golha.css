@@ -240,7 +240,8 @@ header.golha-navbar {
   padding: 1.5rem;
 }
 
-.cart-drawer.active {
+.cart-drawer.active,
+.cart-drawer.open {
   transform: translateX(0);
 }
 

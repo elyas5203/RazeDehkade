@@ -348,13 +348,23 @@
     }
 
     function openCartDrawer() {
-      document.getElementById('cartOverlay').classList.add('active');
-      document.getElementById('cartDrawer').classList.add('active');
+      const drawer = document.getElementById('cartDrawer');
+      const overlay = document.getElementById('cartOverlay');
+      if (drawer) {
+        drawer.classList.add('active');
+        drawer.classList.add('open');
+      }
+      if (overlay) overlay.classList.add('active');
     }
 
     function closeCartDrawer() {
-      document.getElementById('cartOverlay').classList.remove('active');
-      document.getElementById('cartDrawer').classList.remove('active');
+      const drawer = document.getElementById('cartDrawer');
+      const overlay = document.getElementById('cartOverlay');
+      if (drawer) {
+        drawer.classList.remove('active');
+        drawer.classList.remove('open');
+      }
+      if (overlay) overlay.classList.remove('active');
     }
 
     document.getElementById('openCartBtn').addEventListener('click', openCartDrawer);
@@ -385,7 +395,7 @@
         return `
           <div class="product-card">
             <div class="product-img-wrapper">
-              <img src="${p.image}" alt="${p.name}" loading="lazy" width="600" height="600">
+              <img src="${p.image || p.imageUrl || '/golha/assets/images/rose.png'}" alt="${p.name}" loading="lazy" width="600" height="600">
             </div>
             <div class="product-info">
               <h3 class="product-title">${p.name}</h3>

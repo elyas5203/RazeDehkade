@@ -73,14 +73,19 @@ class Session {
    */
   static async create({ name, codeLength = 6, assigned_admin_id = null }) {
     // بررسی تعداد جلسات فعال جاری جهت رعایت سقف
-    const maxSessions = parseInt(process.env.MAX_CONCURRENT_SESSIONS || '50', 10);
-    const activeCountRes = await query("SELECT COUNT(*) as count FROM sessions WHERE status IN ('waiting', 'active')");
-    const activeCount = parseInt(activeCountRes.rows[0].count, 10);
+    const envVal = parseInt(process.env.MAX_CONCURRENT_SESSIONS, 10);
+    // اگر مقدار در .env کمتر از تعداد پیش‌فرض کلاس‌ها (۲۲) باشد یا تعریف نشده باشد، سقف را ۱۰۰ در نظر می‌گیریم
+    const maxSessions = (!isNaN(envVal) && envVal > 25) ? envVal : 100;
 
-    if (activeCount >= maxSessions) {
-      const error = new Error(`حداکثر تعداد جلسات همزمان مجاز (${maxSessions}) تکمیل شده است.`);
-      error.statusCode = 400;
-      throw error;
+    if (maxSessions > 0) {
+      const activeCountRes = await query("SELECT COUNT(*) as count FROM sessions WHERE status IN ('waiting', 'active')");
+      const activeCount = parseInt(activeCountRes.rows[0].count, 10);
+
+      if (activeCount >= maxSessions) {
+        const error = new Error(`حداکثر تعداد جلسات همزمان مجاز (${maxSessions}) تکمیل شده است.`);
+        error.statusCode = 400;
+        throw error;
+      }
     }
 
     const orderCode = await generateUniqueSessionCode(codeLength);

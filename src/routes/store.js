@@ -11,12 +11,12 @@ const Teacher = require('../models/Teacher');
 
 // محصولات جعلی فروشگاه گلها
 const PRODUCTS = [
-  { id: 1, name: 'دسته‌گل رز سرخ', price: 180000, image: '/golha/assets/images/rose.png', description: 'رزهای سرخ با برگ‌های سبز و بسته‌بندی دست‌ساز' },
-  { id: 2, name: 'ارکیده بنفش', price: 650000, image: '/golha/assets/images/orchid.png', description: 'دو شاخه ارکیده در گلدان سرامیکی روشن' },
-  { id: 3, name: 'سانسوریا بافته‌شده', price: 340000, image: '/golha/assets/images/sansevieria.png', description: 'برگ‌های کشیده در گلدان زغالی مات' },
-  { id: 4, name: 'باکس گل «شب‌بو»', price: 890000, image: '/golha/assets/images/box.png', description: 'رز، آلسترومریا و داوودی در باکس گرد' },
-  { id: 5, name: 'بنسای جنسینگ', price: 520000, image: '/golha/assets/images/bonsai.png', description: 'درختچه‌ای کوچک در گلدان دست‌ساز' },
-  { id: 6, name: 'دسته‌گل سفید', price: 420000, image: '/golha/assets/images/lily.png', description: 'ترکیب لیلیوم و مریم با روبان کتان' },
+  { id: 1, name: 'دسته‌گل رز سرخ', price: 180000, image: '/golha/assets/images/rose.png', imageUrl: '/golha/assets/images/rose.png', description: 'رزهای سرخ با برگ‌های سبز و بسته‌بندی دست‌ساز' },
+  { id: 2, name: 'ارکیده بنفش', price: 650000, image: '/golha/assets/images/orchid.png', imageUrl: '/golha/assets/images/orchid.png', description: 'دو شاخه ارکیده در گلدان سرامیکی روشن' },
+  { id: 3, name: 'سانسوریا بافته‌شده', price: 340000, image: '/golha/assets/images/sansevieria.png', imageUrl: '/golha/assets/images/sansevieria.png', description: 'برگ‌های کشیده در گلدان زغالی مات' },
+  { id: 4, name: 'باکس گل «شب‌بو»', price: 890000, image: '/golha/assets/images/box.png', imageUrl: '/golha/assets/images/box.png', description: 'رز، آلسترومریا و داوودی در باکس گرد' },
+  { id: 5, name: 'بنسای جنسینگ', price: 520000, image: '/golha/assets/images/bonsai.png', imageUrl: '/golha/assets/images/bonsai.png', description: 'درختچه‌ای کوچک در گلدان دست‌ساز' },
+  { id: 6, name: 'دسته‌گل سفید', price: 420000, image: '/golha/assets/images/lily.png', imageUrl: '/golha/assets/images/lily.png', description: 'ترکیب لیلیوم و مریم با روبان کتان' },
 ];
 
 /**

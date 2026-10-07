@@ -358,7 +358,7 @@
           <article class="product-card" id="product-${p.id}">
             <div class="product-media-wrapper">
               <span class="product-badge">طبیعی و دست‌چین</span>
-              <img src="${p.imageUrl}" alt="${p.name}" class="product-image" loading="lazy">
+              <img src="${p.image || p.imageUrl || '/golha/assets/images/rose.png'}" alt="${p.name}" class="product-image" loading="lazy">
             </div>
             <div class="product-body">
               <h3 class="product-title">${p.name}</h3>
@@ -399,13 +399,23 @@
     }
 
     function openCartDrawer() {
-      document.getElementById('cartDrawer').classList.add('open');
-      document.getElementById('cartOverlay').classList.add('active');
+      const drawer = document.getElementById('cartDrawer');
+      const overlay = document.getElementById('cartOverlay');
+      if (drawer) {
+        drawer.classList.add('active');
+        drawer.classList.add('open');
+      }
+      if (overlay) overlay.classList.add('active');
     }
 
     function closeCartDrawer() {
-      document.getElementById('cartDrawer').classList.remove('open');
-      document.getElementById('cartOverlay').classList.remove('active');
+      const drawer = document.getElementById('cartDrawer');
+      const overlay = document.getElementById('cartOverlay');
+      if (drawer) {
+        drawer.classList.remove('active');
+        drawer.classList.remove('open');
+      }
+      if (overlay) overlay.classList.remove('active');
     }
 
     document.getElementById('openCartBtn').addEventListener('click', openCartDrawer);

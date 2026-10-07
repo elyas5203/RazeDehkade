@@ -242,6 +242,11 @@ header.golha-navbar {
   width: 420px;
 }
 
+.cart-drawer.active,
+.cart-drawer.open {
+  transform: translateX(0) !important;
+}
+
 .cart-item {
   border: 0;
   border-bottom: 1px solid #354034;
