@@ -993,7 +993,8 @@
   font-family: var(--font-code);
   font-size: 11px;
   line-height: 1.65;
-  direction: rtl;
+  direction: ltr;
+  text-align: left;
   scrollbar-width: thin;
   scrollbar-color: rgba(56, 189, 248, 0.3) transparent;
   display: flex;
@@ -1008,6 +1009,7 @@
   padding: 3px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.03);
   animation: term-appear 0.2s ease-out;
+  direction: ltr;
 }
 
 @keyframes term-appear {
@@ -1037,6 +1039,8 @@
   color: #e2e8f0;
   word-break: break-word;
   flex: 1;
+  direction: ltr;
+  unicode-bidi: plaintext;
 }
 
 /* تم رنگی تگ‌های لاگ */

@@ -7,64 +7,79 @@
 (function () {
   'use strict';
 
-  // بانک لاگ‌های اختصاصی، مرموز و هیجان‌انگیز بازی کارآگاهی «راز دهکده»
+  // بانک لاگ‌های اختصاصی و فوق پیشرفته پایانه پایش سایبری و شبکه امنیتی نکسوس
   const LOG_POOL = [
-    { type: 'det', tag: 'ردگیری', text: 'دریافت سیگنال پلاک ناشناس در جاده فرعی آسیاب قدیمی دهکده (کیلومتر ۴)' },
-    { type: 'sec', tag: 'شنود', text: 'رهگیری مکالمه مشکوک در حوالی ساعت ۲۳:۴۰ — ضبط قطعه صوتی نویزدار' },
-    { type: 'sys', tag: 'مزداک', text: 'پکت ورودی کدگذاری‌شده با امضای M-Z: «فکر کردید پرونده بسته شده؟ رازها تازه شروع شدند...»' },
-    { type: 'det', tag: 'دوربین', text: 'دوربین محوطه انبار غلات: ثبت تردد سایه ناشناس در تاریکی مه' },
-    { type: 'sec', tag: 'سند ۱۱۴', text: 'بازخوانی دست‌نوشته سوخته: کلمات «کلید»، «انبار شماره ۳» و «ساعت ۲ بامداد» بازیابی شد' },
-    { type: 'net', tag: 'فرکانس', text: 'اسکن طیف رادیویی جنگل شمالی: انتشار موج رادیویی ناپایدار روی فرکانس ۴۳۳.۹۲ مگاهرتز' },
-    { type: 'sec', tag: 'هشدار', text: 'تلاش برای نفوذ ناشناس به ترمینال دستیاران کارآگاه — دیواره امنیتی فعال گردید' },
-    { type: 'det', tag: 'ردپا', text: 'تطبیق عمق ردپای گلی با کفش شماره ۴۲ در خاک باتلاقی اطراف رودخانه' },
-    { type: 'sec', tag: 'بایگانی', text: 'اسناد محرمانه عمارت خان: مهر تاریخ سند مخدوش و دستکاری شده است' },
-    { type: 'det', tag: 'دوربین ۲', text: 'بازیابی فریم‌های مخدوش از فیلم دوربین مداربسته انبار مرکزی' },
-    { type: 'det', tag: 'تحلیل', text: 'تناقض زمانی در ادعای مظنون دوم: ادعای حضور در خانه، اما دکل مخابراتی حضور در آسیاب را تایید می‌کند' },
-    { type: 'sec', tag: 'شنود بیسیم', text: '«...بسته رو جا گذاشتیم تو انبار، کسی نباید پیداش کنه...» [قطع ناگهانی سیگنال]' },
-    { type: 'sys', tag: 'رمزنگاری', text: 'آنالیز کد شش رقمی مندرج بر حاشیه مهر مومی پرونده' },
-    { type: 'det', tag: 'شواهد', text: 'کشف قطره‌های روغن چرخ خیاطی و پارچه کتان پاره روی شاخه‌های پرچین' },
-    { type: 'net', tag: 'گزارش میدان', text: 'تیم گشت دهکده: چراغ‌های خانه متروکه انتهای کوچه باغ روشن خاموش شد' },
-    { type: 'sec', tag: 'آزمایشگاه', text: 'تحلیل خاک چسبیده به لاستیک خودرو: وجود ذرات آهک مربوط به کوره قدیمی دهکده' },
-    { type: 'sec', tag: 'هشدار امنیتی', text: 'سیگنال نفوذ رادیویی: احتمال شنود مکالمات دستیاران توسط مظنونین' },
-    { type: 'det', tag: 'پایش صوتی', text: 'کیفیت صدای میکروفون اتاق دستیاران: پایدار — در حال ثبت مکالمات فرضیه‌سازی' },
-    { type: 'sys', tag: 'بازپرس', text: 'پیام فوری به دستیاران: مدارک کشف‌شده در انبار را دوباره با نقشه تطبیق دهید' },
-    { type: 'net', tag: 'سیگنال', text: 'فرستنده ناشناس به مدت ۱۲ ثانیه فعال شد و دوباره به حالت سکوت بازگشت' },
-    { type: 'sys', tag: 'ماهواره', text: 'تحلیل حرارتی مادون قرمز از پشت‌بام عمارت: حرارت غیرمعمول در لوله دودکش خاموش' },
-    { type: 'det', tag: 'شواهد', text: 'عکس اثر انگشت روی قفل زنگ‌زده آسیاب برای تطبیق به پایگاه ارسال شد' },
-    { type: 'sec', tag: 'مزداک', text: 'پیام رمزی در شبکه: «شما حتی یک قدم هم به حقیقت پشت پرده نزدیک نشدید...»' },
-    { type: 'sec', tag: 'محرمانه', text: 'پرونده سال ۱۳۸۴ دهکده از بایگانی راکد استخراج شد — ارتباط با وقایع اخیر تایید شد' },
-    { type: 'det', tag: 'ردگیری', text: 'خودروی وانت آبی‌رنگ در خروجی جاده خاکی رویت شد — اعلام به گشت منطقه‌ای' },
-    { type: 'sys', tag: 'رمزنگاری', text: 'گره‌گشایی از نخستین تناقض در سخنان متهم آغاز گردید' },
-    { type: 'det', tag: 'تحقیقات', text: 'اثر لاستیک موتورسیکلت در مسیر انشعاب آب سد ثبت گردید' },
-    { type: 'sec', tag: 'شنود', text: 'نویز مشکوک کلید و زنجیر در فایل صوتی دریافتی از اتاق سرایداری' },
-    { type: 'det', tag: 'مظنون', text: 'بررسی سابقه مالی کدخدای سابق در بانک دهکده: تراکنش نامتعارف در روز حادثه' },
-    { type: 'net', tag: 'سایبر', text: 'رهگیری آدرس IP ناشناس که در حال وارسی فایل‌های پوشه تصاویر است' },
-    { type: 'det', tag: 'دوربین ۳', text: 'فریم شماره ۷۴۲: شیء فلزی براق در دست شخص دوم دیده شد' },
-    { type: 'sec', tag: 'شواهد', text: 'گزارش پزشک قانونی: زمان تقریبی وقوع حادثه بین ساعت ۲۲:۱۵ تا ۲۲:۴۵ است' },
-    { type: 'det', tag: 'بایگانی', text: 'تطبیق دست‌خط نامه تهدیدآمیز با نمونه خط منشی عمارت' },
-    { type: 'sys', tag: 'گزارش', text: 'دستیاران کارآگاه در حال بررسی تناقضات برگه اعترافات هستند' },
-    { type: 'sec', tag: 'هشدار', text: 'پارازیت شدید روی کانال رادیویی پلیس محلی شناسایی شد' },
-    { type: 'sec', tag: 'آزمایشگاه', text: 'الیاف قرمز رنگ یافت‌شده روی دستگیره در انبار از جنس پشم مصنوعی است' },
-    { type: 'det', tag: 'نقشه', text: 'مسیر مخفی میان باغ فندق و آسیاب قدیمی روی نقشه هوایی آشکار شد' },
-    { type: 'sec', tag: 'شنود ۲', text: '«...دیگه دیره، مدارک رو فرستادن برای آزمایشگاه مرکزی...»' },
-    { type: 'sys', tag: 'مزداک', text: 'ارسال فایل ناشناس با پسوند رمزگذاری‌شده به پایانه دستیاران' },
-    { type: 'sec', tag: 'فرماندهی', text: 'وضعیت زرد در تمام پایگاه‌های بازپرسی اعلام شد — حفظ هوشیاری الزامی است' },
-    { type: 'det', tag: 'ردگیری', text: 'تلفن همراه مظنون اصلی در فاصله ۵۰۰ متری پل سنگی خاموش شد' },
-    { type: 'det', tag: 'کشف', text: 'بسته مشکوک پیچیده‌شده در گونی برنج زیر تخته‌سنگ رودخانه پیدا شد' },
-    { type: 'sys', tag: 'تحلیل داده', text: 'تطبیق زاویه سایه‌ها در عکس انبار با ساعت ادعایی متهم همخوانی ندارد' },
-    { type: 'net', tag: 'رمزنگاری', text: 'کاراکترهای مخدوش سند با نور فرابنفش در حال بازیابی دیجیتال است' },
-    { type: 'det', tag: 'اطلاعیه', text: 'پیام صوتی جدید از بازپرس کشیک آماده دریافت توسط تیم دستیاران است' },
-    { type: 'sec', tag: 'محرمانه', text: 'دسترسی سطح ۲ برای بازبینی اسناد بایگانی راکد صادر شد' },
-    { type: 'det', tag: 'میدان', text: 'گزارش گشت شبانه: دریچه زیرزمین آسیاب نیمه‌باز رها شده است' },
-    { type: 'sec', tag: 'شنود بیسیم', text: '«...کسی توی آسیاب نیست، ولی صدای موتور برق میاد...»' },
-    { type: 'det', tag: 'تطبیق', text: 'مقایسه اثر گل لاستیک‌ها با گل روی پوتین مظنون بازداشت‌شده' },
-    { type: 'sys', tag: 'مزداک', text: 'گلیچ تصویری در ترمینال: «راز دهکده زیر پای شما مدفون شده...»' },
-    { type: 'det', tag: 'پایان تحلیل', text: 'سند شماره ۴ تناقض شهادت شاهد ردیف سوم را اثبات کرد' },
-    { type: 'sec', tag: 'بازجویی', text: 'ثبت لرزش صدا و افزایش ضربان قلب مظنون هنگام شنیدن نام آسیاب' },
-    { type: 'net', tag: 'تله‌متری', text: 'سیگنال جی‌پی‌اس ساعت مچی کشف‌شده در انبار فعال گردید' },
-    { type: 'det', tag: 'سرنخ طلایی', text: 'کلید زنگ‌زده داخل چاه آب با قفل صندوقچه زیرزمین مطابقت دارد' },
-    { type: 'sys', tag: 'هشدار مزداک', text: 'تلاش برای قطع برق پایانه در ساعت ۰۰:۰۰ — منبع پشتیبان آنلاین شد' },
-    { type: 'det', tag: 'گزارش دستیاران', text: 'فرضیه نهایی گروه در حال بارگذاری روی میز بازپرس است' }
+    // --- KERNEL & SYSTEM CORE (SYS) ---
+    { type: 'sys', tag: 'KERNEL', text: 'Quantum cryptographic ring-0 initialized [entropy: 99.98%]' },
+    { type: 'sys', tag: 'SYS-CORE', text: 'Hypervisor vCPU allocation balanced: core_affinity [0-7] nominal' },
+    { type: 'sys', tag: 'DAEMON', text: 'nexus-security-daemon v4.8 active on pid 1048 [IPC ready]' },
+    { type: 'sys', tag: 'MEMORY', text: 'ASLR entropy pool replenished // zero buffer overflow vectors detected' },
+    { type: 'sys', tag: 'THREAD', text: 'Spawning concurrent telemetry worker thread #08 [stack: 64MB heap]' },
+    { type: 'sys', tag: 'BOOT', text: 'Microkernel verified boot signature: 0x9AF4E12C SHA-512 validated' },
+    { type: 'sys', tag: 'CORE', text: 'Hardware security module (HSM) state: ARMED & LOCKED' },
+    { type: 'sys', tag: 'QUANTUM', text: 'QKD (Quantum Key Distribution) entanglement matrix stabilized' },
+    { type: 'sys', tag: 'HOST', text: 'Node cluster consensus: 8/8 nodes healthy // zero drift across peers' },
+    { type: 'sys', tag: 'DAEMON', text: 'Garbage collector flushed 142 orphaned socket descriptors' },
+
+    // --- NETWORK & TRAFFIC TELEMETRY (NET) ---
+    { type: 'net', tag: 'SOCKET', text: 'WSS secure transport established: wss://relay-04.nexus.internal:8443' },
+    { type: 'net', tag: 'PACKET', text: 'Inbound stream packet inspection: 1,420 pkts/sec // jitter < 0.12ms' },
+    { type: 'net', tag: 'TLS-1.3', text: 'TLS 1.3 handshake: CipherSuite TLS_AES_256_GCM_SHA384 negotiated' },
+    { type: 'net', tag: 'ROUTING', text: 'BGP path update received from AS64512: latency optimized -4.2ms' },
+    { type: 'net', tag: 'GATEWAY', text: 'Encrypted multi-hop mesh tunnel active via relay node #714-DELTA' },
+    { type: 'net', tag: 'DNS-SEC', text: 'DNS-over-HTTPS query resolved with valid RRSIG cryptographic proof' },
+    { type: 'net', tag: 'PROXY', text: 'Reverse proxy traffic scrubbed: 0 malicious headers across 420 requests' },
+    { type: 'net', tag: 'TELEMETRY', text: 'Bandwidth utilization: 12.4 Mbps Rx / 4.8 Mbps Tx // signal SNR: 38dB' },
+    { type: 'net', tag: 'DARKNET', text: 'P2P shadow relay heartbeat: 34 active peering nodes responding' },
+    { type: 'net', tag: 'SNIFFER', text: 'Passive promiscuous packet filter online: listening on interface eno1' },
+
+    // --- CYBER DEFENSE, FIREWALL & BREACH DETECTION (SEC) ---
+    { type: 'sec', tag: 'FIREWALL', text: 'Inbound SYN flood mitigated: 185.220.101.45 dropped at perimeter' },
+    { type: 'sec', tag: 'INTRUSION', text: 'Heuristic IDS: Port sweep detected on TCP ports 22, 80, 8080 [BLOCKED]' },
+    { type: 'sec', tag: 'HONEYPOT', text: 'Brute-force auth attempt trapped in sandbox container [IP: 194.26.29.112]' },
+    { type: 'sec', tag: 'ZERO-DAY', text: 'Shadow sandbox executed unknown binary payload: 0 privilege escape' },
+    { type: 'sec', tag: 'OVERRIDE', text: 'Unauthorized sudo escalation attempt intercepted on /dev/pts/3' },
+    { type: 'sec', tag: 'WAF', text: 'SQLi & XSS payload signatures neutralized in incoming POST stream' },
+    { type: 'sec', tag: 'BREACH-DEF', text: 'Zero-trust perimeter enforced: non-whitelisted MAC address isolated' },
+    { type: 'sec', tag: 'THREAT', text: 'Known threat actor fingerprint (APT-44) checked against telemetry: Negative' },
+    { type: 'sec', tag: 'ISOLATION', text: 'Subsystem memory enclosure sealed: air-gap boundaries verified' },
+    { type: 'sec', tag: 'INTEGRITY', text: 'System binary tripwire audit: all 1,280 checksums match origin manifest' },
+
+    // --- CRYPTOGRAPHY, CIPHERS & PROBES (DET) ---
+    { type: 'det', tag: 'CIPHER', text: 'Rotating ephemeral Diffie-Hellman (ECDH) session keys on curve X25519' },
+    { type: 'det', tag: 'HASH', text: 'Merkle tree root recalculation completed: 0x8D3C4B... verified' },
+    { type: 'det', tag: 'SCANNER', text: 'Memory vulnerability probe finished: zero dangling pointers detected' },
+    { type: 'det', tag: 'CRYPTO', text: 'RSA-4096 signature verification succeeded: cert authority #NexusRoot' },
+    { type: 'det', tag: 'PROBE', text: 'Sub-millisecond probe dispatched to node sector 7: RTT = 0.88ms' },
+    { type: 'det', tag: 'DECRYPT', text: 'Deciphering classified payload chunk #104: stream integrity 100%' },
+    { type: 'det', tag: 'ENTROPY', text: 'Hardware True Random Number Generator (TRNG) pool refreshed' },
+    { type: 'det', tag: 'CIPHER', text: 'ChaCha20-Poly1305 authenticated stream active for agent comms' },
+    { type: 'det', tag: 'TRACE', text: 'Tracing anomalous packet TTL decrement across intermediate hops' },
+    { type: 'det', tag: 'AUDIT', text: 'Cryptographic keystore audited: zero expired certificates' },
+
+    // --- CYBER / HACKER PERSPECTIVE & MYSTERY SIGNALS ---
+    { type: 'sys', tag: 'MAINFRAME', text: 'Mainframe consciousness sync: latency 1.4ms // quantum coherence 99.7%' },
+    { type: 'sec', tag: 'ALERT', text: 'Deep packet inspection: malformed protocol header stripped & logged' },
+    { type: 'net', tag: 'RF-SCAN', text: 'Software Defined Radio (SDR): 433.92 MHz carrier signal detected' },
+    { type: 'det', tag: 'NEURAL-BUS', text: 'Neural processing bus: anomaly score = 0.004 [Status: NOMINAL]' },
+    { type: 'sys', tag: 'WATCHDOG', text: 'Watchdog timer reset: heartbeat received from core microservice' },
+    { type: 'sec', tag: 'EVASION', text: 'Anti-debugging hook engaged: ptrace denial activated on sandbox' },
+    { type: 'net', tag: 'UPLINK', text: 'Satellite downlink telemetry frame synchronized: sector 14-B' },
+    { type: 'det', tag: 'FINGERPRINT', text: 'TCP/IP stack OS fingerprinting: client matched authorized workstation' },
+    { type: 'sys', tag: 'CACHE', text: 'L3 cache line prefetch calibrated: zero speculative execution leaks' },
+    { type: 'sec', tag: 'DEFCON', text: 'Cyber readiness condition set to DEFCON 2: maximum perimeter vigilance' },
+
+    // --- DUAL CYBER (ENGLISH + PERSIAN TECH ACCENTS) ---
+    { type: 'sys', tag: 'سایبر', text: 'کانال ارتباطی فوق امن فعال گردید // End-to-End Encryption Armed' },
+    { type: 'sec', tag: 'دیواره آتش', text: 'تلاش برای نفوذ به پورت ۸۴۴۳ دفع شد // Inbound Exploit Blocked' },
+    { type: 'net', tag: 'پایش پورت', text: 'بررسی درگاه‌های باز: تمامی پورت‌ها در حالت Stealth قرار دارند' },
+    { type: 'det', tag: 'رمزنگاری', text: 'کلیدهای نشست کاربری به‌روزرسانی شد // Session Keys Rotated' },
+    { type: 'sys', tag: 'هسته سیستم', text: 'پایش بلادرنگ پردازنده: مصرف بهینه، وضعیت امنیتی پایدار' },
+    { type: 'sec', tag: 'هشدار امنیتی', text: 'شناسایی و خنثی‌سازی بسته‌های نفوذی فاقد امضای دیجیتال معتبر' },
+    { type: 'net', tag: 'ترافیک زنده', text: 'رهگیری بسته داده رمزنگاری‌شده در مسیر سرور مرکزی' },
+    { type: 'det', tag: 'آنالیز داده', text: 'تحلیل هگزادسیمال بسته‌های مشکوک تکمیل گردید: بدون خطر' },
+    { type: 'sys', tag: 'کوانتوم', text: 'الگوریتم رمزنگاری پساکوانتومی (Kyber-1024) با موفقیت فعال شد' },
+    { type: 'sec', tag: 'سپر دفاعی', text: 'دیواره دفاعی چندلایه نکسوس: پایش پیوسته خطوط ارتباطی دستیاران' }
   ];
 
   class LiveTerminal {
@@ -87,8 +102,8 @@
       // شروع استریم با تاخیر اولیه ملایم
       this.addLog({
         type: 'sys',
-        tag: 'INIT',
-        text: '*** سامانه پایش امنیتی نکسوس متصل گردید. دریافت لاگ‌های زنده... ***'
+        tag: 'BOOT',
+        text: '*** NEXUS SECURITY SUBSYSTEM ONLINE // QUANTUM ENCRYPTION ACTIVE ***'
       });
 
       this.scheduleNextLog();
