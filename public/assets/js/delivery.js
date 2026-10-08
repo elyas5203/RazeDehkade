@@ -12,6 +12,13 @@
   const IS_DEV_MODE = true; 
   const BLACKOUT_DURATION_MS = IS_DEV_MODE ? (15 * 1000) : (5 * 60 * 1000);
 
+  // بررسی ورود کاربر از طریق فرم لاگین (بدون سفارش جدید گل)
+  const urlParams = new URLSearchParams(window.location.search);
+  const isFromLogin = urlParams.has('from') || urlParams.get('mode') === 'intro';
+  // در حالت لاگین، معطلی ۳۰ ثانیه‌ای پیک و معطلی ۵ دقیقه‌ای تحویل فیزیکی بسته حذف می‌شود.
+  // یک خاموشی ناگهانی تعلیقی (۲ ثانیه) داده شده و سپس اینتروی سایبری آغاز می‌گردد
+  const LOGIN_BLACKOUT_MS = 2000;
+
   const numberFormat = new Intl.NumberFormat('fa-IR');
 
   let order;
@@ -84,6 +91,9 @@
   ['click', 'touchstart', 'keydown', 'pointerdown'].forEach(evt => {
     window.addEventListener(evt, () => {
       // Unmute trigger
+      if (currentIntroAudio && currentIntroAudio.paused) {
+        currentIntroAudio.play().catch(() => {});
+      }
     }, { once: true });
   });
 
@@ -149,10 +159,12 @@
     }, 600);
   }
 
-  function triggerCyberTransformation() {
+  function triggerCyberTransformation(customBlackoutMs) {
     if (!cyberOverlay) return;
 
-    // ۱. فاز اول: بلک‌اوت کامل (۱۵ ثانیه در حالت توسعه | ۵ دقیقه در حالت پروداکشن)
+    const actualBlackoutDuration = typeof customBlackoutMs === 'number' ? customBlackoutMs : BLACKOUT_DURATION_MS;
+
+    // ۱. فاز اول: بلک‌اوت کامل (۱۵ ثانیه در حالت توسعه | ۵ دقیقه در حالت پروداکشن | ۲ ثانیه در حالت لاگین)
     cyberOverlay.classList.remove('active-cyber');
     cyberOverlay.classList.add('active-blackout');
 
@@ -192,7 +204,7 @@
       // سناریوی ترنزیشن ۱۵ ثانیه‌ای خط‌به‌خط
       // T = 0.5s
       setTimeout(() => {
-        addTerminalLine('> PROTOCOL OVERRIDE DETECTED...', false, true);
+        addTerminalLine(isFromLogin ? '> RE-AUTHENTICATION OVERRIDE DETECTED...' : '> PROTOCOL OVERRIDE DETECTED...', false, true);
         updateProgress(10, 'INTERCEPTING SIGNAL...');
       }, 500);
 
@@ -243,7 +255,7 @@
         doFinalWarpRedirect();
       }, 14500);
 
-    }, BLACKOUT_DURATION_MS);
+    }, actualBlackoutDuration);
   }
 
   // تحویل سفارش
@@ -290,8 +302,31 @@
     }
   }
 
-  update();
-  timerId = setInterval(update, 100);
+  function startFlow() {
+    if (isFromLogin) {
+      isArrived = true;
+      document.body.dataset.phase = 'intro';
+      const stage = document.querySelector('.delivery-stage');
+      if (stage) stage.style.display = 'none';
+      const brand = document.querySelector('.delivery-brand');
+      if (brand) brand.style.display = 'none';
+      const footer = document.querySelector('.delivery-footer');
+      if (footer) footer.style.display = 'none';
+
+      // شروع فوری خاموشی تعلیقی (۲ ثانیه) و سپس سکانس اینترو سایبری ترنسفورماتور
+      triggerCyberTransformation(LOGIN_BLACKOUT_MS);
+      return;
+    }
+
+    update();
+    timerId = setInterval(update, 100);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startFlow);
+  } else {
+    startFlow();
+  }
 
   window.addEventListener('pagehide', () => {
     if (timerId) clearInterval(timerId);
