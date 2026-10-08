@@ -512,25 +512,6 @@ body[data-phase="arrived"] .step-item:nth-child(5) .step-dot {
   color: rgba(255, 255, 255, 0.6);
 }
 
-.cyber-skip-btn {
-  background: rgba(0, 240, 255, 0.08);
-  border: 1px solid rgba(0, 240, 255, 0.4);
-  color: #00f0ff;
-  font-family: 'JetBrains Mono', 'Vazirmatn', monospace;
-  font-size: 11px;
-  padding: 5px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  letter-spacing: 1px;
-}
-
-.cyber-skip-btn:hover {
-  background: rgba(0, 240, 255, 0.22);
-  box-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
-  transform: translateY(-1px);
-}
-
 /* Sci-Fi Corner Brackets */
 .cyber-corner-bracket {
   position: absolute;
