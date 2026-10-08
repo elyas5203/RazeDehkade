@@ -40,6 +40,15 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
+// مسیرهای مستقیم و میانبر برای صفحات فروشگاه و پیگیری سفارش
+app.get(['/golha', '/golha/'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'golha', 'index.html'));
+});
+
+app.get(['/order-status', '/order_status', '/golha/order-status', '/golha/order_status'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'golha', 'order-status.html'));
+});
+
 // مسیرهای API
 const authRoutes = require('./src/routes/auth');
 const sessionRoutes = require('./src/routes/sessions');

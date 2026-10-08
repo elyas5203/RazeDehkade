@@ -1,6 +1,11 @@
 'use strict';
 
 (() => {
+  const TOTAL_DURATION_MS = 30000; // 30 ثانیه برای تحویل
+  const CIRCLE_CIRCUMFERENCE = 565.48; // 2 * PI * 90
+  const BLACKOUT_DURATION_MS = 20 * 1000; // مدت زمان بلک‌اوت (۲۰ ثانیه در حالت توسعه طبق دستور کاربر)
+  const numberFormat = new Intl.NumberFormat('fa-IR');
+
   let order;
   try { 
     order = JSON.parse(localStorage.getItem('golha_last_order') || 'null'); 
@@ -9,28 +14,22 @@
   // مبدا زمانی شمارش معکوس
   let startedAt = Date.now();
   if (order && Number.isFinite(Number(order.countdownStartedAt))) {
-    startedAt = Number(order.countdownStartedAt);
-  }
-
-  // اگر زمان قبلی منقضی شده یا وجود ندارد، زمان جدید ست کن تا شمارش معکوس از ابتدا اجرا شود
-  if (Date.now() - startedAt >= TOTAL_DURATION_MS) {
+    const elapsed = Date.now() - Number(order.countdownStartedAt);
+    if (elapsed < TOTAL_DURATION_MS) {
+      startedAt = Number(order.countdownStartedAt);
+    } else {
+      // اگر قبلاً منقضی شده، ریست کن تا شمارش معکوس مجدداً از ۳۰ ثانیه برای تست کاربر شروع شود
+      startedAt = Date.now();
+      order.countdownStartedAt = startedAt;
+      try { localStorage.setItem('golha_last_order', JSON.stringify(order)); } catch (_) {}
+    }
+  } else {
     startedAt = Date.now();
     if (order) {
       order.countdownStartedAt = startedAt;
-      localStorage.setItem('golha_last_order', JSON.stringify(order));
+      try { localStorage.setItem('golha_last_order', JSON.stringify(order)); } catch (_) {}
     }
-  } else if (order && !order.countdownStartedAt) {
-    order.countdownStartedAt = startedAt;
-    localStorage.setItem('golha_last_order', JSON.stringify(order));
   }
-
-  const numberFormat = new Intl.NumberFormat('fa-IR');
-  const TOTAL_DURATION_MS = 30000; // 30 ثانیه برای تحویل
-  const CIRCLE_CIRCUMFERENCE = 565.48; // 2 * PI * 90
-
-  // مدت زمان بلک‌اوت (۲۰ ثانیه در حالت توسعه طبق دستور کاربر)
-  // در حالت نهایی ۵ دقیقه خواهد بود: 5 * 60 * 1000
-  const BLACKOUT_DURATION_MS = 20 * 1000;
 
   let isArrived = false;
   let timerId = null;
