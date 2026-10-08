@@ -34,11 +34,12 @@ const GROUPS_CONFIG = [
   { name: 'عطاران و نجفیان و شیخ السلامی', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } },
   { name: 'قانع منش و عطاران', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } },
   { name: 'زادسر و مجتبوی', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } },
-  { name: 'سعادتمند و شعبانی', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } }
+  { name: 'سعادتمند و شعبانی', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } },
+  { name: 'حکیم زاده', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } }
 ];
 
 async function seedClasses() {
-  console.log('🌱 شروع ایجاد دسته‌ای ۲۲ گروه کلاس‌های چهارم، پنجم و ششم...');
+  console.log('🌱 شروع ایجاد دسته‌ای ۲۳ گروه کلاس‌های چهارم، پنجم و ششم...');
   try {
     await runMigrations();
 

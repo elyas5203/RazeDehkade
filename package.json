@@ -9,6 +9,8 @@
     "migrate": "node src/db/migrate.js",
     "seed": "node src/db/seed-classes.js",
     "clean-chat": "node src/db/reset-chats.js",
+    "codes": "node scripts/export-codes.js",
+    "export-codes": "node scripts/export-codes.js",
     "test": "node --test --test-concurrency=1 tests/**/*.test.js"
   },
   "keywords": [

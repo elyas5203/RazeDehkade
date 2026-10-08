@@ -11,4 +11,5 @@ public/uploads/*
 # سیستم فایل‌ها
 Thumbs.db
 .DS_Store
+session-codes.txt
 
