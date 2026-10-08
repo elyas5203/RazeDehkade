@@ -100,9 +100,18 @@ class VoiceRecorder {
       this.recordedBlob = null;
       this.secondsRecorded = 0;
 
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
-        ? 'audio/webm;codecs=opus'
-        : (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus') ? 'audio/ogg;codecs=opus' : '');
+      let mimeType = '';
+      if (typeof MediaRecorder.isTypeSupported === 'function') {
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+          mimeType = 'audio/ogg;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          mimeType = 'audio/webm';
+        }
+      }
 
       this.mediaRecorder = mimeType
         ? new MediaRecorder(this.stream, { mimeType })
@@ -115,7 +124,8 @@ class VoiceRecorder {
       };
 
       this.mediaRecorder.onstop = () => {
-        this.recordedBlob = new Blob(this.audioChunks, { type: this.mediaRecorder.mimeType || 'audio/webm' });
+        const type = this.mediaRecorder.mimeType || (this.audioChunks[0] && this.audioChunks[0].type) || 'audio/webm';
+        this.recordedBlob = new Blob(this.audioChunks, { type });
         this.showPreviewState();
       };
 
@@ -160,11 +170,45 @@ class VoiceRecorder {
   stopRecording() {
     this.stopTimer();
     if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
-      this.mediaRecorder.stop();
+      try { this.mediaRecorder.requestData(); } catch (_) {}
+      try { this.mediaRecorder.stop(); } catch (_) {}
     }
     if (this.stream) {
-      this.stream.getTracks().forEach(track => track.stop());
+      try { this.stream.getTracks().forEach(track => track.stop()); } catch (_) {}
     }
+  }
+
+  stopRecordingAsync() {
+    return new Promise((resolve) => {
+      this.stopTimer();
+
+      if (!this.mediaRecorder || this.mediaRecorder.state !== 'recording') {
+        if (this.stream) {
+          try { this.stream.getTracks().forEach(track => track.stop()); } catch (_) {}
+        }
+        return resolve(this.recordedBlob);
+      }
+
+      this.mediaRecorder.onstop = () => {
+        const type = this.mediaRecorder.mimeType || (this.audioChunks[0] && this.audioChunks[0].type) || 'audio/webm';
+        this.recordedBlob = new Blob(this.audioChunks, { type });
+        this.showPreviewState();
+        if (this.stream) {
+          try { this.stream.getTracks().forEach(track => track.stop()); } catch (_) {}
+        }
+        resolve(this.recordedBlob);
+      };
+
+      try {
+        if (typeof this.mediaRecorder.requestData === 'function') {
+          this.mediaRecorder.requestData();
+        }
+        this.mediaRecorder.stop();
+      } catch (err) {
+        console.error('Error stopping recorder async:', err);
+        resolve(this.recordedBlob);
+      }
+    });
   }
 
   showRecordingState() {
@@ -226,76 +270,100 @@ class VoiceRecorder {
   }
 
   async sendRecording() {
-    if (!this.recordedBlob) {
-      this.stopRecording();
-      // کمی تاخیر برای پردازش Blob نهایی
-      await new Promise(r => setTimeout(r, 200));
-    }
-
-    if (!this.recordedBlob || this.recordedBlob.size === 0) {
-      this.cancelRecording();
-      return;
-    }
-
     if (this.previewAudio) {
-      this.previewAudio.pause();
+      try { this.previewAudio.pause(); } catch (_) {}
     }
 
-    const token = sessionStorage.getItem('userToken');
+    const token = sessionStorage.getItem('userToken') || sessionStorage.getItem('adminToken');
     const sessionData = JSON.parse(sessionStorage.getItem('userSession') || '{}');
-    if (!token || !sessionData.id) {
-      alert('اتصال نامعتبر است.');
+    const sessionId = sessionData.id || window.activeSessionId || sessionStorage.getItem('activeAdminSessionId');
+
+    if (!token || !sessionId) {
+      alert('اتصال جلسه نامعتبر است. لطفاً صفحه را بازنشانی فرمایید.');
       return;
     }
-
-    const ext = this.recordedBlob.type.includes('ogg') ? 'ogg' : 'webm';
-    const filename = `voice-user-${Date.now()}.${ext}`;
-    const file = new File([this.recordedBlob], filename, { type: this.recordedBlob.type });
-
-    const formData = new FormData();
-    formData.append('file', file);
 
     const sendBtn = document.getElementById('voice-send-btn');
-    sendBtn.disabled = true;
-    sendBtn.innerHTML = '<span>در حال ارسال…</span>';
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.innerHTML = '<span>در حال ارسال…</span>';
+    }
 
     try {
+      // اگر هنوز ضبط در حال انجام است، متوقف کن و منتظر تکمیل کامل ساخت Blob بمان
+      if (!this.recordedBlob || this.recordedBlob.size === 0) {
+        await this.stopRecordingAsync();
+      }
+
+      if (!this.recordedBlob || this.recordedBlob.size === 0) {
+        throw new Error('فایل صوتی ضبط نشد یا بسیار کوتاه است.');
+      }
+
+      let ext = 'webm';
+      const blobType = (this.recordedBlob.type || '').toLowerCase();
+      if (blobType.includes('ogg')) {
+        ext = 'ogg';
+      } else if (blobType.includes('mp4') || blobType.includes('m4a')) {
+        ext = 'm4a';
+      } else if (blobType.includes('aac')) {
+        ext = 'aac';
+      } else if (blobType.includes('wav')) {
+        ext = 'wav';
+      } else if (blobType.includes('mp3') || blobType.includes('mpeg')) {
+        ext = 'mp3';
+      }
+
+      const filename = `voice-user-${Date.now()}.${ext}`;
+      const formData = new FormData();
+      // استفاده مستقیم از Blob جهت سازگاری کامل با تمامی مرورگرها (به‌ویژه سافاری iOS)
+      formData.append('file', this.recordedBlob, filename);
+
       const uploadRes = await fetch('/api/upload', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
       });
 
-      const uploadData = await uploadRes.json();
-      if (!uploadRes.ok || !uploadData.success) {
-        throw new Error(uploadData.message || 'خطا در آپلود ویس');
+      if (!uploadRes.ok) {
+        const errJson = await uploadRes.json().catch(() => ({}));
+        throw new Error(errJson.message || `خطای سرور (${uploadRes.status}) هنگام آپلود ویس`);
       }
+
+      const uploadData = await uploadRes.json();
+      if (!uploadData.success || !uploadData.data || !uploadData.data.fileUrl) {
+        throw new Error((uploadData && uploadData.message) || 'خطا در دریافت نشانی ویس از سرور');
+      }
+
+      const fileUrl = uploadData.data.fileUrl;
+      const originalName = uploadData.data.fileName || uploadData.data.originalName || filename;
 
       // ارسال رویداد سوکت با نوع user_voice
       if (typeof window.sendUserVoiceMessage === 'function') {
-        window.sendUserVoiceMessage(uploadData.data.fileUrl, uploadData.data.originalName || filename);
-      } else if (typeof window.socket !== 'undefined' && window.socket) {
+        window.sendUserVoiceMessage(fileUrl, originalName);
+      } else if (window.socket && window.socket.connected) {
         window.socket.emit('send_message', {
-          sessionId: sessionData.id,
+          sessionId: sessionId,
           content: 'پیام صوتی',
           messageType: 'user_voice',
-          fileUrl: uploadData.data.fileUrl,
-          fileName: uploadData.data.originalName || filename,
+          fileUrl: fileUrl,
+          fileName: originalName,
         });
       } else {
-        console.error('Socket instance not found on window to send voice.');
+        throw new Error('ارتباط سوکت با سرور برقرار نیست.');
       }
 
       this.cancelRecording();
     } catch (err) {
       console.error('Error sending voice:', err);
-      alert('ارسال ویس با خطا مواجه شد. لطفاً دوباره امتحان کنید.');
+      alert(err.message || 'ارسال ویس با خطا مواجه شد. لطفاً دوباره امتحان کنید.');
     } finally {
-      sendBtn.disabled = false;
-      sendBtn.innerHTML = `
-        <svg class="icon" viewBox="0 0 24 24"><path d="m20 4-6 16-4-6-6-4 16-6ZM10 14 20 4"/></svg>
-        <span>ارسال</span>
-      `;
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = `
+          <svg class="icon" viewBox="0 0 24 24"><path d="m20 4-6 16-4-6-6-4 16-6ZM10 14 20 4"/></svg>
+          <span>ارسال</span>
+        `;
+      }
     }
   }
 }

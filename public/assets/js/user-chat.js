@@ -217,6 +217,10 @@ function initSocket() {
       messageType: 'user_voice',
       fileUrl: fileUrl,
       fileName: fileName || 'voice.webm',
+    }, (ack) => {
+      if (ack && !ack.success) {
+        alert(ack.message || 'خطا در ارسال پیام صوتی به مرکز فرماندهی');
+      }
     });
   };
 

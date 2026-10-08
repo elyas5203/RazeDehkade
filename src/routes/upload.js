@@ -30,13 +30,13 @@ const storage = multer.diskStorage({
 
 // فیلتر فایل‌های مجاز
 const fileFilter = (req, file, cb) => {
-  const allowedExtensions = /^(jpeg|jpg|png|gif|webp|mp3|wav|ogg|m4a|webm|pdf|doc|docx|zip|rar|txt)$/;
+  const allowedExtensions = /^(jpeg|jpg|png|gif|webp|mp3|wav|ogg|m4a|webm|mp4|aac|pdf|doc|docx|zip|rar|txt)$/i;
   const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
 
   if (allowedExtensions.test(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('پسوند فایل انتخابی مجاز نمی‌باشد.'));
+    cb(new Error(`پسوند فایل انتخابی مجاز نمی‌باشد (${ext}).`));
   }
 };
 
@@ -73,7 +73,7 @@ router.post('/', authenticateToken, (req, res) => {
     let messageType = 'file';
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
       messageType = 'image';
-    } else if (['mp3', 'wav', 'ogg', 'm4a', 'webm'].includes(ext)) {
+    } else if (['mp3', 'wav', 'ogg', 'm4a', 'webm', 'mp4', 'aac'].includes(ext)) {
       messageType = 'voice';
     }
 
