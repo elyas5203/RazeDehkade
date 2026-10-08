@@ -1,6 +1,4 @@
-/* public/assets/css/admin.css - استایل‌های کامل پنل مدیریت ادمین و اتاق فرمان */
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap');
-@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+@import url('local-fonts.css');
 
 /* Base Command Page Theme */
 .command-page {
@@ -174,6 +172,36 @@
   padding: 2px 6px;
   border-radius: 3px;
   font-size: 11px;
+}
+
+/* وضعیت آنلاین و لایو بودن جلسات */
+.presence-indicator {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.presence-indicator.online {
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981, 0 0 12px rgba(16, 185, 129, 0.5);
+  animation: presence-pulse 1.6s infinite alternate;
+}
+
+.presence-indicator.offline {
+  background: #64748b;
+  opacity: 0.45;
+}
+
+@keyframes presence-pulse {
+  0% { transform: scale(0.88); opacity: 0.8; }
+  100% { transform: scale(1.15); opacity: 1; }
+}
+
+.command-page .session-card.is-online {
+  border-right: 3px solid #10b981;
 }
 
 .command-page .messages-list {

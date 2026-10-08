@@ -33,6 +33,7 @@ let historyLoadedFor = null;
 let adminPeerConnection = null;
 let isAudioListening = false;
 let audioKeepAliveTimer = null;
+const onlineSessionsSet = new Set();
 const rtcConfig = {
   iceServers: [
     { urls: 'stun:stun.cloudflare.com:3478' },
@@ -131,6 +132,37 @@ function initAdminSocket() {
     }
   });
 
+  // دریافت لیست تمام جلسات آنلاین در بدو اتصال ادمین
+  socket.on('online_sessions_list', (data) => {
+    if (data && Array.isArray(data.onlineSessions)) {
+      onlineSessionsSet.clear();
+      data.onlineSessions.forEach(id => onlineSessionsSet.add(Number(id)));
+      renderSessionsSidebar(Object.values(sessionsMap));
+      updateActiveHeader();
+    }
+  });
+
+  // تغییر وضعیت لحظه‌ای آنلاین/آفلاین شدن یک جلسه
+  socket.on('session_presence_changed', (data) => {
+    if (!data) return;
+    const sId = Number(data.sessionId);
+    if (data.isOnline) {
+      onlineSessionsSet.add(sId);
+    } else {
+      onlineSessionsSet.delete(sId);
+    }
+    renderSessionsSidebar(Object.values(sessionsMap));
+    if (Number(activeSessionId) === sId) {
+      updateActiveHeader();
+    }
+  });
+
+  // دریافت چانک‌های صوتی استریم کاربر از طریق سوکت (فال‌بک مطمئن WebRTC)
+  socket.on('admin_audio_stream_chunk', (data) => {
+    if (!isAudioListening || !data || Number(data.sessionId) !== Number(activeSessionId)) return;
+    playSocketAudioChunk(data.chunk, data.mimeType);
+  });
+
   // دریافت Offer لایو از سمت کاربر جلسه
   socket.on('webrtc_offer', async (data) => {
     if (data.sessionId === activeSessionId && isAudioListening) {
@@ -227,17 +259,23 @@ function renderSessionsSidebar(sessions) {
 
   sortedSessions.forEach(s => {
     sessionsMap[s.id] = s;
+    const isOnline = onlineSessionsSet.has(Number(s.id));
     const item = document.createElement('div');
-    item.className = `session-card ${s.id === activeSessionId ? 'active' : ''}`;
+    item.className = `session-card ${s.id === activeSessionId ? 'active' : ''} ${isOnline ? 'is-online' : ''}`;
     item.onclick = () => switchSession(s.id);
 
     item.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:13px; font-weight:bold;">${escapeHtml(s.name)}</span>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span class="presence-indicator ${isOnline ? 'online' : 'offline'}" title="${isOnline ? 'کاربر هم‌اکنون آنلاین و حاضر در اتاق است' : 'کاربر آفلاین است'}"></span>
+          <span style="font-size:13px; font-weight:bold;">${escapeHtml(s.name)}</span>
+        </div>
         <span class="session-code-badge">${s.code}</span>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
-        <small style="color:var(--text-muted); font-size:11px;">وضعیت: ${s.status}</small>
+        <small style="color:${isOnline ? 'var(--emerald, #10b981)' : 'var(--text-muted)'}; font-size:11px; font-weight:${isOnline ? '600' : '400'};">
+          ${isOnline ? '🟢 لایو و آنلاین' : 'وضعیت: ' + s.status}
+        </small>
         ${s.unread_count > 0 ? `<span class="unread-badge">${s.unread_count}</span>` : ''}
       </div>
     `;
@@ -301,7 +339,9 @@ async function switchSession(nextSessionId) {
 function updateActiveHeader() {
   const s = sessionsMap[activeSessionId];
   if (s) {
-    const titleText = `${s.name} (کد: ${s.code})`;
+    const isOnline = onlineSessionsSet.has(Number(s.id));
+    const statusText = isOnline ? '🟢 آنلاین (حاضر در اتاق تحقیقات)' : '⚪ آفلاین';
+    const titleText = `${s.name} (کد: ${s.code}) - ${statusText}`;
     document.getElementById('active-session-title').innerText = titleText;
     const mobileHeaderEl = document.getElementById('mobile-chat-session-title');
     if (mobileHeaderEl) mobileHeaderEl.innerText = titleText;
@@ -573,6 +613,20 @@ async function promptNewCanned() {
     }
   } catch (err) {
     console.error('Error creating canned response:', err);
+  }
+}
+
+function playSocketAudioChunk(chunkData, mimeType) {
+  try {
+    const audio = new Audio();
+    audio.src = String(chunkData).startsWith('data:') ? chunkData : `data:${mimeType || 'audio/webm'};base64,${chunkData}`;
+    audio.play().then(() => {
+      updateAudioUI('live');
+    }).catch(e => {
+      console.log('Audio chunk autoplay policy note:', e);
+    });
+  } catch (err) {
+    console.error('Socket audio chunk error:', err);
   }
 }
 

@@ -18,6 +18,41 @@ function setupSocketIO(io) {
   const adminSenderTypes = new Set(['admin', 'system', 'hacker']);
   const messageTypes = new Set(['text', 'image', 'voice', 'video', 'file', 'user_voice']);
   const recentMessagesMap = new Map();
+  // نگاشت بلادرنگ کاربران آنلاین بر اساس شناسه جلسه (sessionId -> Set of socket.ids)
+  const sessionOnlineUsers = new Map();
+
+  function trackUserOnline(sessionId, socketId) {
+    const sId = Number(sessionId);
+    if (!sId) return;
+    if (!sessionOnlineUsers.has(sId)) {
+      sessionOnlineUsers.set(sId, new Set());
+    }
+    const set = sessionOnlineUsers.get(sId);
+    const wasOnline = set.size > 0;
+    set.add(socketId);
+    if (!wasOnline) {
+      io.to('admins').emit('session_presence_changed', {
+        sessionId: sId,
+        isOnline: true,
+        onlineCount: set.size,
+      });
+    }
+  }
+
+  function trackUserOffline(sessionId, socketId) {
+    const sId = Number(sessionId);
+    if (!sId || !sessionOnlineUsers.has(sId)) return;
+    const set = sessionOnlineUsers.get(sId);
+    set.delete(socketId);
+    if (set.size === 0) {
+      sessionOnlineUsers.delete(sId);
+      io.to('admins').emit('session_presence_changed', {
+        sessionId: sId,
+        isOnline: false,
+        onlineCount: 0,
+      });
+    }
+  }
 
   function cleanOldRecentMessages() {
     const now = Date.now();
@@ -71,15 +106,45 @@ function setupSocketIO(io) {
 
   io.on('connection', (socket) => {
     const user = socket.user;
-    if (user.role === 'admin') socket.join('admins');
+    if (user.role === 'admin') {
+      socket.join('admins');
+      const onlineList = [];
+      for (const [sId, set] of sessionOnlineUsers.entries()) {
+        if (set.size > 0) onlineList.push(sId);
+      }
+      socket.emit('online_sessions_list', { onlineSessions: onlineList });
+    }
     console.log(`🔌 سوکت متصل شد: Socket ID = ${socket.id} | نقش = ${user.role} | کاربر/ادمین ID = ${user.id || user.sessionId}`);
 
-    // اگر کاربر عادی باشد، به‌طور خودکار به روم جلسه خودش جوین شود
+    // اگر کاربر عادی باشد، به‌طور خودکار به روم جلسه خودش جوین شده و آنلاین بودن آن ثبت شود
     if (user.role === 'user' && user.sessionId) {
       const roomName = `session_${user.sessionId}`;
       socket.join(roomName);
+      trackUserOnline(Number(user.sessionId), socket.id);
       console.log(`📱 کاربر جلسه ${user.sessionId} وارد روم ${roomName} شد.`);
     }
+
+    // درخواست دریافت لیست جلسات آنلاین توسط ادمین
+    socket.on('get_online_sessions', () => {
+      if (user.role !== 'admin') return;
+      const onlineList = [];
+      for (const [sId, set] of sessionOnlineUsers.entries()) {
+        if (set.size > 0) onlineList.push(sId);
+      }
+      socket.emit('online_sessions_list', { onlineSessions: onlineList });
+    });
+
+    // فال‌بک استریم صوتی: رله مستقیم چانک‌های صوتی از طریق سوکت به ادمین (مقاوم در برابر فایروال و NAT)
+    socket.on('audio_stream_chunk', (data) => {
+      if (user.role !== 'user') return;
+      const sessionId = authorizedSessionId(user, data && data.sessionId);
+      if (!sessionId || !data || !data.chunk) return;
+      io.to('admins').emit('admin_audio_stream_chunk', {
+        sessionId: Number(sessionId),
+        chunk: data.chunk,
+        mimeType: data.mimeType || 'audio/webm',
+      });
+    });
 
     /**
      * رویداد join_session: برای جوین شدن به روم جلسه
@@ -541,6 +606,9 @@ function setupSocketIO(io) {
     });
 
     socket.on('disconnect', () => {
+      if (user.role === 'user' && user.sessionId) {
+        trackUserOffline(user.sessionId, socket.id);
+      }
       console.log(`🔌 سوکت قطع شد: Socket ID = ${socket.id}`);
     });
   });

