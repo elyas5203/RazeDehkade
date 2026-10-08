@@ -193,52 +193,52 @@
         if (progLabel && labelText) progLabel.textContent = labelText;
       }
 
-      // سناریوی ترنزیشن ۱۵ ثانیه‌ای خط‌به‌خط منطبق بر داستان بازی راز دهکده
+      // سناریوی ترنزیشن ۱۵ ثانیه‌ای سایبری خالص و نفوذ به شبکه امنیتی
       // T = 0.5s
       setTimeout(() => {
-        addTerminalLine('> [تأیید امنیتی] انهدام پوشش غیرنظامی (سفارش گل) با موفقیت انجام شد.', false, true);
-        updateProgress(14, 'قطع ارتباط با فروشگاه شهری...');
+        addTerminalLine('> [هشدار امنیتی] نفوذ به لایه شبکه شناسایی شد — دور زدن فایروال سرور...', false, true);
+        updateProgress(15, 'شکستن دیواره آتشین (FIREWALL BYPASS)...');
       }, 500);
 
       // T = 2.2s
       setTimeout(() => {
-        addTerminalLine('> بسته فیزیکی مدارک تحویل تیم کارآگاهی در محل گردید.', true);
-        if (phaseBadge) phaseBadge.textContent = 'مرحله اول // رهگیری فرکانس مخابراتی دهکده';
-        updateProgress(30, 'استخراج کدهای رمزنگاری روی بسته...');
+        addTerminalLine('> استخراج بسته‌های داده و شنود فرکانس رمزنگاری‌شده TLS-4096...', true);
+        if (phaseBadge) phaseBadge.textContent = 'مرحله ۰۱ // رهگیری سیگنال و تزریق اکسپلویت';
+        updateProgress(35, 'شکستن کلیدهای رمزنگاری RSA/TLS...');
       }, 2200);
 
       // T = 4.8s
       setTimeout(() => {
-        addTerminalLine('> شناسایی شواهد میدانی: وانت آبی‌رنگ، انشعاب آب، تراکنش‌های مشکوک...', false);
-        addTerminalLine('> رمزگشایی لایه‌های حفاظتی پرونده شماره ۷۱۴...', false);
-        if (subTitle) subTitle.textContent = 'پایگاه اسناد محرمانه // رصد زنده متهمان و حوادث دهکده';
-        updateProgress(52, 'نفوذ به آرشیو سری پرونده قتل دهکده...');
+        addTerminalLine('> تزریق کد نفوذ در هسته شبکه // پورت ارتباطی ۷۱۴ تسخیر گردید.', false);
+        addTerminalLine('> ارتباط ماهواره‌ای تثبیت شد — دریافت تلمتری و بسته‌های محرمانه...', true);
+        if (subTitle) subTitle.textContent = 'نفوذ به هسته پایگاه داده مرکزی // پورت ۷۱۴ فعال شد';
+        updateProgress(58, 'استخراج تلمتری شبکه و کنترل پورت‌ها...');
       }, 4800);
 
       // T = 7.5s
       setTimeout(() => {
-        if (phaseBadge) phaseBadge.textContent = 'مرحله دوم // اعتبارسنجی مأمورین پرونده';
-        if (mainTitle) mainTitle.textContent = 'پرونده جنایی: راز دهکده';
-        addTerminalLine('> احراز هویت کارآگاهان ویژه پرونده تأیید شد.', true);
-        addTerminalLine('> پایگاه اسناد طبقه‌بندی شده آماده دسترسی است.', false, true);
-        updateProgress(72, 'تثبیت اتصال امن با سرور فرماندهی...');
+        if (phaseBadge) phaseBadge.textContent = 'مرحله ۰۲ // آزادسازی دسترسی ریشه (ROOT PRIVILEGES)';
+        if (mainTitle) mainTitle.textContent = 'دسترسی سایبری تأیید شد';
+        addTerminalLine('> سطح دسترسی ادمین/ریشه (ROOT) برای ترمینال صادر گردید.', true);
+        addTerminalLine('> پروتکل رمزنگاری نظامی فعال — بایگانی داده‌ها در دسترس است.', false, true);
+        updateProgress(78, 'آزادسازی دسترسی ریشه و پایگاه داده...');
       }, 7500);
 
       // T = 10.2s
       setTimeout(() => {
-        if (phaseBadge) phaseBadge.textContent = 'مرحله سوم // فعال‌سازی درگاه ورود کد محرمانه';
-        addTerminalLine('> توجه: کد ۶ رقمی درج‌شده روی بسته فیزیکی الزامی است.', true, true);
-        addTerminalLine('> اتصال به شبکه شنود و ترمینال چت کارآگاهان برقرار شد.', false);
-        updateProgress(90, 'آماده‌سازی پورتال ورودی کارآگاهان...');
+        if (phaseBadge) phaseBadge.textContent = 'مرحله ۰۳ // برقراری لینک مستقیم و درگاه ورودی';
+        addTerminalLine('> کانال امن شنود و تبادل داده با موفقیت پیوند خورد.', true);
+        addTerminalLine('> راه‌اندازی درگاه احراز هویت روی پورت اختصاصی کارآگاهان...', false);
+        updateProgress(92, 'پایدارسازی لینک مستقیم با سرور مرکزی...');
       }, 10200);
 
       // T = 12.8s
       setTimeout(() => {
-        addTerminalLine('>>> پروتکل انتقال امن فعال شد. ورود به پرونده در ۳... ۲... ۱...', true);
-        if (phaseBadge) phaseBadge.textContent = 'دسترسی مجاز // آماده ورود';
+        addTerminalLine('>>> عملیات سایبری تکمیل شد. ورود به درگاه امن در ۳... ۲... ۱...', true);
+        if (phaseBadge) phaseBadge.textContent = 'لینک امن برقرار شد // آماده انتقال';
         if (mainTitle) mainTitle.textContent = 'انتقال به درگاه امن';
-        if (subTitle) subTitle.textContent = 'در حال بازگشایی پایگاه ورود کدهای محرمانه...';
-        updateProgress(100, 'درگاه امن بازگشایی شد!');
+        if (subTitle) subTitle.textContent = 'در حال بازگشایی کنسول احراز هویت...';
+        updateProgress(100, 'درگاه امن آماده دسترسی شد!');
       }, 12800);
 
       // T = 14.5s

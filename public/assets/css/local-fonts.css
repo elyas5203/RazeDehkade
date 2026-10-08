@@ -1,17 +1,45 @@
 /* ==========================================================================
-   local-fonts.css - تعریف فونت‌های محلی و پرسرعت بدون وابستگی به CDN خارجی
-   لود فوری و بدون تأخیر در سرور و اینترنت ایران
+   local-fonts.css - تعریف فونت‌های محلی، پرسرعت و فوق‌العاده شیک و مدرن (استعداد و شبنم)
+   بدون وابستگی به CDN خارجی، لود فوری و آفلاین با فرمت بهینه WOFF2
    ========================================================================== */
 
+/* فونت اصلی و فوق‌العاده مدرن استعداد (Estedad Variable 100-900) */
 @font-face {
-  font-family: 'Vazirmatn';
-  src: url('/assets/scene/vazirmatn.woff2') format('woff2');
+  font-family: 'Estedad';
+  src: url('/assets/fonts/estedad.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
-/* فونت‌های کد و مونو اسپیس با فونت‌های سیستمی و پشتیبانی محلی */
+/* فونت شبنم برای رزرو و خطوط جانبی */
+@font-face {
+  font-family: 'Shabnam';
+  src: url('/assets/fonts/shabnam-bold.woff2') format('woff2');
+  font-weight: 700 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Shabnam';
+  src: url('/assets/fonts/shabnam.woff2') format('woff2');
+  font-weight: 300 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* برای اطمینان ۱۰۰٪، فونت وزیرمتن هم با فایل استعداد مپ می‌شود تا کل سایت یکدست شود */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('/assets/fonts/estedad.woff2') format('woff2'),
+       url('/assets/scene/vazirmatn.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* فونت‌های کد و اعداد انگلیسی */
 @font-face {
   font-family: 'JetBrains Mono';
   src: local('JetBrains Mono'), local('Fira Code'), local('Consolas');
@@ -26,4 +54,17 @@
   font-weight: 600 900;
   font-style: normal;
   font-display: swap;
+}
+
+/* متغیر فونت سراسری برای کل صفحات پروژه */
+:root {
+  --font-family: 'Estedad', 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-main: 'Estedad', 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+}
+
+body, button, input, textarea, select {
+  font-family: var(--font-main) !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

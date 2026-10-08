@@ -12,9 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const activeCaseKey = session.active_case || 'village';
 
     const caseDefinitions = [
-        { key: 'syndrome', code: 'DOC-01', title: 'سندروم فراموشی', subtitle: 'ردیابی یک حافظه دست‌کاری‌شده', brief: 'پرونده بسته‌شده مرکز درباره نشانه‌هایی که از ذهن شاهدان پاک شده بود.' },
-        { key: 'village', code: 'DOC-02', title: 'راز دهکده', subtitle: 'ناپدیدشدن پیام‌رسان روستای حصار', brief: 'آخرین گزارش از حوالی آسیاب سنگی رسیده؛ مسیر نامه‌ها و نشانه‌های تازه را بررسی کنید.' },
-        { key: 'court', code: 'DOC-03', title: 'دادگاه عدالت', subtitle: 'حقیقت پشت یک حکم ناتمام', brief: 'دسترسی پس از پایان پرونده جاری و تأیید مرکز فرماندهی آزاد می‌شود.' }
+        { key: 'syndrome', code: 'DOC-01', title: 'پرونده کلاسه ۳۰۲', subtitle: 'عملیات نفوذ — پرونده مختومه', brief: 'تحقیقات جنایی این پرونده تکمیل و گزارش نهایی در بایگانی راکد مرکز نگهداری می‌شود.' },
+        { key: 'village', code: 'DOC-02', title: 'راز دهکده', subtitle: 'پرونده جنایی کلاسه ۷۱۴ — رویدادهای مشکوک و قتل', brief: 'گزارش وقایع مشکوک پیرامون انشعاب آب سد، تردد وانت آبی‌رنگ، تراکنش‌های مالی کدخدا و فایل‌های صوتی سرایداری.' },
+        { key: 'court', code: 'DOC-03', title: 'پرونده کلاسه ۹۱۸', subtitle: 'تحقیقات مالی — در انتظار ارجاع', brief: 'دسترسی به اسناد این پرونده منوط به اتمام و کشف راز پرونده کلاسه ۷۱۴ (راز دهکده) است.' }
     ];
 
     caseDefinitions.forEach(def => {
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
             status = 'solved';
         }
 
-        const labels = { active: 'پرونده باز', solved: 'حل‌شده', locked: 'قفل‌شده' };
+        const labels = { active: 'پرونده فعال', solved: 'مختومه', locked: 'مسدود' };
         folder.className = `case-folder ${status}`;
         folder.tabIndex = status === 'active' ? 0 : -1;
         folder.setAttribute('role', 'button');
@@ -47,8 +47,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
                   </svg>
                 </div>
-                <strong class="locked-text">پرونده قفل است</strong>
-                <span class="locked-subtext">دسترسی مسدود — هماهنگی با مرکز</span>
+                <strong class="locked-text">پرونده مسدود است</strong>
+                <span class="locked-subtext">نیازمند مجوز فرماندهی و اتمام پرونده جاری</span>
               </div>
             `;
         }
@@ -68,26 +68,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         folder.innerHTML = `
           <div class="folder-inside" aria-hidden="true">
-            <span>مرکز تحقیقات نکسوس / ${def.code}</span>
+            <span>مرکز اسناد جنایی و عملیات ویژه / ${def.code}</span>
             <img src="/assets/scene/${images[def.key]}.jpg" alt="">
           </div>
           <div class="folder-cover">
             ${lockOverlayHtml}
             ${solvedStampHtml}
-            <div class="folder-tab">${def.code} / SYSTEM</div>
+            <div class="folder-tab">${def.code} / CLASSIFIED</div>
             <div class="folder-meta">
               <code>CASE FILE / ${def.code.slice(-2)}</code>
               <span class="folder-status">${labels[status]}</span>
             </div>
             <div class="case-title">
-              <small>CLASSIFIED INVESTIGATION</small>
+              <small>CLASSIFIED DOSSIER</small>
               <strong>${def.title}</strong>
               <span>${def.subtitle}</span>
             </div>
             <img class="folder-photo" src="/assets/scene/${images[def.key]}.jpg" alt="" width="320" height="150">
             <p class="folder-description">${def.brief}</p>
             <div class="folder-action">
-              <span>${status === 'active' ? 'گشودن پرونده و ورود به ماجرا' : labels[status]}</span>
+              <span>${status === 'active' ? 'ورود به پرونده و بررسی شواهد' : labels[status]}</span>
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
                 ${status === 'active' ? '<path d="M20 12H4m6-6-6 6 6 6"/>' : status === 'solved' ? '<path d="m5 12 4 4L19 6"/>' : '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 4v3"/>'}
               </svg>

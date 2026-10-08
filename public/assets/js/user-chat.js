@@ -423,7 +423,36 @@ function evidenceFileIcon(type, label) {
 
 function evidenceMediaMarkup(msg, expanded = false) {
   const url = safeFileUrl(msg.file_url);
-  if (msg.message_type === 'image') return `<img src="${url}" alt="${expanded ? escapeHtml(msg.content || 'تصویر مدرک') : ''}" loading="lazy">`;
+  if (msg.message_type === 'image') {
+    if (!expanded) {
+      return `<img src="${url}" alt="" loading="lazy">`;
+    }
+    return `
+      <div class="evidence-zoom-wrapper" id="evidenceZoomWrapper">
+        <div class="zoom-toolbar">
+          <div class="zoom-actions">
+            <button type="button" class="zoom-btn" id="zoomInBtn" title="بزرگ‌نمایی">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/></svg>
+              <span>بزرگ‌نمایی +</span>
+            </button>
+            <button type="button" class="zoom-btn" id="zoomOutBtn" title="کوچک‌نمایی">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M8 11h6"/></svg>
+              <span>کوچک‌نمایی -</span>
+            </button>
+            <button type="button" class="zoom-btn" id="zoomResetBtn" title="اندازه واقعی">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              <span>اندازه اصلی</span>
+            </button>
+            <span class="zoom-level-badge" id="zoomLevelBadge">۱۰۰٪</span>
+          </div>
+          <span class="zoom-hint">اسکرول موس برای زوم · کشیدن (Drag) برای جابه‌جایی روی عکس</span>
+        </div>
+        <div class="zoom-viewport" id="zoomViewport">
+          <img id="zoomTargetImage" src="${url}" alt="${escapeHtml(msg.content || 'تصویر مدرک')}" draggable="false">
+        </div>
+      </div>
+    `;
+  }
   if (msg.message_type === 'video') return expanded ? `<div class="media-loading">در حال بارگذاری اطلاعات فیلم…</div><video controls playsinline webkit-playsinline preload="metadata" src="${url}"></video>` : evidenceFileIcon('video', 'فیلم ضبط‌شده');
   if (msg.message_type === 'voice') return expanded ? `<div class="media-loading">در حال بارگذاری اطلاعات صدا…</div><audio controls playsinline webkit-playsinline preload="metadata" src="${url}"></audio>` : evidenceFileIcon('voice', 'صدای ضبط‌شده');
   return expanded ? `<div class="evidence-file-icon">سند</div><a class="download-evidence" href="${url}" download>دریافت ${escapeHtml(msg.file_name || 'فایل')}</a>` : evidenceFileIcon('file', 'سند پرونده');
@@ -472,14 +501,172 @@ function updateEvidenceThreads() {
 
 window.addEventListener('resize', () => requestAnimationFrame(updateEvidenceThreads));
 
+function initEvidenceZoom() {
+  const wrapper = document.getElementById('evidenceZoomWrapper');
+  const img = document.getElementById('zoomTargetImage');
+  const viewport = document.getElementById('zoomViewport');
+  const badge = document.getElementById('zoomLevelBadge');
+  const zoomIn = document.getElementById('zoomInBtn');
+  const zoomOut = document.getElementById('zoomOutBtn');
+  const zoomReset = document.getElementById('zoomResetBtn');
+
+  if (!wrapper || !img || !viewport) return;
+
+  let zoom = 1;
+  let posX = 0;
+  let posY = 0;
+  let isDragging = false;
+  let startX = 0;
+  let startY = 0;
+
+  function update() {
+    img.style.transform = `translate(${posX}px, ${posY}px) scale(${zoom})`;
+    if (badge) {
+      badge.textContent = `${Math.round(zoom * 100).toLocaleString('fa-IR')}٪`;
+    }
+    if (zoom > 1.05) {
+      viewport.classList.add('is-zoomed');
+    } else {
+      viewport.classList.remove('is-zoomed');
+      posX = 0;
+      posY = 0;
+      img.style.transform = `translate(0px, 0px) scale(${zoom})`;
+    }
+  }
+
+  function applyZoom(newZoom, originX = 0, originY = 0) {
+    const clamped = Math.min(6, Math.max(0.7, newZoom));
+    if (clamped !== zoom && originX && originY) {
+      const scaleRatio = clamped / zoom;
+      posX = originX - (originX - posX) * scaleRatio;
+      posY = originY - (originY - posY) * scaleRatio;
+    }
+    zoom = clamped;
+    update();
+  }
+
+  zoomIn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    applyZoom(zoom + 0.4);
+  });
+
+  zoomOut?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    applyZoom(zoom - 0.4);
+  });
+
+  zoomReset?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    zoom = 1;
+    posX = 0;
+    posY = 0;
+    update();
+  });
+
+  // چرخ موس (Wheel Zoom)
+  viewport.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = viewport.getBoundingClientRect();
+    const originX = e.clientX - rect.left - rect.width / 2;
+    const originY = e.clientY - rect.top - rect.height / 2;
+    const delta = e.deltaY < 0 ? 0.3 : -0.3;
+    applyZoom(zoom + delta, originX, originY);
+  }, { passive: false });
+
+  // دابل کلیک برای زوم سریع یا ریست
+  viewport.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    if (zoom > 1.2) {
+      zoom = 1;
+      posX = 0;
+      posY = 0;
+      update();
+    } else {
+      const rect = viewport.getBoundingClientRect();
+      const originX = e.clientX - rect.left - rect.width / 2;
+      const originY = e.clientY - rect.top - rect.height / 2;
+      applyZoom(2.5, originX, originY);
+    }
+  });
+
+  // موس درگ (Pan when zoomed)
+  viewport.addEventListener('mousedown', (e) => {
+    if (e.button !== 0 || zoom <= 1.05) return;
+    isDragging = true;
+    startX = e.clientX - posX;
+    startY = e.clientY - posY;
+    viewport.classList.add('is-dragging');
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    posX = e.clientX - startX;
+    posY = e.clientY - startY;
+    update();
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      viewport?.classList.remove('is-dragging');
+    }
+  });
+
+  // تاچ و لمس برای موبایل و تبلت
+  let touchStartDist = 0;
+  let touchStartZoom = 1;
+
+  viewport.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1 && zoom > 1.05) {
+      isDragging = true;
+      startX = e.touches[0].clientX - posX;
+      startY = e.touches[0].clientY - posY;
+    } else if (e.touches.length === 2) {
+      isDragging = false;
+      touchStartDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      touchStartZoom = zoom;
+    }
+  }, { passive: true });
+
+  viewport.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 1 && isDragging) {
+      posX = e.touches[0].clientX - startX;
+      posY = e.touches[0].clientY - startY;
+      update();
+    } else if (e.touches.length === 2 && touchStartDist) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      applyZoom(touchStartZoom * (dist / touchStartDist));
+    }
+  }, { passive: true });
+
+  viewport.addEventListener('touchend', () => {
+    isDragging = false;
+    touchStartDist = 0;
+  });
+
+  update();
+}
+
 function openEvidence(msg) {
   const dialog = document.getElementById('evidence-dialog');
   document.getElementById('evidence-dialog-content').innerHTML = `${evidenceMediaMarkup(msg, true)}<h2>${escapeHtml(msg.content || msg.file_name || 'مدرک پرونده')}</h2><p>ارسال‌شده از مرکز فرماندهی برای بررسی گروه.</p>`;
   dialog.showModal();
+  if (msg.message_type === 'image') {
+    initEvidenceZoom();
+  }
 }
 
 function closeEvidence() {
-  document.getElementById('evidence-dialog')?.close();
+  const dialog = document.getElementById('evidence-dialog');
+  if (dialog) dialog.close();
+  const img = document.getElementById('zoomTargetImage');
+  if (img) img.style.transform = '';
 }
 
 let isSendingMessage = false;
