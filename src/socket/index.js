@@ -302,6 +302,12 @@ function setupSocketIO(io) {
           sender_name: user.role === 'admin' ? (user.display_name || 'ادمین') : 'دستیاران کارآگاه',
         });
 
+        // اگر ادمین پیامی ارسال کرد، بدیهی است تمام پیام‌های کاربر در این جلسه را خوانده است
+        if (effectiveSenderType !== 'user' || user.role === 'admin') {
+          await Message.markAsRead(targetSessionId, 'user');
+          io.to('admins').emit('session_read', { sessionId: targetSessionId });
+        }
+
         // همچنین برای اکتیو ماندن لیست جلسات ادمین، رویداد به‌روزرسانی لیست جلسه ارسال می‌شود
         io.to('admins').emit('session_updated', {
           sessionId: targetSessionId,
@@ -348,6 +354,10 @@ function setupSocketIO(io) {
           sessionId,
           markedBy: user.role,
         });
+
+        if (user.role === 'admin') {
+          io.to('admins').emit('session_read', { sessionId });
+        }
       } catch (err) {
         console.error('Error in mark_as_read socket handler:', err);
       }

@@ -108,14 +108,26 @@ function initAdminSocket() {
   socket.on('new_message', (msg) => {
     if (Number(msg.session_id) === Number(activeSessionId)) {
       renderAdminMessage(msg);
+      if (sessionsMap[msg.session_id]) {
+        sessionsMap[msg.session_id].unread_count = 0;
+      }
+      if (socket) {
+        socket.emit('mark_as_read', { sessionId: activeSessionId });
+      }
+    } else if (sessionsMap[msg.session_id] && msg.sender_type === 'user') {
+      sessionsMap[msg.session_id].unread_count = (sessionsMap[msg.session_id].unread_count || 0) + 1;
     }
     if (sessionsMap[msg.session_id]) {
       sessionsMap[msg.session_id].last_activity_at = new Date().toISOString();
-      if (Number(msg.session_id) !== Number(activeSessionId) && msg.sender_type === 'user') {
-        sessionsMap[msg.session_id].unread_count = (sessionsMap[msg.session_id].unread_count || 0) + 1;
-      }
     }
     loadAdminSessions();
+  });
+
+  socket.on('session_read', (data) => {
+    if (data && data.sessionId && sessionsMap[data.sessionId]) {
+      sessionsMap[data.sessionId].unread_count = 0;
+      renderSessionsSidebar(Object.values(sessionsMap));
+    }
   });
 
   socket.on('session_updated', (data) => {
@@ -160,6 +172,8 @@ function initAdminSocket() {
   // دریافت چانک‌های صوتی استریم کاربر از طریق سوکت (فال‌بک مطمئن WebRTC)
   socket.on('admin_audio_stream_chunk', (data) => {
     if (!isAudioListening || !data || Number(data.sessionId) !== Number(activeSessionId)) return;
+    // اگر استریم WebRTC مستقیم وصل است، چانک را رد کن تا اکو و صدای دوبله ایجاد نشود
+    if (adminPeerConnection && adminPeerConnection.connectionState === 'connected') return;
     playSocketAudioChunk(data.chunk, data.mimeType);
   });
 
@@ -232,6 +246,13 @@ async function loadAdminSessions() {
     });
     const data = await res.json();
     if (data.success) {
+      if (activeSessionId) {
+        data.data.forEach(s => {
+          if (Number(s.id) === Number(activeSessionId)) {
+            s.unread_count = 0;
+          }
+        });
+      }
       renderSessionsSidebar(data.data);
 
       if (!activeSessionId && data.data.length > 0) {
@@ -295,6 +316,11 @@ async function switchSession(nextSessionId) {
   document.getElementById('admin-messages-box').innerHTML = '';
   sessionStorage.setItem('activeAdminSessionId', nextSessionId);
 
+  // پاک کردن فوری نشانگر پیام‌های ناخوانده در UI برای این جلسه
+  if (sessionsMap[nextSessionId]) {
+    sessionsMap[nextSessionId].unread_count = 0;
+  }
+
   updateActiveHeader();
   renderSessionsSidebar(Object.values(sessionsMap));
 
@@ -308,6 +334,7 @@ async function switchSession(nextSessionId) {
       previousSessionId: prevSessionId,
       nextSessionId: activeSessionId,
     });
+    socket.emit('mark_as_read', { sessionId: activeSessionId });
   }
 
   // دریافت پیام‌ها
@@ -322,6 +349,11 @@ async function switchSession(nextSessionId) {
     }
     const data = await res.json();
     if (data.success && activeSessionId === nextSessionId) {
+      if (sessionsMap[activeSessionId]) {
+        sessionsMap[activeSessionId].unread_count = 0;
+      }
+      renderSessionsSidebar(Object.values(sessionsMap));
+
       const lockState = (data.session && typeof data.session.is_chat_locked !== 'undefined')
         ? data.session.is_chat_locked
         : (typeof data.is_chat_locked !== 'undefined' ? data.is_chat_locked : sessionsMap[activeSessionId]?.is_chat_locked);
@@ -451,6 +483,12 @@ function sendAdminMessage() {
     senderType: senderTypeSelect.value,
     messageType: 'text',
   });
+
+  if (sessionsMap[activeSessionId]) {
+    sessionsMap[activeSessionId].unread_count = 0;
+    renderSessionsSidebar(Object.values(sessionsMap));
+  }
+  socket.emit('mark_as_read', { sessionId: activeSessionId });
 
   input.value = '';
   input.style.height = 'auto';
@@ -616,17 +654,41 @@ async function promptNewCanned() {
   }
 }
 
+let audioQueue = [];
+let isAudioPlaying = false;
+
 function playSocketAudioChunk(chunkData, mimeType) {
+  audioQueue.push({ chunkData, mimeType });
+  processAudioQueue();
+}
+
+function processAudioQueue() {
+  if (isAudioPlaying || audioQueue.length === 0) return;
+  const item = audioQueue.shift();
+  isAudioPlaying = true;
+
   try {
     const audio = new Audio();
-    audio.src = String(chunkData).startsWith('data:') ? chunkData : `data:${mimeType || 'audio/webm'};base64,${chunkData}`;
+    audio.src = String(item.chunkData).startsWith('data:') ? item.chunkData : `data:${item.mimeType || 'audio/webm'};base64,${item.chunkData}`;
+
+    const finish = () => {
+      isAudioPlaying = false;
+      processAudioQueue();
+    };
+
+    audio.onended = finish;
+    audio.onerror = finish;
+
     audio.play().then(() => {
       updateAudioUI('live');
     }).catch(e => {
       console.log('Audio chunk autoplay policy note:', e);
+      finish();
     });
   } catch (err) {
     console.error('Socket audio chunk error:', err);
+    isAudioPlaying = false;
+    processAudioQueue();
   }
 }
 
@@ -748,6 +810,9 @@ function startAdminAudioListening() {
 }
 
 function stopAdminAudioListening() {
+  audioQueue = [];
+  isAudioPlaying = false;
+
   if (!isAudioListening && !adminPeerConnection && !audioKeepAliveTimer) {
     return;
   }

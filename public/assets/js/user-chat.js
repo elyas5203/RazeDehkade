@@ -585,9 +585,11 @@ async function startPeerConnection(adminSocketId) {
     peerConnection = null;
   }
 
-  // بررسی زنده بودن ترک‌های میکروفون و دریافت مجدد در صورت نیاز
+  // بررسی زنده بودن ترک‌های میکروفون و فعال‌سازی مجدد
   const isStreamActive = localStream && localStream.getAudioTracks().some(t => t.readyState === 'live');
-  if (!isStreamActive) {
+  if (isStreamActive) {
+    localStream.getAudioTracks().forEach(t => { t.enabled = true; });
+  } else {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         console.warn('⚠️ دسترسی به میکروفون نیازمند پروتکل امن HTTPS است.');
@@ -663,14 +665,22 @@ function stopPeerConnection() {
     try { peerConnection.close(); } catch (_) {}
     peerConnection = null;
   }
+  // برای جلوگیری از نیاز به تایید مجدد پرمیشن میکروفون در سافاری و iOS، به جای بستن منبع، ترک را بی‌صدا (Mute) می‌کنیم
+  if (localStream) {
+    try {
+      localStream.getAudioTracks().forEach(track => { track.enabled = false; });
+    } catch (_) {}
+  }
+  lastAdminSocketId = null;
+}
+
+window.addEventListener('beforeunload', () => {
   if (localStream) {
     try {
       localStream.getTracks().forEach(track => track.stop());
     } catch (_) {}
-    localStream = null;
   }
-  lastAdminSocketId = null;
-}
+});
 
 function triggerFileInput(acceptType) {
   const fileInput = document.getElementById('user-file-input');
