@@ -56,24 +56,13 @@
   const matrixCanvas = document.getElementById('matrixCanvas');
 
   // ==========================================
-  // موتور پخش فایل‌های صوتی واقعی و استودیویی
+  // موتور پخش ساندترک سینمایی و استودیویی
   // ==========================================
   let currentIntroAudio = null;
 
-  // ۱. صدای تیک‌تاک ساعت شمارش معکوس از فایل صوتی واقعی
-  function playClockTick() {
-    try {
-      // فایل صوتی تیک ساعت واقعی (بدون بیپ مصنوعی)
-      const tick = new Audio('/assets/sounds/clock-tick.wav');
-      tick.volume = 0.7;
-      tick.play().catch(() => {});
-    } catch (_) {}
-  }
-
-  // ۲. پخش ساندترک سینمایی و سایبری اینترو ترنسفورماتور
+  // پخش ساندترک سینمایی ساب‌بیس دارک تریلر بدون بیپ یا صداهای آزاردهنده
   function playCyberIntroSound() {
     try {
-      // اگر کاربر فایل mp3 دلخواه گذاشته باشد آن را می‌خواند، در غیر اینصورت wav پیش‌فرض
       const mp3 = new Audio('/assets/sounds/cyber-intro.mp3');
       mp3.volume = 0.95;
       mp3.play().then(() => {
@@ -87,10 +76,9 @@
     } catch (_) {}
   }
 
-  // فعال‌سازی دسترسی صدا در مرورگر با اولین کلیک
+  // فعال‌سازی دسترسی صدا در مرورگر با اولین کلیک یا لمس
   ['click', 'touchstart', 'keydown', 'pointerdown'].forEach(evt => {
     window.addEventListener(evt, () => {
-      // Unmute trigger
       if (currentIntroAudio && currentIntroAudio.paused) {
         currentIntroAudio.play().catch(() => {});
       }
@@ -106,7 +94,7 @@
     matrixCanvas.width = window.innerWidth;
     matrixCanvas.height = window.innerHeight;
 
-    const chars = '0101アイウエオカキクケコサシスセソタチツテトナニヌネノ1010#$@%*&=+XYZ89';
+    const chars = '0101#$@%*&=+XYZ89';
     const fontSize = 14;
     const columns = Math.floor(matrixCanvas.width / fontSize);
     const drops = Array(columns).fill(1);
@@ -115,7 +103,7 @@
       ctx.fillStyle = 'rgba(2, 7, 5, 0.12)';
       ctx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
 
-      ctx.fillStyle = '#00ff88';
+      ctx.fillStyle = 'rgba(0, 255, 136, 0.55)';
       ctx.font = `${fontSize}px 'JetBrains Mono', monospace`;
 
       for (let i = 0; i < drops.length; i++) {
@@ -138,7 +126,7 @@
   }
 
   // ==========================================
-  // سکانس پیشرفته ترنسفورماتور و ترنزیشن سایبری
+  // سکانس ترنزیشن سینمایی پرونده راز دهکده
   // ==========================================
   let cyberSequenceTimeout = null;
   let hasRedirected = false;
@@ -164,12 +152,16 @@
 
     const actualBlackoutDuration = typeof customBlackoutMs === 'number' ? customBlackoutMs : BLACKOUT_DURATION_MS;
 
-    // ۱. فاز اول: بلک‌اوت کامل (۱۵ ثانیه در حالت توسعه | ۵ دقیقه در حالت پروداکشن | ۲ ثانیه در حالت لاگین)
+    // ۱. فاز اول: بلک‌اوت ۱۰۰٪ مطلق و خاموشی کامل نمایشگر (بدون متن، بدون کادر، بدون صدا، بدون نشانگر موس)
+    document.body.classList.add('is-blackout');
+    document.body.style.cursor = 'none';
     cyberOverlay.classList.remove('active-cyber');
     cyberOverlay.classList.add('active-blackout');
 
     cyberSequenceTimeout = setTimeout(() => {
-      // ۲. فاز دوم: آغاز اینترو سینمایی ترنسفورماتور و باران ماتریکس
+      // ۲. فاز دوم: پایان بلک‌اوت و آغاز سکانس سینمایی و رمزگشایی پرونده محرمانه
+      document.body.classList.remove('is-blackout');
+      document.body.style.cursor = '';
       cyberOverlay.classList.remove('active-blackout');
       cyberOverlay.classList.add('active-cyber');
 
@@ -196,59 +188,58 @@
       }
 
       function updateProgress(pct, labelText) {
-        if (progPct) progPct.textContent = `${pct}%`;
+        if (progPct) progPct.textContent = `${numberFormat.format(pct)}٪`;
         if (progFill) progFill.style.width = `${pct}%`;
         if (progLabel && labelText) progLabel.textContent = labelText;
       }
 
-      // سناریوی ترنزیشن ۱۵ ثانیه‌ای خط‌به‌خط
+      // سناریوی ترنزیشن ۱۵ ثانیه‌ای خط‌به‌خط منطبق بر داستان بازی راز دهکده
       // T = 0.5s
       setTimeout(() => {
-        addTerminalLine(isFromLogin ? '> RE-AUTHENTICATION OVERRIDE DETECTED...' : '> PROTOCOL OVERRIDE DETECTED...', false, true);
-        updateProgress(10, 'INTERCEPTING SIGNAL...');
+        addTerminalLine('> [تأیید امنیتی] انهدام پوشش غیرنظامی (سفارش گل) با موفقیت انجام شد.', false, true);
+        updateProgress(14, 'قطع ارتباط با فروشگاه شهری...');
       }, 500);
 
-      // T = 2.0s
+      // T = 2.2s
       setTimeout(() => {
-        addTerminalLine('> DECONSTRUCTING CIVILIAN STORE: "فروشگاه گل و گیاه"...', false);
-        if (phaseBadge) phaseBadge.textContent = 'STAGE 01 // FREQUENCY INTERCEPTION';
-        updateProgress(22, 'CRACKING TLS CIPHER...');
-      }, 2000);
+        addTerminalLine('> بسته فیزیکی مدارک تحویل تیم کارآگاهی در محل گردید.', true);
+        if (phaseBadge) phaseBadge.textContent = 'مرحله اول // رهگیری فرکانس مخابراتی دهکده';
+        updateProgress(30, 'استخراج کدهای رمزنگاری روی بسته...');
+      }, 2200);
 
-      // T = 4.2s
+      // T = 4.8s
       setTimeout(() => {
-        addTerminalLine('> EXTRACTION KEY: #GOLHA-TO-DETECTIVE-PORTAL', true);
-        addTerminalLine('> BYPASSING RSA-4096 ENCRYPTION BLOCK...', false);
-        if (subTitle) subTitle.textContent = 'QUANTUM CORE SPOOLING UP // SECTOR 7';
-        updateProgress(38, 'BYPASSING SECURITY FIREWALL...');
-      }, 4200);
+        addTerminalLine('> شناسایی شواهد میدانی: وانت آبی‌رنگ، انشعاب آب، تراکنش‌های مشکوک...', false);
+        addTerminalLine('> رمزگشایی لایه‌های حفاظتی پرونده شماره ۷۱۴...', false);
+        if (subTitle) subTitle.textContent = 'پایگاه اسناد محرمانه // رصد زنده متهمان و حوادث دهکده';
+        updateProgress(52, 'نفوذ به آرشیو سری پرونده قتل دهکده...');
+      }, 4800);
 
-      // T = 6.8s
+      // T = 7.5s
       setTimeout(() => {
-        if (phaseBadge) phaseBadge.textContent = 'STAGE 02 // MAINFRAME TRANSFORMATION';
-        if (mainTitle) mainTitle.textContent = 'MORPHING';
-        addTerminalLine('> MAINFRAME LOCATED: "RAZ-E-DEHKADE // SECRET DOSSIER"', true);
-        addTerminalLine('> CIVILIAN COVER PERMANENTLY TERMINATED.', false, true);
-        updateProgress(58, 'TRANSFORMING REALITY MATRIX...');
-      }, 6800);
+        if (phaseBadge) phaseBadge.textContent = 'مرحله دوم // اعتبارسنجی مأمورین پرونده';
+        if (mainTitle) mainTitle.textContent = 'پرونده جنایی: راز دهکده';
+        addTerminalLine('> احراز هویت کارآگاهان ویژه پرونده تأیید شد.', true);
+        addTerminalLine('> پایگاه اسناد طبقه‌بندی شده آماده دسترسی است.', false, true);
+        updateProgress(72, 'تثبیت اتصال امن با سرور فرماندهی...');
+      }, 7500);
 
-      // T = 9.2s
+      // T = 10.2s
       setTimeout(() => {
-        if (phaseBadge) phaseBadge.textContent = 'STAGE 03 // QUANTUM TUNNELING';
-        if (mainTitle) mainTitle.textContent = 'PORTAL CHARGING';
-        addTerminalLine('> CLEARANCE LEVEL 5 GRANTED: OPERATIVE / DETECTIVE', true);
-        addTerminalLine('> PREPARING CLASSIFIED CODE ENTRY PORTAL...', false);
-        updateProgress(78, 'STABILIZING QUANTUM WORMHOLE...');
-      }, 9200);
+        if (phaseBadge) phaseBadge.textContent = 'مرحله سوم // فعال‌سازی درگاه ورود کد محرمانه';
+        addTerminalLine('> توجه: کد ۶ رقمی درج‌شده روی بسته فیزیکی الزامی است.', true, true);
+        addTerminalLine('> اتصال به شبکه شنود و ترمینال چت کارآگاهان برقرار شد.', false);
+        updateProgress(90, 'آماده‌سازی پورتال ورودی کارآگاهان...');
+      }, 10200);
 
-      // T = 12.0s
+      // T = 12.8s
       setTimeout(() => {
-        addTerminalLine('>>> QUANTUM BRIDGE STABILIZED. PREPARE FOR WARP IN 3... 2... 1...', true);
-        if (phaseBadge) phaseBadge.textContent = 'SYSTEM OVERDRIVE // READY';
-        if (mainTitle) mainTitle.textContent = 'WARP READY';
-        if (subTitle) subTitle.textContent = 'TRANSFERRING CONSCIOUSNESS TO AGENT TERMINAL';
-        updateProgress(100, 'WARP PORTAL OPENED!');
-      }, 12000);
+        addTerminalLine('>>> پروتکل انتقال امن فعال شد. ورود به پرونده در ۳... ۲... ۱...', true);
+        if (phaseBadge) phaseBadge.textContent = 'دسترسی مجاز // آماده ورود';
+        if (mainTitle) mainTitle.textContent = 'انتقال به درگاه امن';
+        if (subTitle) subTitle.textContent = 'در حال بازگشایی پایگاه ورود کدهای محرمانه...';
+        updateProgress(100, 'درگاه امن بازگشایی شد!');
+      }, 12800);
 
       // T = 14.5s
       setTimeout(() => {
@@ -268,10 +259,10 @@
     if (ring) ring.style.strokeDashoffset = '0';
     if (timerDisplay) timerDisplay.textContent = numberFormat.format(0);
 
-    // ۲.۵ ثانیه سفارش تحویل شده نمایش داده می‌شود، سپس بلک‌اوت آغاز می‌گردد
+    // ۱.۵ ثانیه سفارش تحویل شده نمایش داده می‌شود، سپس بلک‌اوت کامل آغاز می‌گردد
     setTimeout(() => {
       triggerCyberTransformation();
-    }, 2500);
+    }, 1500);
   };
 
   function update() {
@@ -282,10 +273,6 @@
     const seconds = Math.ceil(remaining / 1000);
 
     if (seconds !== lastSeconds) {
-      if (lastSeconds !== null) {
-        // پخش صدای تیک‌تاک ساعت روی هر ثانیه
-        playClockTick(seconds % 2 === 0);
-      }
       lastSeconds = seconds;
       if (timerDisplay) {
         timerDisplay.textContent = numberFormat.format(seconds);
