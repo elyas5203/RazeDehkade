@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>پیگیری تحویل سفارش | فروشگاه اینترنتی گل و گیاه</title>
-  <link rel="stylesheet" href="/assets/css/delivery.css?v=3.6">
-  <script src="/assets/js/delivery.js?v=3.6" defer></script>
+  <link rel="stylesheet" href="/assets/css/delivery.css?v=3.8">
+  <script src="/assets/js/delivery.js?v=3.8" defer></script>
 </head>
 <body class="delivery-page" data-phase="countdown">
 
@@ -78,21 +78,91 @@
     <div class="cyber-scanlines"></div>
     <div class="cyber-grid-floor"></div>
     <div class="cyber-vignette"></div>
+    <div class="cyber-flash-flare" id="cyberFlashFlare"></div>
+
+    <!-- هدر فوق پیشرفته سایبری و وضعیت سامانه -->
+    <div class="cyber-top-hud">
+      <div class="cyber-hud-left">
+        <span class="hud-pulse-dot"></span>
+        <span class="hud-mono-code">NODE: #714-DELTA // CLASSIFIED</span>
+      </div>
+      <div class="cyber-hud-center">
+        <span class="hud-alert-badge" id="hudAlertBadge">⚠️ CRITICAL BREACH IN PROGRESS</span>
+      </div>
+      <div class="cyber-hud-right">
+        <span class="hud-mono-tag">PROTOCOL: RAZ-E-DEHKADE</span>
+        <button type="button" class="cyber-skip-btn" id="cyberSkipBtn" title="رد کردن و ورود به سامانه">
+          [ رد شدن / SKIP ]
+        </button>
+      </div>
+    </div>
+
+    <!-- گوشه‌های هولوگرافیک Sci-Fi -->
+    <div class="cyber-corner-bracket corner-tl"></div>
+    <div class="cyber-corner-bracket corner-tr"></div>
+    <div class="cyber-corner-bracket corner-bl"></div>
+    <div class="cyber-corner-bracket corner-br"></div>
+
+    <!-- صحنه مرکزی ترنسفورماتور و هک سایبری -->
     <div class="cyber-center-hud">
-      <div class="cyber-glitch-badge">⚠️ SYSTEM REBOOT // CYBER PORTAL INITIATED</div>
-      <div class="cyber-title" data-text="TRANSFORMATION">TRANSFORMATION</div>
-      <div class="cyber-transformer-core">
-        <div class="core-ring core-ring-1"></div>
-        <div class="core-ring core-ring-2"></div>
-        <div class="core-ring core-ring-3"></div>
-        <div class="core-pulse"></div>
+      <div class="cyber-glitch-badge" id="cyberPhaseBadge">INITIALIZING NEURAL OVERRIDE...</div>
+      
+      <!-- رآکتور مکانیکی / جایروسکوپ چندلایه ترنسفورماتور -->
+      <div class="cyber-transformer-stage">
+        <div class="cyber-transformer-core">
+          <div class="core-outer-dial"></div>
+          <div class="core-ring core-ring-1">
+            <span class="ring-coord coord-0">000°</span>
+            <span class="ring-coord coord-90">090°</span>
+            <span class="ring-coord coord-180">180°</span>
+            <span class="ring-coord coord-270">270°</span>
+          </div>
+          <div class="core-ring core-ring-2"></div>
+          <div class="core-ring core-ring-3"></div>
+          <div class="core-ring core-ring-hex"></div>
+          <div class="core-pulse"></div>
+          <div class="core-crosshair"></div>
+        </div>
       </div>
-      <div class="cyber-terminal-text" id="cyberTerminalText">
-        CONNECTING TO DETECTIVE SECURE MAINFRAME...
+
+      <div class="cyber-title" id="cyberMainTitle" data-text="TRANSFORMATION">TRANSFORMATION</div>
+      <div class="cyber-subtitle" id="cyberSubTitle">SYSTEM IDENTITY MORPHING // SECTOR 7</div>
+
+      <!-- اکولایزر فرکانسی صوتی -->
+      <div class="cyber-visualizer" id="cyberVisualizer">
+        <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
+        <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
+        <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
+        <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
       </div>
-      <div class="cyber-progress-bar">
-        <div class="cyber-progress-fill" id="cyberProgressFill"></div>
+
+      <!-- ترمینال هک زنده خط به خط -->
+      <div class="cyber-terminal-card">
+        <div class="terminal-card-header">
+          <div class="terminal-lights">
+            <span class="light red"></span>
+            <span class="light yellow"></span>
+            <span class="light green"></span>
+          </div>
+          <span class="terminal-header-title">MAINFRAME CIPHER TERMINAL // [PORT 1420]</span>
+          <span class="terminal-status-indicator">SECURE</span>
+        </div>
+        <div class="terminal-card-body" id="cyberTerminalBody">
+          <div class="term-line prefix">> SYSTEM BOOT INITIATED...</div>
+        </div>
       </div>
+
+      <!-- نوار درصد پیشرفت پیشرفته -->
+      <div class="cyber-progress-box">
+        <div class="progress-meta">
+          <span class="meta-label" id="cyberProgressLabel">DECRYPTING QUANTUM STREAM...</span>
+          <span class="meta-pct" id="cyberProgressPercent">0%</span>
+        </div>
+        <div class="cyber-progress-track">
+          <div class="cyber-progress-fill" id="cyberProgressFill"></div>
+        </div>
+      </div>
+
     </div>
   </div>
 
