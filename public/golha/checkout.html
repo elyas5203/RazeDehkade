@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ثبت و تسویه سفارش | فروشگاه گلها</title>
+  <title>ثبت و تسویه سفارش | فروشگاه اینترنتی گل و گیاه</title>
   <link rel="stylesheet" href="/golha/assets/css/golha.css">
   <style>
     .checkout-container {
@@ -66,8 +66,8 @@
 <body>
 
   <header class="golha-navbar">
-    <a href="/golha/index.html" class="brand-logo">
-      گلها <span>FLORAL ATELIER</span>
+    <a href="/golha/index.html" class="brand-logo" style="letter-spacing: 0;">
+      فروشگاه اینترنتی گل و گیاه
     </a>
   </header>
 
@@ -137,23 +137,23 @@
         <ul style="margin-top: 0.5rem; padding-right: 1.2rem; color: var(--text-muted); line-height: 1.8;">
           ${cart.map(item => {
             const itemTotal = item.price * item.quantity;
-            return `<li>${item.name} (${item.quantity} عدد) - ${itemTotal.toLocaleString('fa-IR')} تومان</li>`;
+            return `<li>${item.name} (${item.quantity} عدد) - ${itemTotal.toLocaleString('fa-IR')} ریال</li>`;
           }).join('')}
         </ul>
         <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px dashed var(--border-color); display: flex; flex-direction: column; gap: 6px;">
           <div style="display:flex; justify-content:space-between; font-size: 0.95rem; color: var(--text-muted);">
             <span>مجموع قیمت اقلام:</span>
-            <span>${subtotal.toLocaleString('fa-IR')} تومان</span>
+            <span>${subtotal.toLocaleString('fa-IR')} ریال</span>
           </div>
           ${appliedDiscount > 0 ? `
             <div style="display:flex; justify-content:space-between; font-size: 0.95rem; color: #22c55e; font-weight: bold;">
               <span>تخفیف ویژه سفارش (۱۰۰٪):</span>
-              <span>${discountAmount.toLocaleString('fa-IR')}- تومان</span>
+              <span>${discountAmount.toLocaleString('fa-IR')}- ریال</span>
             </div>
           ` : ''}
           <div style="display:flex; justify-content:space-between; margin-top: 6px; font-weight: bold; font-size: 1.1rem; color: var(--accent-gold);">
             <span>مبلغ قابل پرداخت:</span>
-            <span style="${appliedDiscount > 0 ? 'color: #22c55e;' : ''}">${appliedDiscount > 0 ? '۰ تومان (رایگان با کد تخفیف)' : `${payable.toLocaleString('fa-IR')} تومان`}</span>
+            <span style="${appliedDiscount > 0 ? 'color: #22c55e;' : ''}">${appliedDiscount > 0 ? '۰ ریال (رایگان با کد تخفیف)' : `${payable.toLocaleString('fa-IR')} ریال`}</span>
           </div>
         </div>
       `;
@@ -203,7 +203,7 @@
           appliedDiscount = 100;
           renderOrderSummary();
           discountFeedback.style.color = '#22c55e';
-          discountFeedback.innerHTML = `✅ <strong>کد تخفیف ۱۰۰ درصدی با موفقیت اعمال شد.</strong> مبلغ قابل پرداخت به ۰ تومان تغییر یافت.`;
+          discountFeedback.innerHTML = `✅ <strong>کد تخفیف ۱۰۰ درصدی با موفقیت اعمال شد.</strong> مبلغ قابل پرداخت به ۰ ریال تغییر یافت.`;
         } else {
           appliedDiscount = 0;
           renderOrderSummary();

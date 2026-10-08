@@ -257,9 +257,6 @@ async function switchSession(nextSessionId) {
   document.getElementById('admin-messages-box').innerHTML = '';
   sessionStorage.setItem('activeAdminSessionId', nextSessionId);
 
-  // هنگام سوئیچ ادمین بین جلسات، استریم صدای جلسه قبلی حتماً قطع می‌شود
-  stopAdminAudioListening();
-
   updateActiveHeader();
   renderSessionsSidebar(Object.values(sessionsMap));
 
@@ -697,7 +694,7 @@ function startAdminAudioListening() {
 }
 
 function stopAdminAudioListening() {
-  if (!confirm('آیا از قطع شنود صدای زنده این کلاس مطمئن هستید؟')) {
+  if (!isAudioListening && !adminPeerConnection && !audioKeepAliveTimer) {
     return;
   }
 
@@ -712,7 +709,7 @@ function stopAdminAudioListening() {
   }
 
   if (adminPeerConnection) {
-    adminPeerConnection.close();
+    try { adminPeerConnection.close(); } catch (_) {}
     adminPeerConnection = null;
   }
 

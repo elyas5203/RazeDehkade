@@ -17,6 +17,14 @@ const SessionLog = require('../models/SessionLog');
 function setupSocketIO(io) {
   const adminSenderTypes = new Set(['admin', 'system', 'hacker']);
   const messageTypes = new Set(['text', 'image', 'voice', 'video', 'file', 'user_voice']);
+  const recentMessagesMap = new Map();
+
+  function cleanOldRecentMessages() {
+    const now = Date.now();
+    for (const [key, val] of recentMessagesMap.entries()) {
+      if (now - val.time > 5000) recentMessagesMap.delete(key);
+    }
+  }
 
   function authorizedSessionId(user, requested) {
     const sessionId = parseInt(requested || user.sessionId, 10);
@@ -198,6 +206,16 @@ function setupSocketIO(io) {
         }
         if (!safeContent && !validatedFileUrl) return socket.emit('error_message', { message: 'پیام خالی است.' });
 
+        // پیشگیری قاطع از ثبت و ارسال پیام تکراری در فاصله کمتر از ۱.۵ ثانیه (جلوگیری از دابل کلیک یا رویداد همزمان)
+        const dedupKey = `${targetSessionId}_${effectiveSenderType}_${safeContent}_${validatedFileUrl || ''}`;
+        const now = Date.now();
+        cleanOldRecentMessages();
+        if (recentMessagesMap.has(dedupKey) && (now - recentMessagesMap.get(dedupKey).time < 1500)) {
+          const cachedMsg = recentMessagesMap.get(dedupKey).message;
+          if (typeof ack === 'function') ack({ success: true, message: cachedMsg });
+          return;
+        }
+
         // ذخیره در دیتابیس
         const savedMessage = await Message.create({
           session_id: targetSessionId,
@@ -208,6 +226,8 @@ function setupSocketIO(io) {
           file_url: validatedFileUrl,
           file_name: fileName,
         });
+
+        recentMessagesMap.set(dedupKey, { time: now, message: savedMessage });
 
         const roomName = `session_${targetSessionId}`;
 

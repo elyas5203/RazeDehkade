@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>فروشگاه گل و گیاه «گلها» | سفارش آنلاین گل و هدیه</title>
+  <title>فروشگاه اینترنتی گل و گیاه | ارسال خیـــــلی خیـــــلی خیـــــلی سریع</title>
   <link rel="stylesheet" href="/golha/assets/css/golha.css">
   <link rel="stylesheet" href="/golha/assets/css/atelier.css">
+  <link rel="preload" as="image" href="/golha/assets/images/floral-editorial.webp" type="image/webp">
   <style>
     .floating-cart-btn {
       position: fixed;
@@ -96,8 +97,8 @@
 
   <!-- هدر و ناوبری فروشگاه -->
   <header class="golha-navbar">
-    <a href="/golha/index.html" class="brand-logo">
-      گلها <span>FLORAL ATELIER</span>
+    <a href="/golha/index.html" class="brand-logo" style="letter-spacing: 0;">
+      فروشگاه اینترنتی گل و گیاه
     </a>
     <div class="nav-actions" style="display:flex;align-items:center;gap:12px;">
       <button type="button" class="account-btn" onclick="openLoginModal()">
@@ -113,19 +114,19 @@
   <!-- بنر اصلی -->
   <section class="hero-banner">
     <div class="hero-copy">
-      <span class="atelier-eyebrow">گل‌آرایی با حوصله، برای شما</span>
-      <h1>گاهی یک گل،<br>همه‌چیز را می‌گوید.</h1>
-      <p>گل‌های تازه، ترکیب‌های دست‌چین و هدیه‌ای که به یاد می‌ماند.</p>
-      <a class="collection-link" href="#productsGrid">مشاهده گل‌ها <span>↓</span></a>
+      <span class="atelier-eyebrow">فروشگاه تخصصی گل و گیاه طبیعی و ملزومات</span>
+      <h1 style="line-height: 1.4; font-size: 38px;">ارسال خیـــــلی خیـــــلی خیـــــلی سریع</h1>
+      <p>گل‌های تازه، گیاهان آپارتمانی شاداب و ملزومات باغبانی با بسته‌بندی ویژه و تحویل فوری درب منزل.</p>
+      <a class="collection-link" href="#productsGrid">مشاهده محصولات <span>↓</span></a>
     </div>
   </section>
 
   <div class="collection-heading">
     <div>
-      <span class="atelier-eyebrow">انتخاب‌های گلها</span>
-      <h2>برای یک لحظهٔ ماندگار</h2>
+      <span class="atelier-eyebrow">محصولات برگزیده</span>
+      <h2>ارسال خیـــــلی خیـــــلی خیـــــلی سریع</h2>
     </div>
-    <span>گل و گیاه طبیعی · آمادهٔ ارسال</span>
+    <span>گل و گیاه طبیعی · آمادهٔ تحویل فوری</span>
   </div>
 
   <!-- شبکه نمایش محصولات -->
@@ -152,7 +153,7 @@
     <div class="cart-drawer-footer">
       <div class="cart-total">
         <span>مجموع کل:</span>
-        <span id="cartTotalPrice">۰ تومان</span>
+        <span id="cartTotalPrice">۰ ریال</span>
       </div>
       <a href="/golha/checkout.html" class="checkout-btn" id="checkoutLink">تکمیل سفارش و تسویه</a>
     </div>
@@ -285,7 +286,7 @@
 
       if (cart.length === 0) {
         cartItemsListEl.innerHTML = '<p style="text-align: center; color: var(--text-muted); margin-top: 2rem;">سبد خرید شما خالی است.</p>';
-        cartTotalPriceEl.textContent = '۰ تومان';
+        cartTotalPriceEl.textContent = '۰ ریال';
         document.getElementById('checkoutLink').style.pointerEvents = 'none';
         document.getElementById('checkoutLink').style.opacity = '0.5';
         return;
@@ -302,7 +303,7 @@
           <div class="cart-item">
             <div class="cart-item-info">
               <h4>${item.name}</h4>
-              <span>${item.price.toLocaleString('fa-IR')} تومان</span>
+              <span>${item.price.toLocaleString('fa-IR')} ریال</span>
             </div>
             <div style="display:flex;align-items:center;gap:10px;">
               <div class="qty-stepper">
@@ -316,7 +317,7 @@
         `;
       }).join('');
 
-      cartTotalPriceEl.textContent = `${total.toLocaleString('fa-IR')} تومان`;
+      cartTotalPriceEl.textContent = `${total.toLocaleString('fa-IR')} ریال`;
     }
 
     function increaseItemById(productId) {
@@ -371,13 +372,58 @@
     document.getElementById('closeCartBtn').addEventListener('click', closeCartDrawer);
     document.getElementById('cartOverlay').addEventListener('click', closeCartDrawer);
 
+    function handleProductImgLoad(img) {
+      if (!img) return;
+      img.classList.add('is-loaded');
+      if (img.parentElement) {
+        img.parentElement.classList.add('is-loaded');
+      }
+    }
+
+    function handleProductImgError(img, title) {
+      if (!img) return;
+      img.onerror = null;
+      const parent = img.parentElement;
+      if (!parent) return;
+
+      const currentSrc = img.getAttribute('src') || '';
+      // اگر فرمت webp با خطا مواجه شد، یک‌بار نسخه پشتیبان jpg را امتحان کن
+      if (currentSrc.endsWith('.webp')) {
+        img.onerror = () => showBotanicalFallback(parent, title);
+        img.src = currentSrc.replace('.webp', '.jpg');
+        return;
+      }
+
+      showBotanicalFallback(parent, title);
+    }
+
+    function showBotanicalFallback(parent, title) {
+      if (!parent) return;
+      parent.classList.add('is-loaded');
+      parent.innerHTML = `
+        <span class="product-badge">طبیعی و دست‌چین</span>
+        <div class="img-fallback-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22c5.523 0 10-4.477 10-10a9.96 9.96 0 0 0-2.31-6.383c-.396-.464-1.127-.27-1.28.324a6.5 6.5 0 0 1-5.41 4.776V22z"/>
+            <path d="M12 22C6.477 22 2 17.523 2 12c0-2.486.91-4.76 2.417-6.507.382-.442 1.096-.24 1.25.335a6.5 6.5 0 0 1 5.333 4.89V22z"/>
+          </svg>
+          <span>گلها · ${title || 'محصول دست‌چین'}</span>
+        </div>
+      `;
+    }
+
     function renderProductsGrid() {
       const grid = document.getElementById('productsGrid');
       if (!grid || !rawProducts.length) return;
 
-      grid.innerHTML = rawProducts.map(p => {
+      grid.innerHTML = rawProducts.map((p, idx) => {
         const cartItem = cart.find(item => String(item.id) === String(p.id));
         const qty = cartItem ? cartItem.quantity : 0;
+
+        // ۴ محصول اول صفحه با بالاترین اولویت لود شوند، بقیه به شکل Lazy لود شوند
+        const isHighPriority = idx < 4;
+        const loadingAttr = isHighPriority ? 'eager' : 'lazy';
+        const fetchPriorityAttr = isHighPriority ? 'fetchpriority="high"' : 'fetchpriority="low"';
 
         let actionHtml = '';
         if (qty === 0) {
@@ -392,23 +438,41 @@
           `;
         }
 
+        const imgSrc = p.image || p.imageUrl || '/golha/assets/images/rose.webp';
+        const safeTitle = (p.name || '').replace(/'/g, "\\'");
+
         return `
           <div class="product-card" id="product-${p.id}">
-            <div class="product-img-wrapper">
+            <div class="product-img-wrapper" id="img-wrap-${p.id}">
               <span class="product-badge">طبیعی و دست‌چین</span>
-              <img src="${p.image || p.imageUrl || '/golha/assets/images/rose.png'}" alt="${p.name}" loading="lazy" width="600" height="600">
+              <img src="${imgSrc}" 
+                   alt="${p.name}" 
+                   loading="${loadingAttr}" 
+                   ${fetchPriorityAttr}
+                   decoding="async" 
+                   width="600" 
+                   height="600"
+                   onload="handleProductImgLoad(this)"
+                   onerror="handleProductImgError(this, '${safeTitle}')">
             </div>
             <div class="product-info">
               <h3 class="product-title">${p.name}</h3>
               <p class="product-desc">${p.description}</p>
               <div class="product-footer">
-                <span class="product-price">${p.price.toLocaleString('fa-IR')} تومان</span>
+                <span class="product-price">${p.price.toLocaleString('fa-IR')} ریال</span>
                 ${actionHtml}
               </div>
             </div>
           </div>
         `;
       }).join('');
+
+      // بررسی وضعیت عکس‌هایی که ممکن است بلافاصله از کش لود شده باشند
+      grid.querySelectorAll('img').forEach(img => {
+        if (img.complete && img.naturalWidth > 0) {
+          handleProductImgLoad(img);
+        }
+      });
     }
 
     async function loadProducts() {

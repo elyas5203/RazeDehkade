@@ -9,14 +9,23 @@ const Session = require('../models/Session');
 const SessionLog = require('../models/SessionLog');
 const Teacher = require('../models/Teacher');
 
-// محصولات جعلی فروشگاه گلها
+// محصولات فروشگاه (مبالغ به ریال و ۵ محصول درخواستی پخش‌شده در میان محصولات)
 const PRODUCTS = [
-  { id: 1, name: 'دسته‌گل رز سرخ', price: 180000, image: '/golha/assets/images/rose.png', imageUrl: '/golha/assets/images/rose.png', description: 'رزهای سرخ با برگ‌های سبز و بسته‌بندی دست‌ساز' },
-  { id: 2, name: 'ارکیده بنفش', price: 650000, image: '/golha/assets/images/orchid.png', imageUrl: '/golha/assets/images/orchid.png', description: 'دو شاخه ارکیده در گلدان سرامیکی روشن' },
-  { id: 3, name: 'سانسوریا بافته‌شده', price: 340000, image: '/golha/assets/images/sansevieria.png', imageUrl: '/golha/assets/images/sansevieria.png', description: 'برگ‌های کشیده در گلدان زغالی مات' },
-  { id: 4, name: 'باکس گل «شب‌بو»', price: 890000, image: '/golha/assets/images/box.png', imageUrl: '/golha/assets/images/box.png', description: 'رز، آلسترومریا و داوودی در باکس گرد' },
-  { id: 5, name: 'بنسای جنسینگ', price: 520000, image: '/golha/assets/images/bonsai.png', imageUrl: '/golha/assets/images/bonsai.png', description: 'درختچه‌ای کوچک در گلدان دست‌ساز' },
-  { id: 6, name: 'دسته‌گل سفید', price: 420000, image: '/golha/assets/images/lily.png', imageUrl: '/golha/assets/images/lily.png', description: 'ترکیب لیلیوم و مریم با روبان کتان' },
+  { id: 6, name: 'دسته‌گل رز هلندی سرخ', price: 12000000, image: '/golha/assets/images/red_roses_bouquet.webp', imageUrl: '/golha/assets/images/red_roses_bouquet.webp', description: 'رزهای سرخ ممتاز با تزیین برگ‌های اکالیپتوس و بسته‌بندی لوکس' },
+  { id: 1, name: 'بیلچه', price: 1500000, image: '/golha/assets/images/garden_trowel.webp', imageUrl: '/golha/assets/images/garden_trowel.webp', description: 'بیلچه باغبانی دسته‌چوبی مقاوم و سبک مناسب کاشت و تعویض گلدان' },
+  { id: 10, name: 'گلدان زامیفولیا بلک', price: 9500000, image: '/golha/assets/images/black_zz_plant.webp', imageUrl: '/golha/assets/images/black_zz_plant.webp', description: 'گیاه فوق‌العاده مقاوم و کم‌توقع با برگ‌های براق و تیره' },
+  { id: 2, name: 'سانسوریا پاکوتاه', price: 10500000, image: '/golha/assets/images/dwarf_sansevieria.webp', imageUrl: '/golha/assets/images/dwarf_sansevieria.webp', description: 'گیاه آپارتمانی مقاوم و تصفیه‌کننده هوا در گلدان سرامیکی' },
+  { id: 9, name: 'باکس گل لوکس شب‌بو', price: 14000000, image: '/golha/assets/images/luxury_flower_box.webp', imageUrl: '/golha/assets/images/luxury_flower_box.webp', description: 'ترکیب رز، آلسترومریا و داوودی در باکس گرد هدیه' },
+  { id: 14, name: 'اسپری آبپاش و غبارپاش شیشه‌ای', price: 2200000, image: '/golha/assets/images/glass_water_spray.webp', imageUrl: '/golha/assets/images/glass_water_spray.webp', description: 'آبپاش مه‌پاش طرح آنتیک با نازل برنجی جهت حفظ رطوبت برگ‌ها' },
+  { id: 3, name: 'لیلیوم صورتی', price: 8000000, image: '/golha/assets/images/pink_lily.webp', imageUrl: '/golha/assets/images/pink_lily.webp', description: 'شاخه گل لیلیوم اورینتال با عطر دلنشین و شکوفه‌های درشت' },
+  { id: 7, name: 'ارکیده فالانوپسیس بنفش', price: 15500000, image: '/golha/assets/images/purple_orchid.webp', imageUrl: '/golha/assets/images/purple_orchid.webp', description: 'دو شاخه ارکیده با گل‌های مخملی در گلدان سرامیکی روشن' },
+  { id: 13, name: 'خاک پرلیت و پیت‌ماس مخصوص (۵ لیتری)', price: 1800000, image: '/golha/assets/images/potting_soil_bag.webp', imageUrl: '/golha/assets/images/potting_soil_bag.webp', description: 'بستر کشت غنی‌شده با زهکشی عالی مناسب انواع گیاهان آپارتمانی' },
+  { id: 4, name: 'کاکتوس ساکولنت', price: 7000000, image: '/golha/assets/images/succulent_cactus.webp', imageUrl: '/golha/assets/images/succulent_cactus.webp', description: 'مجموعه ساکولنت شاداب در گلدان سفالی دکوراتیو' },
+  { id: 8, name: 'بسای جنسینگ مینیاتوری', price: 18000000, image: '/golha/assets/images/ginseng_bonsai.webp', imageUrl: '/golha/assets/images/ginseng_bonsai.webp', description: 'درختچه بنسای ریشه‌دار مقاوم و شاداب در گلدان دست‌ساز' },
+  { id: 15, name: 'اسپری تقویت رشد ریشه', price: 3500000, image: '/golha/assets/images/root_booster_fertilizer.webp', imageUrl: '/golha/assets/images/root_booster_fertilizer.webp', description: 'کود مایع کامل حاوی ریزمغذی‌ها و اسید هیومیک برای رشد برگ و ساقه' },
+  { id: 5, name: 'کود تراریم پروتکت', price: 3000000, image: '/golha/assets/images/terrarium_fertilizer.webp', imageUrl: '/golha/assets/images/terrarium_fertilizer.webp', description: 'محلول تخصصی تقویت ریشه و محافظت از رطوبت بستر تراریوم' },
+  { id: 11, name: 'دسته‌گل آلسترومریا رنگارنگ', price: 6500000, image: '/golha/assets/images/alstroemeria_bouquet.webp', imageUrl: '/golha/assets/images/alstroemeria_bouquet.webp', description: 'دسته گل شاداب با تنوع رنگی بالا و ماندگاری طولانی' },
+  { id: 12, name: 'گلدان فیکوس لیراتا', price: 11000000, image: '/golha/assets/images/ficus_lyrata.webp', imageUrl: '/golha/assets/images/ficus_lyrata.webp', description: 'گیاه برگ ویولنی جذاب و دکوراتیو مناسب فضاهای روشن' },
 ];
 
 /**

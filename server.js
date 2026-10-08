@@ -13,18 +13,31 @@ require('dotenv').config();
 const { runMigrations } = require('./src/db/migrate');
 const setupSocketIO = require('./src/socket');
 
+const compression = require('compression');
+
 // ساخت اپلیکیشن Express و سرور HTTP
 const app = express();
 const server = http.createServer(app);
 
 // پیکربندی Middlewareها
 app.disable('x-powered-by');
+app.use(compression());
 app.use(cors({ origin: process.env.CORS_ORIGIN || true }));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
-// سرو کردن فایل‌های استاتیک پوشه public برای تست موقت
-app.use(express.static(path.join(__dirname, 'public')));
+// سرو کردن بهینه فایل‌های استاتیک پوشه public (کش بلندمدت برای عکس‌ها و فونت‌ها، نو-کش برای اسکریپت‌ها و استایل‌ها)
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, filePath) => {
+    if (filePath.match(/\.(webp|jpg|jpeg|png|gif|svg|woff2|woff|ttf)$/i)) {
+      res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+    } else {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+}));
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
 // مسیرهای API

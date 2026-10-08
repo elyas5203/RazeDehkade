@@ -46,6 +46,23 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('session-title').innerText = sessionData.name || 'دستیاران کارآگاه';
   document.getElementById('session-code-display').innerText = sessionData.code;
 
+  // بارگذاری فوری از کش مرورگر برای نمایش آنی و بدون تاخیر پیام‌ها
+  try {
+    const cached = sessionStorage.getItem(`cached_msgs_${sessionData.id}`);
+    if (cached) {
+      const cachedList = JSON.parse(cached);
+      if (Array.isArray(cachedList) && cachedList.length) {
+        cachedList.forEach(m => renderMessage(m, { skipScroll: true, skipThreads: true }));
+        const box = document.getElementById('messages-box');
+        if (box) box.scrollTop = box.scrollHeight;
+        requestAnimationFrame(updateEvidenceThreads);
+      }
+    }
+  } catch (_) {}
+
+  // دریافت سریع پیام‌ها از سرور به صورت موازی (بدون انتظار برای اتصال سوکت)
+  loadHistory();
+
   // درخواست یک‌باره دسترسی میکروفون قبل از شروع جلسه جهت جلوگیری از نمایش مجدد پرمپت در طول بازی
   initUserMicrophone();
   initSocket();
@@ -140,8 +157,14 @@ function applyChatLock(isLocked) {
   }
 }
 
-// بارگذاری تاریخچه پیام‌های قبلی
+let isHistoryLoaded = false;
+let isFetchingHistory = false;
+
+// بارگذاری تاریخچه پیام‌های قبلی به صورت بهینه و فوق‌سریع
 async function loadHistory() {
+  if (isFetchingHistory) return;
+  isFetchingHistory = true;
+
   try {
     const res = await fetch(`/api/sessions/${sessionData.id}/messages`, {
       headers: {
@@ -154,15 +177,25 @@ async function loadHistory() {
       return;
     }
     const data = await res.json();
-    if (data.success) {
+    if (data.success && Array.isArray(data.data)) {
       const box = document.getElementById('messages-box');
-      data.data.forEach(renderMessage);
+      data.data.forEach(msg => renderMessage(msg, { skipScroll: true, skipThreads: true }));
+      if (box) box.scrollTop = box.scrollHeight;
+      requestAnimationFrame(updateEvidenceThreads);
+
+      try {
+        sessionStorage.setItem(`cached_msgs_${sessionData.id}`, JSON.stringify(data.data));
+      } catch (_) {}
+
       if (data.session && typeof data.session.is_chat_locked !== 'undefined') {
         applyChatLock(Boolean(data.session.is_chat_locked));
       }
+      isHistoryLoaded = true;
     }
   } catch (err) {
     console.error('Error loading history:', err);
+  } finally {
+    isFetchingHistory = false;
   }
 }
 
@@ -193,7 +226,9 @@ function initSocket() {
     statusEl.className = 'status-indicator online';
     statusEl.innerHTML = '<span class="status-dot"></span> متصل';
     socket.emit('join_session', { sessionId: sessionData.id });
-    loadHistory();
+    if (!isHistoryLoaded) {
+      loadHistory();
+    }
   });
 
   socket.io.on('reconnect', () => {
@@ -282,8 +317,9 @@ function initSocket() {
 }
 
 // نمایش پیام در چت‌باکس
-function renderMessage(msg) {
+function renderMessage(msg, options = {}) {
   const box = document.getElementById('messages-box');
+  if (!box) return;
   if (Number(msg.session_id) !== Number(sessionData.id)) return;
   if (box.querySelector(`[data-message-id="${Number(msg.id)}"]`)) return;
   const div = document.createElement('div');
@@ -301,7 +337,7 @@ function renderMessage(msg) {
 
   if (isEvidence) {
     div.classList.add('evidence-receipt');
-    renderEvidence(msg);
+    renderEvidence(msg, options);
   }
 
   const timeFormatted = new Date(msg.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
@@ -367,7 +403,9 @@ function renderMessage(msg) {
 
   const laterMessage = [...box.children].find(child => Number(child.dataset.messageId) > Number(msg.id));
   box.insertBefore(div, laterMessage || null);
-  box.scrollTop = box.scrollHeight;
+  if (!options.skipScroll) {
+    box.scrollTop = box.scrollHeight;
+  }
 }
 
 function evidenceFileIcon(type, label) {
@@ -387,7 +425,7 @@ function evidenceMediaMarkup(msg, expanded = false) {
   return expanded ? `<div class="evidence-file-icon">سند</div><a class="download-evidence" href="${url}" download>دریافت ${escapeHtml(msg.file_name || 'فایل')}</a>` : evidenceFileIcon('file', 'سند پرونده');
 }
 
-function renderEvidence(msg) {
+function renderEvidence(msg, options = {}) {
   const grid = document.getElementById('evidence-grid');
   if (!grid || grid.querySelector(`[data-evidence-id="${Number(msg.id)}"]`)) return;
   grid.querySelector('.empty-evidence')?.remove();
@@ -402,7 +440,9 @@ function renderEvidence(msg) {
   grid.insertBefore(card, later || null);
   document.getElementById('evidence-count').textContent = `${grid.querySelectorAll('.evidence-card').length.toLocaleString('fa-IR')} مدرک`;
   if (typeof applyEvidenceFilter === 'function') applyEvidenceFilter();
-  requestAnimationFrame(updateEvidenceThreads);
+  if (!options.skipThreads) {
+    requestAnimationFrame(updateEvidenceThreads);
+  }
 }
 
 function updateEvidenceThreads() {
@@ -438,8 +478,12 @@ function closeEvidence() {
   document.getElementById('evidence-dialog')?.close();
 }
 
-// ارسال پیام جدید
+let isSendingMessage = false;
+
+// ارسال پیام جدید با تضمین ارسال تکی و عدم امکان دابل ارسال
 function sendMessage() {
+  if (isSendingMessage) return;
+
   const input = document.getElementById('msg-input');
   const rawContent = input.value.trim();
   const content = rawContent.replace(/\n{3,}/g, '\n\n');
@@ -451,20 +495,27 @@ function sendMessage() {
   }
   document.getElementById('chat-feedback').textContent = '';
 
+  isSendingMessage = true;
   const submit = document.querySelector('.send-button');
-  submit.disabled = true;
+  if (submit) submit.disabled = true;
+
+  // پاک کردن آنی متن داخل ورودی جهت پیشگیری از ارسال چندباره
+  input.value = '';
+  input.style.height = 'auto';
+
   socket.timeout(5000).emit('send_message', {
     sessionId: sessionData.id,
     content: content,
     messageType: 'text',
   }, (error, result) => {
-    submit.disabled = false;
+    isSendingMessage = false;
+    if (submit) submit.disabled = false;
     if (error || !result?.success) {
       document.getElementById('chat-feedback').textContent = 'ارسال تأیید نشد؛ اتصال را بررسی کنید.';
+      // برگرداندن متن در صورت نرسیدن پیام به سرور
+      input.value = content;
       return;
     }
-    input.value = '';
-    input.style.height = 'auto';
     renderMessage(result.message);
   });
   sendTypingStatus(false);

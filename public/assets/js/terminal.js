@@ -1,5 +1,4 @@
 'use strict';
-document.getElementById('message-form').addEventListener('submit', event => { event.preventDefault(); sendMessage(); });
 const clockStarted = Date.now();
 const clockInterval = setInterval(() => {
   const seconds = Math.floor((Date.now() - clockStarted) / 1000);
