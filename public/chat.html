@@ -6,17 +6,17 @@
   <title>اتاق تحقیقات | راز دهکده</title>
   <link rel="preload" href="/assets/scene/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/investigation.css">
-  <link rel="stylesheet" href="/assets/css/terminal.css?v=4.2">
-  <link rel="stylesheet" href="/assets/css/vault-3d.css?v=4.2">
+  <link rel="stylesheet" href="/assets/css/terminal.css?v=4.3">
+  <link rel="stylesheet" href="/assets/css/vault-3d.css?v=4.3">
   <link rel="stylesheet" href="/assets/css/breach.css">
   <link rel="stylesheet" href="/assets/css/voice-player.css">
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="/assets/js/hack-sequence.js" defer></script>
   <script src="/assets/js/voice-recorder.js" defer></script>
-  <script src="/assets/js/user-chat.js?v=4.2" defer></script>
-  <script src="/assets/js/terminal-stream.js?v=4.2" defer></script>
-  <script src="/assets/js/terminal.js?v=4.2" defer></script>
-  <script src="/assets/js/vault-3d.js?v=4.2" defer></script>
+  <script src="/assets/js/user-chat.js?v=4.3" defer></script>
+  <script src="/assets/js/terminal-stream.js?v=4.3" defer></script>
+  <script src="/assets/js/terminal.js?v=4.3" defer></script>
+  <script src="/assets/js/vault-3d.js?v=4.3" defer></script>
 </head>
 <body class="terminal-page">
   <!-- فضای اصلی کار تمام‌صفحه (بدون هدر بالا و بدون فوتر پایین جهت حداکثر فضا): چت در سمت راست و ستون چپ دوگانه -->
@@ -198,10 +198,9 @@
           <button type="button" class="vault-3d-trigger-btn" id="vault-3d-trigger-btn" onclick="openVaultInteraction()" aria-label="گاوصندوق اسناد محرمانه">
             <div class="vault-3d-chassis" aria-hidden="true">
 
-              <!-- محفظه داخلی گاوصندوق (هنگام باز شدن درب سه‌بعدی با نور داخلی ملایم نمایان می‌شود) -->
+              <!-- محفظه داخلی گاوصندوق (هنگام باز شدن درب سه‌بعدی با عکس واقعی محفظه اسناد نمایان می‌شود) -->
               <div class="vault-interior-chamber" id="vault-interior-chamber">
-                <div class="vault-interior-backplate"></div>
-                <div class="vault-interior-shelf"></div>
+                <div class="vault-interior-photo"></div>
                 <div class="vault-interior-dossier-box">
                   <div class="vault-dossier-folder">
                     <span class="vault-dossier-tab">CLASSIFIED // ARCHIVE</span>
@@ -240,19 +239,9 @@
                 <!-- ضخامت لبه متالیک درب هنگام چرخش سه‌بعدی -->
                 <span class="vault-door-edge-thickness"></span>
 
-                <!-- سطح فولادی چکشی سنگین با پلاک مشخصات متالیک و قطعات مکانیکی -->
+                <!-- تصویر فوتورئالیستیک بدنه و قطعات درب فولادی واقعی گاوصندوق -->
                 <div class="vault-real-door-plate">
-                  <!-- پلاک آلومینیوم/استیل صنعتی مشخصات فنی امنیتی گاوصندوق -->
-                  <div class="vault-spec-plate">
-                    <span class="plate-screw tl"></span>
-                    <span class="plate-screw tr"></span>
-                    <div class="plate-brand">
-                      <span class="plate-brand-text">KAV-HEAVY INDUSTRIAL // CLASS 5</span>
-                      <span class="plate-serial">SER: RD-8849-CLASSIFIED</span>
-                    </div>
-                    <span class="plate-screw bl"></span>
-                    <span class="plate-screw br"></span>
-                  </div>
+                  <div class="vault-door-photo-bg"></div>
 
                   <!-- زندانه‌های استوانه‌ای کروم ضخیم در لبه‌های قفل درب -->
                   <div class="vault-locking-bolts">
@@ -262,69 +251,15 @@
                     <span class="vault-piston bottom"><i></i></span>
                   </div>
 
-                  <!-- قفل چرخشی رمز مدرج واقعی (Real Calibrated Mechanical Combination Dial) -->
-                  <div class="vault-combination-dial">
-                    <!-- شاخص مثلثی تراز در بالای قفل -->
-                    <span class="vault-dial-pointer" aria-hidden="true">▼</span>
-                    <!-- صفحه مدور نقره‌ای/کروم مدرج با اعداد واقعی ۰ تا ۹۰ -->
-                    <div class="vault-dial-calibrated-ring">
-                      <svg viewBox="0 0 160 160" class="vault-dial-ticks-svg">
-                        <defs>
-                          <radialGradient id="realDialFace" cx="50%" cy="50%" r="50%">
-                            <stop offset="0%" stop-color="#475569" />
-                            <stop offset="45%" stop-color="#334155" />
-                            <stop offset="85%" stop-color="#1e293b" />
-                            <stop offset="100%" stop-color="#0f172a" />
-                          </radialGradient>
-                          <linearGradient id="chromeRingBevel" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#f8fafc" />
-                            <stop offset="25%" stop-color="#cbd5e1" />
-                            <stop offset="50%" stop-color="#64748b" />
-                            <stop offset="75%" stop-color="#e2e8f0" />
-                            <stop offset="100%" stop-color="#1e293b" />
-                          </linearGradient>
-                        </defs>
-                        <!-- رینگ خارجی کروم با بازتاب نور -->
-                        <circle cx="80" cy="80" r="76" fill="url(#realDialFace)" stroke="url(#chromeRingBevel)" stroke-width="6" />
-                        <!-- خطوط ریز درجه‌بندی ۱۰۰ تایی قفل مکانیکی واقعی -->
-                        <circle cx="80" cy="80" r="66" fill="none" stroke="#cbd5e1" stroke-width="4" stroke-dasharray="1 3.14" opacity="0.65" />
-                        <!-- خطوط اصلی ۱۰ تایی با طول بلندتر -->
-                        <circle cx="80" cy="80" r="64" fill="none" stroke="#f8fafc" stroke-width="7" stroke-dasharray="2 31.4" opacity="0.95" />
-                        <!-- اعداد روی قفل رمز چرخشی -->
-                        <text x="80" y="24" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="800" font-family="monospace">0</text>
-                        <text x="122" y="42" text-anchor="middle" fill="#cbd5e1" font-size="9" font-weight="700" font-family="monospace">20</text>
-                        <text x="138" y="83" text-anchor="middle" fill="#cbd5e1" font-size="9" font-weight="700" font-family="monospace">30</text>
-                        <text x="122" y="126" text-anchor="middle" fill="#cbd5e1" font-size="9" font-weight="700" font-family="monospace">40</text>
-                        <text x="80" y="142" text-anchor="middle" fill="#cbd5e1" font-size="9" font-weight="700" font-family="monospace">50</text>
-                        <text x="38" y="126" text-anchor="middle" fill="#cbd5e1" font-size="9" font-weight="700" font-family="monospace">60</text>
-                        <text x="22" y="83" text-anchor="middle" fill="#cbd5e1" font-size="9" font-weight="700" font-family="monospace">70</text>
-                        <text x="38" y="42" text-anchor="middle" fill="#cbd5e1" font-size="9" font-weight="700" font-family="monospace">80</text>
-                      </svg>
-                    </div>
+                  <!-- گردونه مرکزی قفل مکانیکی -->
+                  <div class="vault-dial-knurled-knob" id="vault-inner-gear" aria-hidden="true"></div>
 
-                    <!-- دستگیره عاج‌دار مرکزی قفل رمز (Knurled Dial Knob) -->
-                    <div class="vault-dial-knurled-knob" id="vault-inner-gear">
-                      <span class="knurled-texture"></span>
-                      <span class="knob-center-lens"></span>
-                    </div>
-                  </div>
-
-                  <!-- دستگیره سه‌شاخه سنگین کروم آینه‌ای گاوصندوق واقعی (#vault-3d-handle) -->
+                  <!-- دستگیره سه‌شاخه سنگین کروم آینه‌ای واقعی و چرخان (#vault-3d-handle) -->
                   <div class="vault-real-spoke-handle" id="vault-3d-handle">
-                    <!-- سایه سنگین دستگیره روی درب -->
-                    <span class="vault-handle-shadow"></span>
-                    <!-- سه شاخه ریخته‌گری ضخیم کروم با سرهای گرد -->
-                    <div class="vault-spoke-assembly">
-                      <span class="vault-spoke sp-1"><i></i></span>
-                      <span class="vault-spoke sp-2"><i></i></span>
-                      <span class="vault-spoke sp-3"><i></i></span>
-                      <!-- توپی سنگین مرکزی دستگیره کروم با مهر محرمانه «؟» -->
-                      <span class="vault-spoke-hub">
-                        <span class="vault-hub-recess">
-                          <span class="vault-question-mark" id="vault-question-mark">؟</span>
-                        </span>
-                      </span>
-                    </div>
+                    <div class="vault-handle-photo"></div>
+                    <span class="vault-hub-recess">
+                      <span class="vault-question-mark" id="vault-question-mark">؟</span>
+                    </span>
                   </div>
 
                 </div>
@@ -370,46 +305,61 @@
     </div>
   </dialog>
 
-  <!-- پاپ‌آپ ورود رمز گاوصندوق اسناد محرمانه (کاملاً جدی، تاکتیکال و بدون اسپویل) -->
+  <!-- پاپ‌آپ ورود رمز گاوصندوق اسناد محرمانه (طراحی فوق‌العاده شیک، جدی، امنیتی و استاندارد) -->
   <dialog id="vault-password-dialog" class="themed-modal-dialog vault-password-dialog">
-    <div class="themed-modal-header">
+    <div class="themed-modal-header vault-terminal-header">
       <div class="themed-modal-title-group">
-        <span class="eyebrow">RESTRICTED ARCHIVE // SECURITY LEVEL 5</span>
+        <div class="vault-security-status-badge">
+          <span class="vault-status-led" aria-hidden="true"></span>
+          <span class="vault-badge-text">SECURITY ARCHIVE // UNIT-804</span>
+        </div>
         <h3>🔐 گاوصندوق اسناد محرمانه</h3>
       </div>
       <button class="dialog-close" type="button" onclick="closeVaultPasswordModal()" aria-label="بستن پنجره رمز">×</button>
     </div>
-    <form id="vault-password-form" onsubmit="submitVaultPassword(event)" class="themed-modal-body">
-      <div class="vault-code-input-wrap">
-        <input
-          type="text"
-          id="vault-code-input"
-          autocomplete="off"
-          placeholder="رمز عبور اسناد محرمانه…"
-          maxlength="32"
-          aria-label="رمز گاوصندوق اسناد محرمانه"
-        >
-        <button type="button" class="vault-clear-input-btn" onclick="clearVaultCodeInput()" title="پاک کردن">پاک کردن</button>
+    <form id="vault-password-form" onsubmit="submitVaultPassword(event)" class="themed-modal-body vault-password-body">
+      
+      <!-- نمایشگر دیجیتال رمز به سبک قفل‌های دیجیتال امنیتی بانکی -->
+      <div class="vault-digital-display-card">
+        <div class="vault-display-meta">
+          <span class="vault-display-label">سیستم امنیتی اسناد محرمانه</span>
+          <span class="vault-display-lock-state">🔒 LOCKED</span>
+        </div>
+        <div class="vault-display-screen">
+          <input
+            type="text"
+            id="vault-code-input"
+            autocomplete="off"
+            placeholder="کد عبور را وارد کنید"
+            maxlength="32"
+            aria-label="رمز گاوصندوق اسناد محرمانه"
+          >
+        </div>
       </div>
 
-      <div class="vault-keypad-grid" aria-label="صفحه کلید امنیتی گاوصندوق">
-        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('1')">۱</button>
-        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('2')">۲</button>
-        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('3')">۳</button>
-        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('4')">۴</button>
-        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('5')">۵</button>
-        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('6')">۶</button>
-        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('7')">۷</button>
-        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('8')">۸</button>
-        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('9')">۹</button>
-        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('0')">۰</button>
+      <!-- صفحه کلید امنیتی ۳×۴ با کلیدهای متالیک تاکتیکال -->
+      <div class="vault-keypad-3x4" aria-label="صفحه کلید امنیتی گاوصندوق">
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('1')"><span>1</span><small>۱</small></button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('2')"><span>2</span><small>۲</small></button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('3')"><span>3</span><small>۳</small></button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('4')"><span>4</span><small>۴</small></button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('5')"><span>5</span><small>۵</small></button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('6')"><span>6</span><small>۶</small></button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('7')"><span>7</span><small>۷</small></button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('8')"><span>8</span><small>۸</small></button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('9')"><span>9</span><small>۹</small></button>
+        <button type="button" class="vault-key-btn func-clear" onclick="clearVaultCodeInput()" title="پاکسازی ورودی"><span>CLR</span><small>پاکسازی</small></button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('0')"><span>0</span><small>۰</small></button>
+        <button type="button" class="vault-key-btn func-backspace" onclick="backspaceVaultCodeInput()" title="حذف رقم آخر"><span>⌫</span><small>حذف</small></button>
       </div>
 
       <div id="vault-feedback-banner" class="vault-feedback-banner" role="alert" hidden></div>
 
-      <div class="themed-modal-footer">
-        <button type="button" class="themed-btn secondary" onclick="closeVaultPasswordModal()">انصراف</button>
-        <button type="submit" class="themed-btn primary" id="vault-unlock-submit-btn">🔓 احراز هویت و بازگشایی</button>
+      <div class="vault-password-modal-footer">
+        <button type="submit" class="vault-primary-submit-btn" id="vault-unlock-submit-btn">
+          <span>🔓 احراز هویت و بازگشایی گاوصندوق</span>
+        </button>
+        <button type="button" class="vault-cancel-link-btn" onclick="closeVaultPasswordModal()">انصراف و بازگشت</button>
       </div>
     </form>
   </dialog>

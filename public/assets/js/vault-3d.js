@@ -200,6 +200,20 @@
     }
   }
 
+  function backspaceVaultCodeInput() {
+    playVaultKeyClick();
+    const input = document.getElementById('vault-code-input');
+    const banner = document.getElementById('vault-feedback-banner');
+    if (input) {
+      input.classList.remove('is-error');
+      input.value = input.value.slice(0, -1);
+      input.focus();
+    }
+    if (banner) {
+      banner.hidden = true;
+    }
+  }
+
   function triggerVaultWrongPasswordError(customMsg) {
     playVaultErrorSound();
     const banner = document.getElementById('vault-feedback-banner');
@@ -427,6 +441,7 @@
   window.closeVaultPasswordModal = closeVaultPasswordModal;
   window.appendVaultKeypadChar = appendVaultKeypadChar;
   window.clearVaultCodeInput = clearVaultCodeInput;
+  window.backspaceVaultCodeInput = backspaceVaultCodeInput;
   window.submitVaultPassword = submitVaultPassword;
   window.changeVaultGallerySlide = changeVaultGallerySlide;
   window.selectVaultGallerySlide = selectVaultGallerySlide;
