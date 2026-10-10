@@ -104,122 +104,22 @@
   }
 
   // ============================================================================
-  // موتور تولید صدای مکانیکی گاوصندوق (Web Audio API — بدون نیاز به فایل خارجی)
+  // سیاست سکوت مکانیکی و حذف قطعی صداهای بازی/دیدیدینگ طبق VAULT_SLOT4_MASTER.md
   // ============================================================================
-  function getAudioContext() {
-    if (!vaultAudioCtx) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) {
-        vaultAudioCtx = new AudioCtx();
-      }
-    }
-    if (vaultAudioCtx && vaultAudioCtx.state === 'suspended') {
-      vaultAudioCtx.resume().catch(() => {});
-    }
-    return vaultAudioCtx;
-  }
-
   function playVaultKeyClick() {
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(920, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(280, ctx.currentTime + 0.045);
-      gain.gain.setValueAtTime(0.08, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.045);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.05);
-    } catch (_) {}
+    /* Silent: تمام صداهای مصنوعی کلیک طبق دستور حذف شدند */
   }
 
   function playVaultErrorSound() {
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      [0, 0.14].forEach((offset) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(155, ctx.currentTime + offset);
-        osc.frequency.setValueAtTime(115, ctx.currentTime + offset + 0.06);
-        gain.gain.setValueAtTime(0.12, ctx.currentTime + offset);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.12);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(ctx.currentTime + offset);
-        osc.stop(ctx.currentTime + offset + 0.13);
-      });
-    } catch (_) {}
+    /* Silent: آلارم‌های الکترونیکی حذف شدند */
   }
 
-  /**
-   * صدای چرخش آرام و سنگین چرخ‌دنده‌های دستگیره گاوصندوق (طی ۳.۵ ثانیه)
-   */
   function playVaultSlowHandleTurnSound() {
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      const clickTimes = [
-        0.08, 0.24, 0.42, 0.62, 0.84, 1.08, 1.34, 1.62,
-        1.92, 2.24, 2.58, 2.92, 3.25
-      ];
-      clickTimes.forEach((t, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        const baseFreq = 320 + (idx % 3) * 45;
-        osc.frequency.setValueAtTime(baseFreq, ctx.currentTime + t);
-        osc.frequency.exponentialRampToValueAtTime(95, ctx.currentTime + t + 0.06);
-        gain.gain.setValueAtTime(0.11, ctx.currentTime + t);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.065);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(ctx.currentTime + t);
-        osc.stop(ctx.currentTime + t + 0.07);
-      });
-
-      // صدای عقب رفتن پیستون‌های فولادی قفل
-      const boltOsc = ctx.createOscillator();
-      const boltGain = ctx.createGain();
-      boltOsc.type = 'triangle';
-      boltOsc.frequency.setValueAtTime(190, ctx.currentTime + 3.32);
-      boltOsc.frequency.exponentialRampToValueAtTime(62, ctx.currentTime + 3.55);
-      boltGain.gain.setValueAtTime(0.18, ctx.currentTime + 3.32);
-      boltGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 3.56);
-      boltOsc.connect(boltGain);
-      boltGain.connect(ctx.destination);
-      boltOsc.start(ctx.currentTime + 3.32);
-      boltOsc.stop(ctx.currentTime + 3.58);
-    } catch (_) {}
+    /* Silent: صداهای تکراری چرخ‌دنده‌ها حذف شدند */
   }
 
-  /**
-   * صدای باز شدن درب سنگین گاوصندوق و آکورد طلایی کشف راز
-   */
   function playVaultDoorOpenAndRevealSound() {
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      const notes = [261.63, 329.63, 392.00, 523.25];
-      notes.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        const start = ctx.currentTime + 0.25 + i * 0.11;
-        osc.frequency.setValueAtTime(freq, start);
-        gain.gain.setValueAtTime(0.08, start);
-        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.95);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(start);
-        osc.stop(start + 1.0);
-      });
-    } catch (_) {}
+    /* Silent: صدای پیروزی دیدیدینگ و آکوردهای بازی طبق دستور کاربر به کلی حذف شدند */
   }
 
   // ============================================================================
