@@ -26,6 +26,18 @@ const checkedFastStartFiles = new Set();
 
 // پیکربندی Middlewareها
 app.disable('x-powered-by');
+app.set('trust proxy', true);
+
+// محافظت در برابر کاراکترهای نامعتبر در URL و جلوگیری از خطای ۴۰۰ بد ریکوئست
+app.use((req, res, next) => {
+  try {
+    decodeURI(req.path);
+    next();
+  } catch (_) {
+    return res.redirect(302, '/');
+  }
+});
+
 app.use(compression({
   filter: (req, res) => {
     if (req.headers.range) return false;
