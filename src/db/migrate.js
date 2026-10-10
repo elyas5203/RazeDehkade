@@ -69,7 +69,7 @@ async function runMigrations() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    const legacyClearKey = 'clear_legacy_canned_and_weekly_v1';
+    const legacyClearKey = 'clear_legacy_canned_and_weekly_v2';
     const existingMigration = await query('SELECT * FROM app_migrations WHERE migration_key = ?', [legacyClearKey]);
     if (!existingMigration.rows || existingMigration.rows.length === 0) {
       await query('DELETE FROM weekly_content');

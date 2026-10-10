@@ -881,9 +881,9 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     }
   });
 
-  it('16. MohtavaTelBot restricts to admin 5490508090 and saves sequential messages/media per week', async function () {
+  it('16. MohtavaTelBot restricts to admin 5490508090 and auto-numbers items (پیام 1, پیام 2...) until title is changed', async function () {
     const fs = require('fs');
-    const { MohtavaTelegramBot, BTN_WEEK_1, BTN_END_WEEK, BTN_UNDO_LAST } = require('../MohtavaTelBot/bot');
+    const { MohtavaTelegramBot, BTN_WEEK_1, BTN_CHANGE_TITLE, BTN_END_WEEK, BTN_UNDO_LAST } = require('../MohtavaTelBot/bot');
     const sentMessages = [];
     const bot = new MohtavaTelegramBot({ adminId: 5490508090 });
 
@@ -892,8 +892,8 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
       return { ok: true };
     };
     bot.downloadTelegramFile = async (fileId, destFilePath) => {
-      fs.writeFileSync(destFilePath, Buffer.from('fake-image-bytes'));
-      return 'photos/file_1.jpg';
+      fs.writeFileSync(destFilePath, Buffer.from('fake-media-bytes'));
+      return 'videos/file_1.mp4';
     };
 
     // 1. Reject unauthorized user
@@ -913,36 +913,50 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     assert.strictEqual(bot.adminState.mode, 'WAIT_TITLE');
     assert.strictEqual(bot.adminState.week, 1);
 
-    // 3. Admin sends title
+    // 3. Admin sends title "پیام ها" -> normalized to "پیام"
     await bot.handleMessage({
       chat: { id: 5490508090 },
       from: { id: 5490508090 },
-      text: 'وصیت‌نامه و نقشه',
+      text: 'پیام ها',
     });
     assert.strictEqual(bot.adminState.mode, 'WAIT_CONTENT');
-    assert.strictEqual(bot.adminState.currentTitle, 'وصیت‌نامه و نقشه');
+    assert.strictEqual(bot.adminState.currentTitle, 'پیام');
 
-    // 4. Admin forwards 2 text messages and 1 photo (just like the user's screenshot)
+    // 4. Admin sends 2 separate text messages -> saved as "پیام 1" and "پیام 2"
     await bot.handleMessage({
       chat: { id: 5490508090 },
       from: { id: 5490508090 },
-      text: 'بابا باریکلا خوشم اومد که این کاره این.. این نقشه خیلی مهمه',
+      text: 'سلام\nممنونم ازتون که سفارش رو انجام دادین و تا اینجا اومدین',
     });
     await bot.handleMessage({
       chat: { id: 5490508090 },
       from: { id: 5490508090 },
-      text: 'من بهش گفتم که نقشه رو پیدا کردیم بهم جواب داد الان براتون میفرستم',
-    });
-    await bot.handleMessage({
-      chat: { id: 5490508090 },
-      from: { id: 5490508090 },
-      photo: [
-        { file_id: 'small_id', width: 90, height: 90 },
-        { file_id: 'large_id', width: 800, height: 1200 },
-      ],
+      text: 'خب\nبسته رو باز کردین؟',
     });
 
-    // Verify via API that Week 1 now has 3 items in exact order (#1 text, #2 text, #3 image)
+    // 5. Admin clicks Change Title -> sets title to "ویدیو" -> sends a video -> saved as "ویدیو 1"
+    await bot.handleMessage({
+      chat: { id: 5490508090 },
+      from: { id: 5490508090 },
+      text: BTN_CHANGE_TITLE,
+    });
+    assert.strictEqual(bot.adminState.mode, 'WAIT_TITLE');
+
+    await bot.handleMessage({
+      chat: { id: 5490508090 },
+      from: { id: 5490508090 },
+      text: 'ویدیو',
+    });
+    assert.strictEqual(bot.adminState.mode, 'WAIT_CONTENT');
+    assert.strictEqual(bot.adminState.currentTitle, 'ویدیو');
+
+    await bot.handleMessage({
+      chat: { id: 5490508090 },
+      from: { id: 5490508090 },
+      video: { file_id: 'vid_id_1', file_name: 'intro.mp4' },
+    });
+
+    // Verify via API that Week 1 now has 3 items: "پیام 1", "پیام 2", "ویدیو 1"
     const week1Res = await fetch(`${serverUrl}/api/weekly-content?week=1`, {
       headers: { Authorization: `Bearer ${adminToken}` },
     });
@@ -951,14 +965,16 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     assert.strictEqual(week1Data.data.length, 3);
     assert.strictEqual(week1Data.data[0].step_order, 1);
     assert.strictEqual(week1Data.data[0].content_type, 'text');
-    assert.strictEqual(week1Data.data[0].title, 'وصیت‌نامه و نقشه');
+    assert.strictEqual(week1Data.data[0].title, 'پیام 1');
     assert.strictEqual(week1Data.data[1].step_order, 2);
     assert.strictEqual(week1Data.data[1].content_type, 'text');
+    assert.strictEqual(week1Data.data[1].title, 'پیام 2');
     assert.strictEqual(week1Data.data[2].step_order, 3);
-    assert.strictEqual(week1Data.data[2].content_type, 'image');
+    assert.strictEqual(week1Data.data[2].content_type, 'video');
+    assert.strictEqual(week1Data.data[2].title, 'ویدیو 1');
     assert.ok(week1Data.data[2].payload.startsWith('/uploads/weekly/'));
 
-    // 5. Undo last step and finish week
+    // 6. Undo last step and finish week
     await bot.handleMessage({
       chat: { id: 5490508090 },
       from: { id: 5490508090 },

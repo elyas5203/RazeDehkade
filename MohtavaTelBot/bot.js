@@ -23,6 +23,8 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
+const STATE_FILE_PATH = path.join(__dirname, '.bot-state.json');
+
 const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.svg', '.heic']);
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.mkv', '.webm', '.3gp', '.avi']);
 const VOICE_EXTS = new Set(['.ogg', '.oga', '.mp3', '.wav', '.m4a', '.aac', '.flac', '.opus']);
@@ -90,7 +92,7 @@ function getTitleInputKeyboard() {
 function getReceivingContentKeyboard() {
   return {
     keyboard: [
-      [{ text: BTN_END_WEEK }, { text: BTN_CHANGE_TITLE }],
+      [{ text: BTN_CHANGE_TITLE }, { text: BTN_END_WEEK }],
       [{ text: BTN_UNDO_LAST }, { text: BTN_LIST_CURRENT_WEEK }],
     ],
     resize_keyboard: true,
@@ -133,6 +135,58 @@ function formatTypeFa(contentType) {
   }
 }
 
+function defaultBaseTitleForType(contentType) {
+  switch (contentType) {
+    case 'image':
+      return 'عکس';
+    case 'video':
+      return 'ویدیو';
+    case 'voice':
+      return 'ویس';
+    case 'file':
+      return 'فایل';
+    default:
+      return 'پیام';
+  }
+}
+
+/**
+ * نرمال‌سازی عنوان پایه تا هنگام افزودن شماره، عبارت‌هایی مثل «پیام 1»، «پیام 2» یا «ویدیو 1» ساخته شود
+ */
+function normalizeBaseTitle(rawTitle) {
+  let t = String(rawTitle || '').trim();
+  if (!t) return 'پیام';
+
+  // تبدیل جمع به مفرد برای شماره‌گذاری تمیز (مثلاً "پیام ها" -> "پیام" تا بشود "پیام 1، پیام 2...")
+  if (/^پیام[\s\u200c]*ها$/u.test(t)) return 'پیام';
+  if (/^ویدیو[\s\u200c]*ها$/u.test(t)) return 'ویدیو';
+  if (/^فیلم[\s\u200c]*ها$/u.test(t)) return 'فیلم';
+  if (/^عکس[\s\u200c]*ها$/u.test(t)) return 'عکس';
+  if (/^ویس[\s\u200c]*ها$/u.test(t)) return 'ویس';
+  if (/^صوت[\s\u200c]*ها$/u.test(t)) return 'صوت';
+  if (/^فایل[\s\u200c]*ها$/u.test(t)) return 'فایل';
+
+  // حذف عدد انتهایی احتمالی تا شماره تکراری نخورد
+  t = t.replace(/\s+[0-9۰-۹]+$/u, '').trim();
+  return t || 'پیام';
+}
+
+/**
+ * تشخیص اینکه آیا پیام ارسال‌شده یک «عنوان کوتاه» است یا خودش یک «پیام محتوا/فوروارد شده» است
+ */
+function isLikelyContentInsteadOfTitle(msg, text) {
+  if (!msg) return false;
+  // اگر پیام فوروارد شده باشد، قطعاً محتواست نه عنوان
+  if (msg.forward_date || msg.forward_origin || msg.forward_from || msg.forward_from_chat || msg.forward_sender_name) {
+    return true;
+  }
+  // اگر چندخطی باشد یا طولانی‌تر از ۴۰ کاراکتر باشد، متن پیام است نه عنوان
+  if (text && (text.includes('\n') || text.length > 40)) {
+    return true;
+  }
+  return false;
+}
+
 class MohtavaTelegramBot {
   /**
    * @param {object} [options]
@@ -148,14 +202,47 @@ class MohtavaTelegramBot {
     this.fileBase = `https://api.telegram.org/file/bot${this.token}`;
     this.offset = 0;
     this.running = false;
-    this.pollTimer = null;
+    this.persistState = process.env.NODE_ENV !== 'test';
 
     // وضعیت مکالمه ادمین
     this.adminState = {
       mode: 'IDLE', // 'IDLE' | 'WAIT_TITLE' | 'WAIT_CONTENT' | 'WAIT_CLEAR_WEEK' | 'WAIT_CONFIRM_CLEAR_ALL'
       week: null,
       currentTitle: '',
+      titleCounter: 0,
     };
+
+    if (this.persistState) {
+      this.loadPersistedState();
+    }
+  }
+
+  loadPersistedState() {
+    try {
+      if (fs.existsSync(STATE_FILE_PATH)) {
+        const raw = JSON.parse(fs.readFileSync(STATE_FILE_PATH, 'utf8'));
+        if (raw && typeof raw === 'object') {
+          this.adminState = {
+            mode: raw.mode || 'IDLE',
+            week: raw.week || null,
+            currentTitle: raw.currentTitle || '',
+            titleCounter: Number(raw.titleCounter) || 0,
+          };
+        }
+      }
+    } catch (_) {}
+  }
+
+  savePersistedState() {
+    if (!this.persistState) return;
+    try {
+      fs.writeFileSync(STATE_FILE_PATH, JSON.stringify(this.adminState, null, 2), 'utf8');
+    } catch (_) {}
+  }
+
+  setState(patch) {
+    this.adminState = { ...this.adminState, ...patch };
+    this.savePersistedState();
   }
 
   setSocketIO(io) {
@@ -365,10 +452,10 @@ class MohtavaTelegramBot {
 
     // ۱. دستور شروع یا بازگشت به منوی اصلی
     if (text === '/start' || text === '/menu' || text === BTN_BACK_MAIN) {
-      this.adminState = { mode: 'IDLE', week: null, currentTitle: '' };
+      this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 });
       await this.sendMessage(
         chatId,
-        `👋 سلام ادمین عزیز!\nبه ربات مدیریت «پیام‌های آماده و سناریوی ۵ هفته‌ای» خوش آمدید.\n\n۱️⃣ ابتدا هفته مورد نظر (هفته اول تا پنجم) را انتخاب کنید.\n۲️⃣ سپس عنوان را بنویسید.\n۳️⃣ بعد پیام‌ها یا فایل‌ها (متن، عکس، فیلم، صوت) را فوروارد یا ارسال کنید تا به ترتیب (۱، ۲، ۳...) در سرور ذخیره شوند.`,
+        `👋 سلام ادمین عزیز!\nبه ربات مدیریت «پیام‌های آماده و سناریوی ۵ هفته‌ای» خوش آمدید.\n\n۱️⃣ ابتدا هفته مورد نظر (هفته اول تا پنجم) را انتخاب کنید.\n۲️⃣ سپس عنوان دسته را بنویسید (مثلاً: «پیام ها» یا «ویدیو»).\n۳️⃣ حالا پیام‌ها را یکی‌یکی بفرستید؛ بات خودش به عنوان عدد اضافه می‌کند (پیام 1، پیام 2، پیام 3...) و تا وقتی «${BTN_CHANGE_TITLE}» را نزنید، عنوان تغییر نمی‌کند!`,
         getMainMenuKeyboard()
       );
       return;
@@ -389,7 +476,7 @@ class MohtavaTelegramBot {
 
     // ۴. دکمه پاکسازی یک هفته مشخص
     if (text === BTN_CLEAR_ONE_WEEK) {
-      this.adminState = { mode: 'WAIT_CLEAR_WEEK', week: null, currentTitle: '' };
+      this.setState({ mode: 'WAIT_CLEAR_WEEK', week: null, currentTitle: '', titleCounter: 0 });
       await this.sendMessage(
         chatId,
         `🧹 کدام هفته را می‌خواهید به طور کامل پاکسازی کنید؟`,
@@ -405,7 +492,7 @@ class MohtavaTelegramBot {
         const deletedItems = await WeeklyContent.deleteByWeek(weekNum);
         this.deleteUploadedFilesForItems(deletedItems);
         this.notifyAdminPanel(weekNum);
-        this.adminState = { mode: 'IDLE', week: null, currentTitle: '' };
+        this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 });
         await this.sendMessage(
           chatId,
           `✅ تمام محتوای «${WEEK_NAMES[weekNum]}» (${deletedItems.length} مرحله) پاکسازی شد.`,
@@ -417,7 +504,7 @@ class MohtavaTelegramBot {
 
     // ۵. دکمه پاکسازی کل پیام‌های آماده (همه هفته‌ها)
     if (text === BTN_CLEAR_ALL) {
-      this.adminState = { mode: 'WAIT_CONFIRM_CLEAR_ALL', week: null, currentTitle: '' };
+      this.setState({ mode: 'WAIT_CONFIRM_CLEAR_ALL', week: null, currentTitle: '', titleCounter: 0 });
       await this.sendMessage(
         chatId,
         `⚠️ آیا مطمئن هستید که می‌خواهید تمام پیام‌های آماده و محتوای هر ۵ هفته به طور کامل پاک شوند؟`,
@@ -431,7 +518,7 @@ class MohtavaTelegramBot {
       await query('DELETE FROM canned_responses');
       this.deleteUploadedFilesForItems(deletedItems);
       this.notifyAdminPanel(null);
-      this.adminState = { mode: 'IDLE', week: null, currentTitle: '' };
+      this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 });
       await this.sendMessage(
         chatId,
         `🗑 تمام پیام‌های آماده و محتوای هر ۵ هفته (${deletedItems.length} مورد) به طور کامل از سرور پاک شدند.`,
@@ -444,23 +531,40 @@ class MohtavaTelegramBot {
     if (this.adminState.mode === 'WAIT_TITLE' && this.adminState.week) {
       const weekNum = this.adminState.week;
       const weekName = WEEK_NAMES[weekNum];
+      const mediaInfo = this.extractMediaInfo(msg);
+
+      // اگر کاربر به جای نوشتن عنوان کوتاه، مستقیماً پیام طولانی/چندخطی یا فوروارد یا فایل فرستاد،
+      // آن را به عنوان «عنوان» اشتباه نگیر! عنوان پیش‌فرض (پیام / ویدیو / عکس) بگذار و مستقیم ذخیره‌اش کن:
+      if (mediaInfo || isLikelyContentInsteadOfTitle(msg, text)) {
+        const autoBaseTitle = mediaInfo ? defaultBaseTitleForType(mediaInfo.contentType) : 'پیام';
+        this.setState({
+          mode: 'WAIT_CONTENT',
+          currentTitle: autoBaseTitle,
+          titleCounter: 0,
+        });
+        await this.saveIncomingContentItem(chatId, msg);
+        return;
+      }
 
       if (!text) {
         await this.sendMessage(
           chatId,
-          `⚠️ لطفاً ابتدا یک «عنوان» متنی برای «${weekName}» بنویسید و ارسال کنید:`,
+          `⚠️ لطفاً ابتدا یک «عنوان» برای این دسته در «${weekName}» بنویسید (مثلاً: پیام ها، ویدیو، ویس):`,
           getTitleInputKeyboard()
         );
         return;
       }
 
-      this.adminState.currentTitle = text.slice(0, 140);
-      this.adminState.mode = 'WAIT_CONTENT';
+      const cleanBaseTitle = normalizeBaseTitle(text);
+      this.setState({
+        mode: 'WAIT_CONTENT',
+        currentTitle: cleanBaseTitle,
+        titleCounter: 0,
+      });
 
-      const nextOrder = await WeeklyContent.getNextStepOrder(weekNum);
       await this.sendMessage(
         chatId,
-        `✅ عنوان «${this.adminState.currentTitle}» برای «${weekName}» ثبت شد.\n\n📤 حالا محتوای آن را (متن، عکس، فیلم، ویس/صوت یا فایل) فوروارد کنید یا بفرستید.\n🔢 هر پیام یا فایلی که بفرستید، به صورت کارت جداگانه از شماره ${nextOrder} به بعد به ترتیب ثبت می‌شود.\n\n💡 برای تغییر عنوان بخش بعدی «${BTN_CHANGE_TITLE}» و در انتهای کار «${BTN_END_WEEK}» را بزنید.`,
+        `✅ عنوان روی «${cleanBaseTitle}» تنظیم شد.\n\n📤 حالا پیام‌ها یا فایل‌ها را یکی‌یکی بفرستید یا فوروارد کنید.\n🔢 بات به صورت خودکار به عنوان هر کدام عدد اضافه می‌کند:\n«${cleanBaseTitle} 1»، «${cleanBaseTitle} 2»، «${cleanBaseTitle} 3» و...\n\n🔒 تا زمانی که دکمه «${BTN_CHANGE_TITLE}» را نزنید، همین عنوان حفظ می‌شود.`,
         getReceivingContentKeyboard()
       );
       return;
@@ -474,7 +578,7 @@ class MohtavaTelegramBot {
       // الف) دکمه پایان هفته
       if (text === BTN_END_WEEK) {
         const items = await WeeklyContent.findByWeek(weekNum);
-        this.adminState = { mode: 'IDLE', week: null, currentTitle: '' };
+        this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 });
         await this.sendMessage(
           chatId,
           `🎉 ثبت محتوای «${weekName}» به پایان رسید.\n📊 مجموع مراحل ثبت‌شده در ${weekName}: ${items.length} مرحله.\n\nمی‌توانید هفته بعدی را از منوی زیر انتخاب کنید:`,
@@ -483,12 +587,12 @@ class MohtavaTelegramBot {
         return;
       }
 
-      // ب) دکمه تغییر عنوان برای مراحل بعدی همان هفته
+      // ب) دکمه تغییر عنوان برای دسته بعدی در همان هفته
       if (text === BTN_CHANGE_TITLE) {
-        this.adminState.mode = 'WAIT_TITLE';
+        this.setState({ mode: 'WAIT_TITLE', titleCounter: 0 });
         await this.sendMessage(
           chatId,
-          `✏️ لطفاً «عنوان جدید» برای ادامه مراحل «${weekName}» را بنویسید:`,
+          `✏️ لطفاً «عنوان جدید» را بنویسید (مثلاً: ویدیو، پیام ها، ویس، عکس):`,
           getTitleInputKeyboard()
         );
         return;
@@ -508,6 +612,9 @@ class MohtavaTelegramBot {
         const lastItem = items[items.length - 1];
         await WeeklyContent.delete(lastItem.id);
         this.deleteUploadedFilesForItems([lastItem]);
+        if (this.adminState.titleCounter > 0) {
+          this.setState({ titleCounter: this.adminState.titleCounter - 1 });
+        }
         this.notifyAdminPanel(weekNum);
         await this.sendMessage(
           chatId,
@@ -523,7 +630,7 @@ class MohtavaTelegramBot {
         return;
       }
 
-      // هـ) دریافت و ذخیره محتوا (فایل رسانه‌ای یا پیام متنی)
+      // هـ) دریافت و ذخیره محتوا (فایل رسانه‌ای یا پیام متنی) با شماره‌گذاری خودکار روی عنوان فعلی
       await this.saveIncomingContentItem(chatId, msg);
       return;
     }
@@ -539,26 +646,29 @@ class MohtavaTelegramBot {
   async startWeekSelection(chatId, weekNum) {
     const items = await WeeklyContent.findByWeek(weekNum);
     const weekName = WEEK_NAMES[weekNum];
-    this.adminState = {
+    this.setState({
       mode: 'WAIT_TITLE',
       week: weekNum,
       currentTitle: '',
-    };
+      titleCounter: 0,
+    });
 
     await this.sendMessage(
       chatId,
-      `📌 «${weekName}» انتخاب شد.\n📊 تعداد مراحل ثبت‌شده فعلی در این هفته: ${items.length}\n\n✏️ لطفاً «عنوان» را بنویسید و بفرستید:`,
+      `📌 «${weekName}» انتخاب شد.\n📊 تعداد مراحل ثبت‌شده فعلی در این هفته: ${items.length}\n\n✏️ لطفاً «عنوان» دسته اول را بنویسید (مثلاً بنویسید: پیام ها یا ویدیو):`,
       getTitleInputKeyboard()
     );
   }
 
   /**
-   * ذخیره یک پیام متنی یا دانلود و ذخیره فایل (عکس، فیلم، صوت، سند) به ترتیب در هفته انتخاب‌شده
+   * ذخیره یک پیام متنی یا دانلود و ذخیره فایل (عکس، فیلم، صوت، سند) با افزودن خودکار عدد (1, 2, 3...) به عنوان
    */
   async saveIncomingContentItem(chatId, msg) {
     const weekNum = this.adminState.week;
     const weekName = WEEK_NAMES[weekNum];
-    const title = this.adminState.currentTitle || `مرحله ${weekName}`;
+    const baseTitle = this.adminState.currentTitle || 'پیام';
+    const nextCounter = (Number(this.adminState.titleCounter) || 0) + 1;
+    const numberedTitle = `${baseTitle} ${nextCounter}`;
     const stepOrder = await WeeklyContent.getNextStepOrder(weekNum);
 
     const mediaInfo = this.extractMediaInfo(msg);
@@ -576,16 +686,17 @@ class MohtavaTelegramBot {
           week_number: weekNum,
           step_order: stepOrder,
           content_type: mediaInfo.contentType,
-          title,
+          title: numberedTitle,
           payload: publicFileUrl,
           file_name: safeUniqueName,
         });
 
+        this.setState({ titleCounter: nextCounter });
         this.notifyAdminPanel(weekNum);
 
         await this.sendMessage(
           chatId,
-          `✅ ثبت شد!\n📅 ${weekName} — مرحله شماره ${created.step_order}\n🏷 عنوان: ${title}\n📂 نوع محتوا: ${formatTypeFa(mediaInfo.contentType)}`,
+          `✅ ثبت شد!\n📅 ${weekName} — مرحله کل: #${created.step_order}\n🏷 عنوان کارت: ${numberedTitle}\n📂 نوع محتوا: ${formatTypeFa(mediaInfo.contentType)}\n\n💡 پیام/فایل بعدی با عنوان «${baseTitle} ${nextCounter + 1}» ثبت می‌شود (یا «${BTN_CHANGE_TITLE}» را بزنید).`,
           getReceivingContentKeyboard()
         );
       } catch (err) {
@@ -607,17 +718,18 @@ class MohtavaTelegramBot {
           week_number: weekNum,
           step_order: stepOrder,
           content_type: 'text',
-          title,
+          title: numberedTitle,
           payload: textContent,
           file_name: null,
         });
 
+        this.setState({ titleCounter: nextCounter });
         this.notifyAdminPanel(weekNum);
 
-        const preview = textContent.length > 60 ? textContent.slice(0, 60) + '…' : textContent;
+        const preview = textContent.length > 50 ? textContent.slice(0, 50) + '…' : textContent;
         await this.sendMessage(
           chatId,
-          `✅ ثبت شد!\n📅 ${weekName} — مرحله شماره ${created.step_order}\n🏷 عنوان: ${title}\n📂 نوع محتوا: 💬 متن\n📝 متن: «${preview}»`,
+          `✅ ثبت شد!\n📅 ${weekName} — مرحله کل: #${created.step_order}\n🏷 عنوان کارت: ${numberedTitle}\n📂 نوع محتوا: 💬 متن\n📝 متن: «${preview}»\n\n💡 پیام بعدی با عنوان «${baseTitle} ${nextCounter + 1}» ثبت می‌شود (برای عوض کردن عنوان، «${BTN_CHANGE_TITLE}» را بزنید).`,
           getReceivingContentKeyboard()
         );
       } catch (err) {
@@ -654,7 +766,7 @@ class MohtavaTelegramBot {
         item.content_type === 'text'
           ? ` — "${String(item.payload || '').slice(0, 35)}${String(item.payload || '').length > 35 ? '…' : ''}"`
           : '';
-      lines.push(`${item.step_order}. [${typeLabel}] ${item.title}${snippet}`);
+      lines.push(`#${item.step_order} | 🏷 ${item.title} [${typeLabel}]${snippet}`);
     }
 
     await this.sendMessage(chatId, lines.join('\n'), keyboard);
@@ -668,11 +780,11 @@ class MohtavaTelegramBot {
       const items = await WeeklyContent.findByWeek(w);
       total += items.length;
       lines.push(`🔹 ${WEEK_NAMES[w]}: ${items.length} مرحله`);
-      for (const item of items.slice(0, 8)) {
+      for (const item of items.slice(0, 10)) {
         lines.push(`   #${item.step_order} ${formatTypeFa(item.content_type)} — ${item.title}`);
       }
-      if (items.length > 8) {
-        lines.push(`   ... و ${items.length - 8} مرحله دیگر`);
+      if (items.length > 10) {
+        lines.push(`   ... و ${items.length - 10} مرحله دیگر`);
       }
     }
 
@@ -736,7 +848,6 @@ class MohtavaTelegramBot {
               }
             }
           } else if (data && !data.ok) {
-            // اگر نمونه دیگری از بات (مثلاً به صورت مستقل با PM2) در حال اجرا باشد، آرام عقب‌نشینی کن
             if (data.error_code === 409) {
               await new Promise((r) => setTimeout(r, 10000));
             } else {
@@ -762,6 +873,7 @@ class MohtavaTelegramBot {
 
 module.exports = {
   MohtavaTelegramBot,
+  normalizeBaseTitle,
   WEEK_BUTTON_TO_NUM,
   BTN_WEEK_1,
   BTN_WEEK_2,
