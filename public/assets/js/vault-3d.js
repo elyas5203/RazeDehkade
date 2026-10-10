@@ -256,7 +256,7 @@
       card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
     if (qMark) {
-      qMark.textContent = '؟';
+      qMark.textContent = '';
     }
 
     // ۲. شروع چرخش آرام فلکه ۶ پره با سرعت پایین (۳.۵ ثانیه) + چرخش معکوس چرخ‌دنده برنجی + جمع شدن ۴ پیستون قفل
@@ -429,7 +429,7 @@
       card.classList.remove('is-unlocked', 'is-unlocking-wheel');
     }
     if (qMark) {
-      qMark.textContent = '؟';
+      qMark.textContent = '';
     }
   }
 

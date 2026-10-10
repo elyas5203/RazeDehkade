@@ -89,80 +89,18 @@
 
 /* --------------------------------------------------------------------------
    لولاهای استوانه‌ای فولادی قطور و واقعی روی چهارچوب بیرونی
+   (عکس فوتورئالیستیک بدنه خود دارای لولاهای سنگین چدنی و زندانه‌های ۸کی است)
    -------------------------------------------------------------------------- */
 .vault-real-barrel-hinges {
-  position: absolute;
-  left: 4px;
-  top: 0;
-  bottom: 0;
-  width: 16px;
-  pointer-events: none;
-  z-index: 6;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 14px 0;
-}
-
-.vault-barrel-hinge {
-  position: relative;
-  width: 14px;
-  height: 40px;
-  border-radius: 3px;
-  background: linear-gradient(90deg, #11141a 0%, #475569 32%, #e2e8f0 55%, #334155 78%, #0d0f14 100%);
-  box-shadow:
-    4px 4px 10px rgba(0, 0, 0, 0.95),
-    inset 0 1px 1px rgba(255, 255, 255, 0.4);
-  border: 1px solid #090b0e;
-}
-
-.vault-barrel-hinge .hinge-cap {
-  position: absolute;
-  left: -1px;
-  right: -1px;
-  height: 4px;
-  background: linear-gradient(90deg, #0f1217, #94a3b8, #0f1217);
-  border-radius: 2px;
-}
-.vault-barrel-hinge .hinge-cap.top { top: -2px; }
-.vault-barrel-hinge .hinge-cap.bottom { bottom: -2px; }
-
-.vault-barrel-hinge .hinge-pin {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 2px;
-  transform: translateY(-50%);
-  background: #090b0f;
+  display: none !important;
 }
 
 /* --------------------------------------------------------------------------
    چهارچوب فولادی بیرونی
    -------------------------------------------------------------------------- */
 .vault-outer-bezel {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 5;
+  display: none !important;
 }
-
-.vault-frame-rivet {
-  position: absolute;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #f8fafc 0%, #94a3b8 45%, #334155 80%, #090d16 100%);
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.95),
-    inset 0 1px 1px rgba(255, 255, 255, 0.6);
-  border: 1px solid #07090d;
-}
-
-.vault-frame-rivet.r-tl { top: 6px; left: 24px; }
-.vault-frame-rivet.r-tr { top: 6px; right: 8px; }
-.vault-frame-rivet.r-bl { bottom: 6px; left: 24px; }
-.vault-frame-rivet.r-br { bottom: 6px; right: 8px; }
 
 /* --------------------------------------------------------------------------
    محفظه داخلی واقعی گاوصندوق (عکس باکیفیت محفظه اسناد با قفسه‌ها)
@@ -354,15 +292,19 @@
 /* --------------------------------------------------------------------------
    دستگیره سه‌شاخه سنگین فوتورئالیستیک کروم (#vault-3d-handle)
    -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+   دستگیره سه‌شاخه سنگین فوتورئالیستیک کروم (#vault-3d-handle)
+   مرکز دقیق فلنج فولادی: left: 65.5%; top: 50.2%
+   -------------------------------------------------------------------------- */
 .vault-real-spoke-handle {
   position: absolute;
-  left: 60.2%;
-  top: 50%;
+  left: 65.5%;
+  top: 50.2%;
   transform: translate(-50%, -50%) rotate(0deg);
-  width: 38%;
-  height: 38%;
-  max-width: 130px;
-  max-height: 130px;
+  width: 44%;
+  height: 44%;
+  max-width: 145px;
+  max-height: 145px;
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   display: flex;
@@ -377,31 +319,7 @@
   position: absolute;
   inset: 0;
   background: url('/assets/vault/real-chrome-handle.png') center center / contain no-repeat;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.95));
-}
-
-.vault-hub-recess {
-  position: relative;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 45% 40%, #1a202c 0%, #0d1015 80%, #040507 100%);
-  border: 1px solid #4a5568;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 6;
-}
-
-.vault-question-mark {
-  display: inline-block;
-  font-size: 1.05rem;
-  font-weight: 900;
-  line-height: 1;
-  color: #cbd5e1;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
-  user-select: none;
+  filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.98));
 }
 
 .quad-vault-card:not(.is-unlocking-wheel):not(.is-unlocked):hover .vault-real-spoke-handle {
@@ -423,22 +341,22 @@
    طراحی فوق‌العاده مدرن، تمیز، های‌تک و جدی (High-Security Security Console)
    ========================================================================== */
 .vault-password-dialog {
-  width: min(390px, 92vw) !important;
-  background: #0d1017 !important;
-  border: 1.5px solid #2d3748 !important;
-  border-radius: 16px !important;
+  width: min(370px, 94vw) !important;
+  background: radial-gradient(130% 120% at 50% 0%, #151a24 0%, #0d1017 65%, #07090e 100%) !important;
+  border: 1.5px solid #283344 !important;
+  border-radius: 18px !important;
   padding: 0 !important;
   overflow: hidden;
   box-shadow:
-    0 26px 70px rgba(0, 0, 0, 0.98),
-    inset 0 1px 1px rgba(255, 255, 255, 0.12),
-    0 0 0 1px rgba(0, 0, 0, 0.9) !important;
+    0 32px 85px rgba(0, 0, 0, 0.98),
+    inset 0 1px 1px rgba(255, 255, 255, 0.14),
+    0 0 0 1px #040508 !important;
 }
 
 .vault-terminal-header {
-  padding: 16px 20px 12px !important;
-  background: linear-gradient(180deg, #161b24 0%, #10141c 100%) !important;
-  border-bottom: 1px solid #222a36 !important;
+  padding: 16px 20px 14px !important;
+  background: linear-gradient(180deg, #181e2b 0%, #11151f 100%) !important;
+  border-bottom: 1px solid #1f2735 !important;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -467,29 +385,51 @@
 
 .vault-terminal-header h3 {
   margin: 0;
-  font-size: 1.12rem;
+  font-size: 1.15rem;
   font-weight: 900;
   color: #f1f5f9;
 }
 
+.vault-console-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  font-size: 1.2rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.vault-console-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #fca5a5;
+}
+
 .vault-password-body {
-  padding: 18px 20px 22px !important;
+  padding: 20px 22px 24px !important;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 15px;
 }
 
 /* --------------------------------------------------------------------------
    نمایشگر دیجیتال قفل (Digital Safe Display Card)
    -------------------------------------------------------------------------- */
 .vault-digital-display-card {
-  border-radius: 12px;
-  background: #06080c;
-  border: 1.5px solid #1f2733;
-  padding: 10px 14px;
+  border-radius: 13px;
+  background: #030509;
+  border: 1.5px solid #1a2230;
+  padding: 12px 16px;
   box-shadow:
-    inset 0 2px 8px rgba(0, 0, 0, 0.95),
-    0 2px 6px rgba(0, 0, 0, 0.4);
+    inset 0 3px 12px rgba(0, 0, 0, 0.98),
+    0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .vault-display-meta {
@@ -498,7 +438,7 @@
   justify-content: space-between;
   margin-bottom: 6px;
   font-family: var(--font-mono, monospace);
-  font-size: 0.66rem;
+  font-size: 0.68rem;
   font-weight: 700;
 }
 
@@ -510,6 +450,7 @@
 .vault-display-lock-state {
   color: #ef4444;
   letter-spacing: 0.08em;
+  font-weight: 800;
 }
 
 .vault-display-screen input#vault-code-input {
@@ -519,12 +460,13 @@
   padding: 6px 0;
   margin: 0;
   outline: none;
-  color: #f8fafc;
+  color: #38bdf8;
+  text-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
   font-family: var(--font-mono, monospace), var(--font-sans, sans-serif);
-  font-size: 1.45rem;
+  font-size: 1.6rem;
   font-weight: 900;
   text-align: center;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.28em;
   caret-color: #38bdf8;
 }
 
@@ -533,10 +475,12 @@
   font-weight: 600;
   letter-spacing: 0;
   color: #475569;
+  text-shadow: none;
 }
 
 .vault-display-screen input#vault-code-input.is-error {
   color: #fca5a5 !important;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.6) !important;
   animation: vault-error-shake 0.44s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
@@ -546,72 +490,67 @@
 .vault-keypad-3x4 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+  gap: 10px;
   margin-top: 2px;
   direction: ltr;
 }
 
 .vault-keypad-3x4 .vault-key-btn {
-  padding: 10px 0;
-  border-radius: 10px;
-  border: 1px solid #293241;
-  background: linear-gradient(180deg, #1b212c 0%, #11151e 100%);
+  padding: 13px 0;
+  border-radius: 11px;
+  border: 1px solid #2f394c;
+  background: linear-gradient(180deg, #222938 0%, #161c26 60%, #10141c 100%);
   color: #f1f5f9;
   font-family: var(--font-mono, monospace);
-  font-size: 1.15rem;
+  font-size: 1.35rem;
   font-weight: 800;
   cursor: pointer;
   box-shadow:
-    0 3px 6px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 4px 8px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.5);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0;
-  line-height: 1.1;
+  line-height: 1;
   transition: all 0.12s ease;
   user-select: none;
 }
 
-.vault-keypad-3x4 .vault-key-btn small {
-  font-size: 0.62rem;
-  color: #64748b;
-  font-weight: 600;
-}
-
 .vault-keypad-3x4 .vault-key-btn:hover {
-  background: linear-gradient(180deg, #242c3b 0%, #171d28 100%);
-  border-color: #4b586e;
+  background: linear-gradient(180deg, #2b3447 0%, #1c2432 60%, #131924 100%);
+  border-color: #4f607d;
   color: #38bdf8;
   transform: translateY(-1px);
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .vault-keypad-3x4 .vault-key-btn:active {
-  transform: translateY(1px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
-  background: #0f131a;
+  transform: translateY(2px);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), inset 0 2px 5px rgba(0, 0, 0, 0.9);
+  background: #0c0f16;
 }
 
 /* دکمه‌های کنترلی کلیر و بک‌اسپیس */
 .vault-keypad-3x4 .vault-key-btn.func-clear {
-  border-color: rgba(239, 68, 68, 0.35);
-  background: linear-gradient(180deg, #201518 0%, #150d10 100%);
-  color: #fca5a5;
-  font-size: 0.95rem;
+  border-color: rgba(244, 63, 94, 0.4);
+  background: linear-gradient(180deg, #26161b 0%, #160d10 100%);
+  color: #fda4af;
+  font-size: 1.05rem;
 }
 .vault-keypad-3x4 .vault-key-btn.func-clear:hover {
-  border-color: rgba(239, 68, 68, 0.6);
+  border-color: rgba(244, 63, 94, 0.7);
   color: #ffffff;
-  background: #2b181e;
+  background: #351a23;
 }
 
 .vault-keypad-3x4 .vault-key-btn.func-backspace {
-  border-color: rgba(148, 163, 184, 0.25);
-  background: linear-gradient(180deg, #1b2029 0%, #11141b 100%);
-  color: #94a3b8;
-  font-size: 1.1rem;
+  border-color: rgba(148, 163, 184, 0.35);
+  background: linear-gradient(180deg, #202633 0%, #121620 100%);
+  color: #cbd5e1;
+  font-size: 1.3rem;
 }
 .vault-keypad-3x4 .vault-key-btn.func-backspace:hover {
   border-color: #64748b;
@@ -622,10 +561,10 @@
    بنر فیدبک خطا
    -------------------------------------------------------------------------- */
 .vault-feedback-banner {
-  min-height: 36px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 0.8rem;
+  min-height: 38px;
+  padding: 9px 14px;
+  border-radius: 9px;
+  font-size: 0.82rem;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -638,14 +577,14 @@
 }
 
 .vault-feedback-banner.error {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid rgba(239, 68, 68, 0.55);
   color: #fca5a5;
 }
 
 .vault-feedback-banner.success {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.5);
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.55);
   color: #a7f3d0;
 }
 
@@ -655,18 +594,18 @@
 .vault-password-modal-footer {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
   margin-top: 4px;
 }
 
 .vault-primary-submit-btn {
   width: 100%;
-  padding: 12px 16px;
-  border-radius: 10px;
+  padding: 13px 18px;
+  border-radius: 11px;
   border: 1.5px solid #059669;
-  background: linear-gradient(180deg, #059669 0%, #047857 60%, #065f46 100%);
+  background: linear-gradient(180deg, #065f46 0%, #047857 55%, #064e3b 100%);
   color: #ffffff;
-  font-size: 0.95rem;
+  font-size: 0.98rem;
   font-weight: 800;
   cursor: pointer;
   display: flex;
@@ -674,16 +613,16 @@
   justify-content: center;
   gap: 8px;
   box-shadow:
-    0 4px 14px rgba(5, 150, 105, 0.35),
+    0 4px 16px rgba(5, 150, 105, 0.35),
     inset 0 1px 1px rgba(255, 255, 255, 0.25);
   transition: all 0.18s ease;
 }
 
 .vault-primary-submit-btn:hover {
-  background: linear-gradient(180deg, #10b981 0%, #059669 60%, #047857 100%);
+  background: linear-gradient(180deg, #10b981 0%, #059669 55%, #047857 100%);
   border-color: #10b981;
   box-shadow:
-    0 6px 18px rgba(5, 150, 105, 0.5),
+    0 6px 22px rgba(16, 185, 129, 0.5),
     inset 0 1px 1px rgba(255, 255, 255, 0.4);
   transform: translateY(-1px);
 }
@@ -696,7 +635,7 @@
   background: transparent;
   border: none;
   color: #64748b;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
   padding: 4px 0;
