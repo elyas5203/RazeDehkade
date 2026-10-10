@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>اتاق فرمان | SYSTEM</title>
-  <link rel="stylesheet" href="/assets/css/main.css">
-  <link rel="stylesheet" href="/assets/css/cyber.css">
-  <link rel="stylesheet" href="/assets/css/admin.css">
-  <link rel="stylesheet" href="/assets/css/admin-polish.css">
-  <link rel="stylesheet" href="/assets/css/voice-player.css">
+  <link rel="stylesheet" href="/assets/css/main.css?v=3.4">
+  <link rel="stylesheet" href="/assets/css/cyber.css?v=3.4">
+  <link rel="stylesheet" href="/assets/css/admin.css?v=3.4">
+  <link rel="stylesheet" href="/assets/css/admin-polish.css?v=3.4">
+  <link rel="stylesheet" href="/assets/css/voice-player.css?v=3.4">
   <script src="/socket.io/socket.io.js" defer></script>
-  <script src="/assets/js/voice-recorder.js" defer></script>
-  <script src="/assets/js/admin-chat.js" defer></script>
+  <script src="/assets/js/voice-recorder.js?v=3.4" defer></script>
+  <script src="/assets/js/admin-chat.js?v=3.4" defer></script>
 </head>
 <body class="command-page">
   <header class="command-bar">
@@ -93,7 +93,7 @@
           <option value="system">سیستم</option>
           <option value="hacker">مزداک</option>
         </select>
-        <textarea id="admin-msg-input" rows="1" aria-label="متن پیام جلسه" placeholder="پیام جلسه را بنویسید… (Enter ارسال · Shift+Enter خط جدید)"></textarea>
+        <textarea id="admin-msg-input" rows="1" onkeydown="handleAdminComposerKeydown(event)" oninput="handleAdminComposerInput(this)" aria-label="متن پیام جلسه" placeholder="پیام جلسه را بنویسید… (Enter ارسال · Shift+Enter خط جدید)"></textarea>
         <button type="button" onclick="sendAdminMessage()" class="command-button primary">ارسال پیام</button>
       </div>
     </section>
@@ -109,7 +109,7 @@
       </div>
 
       <!-- تب‌های ۵ هفته -->
-      <div class="weekly-tabs-container" style="display:flex;gap:4px;margin:10px 0 8px;padding-bottom:4px;overflow-x:auto;">
+      <div class="weekly-tabs-container" style="display:flex;gap:4px;margin:10px 0 8px;padding-bottom:4px;overflow-x:auto;flex-shrink:0;">
         <button type="button" class="command-button week-tab-btn active" data-week="1" onclick="selectWeek(1)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۱</button>
         <button type="button" class="command-button week-tab-btn" data-week="2" onclick="selectWeek(2)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۲</button>
         <button type="button" class="command-button week-tab-btn" data-week="3" onclick="selectWeek(3)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۳</button>
@@ -117,16 +117,16 @@
         <button type="button" class="command-button week-tab-btn" data-week="5" onclick="selectWeek(5)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۵</button>
       </div>
 
-      <p class="media-help" style="font-size:11px;color:#8d9699;margin-bottom:8px;">
+      <p class="media-help" style="font-size:11px;color:#8d9699;margin:0 0 6px;flex-shrink:0;">
         مراحل زیر به ترتیب سناریو چیده شده‌اند. با کلیک متن‌ها در کادر چت قرار می‌گیرند و فایل‌ها پس از تایید ارسال می‌شوند:
       </p>
 
-      <div id="weekly-content-feedback" class="media-feedback" role="status" style="font-size:11px;min-height:18px;margin-bottom:6px;"></div>
+      <div id="weekly-content-feedback" class="media-feedback" role="status" style="font-size:11px;min-height:18px;margin:0 0 6px;flex-shrink:0;"></div>
       
       <!-- لیست به ترتیب مراحل این هفته -->
-      <div id="weekly-content-list" class="weekly-content-list" style="display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 280px);overflow-y:auto;padding-right:2px;"></div>
+      <div id="weekly-content-list" class="weekly-content-list"></div>
 
-      <button type="button" onclick="openAddStepDialog()" class="command-button" style="margin-top:10px;width:100%;font-size:11px;background:rgba(245,158,11,0.12);color:var(--command-amber);border:1px dashed var(--command-amber);">
+      <button type="button" onclick="openAddStepDialog()" class="command-button add-step-btn" style="margin-top:10px;width:100%;font-size:11px;background:rgba(245,158,11,0.12);color:var(--command-amber);border:1px dashed var(--command-amber);flex-shrink:0;">
         ➕ افزودن مرحله جدید به این هفته
       </button>
     </aside>

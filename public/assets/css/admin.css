@@ -5,7 +5,10 @@
   font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: #080b0e;
   color: #e8e5dc;
-  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -17,11 +20,15 @@
 
 /* Command Bar (Header) */
 .command-bar {
-  height: 76px;
-  padding: 12px 22px;
+  min-height: 66px;
+  height: auto;
+  flex-shrink: 0;
+  padding: 10px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
   border-bottom: 1px solid var(--command-line);
   background: #0c1012;
 }
@@ -29,16 +36,19 @@
 .command-identity, .command-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .command-identity > a {
   color: #16120d;
   background: var(--command-amber);
-  padding: 10px 16px;
+  padding: 9px 15px;
   font-weight: 800;
   text-decoration: none;
-  border-radius: 2px;
+  border-radius: 4px;
+  font-size: 13px;
+  flex-shrink: 0;
 }
 
 .command-identity small, .panel-title small {
@@ -49,18 +59,20 @@
 
 .command-identity strong {
   display: block;
-  margin-top: 4px;
-  font-size: 15px;
+  margin-top: 3px;
+  font-size: 14px;
 }
 
 .command-button {
   border: 1px solid #485055;
   background: #171c1f;
   color: #dbe1e2;
-  padding: 10px 13px;
-  border-radius: 2px;
+  padding: 9px 13px;
+  border-radius: 4px;
   font-weight: 700;
+  font-size: 12.5px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .command-button:hover, .command-button:focus-visible {
@@ -90,42 +102,50 @@
   cursor: not-allowed;
 }
 
-/* Command Layout (Desktop Grid: Sidebar 280px | Chat 1fr | Media Library 340px) */
+/* Command Layout (Desktop Grid: Sidebar 270px | Chat 1fr | Media Library 330px) */
 .command-layout {
-  height: calc(100dvh - 76px);
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  width: 100%;
   display: grid;
-  grid-template-columns: 280px minmax(360px, 1fr) 340px;
-  gap: 12px;
-  padding: 12px;
+  grid-template-columns: 270px minmax(0, 1fr) 330px;
+  gap: 10px;
+  padding: 10px;
   direction: rtl;
+  overflow: hidden;
 }
 
 .command-sidebar, .command-chat, .media-library-panel {
   background: var(--command-paper);
   border: 1px solid var(--command-line);
+  border-radius: 6px;
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .command-sidebar, .media-library-panel {
-  padding: 16px;
-  overflow-y: auto;
+  padding: 14px;
 }
 
 .command-chat {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
 }
 
 .panel-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 13px;
+  padding-bottom: 11px;
   border-bottom: 1px solid var(--command-line);
   font-weight: 900;
+  flex-shrink: 0;
 }
 
 .panel-title button {
@@ -137,18 +157,31 @@
 }
 
 .session-cards-container {
-  padding: 14px 0;
+  flex: 1;
+  min-height: 0;
+  padding: 12px 0 4px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   overflow-y: auto;
 }
 
+.weekly-content-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding-left: 2px;
+}
+
 .command-page .session-card {
-  border-radius: 4px;
+  flex-shrink: 0;
+  border-radius: 5px;
   background: #101416;
   border: 1px solid #2a3033;
-  padding: 12px;
+  padding: 11px 12px;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -206,6 +239,7 @@
 
 .command-page .messages-list {
   flex: 1;
+  min-height: 0;
   padding: 18px;
   overflow-y: auto;
   display: flex;
@@ -214,10 +248,11 @@
 }
 
 .admin-typing {
-  height: 22px;
-  padding: 0 18px;
+  height: 20px;
+  flex-shrink: 0;
+  padding: 0 16px;
   color: var(--command-amber);
-  font-size: 12px;
+  font-size: 11.5px;
 }
 
 .canned-responses-wrapper {
@@ -275,12 +310,34 @@
 
 .admin-composer {
   display: grid;
-  grid-template-columns: auto auto 90px 1fr auto;
+  grid-template-columns: auto auto 86px minmax(0, 1fr) auto;
+  align-items: end;
   gap: 8px;
-  padding: 12px;
+  padding: 10px 12px;
   border-top: 1px solid var(--command-line);
   background: #0e1214;
   position: relative;
+  flex-shrink: 0;
+}
+
+.admin-composer .command-button {
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  align-self: end !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 6px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.admin-composer #admin-emoji-btn {
+  width: 42px;
+  padding: 0;
+  font-size: 17px;
 }
 
 .admin-emoji-picker {
@@ -369,19 +426,40 @@
   backdrop-filter: blur(5px);
 }
 
-.admin-composer input, .admin-composer select, .admin-composer textarea {
-  border-radius: 4px;
+.admin-composer select {
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  align-self: end !important;
+  border-radius: 6px;
   background: #15191b;
   border: 1px solid #3a4043;
   color: #e8e5dc;
-  padding: 8px 12px;
+  padding: 0 8px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 12.5px;
+  font-weight: 700;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.admin-composer input, .admin-composer textarea {
+  border-radius: 6px;
+  background: #15191b;
+  border: 1px solid #3a4043;
+  color: #e8e5dc;
+  padding: 9px 12px;
+  font-family: inherit;
+  font-size: 13.5px;
   line-height: 1.5;
   outline: none;
   resize: none;
-  min-height: 40px;
-  max-height: 160px;
+  height: 42px;
+  min-height: 42px;
+  max-height: 96px;
+  align-self: end;
+  width: 100%;
+  box-sizing: border-box;
   overflow-y: auto;
 }
 
@@ -394,6 +472,7 @@
    ========================================================================== */
 .command-page .messages-list {
   flex: 1;
+  min-height: 0;
   padding: 14px 16px;
   overflow-y: auto;
   display: flex;
@@ -402,6 +481,7 @@
 }
 
 .command-page .message-bubble {
+  flex-shrink: 0 !important;
   width: fit-content !important;
   max-width: min(72%, 460px) !important;
   min-width: 85px !important;
@@ -725,17 +805,25 @@
   margin-top: 14px;
 }
 
-/* Medium screen adjustments (769px to 1150px) */
-@media(min-width: 769px) and (max-width: 1150px) {
+/* Medium laptop screen adjustments (901px to 1220px) */
+@media (min-width: 901px) and (max-width: 1220px) {
+  .command-bar {
+    padding: 8px 14px;
+    min-height: 58px;
+  }
+  .command-actions {
+    gap: 6px;
+  }
+  .command-actions .command-button {
+    padding: 7px 10px;
+    font-size: 11.5px;
+  }
   .command-layout {
-    grid-template-columns: 220px 1fr 270px;
+    grid-template-columns: 215px minmax(0, 1fr) 265px;
     gap: 8px;
     padding: 8px;
   }
-  .media-library-panel {
-    display: flex;
-    padding: 10px;
-  }
+  .media-library-panel,
   .command-sidebar {
     padding: 10px;
   }
@@ -744,11 +832,11 @@
   }
 }
 
-/* Smartphone screen adjustments (768px and below) */
-@media(max-width: 768px) {
+/* Tablet & Smartphone screen adjustments (900px and below) */
+@media (max-width: 900px) {
   .command-bar {
-    height: 56px;
-    min-height: 56px;
+    min-height: 54px;
+    height: auto;
     padding: 8px 14px;
     flex-direction: row;
     align-items: center;
@@ -757,49 +845,62 @@
     border-bottom: 1px solid var(--command-line);
   }
   
-  /* پنهان‌سازی دکمه‌های تکراری هدر در موبایل (این دکمه‌ها درون تب ابزارها قرار دارند) */
+  /* پنهان‌سازی دکمه‌های تکراری هدر در تبلت و موبایل (این دکمه‌ها درون تب ابزارها قرار دارند) */
   .command-actions {
     display: none !important;
   }
   
   .command-identity {
     gap: 8px;
+    min-width: 0;
+    flex: 1;
   }
   
   .command-identity > a {
     padding: 6px 12px;
     font-size: 12px;
+    flex-shrink: 0;
   }
   
+  .command-identity > div {
+    min-width: 0;
+    flex: 1;
+  }
+
   .command-identity strong {
     font-size: 13px;
     margin-top: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 180px;
+    max-width: 100%;
   }
   
   .mobile-nav-tabs {
     display: flex;
-    height: 48px;
-    min-height: 48px;
+    flex-shrink: 0;
+    height: 46px;
+    min-height: 46px;
     background: #0f1315;
     border-bottom: 1px solid var(--command-line);
     overflow-x: auto;
+    padding: 5px 6px;
+    gap: 5px;
   }
   
   .mobile-tab-btn {
     flex: 1;
-    font-size: 11px;
-    padding: 8px 4px;
+    font-size: 11.5px;
+    padding: 6px 6px;
     white-space: nowrap;
     text-align: center;
   }
   
   .command-layout {
-    height: calc(100dvh - 104px);
-    max-height: calc(100dvh - 104px);
+    flex: 1;
+    min-height: 0;
+    height: auto;
+    max-height: none;
     grid-template-columns: 1fr;
     padding: 0;
     margin: 0;
@@ -810,29 +911,33 @@
   
   .command-sidebar, .command-chat, .media-library-panel, .mobile-tools-panel {
     display: none;
+    flex: 1;
     height: 100%;
     min-height: 0;
-    overflow-y: auto;
+    overflow: hidden;
     border: none;
+    border-radius: 0;
   }
   
-  /* نمایش تب فعال در موبایل */
-  body.mobile-tab-sidebar #panel-sidebar { display: flex; flex-direction: column; padding: 12px; }
+  /* نمایش تب فعال در موبایل و تبلت */
+  body.mobile-tab-sidebar #panel-sidebar { display: flex; flex-direction: column; padding: 12px; overflow: hidden; }
   body.mobile-tab-chat #panel-chat { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
-  body.mobile-tab-media #panel-media { display: flex; flex-direction: column; padding: 12px; }
-  body.mobile-tab-tools #panel-tools { display: flex; flex-direction: column; padding: 16px; }
+  body.mobile-tab-media #panel-media { display: flex; flex-direction: column; padding: 12px; overflow: hidden; }
+  body.mobile-tab-tools #panel-tools { display: flex; flex-direction: column; padding: 16px; overflow-y: auto; }
 
   /* حالت پیش‌فرض اگر تبی تعیین نشده باشد */
   body:not(.mobile-tab-chat):not(.mobile-tab-media):not(.mobile-tab-tools) #panel-sidebar {
     display: flex;
     flex-direction: column;
     padding: 12px;
+    overflow: hidden;
   }
   
   .mobile-chat-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
     padding: 8px 12px;
     background: #14191c;
     border-bottom: 1px solid var(--command-line);
@@ -842,6 +947,16 @@
   .mobile-chat-header .mobile-back-btn {
     padding: 6px 10px;
     font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  #mobile-chat-session-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #e2e8f0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
   #admin-messages-box {
@@ -849,12 +964,13 @@
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 10px;
+    padding: 10px 12px;
   }
   
   .admin-composer {
     flex-shrink: 0;
-    grid-template-columns: auto auto 1fr auto;
+    grid-template-columns: auto auto 72px minmax(0, 1fr) auto;
+    align-items: end;
     padding: 8px 10px;
     gap: 6px;
     background: #0c1012;
@@ -862,17 +978,47 @@
   }
   
   #admin-sender-type {
-    display: none;
+    display: inline-flex !important;
+    width: 72px;
+    font-size: 12px;
+    padding: 0 4px;
   }
   
   .admin-composer input, .admin-composer textarea {
-    font-size: 14px;
+    font-size: 13.5px;
+    height: 40px;
     min-height: 40px;
-    max-height: 120px;
+    max-height: 92px;
+    padding: 8px 10px;
   }
   
+  .admin-composer .command-button,
+  .admin-composer select {
+    height: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .admin-composer #admin-emoji-btn {
+    width: 38px;
+    padding: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-composer {
+    grid-template-columns: auto auto 64px minmax(0, 1fr) auto;
+    gap: 4px;
+    padding: 6px 8px;
+  }
+  #admin-sender-type {
+    width: 64px;
+    font-size: 11.5px;
+  }
   .admin-composer .command-button {
-    padding: 8px 12px;
-    font-size: 13px;
+    padding: 0 8px;
+    font-size: 11.5px;
   }
 }

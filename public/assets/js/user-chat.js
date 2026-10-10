@@ -379,13 +379,13 @@ function renderMessage(msg, options = {}) {
 
     if (box.querySelector(`[data-message-id="${msgId}"]`)) return;
 
-    // نمایش کارت هشدار کوچک و جمع‌وجور در چت که بعد از ۱۰ ثانیه خودکار حذف می‌شود
+    // نمایش کارت هشدار کوچک، شکیل و جمع‌وجور در چت که بعد از ۱۰ ثانیه خودکار حذف می‌شود
     const alertDiv = document.createElement('div');
     alertDiv.dataset.messageId = msgId;
     alertDiv.className = 'message-bubble evidence-alert-card';
     const subTitle = (msg.content && msg.content !== msg.file_name)
       ? msg.content
-      : 'برای مشاهده روی برد شواهد کلیک کنید';
+      : 'در برد شواهد (سمت چپ) پین شد';
 
     alertDiv.innerHTML = `
       <div class="evidence-alert-inner">
@@ -394,6 +394,7 @@ function renderMessage(msg, options = {}) {
           <strong>کارآگاه مدرک جدیدی به برد اسناد اضافه کرد</strong>
           <small>${escapeHtml(subTitle)}</small>
         </div>
+        <span class="evidence-alert-cta">مشاهده ↗</span>
       </div>
       <div class="evidence-alert-timer-bar"></div>
     `;
@@ -404,6 +405,9 @@ function renderMessage(msg, options = {}) {
     box.insertBefore(alertDiv, laterMsg || null);
     if (!options.skipScroll) {
       box.scrollTop = box.scrollHeight;
+      requestAnimationFrame(() => {
+        box.scrollTop = box.scrollHeight;
+      });
     }
 
     const remainingMs = (options.isHistory && ageMs > 0 && ageMs < 10000) ? (10000 - ageMs) : 10000;

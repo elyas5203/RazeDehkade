@@ -53,29 +53,28 @@ document.addEventListener('DOMContentLoaded', () => {
   loadWeeklyContent(1);
   initAdminSocket();
   initAdminEmojiPicker();
-
-  const adminMsgInput = document.getElementById('admin-msg-input');
-  if (adminMsgInput) {
-    adminMsgInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        if (!e.shiftKey) {
-          e.preventDefault();
-          if (e.isComposing || e.keyCode === 229) {
-            return;
-          }
-          sendAdminMessage();
-        }
-        // Shift+Enter creates a new line
-      }
-    });
-
-    adminMsgInput.addEventListener('input', () => {
-      handleAdminTyping();
-      adminMsgInput.style.height = 'auto';
-      adminMsgInput.style.height = Math.min(adminMsgInput.scrollHeight, 160) + 'px';
-    });
-  }
 });
+
+function handleAdminComposerKeydown(e) {
+  if (e.key === 'Enter' || e.keyCode === 13) {
+    if (!e.shiftKey) {
+      e.preventDefault();
+      if (e.isComposing || e.keyCode === 229) {
+        return;
+      }
+      sendAdminMessage();
+    }
+    // Shift+Enter creates a new line
+  }
+}
+
+function handleAdminComposerInput(el) {
+  const input = el || document.getElementById('admin-msg-input');
+  if (!input) return;
+  handleAdminTyping();
+  input.style.height = '42px';
+  input.style.height = Math.min(Math.max(input.scrollHeight, 42), 96) + 'px';
+}
 
 function initAdminSocket() {
   socket = io({
@@ -270,7 +269,13 @@ async function loadAdminSessions() {
 
 function renderSessionsSidebar(sessions) {
   const container = document.getElementById('admin-sessions-list');
+  if (!container) return;
   container.innerHTML = '';
+
+  const mobileCountEl = document.getElementById('mobile-sessions-count');
+  if (mobileCountEl) {
+    mobileCountEl.textContent = sessions.length.toLocaleString('fa-IR');
+  }
 
   // سورت بلادرنگ جلسات بر اساس جدیدترین زمان فعالیت / پیام (last_activity_at)
   const sortedSessions = [...sessions].sort((a, b) => {
@@ -287,12 +292,12 @@ function renderSessionsSidebar(sessions) {
     item.onclick = () => switchSession(s.id);
 
     item.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="display:flex; align-items:center; gap:6px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+        <div style="display:flex; align-items:center; gap:6px; min-width:0;">
           <span class="presence-indicator ${isOnline ? 'online' : 'offline'}" title="${isOnline ? 'کاربر هم‌اکنون آنلاین و حاضر در اتاق است' : 'کاربر آفلاین است'}"></span>
-          <span style="font-size:13px; font-weight:bold;">${escapeHtml(s.name)}</span>
+          <span style="font-size:13px; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(s.name)}</span>
         </div>
-        <span class="session-code-badge">${s.code}</span>
+        <span class="session-code-badge" style="flex-shrink:0;">${s.code}</span>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
         <small style="color:${isOnline ? 'var(--emerald, #10b981)' : 'var(--text-muted)'}; font-size:11px; font-weight:${isOnline ? '600' : '400'};">
@@ -309,11 +314,17 @@ function renderSessionsSidebar(sessions) {
 async function switchSession(nextSessionId) {
   const prevSessionId = activeSessionId;
   const input = document.getElementById('admin-msg-input');
-  if (prevSessionId) sessionDrafts.set(prevSessionId, input.value);
+  if (prevSessionId && input) sessionDrafts.set(prevSessionId, input.value);
   stopAdminAudioListening();
   activeSessionId = nextSessionId;
   historyLoadedFor = nextSessionId;
-  input.value = sessionDrafts.get(nextSessionId) || '';
+  if (input) {
+    input.value = sessionDrafts.get(nextSessionId) || '';
+    input.style.height = '42px';
+    if (input.value) {
+      input.style.height = Math.min(Math.max(input.scrollHeight, 42), 96) + 'px';
+    }
+  }
   document.getElementById('admin-messages-box').innerHTML = '';
   sessionStorage.setItem('activeAdminSessionId', nextSessionId);
 
@@ -325,8 +336,8 @@ async function switchSession(nextSessionId) {
   updateActiveHeader();
   renderSessionsSidebar(Object.values(sessionsMap));
 
-  // در گوشی موبایل با انتخاب یک جلسه، بلافاصله به تب اتاق گفتگو هدایت شود
-  if (window.innerWidth <= 768) {
+  // در تبلت و گوشی موبایل با انتخاب یک جلسه، بلافاصله به تب اتاق گفتگو هدایت شود
+  if (window.innerWidth <= 900) {
     switchMobileTab('chat');
   }
 
@@ -512,19 +523,26 @@ function deleteChatMessage(messageId) {
 }
 
 function sendAdminMessage() {
-  if (!activeSessionId) return;
+  if (!activeSessionId) {
+    alert('لطفاً ابتدا یک جلسه را از لیست جلسه‌ها انتخاب کنید.');
+    return;
+  }
 
   const input = document.getElementById('admin-msg-input');
   const senderTypeSelect = document.getElementById('admin-sender-type');
   const rawContent = input.value.trim();
   const content = rawContent.replace(/\n{3,}/g, '\n\n');
 
-  if (!content) return;
+  if (!content) {
+    input.value = '';
+    input.style.height = '42px';
+    return;
+  }
 
   socket.emit('send_message', {
     sessionId: activeSessionId,
     content: content,
-    senderType: senderTypeSelect.value,
+    senderType: senderTypeSelect ? senderTypeSelect.value : 'admin',
     messageType: 'text',
   });
 
@@ -535,7 +553,7 @@ function sendAdminMessage() {
   socket.emit('mark_as_read', { sessionId: activeSessionId });
 
   input.value = '';
-  input.style.height = 'auto';
+  input.style.height = '42px';
   sendAdminTyping(false);
 }
 
@@ -1225,8 +1243,8 @@ function insertTextToComposer(text) {
   const input = document.getElementById('admin-msg-input');
   if (input) {
     input.value = text;
-    input.style.height = 'auto';
-    input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+    input.style.height = '42px';
+    input.style.height = Math.min(Math.max(input.scrollHeight, 42), 96) + 'px';
     input.focus();
     input.scrollIntoView({ behavior: 'smooth', block: 'center' });
     const feedback = document.getElementById('weekly-content-feedback');
