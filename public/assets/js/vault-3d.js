@@ -314,7 +314,7 @@
 
     if (banner) {
       banner.className = 'vault-feedback-banner error';
-      banner.textContent = customMsg || '⛔ رمز واردشده اشتباه است! قفل گاوصندوق باز نشد.';
+      banner.textContent = customMsg || '⛔ دسترسی غیرمجاز! رمز گاوصندوق اسناد محرمانه نادرست است.';
       banner.hidden = false;
     }
   }
@@ -382,13 +382,13 @@
     const rawCode = input ? input.value.trim() : '';
 
     if (!rawCode) {
-      triggerVaultWrongPasswordError('⚠️ لطفاً ابتدا رمز عبور را وارد کنید.');
+      triggerVaultWrongPasswordError('⚠️ لطفاً ابتدا رمز عبور اسناد محرمانه را وارد کنید.');
       return;
     }
 
     const matchedFlag = findMatchingVaultFlag(rawCode);
     if (!matchedFlag) {
-      triggerVaultWrongPasswordError('⛔ رمز واردشده اشتباه است! قفل گاوصندوق باز نشد.');
+      triggerVaultWrongPasswordError('⛔ دسترسی غیرمجاز! رمز گاوصندوق اسناد محرمانه نادرست است.');
       return;
     }
 

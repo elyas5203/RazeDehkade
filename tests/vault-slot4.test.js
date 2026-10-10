@@ -29,6 +29,7 @@ test('Slot 4 Full-Bleed 3D Vault, Zero-Spoiler Policy, and Reset-on-Refresh Veri
     const pwdModalStart = html.indexOf('id="vault-password-dialog"');
     const pwdModalEnd = html.indexOf('</dialog>', pwdModalStart);
     const pwdModalHtml = html.slice(pwdModalStart, pwdModalEnd);
+    assert.ok(pwdModalHtml.includes('گاوصندوق اسناد محرمانه'), 'Password modal must title as classified documents vault');
     assert.ok(!pwdModalHtml.includes('کارآگاه'), 'Password modal must NOT mention detective (spoiler)');
     assert.ok(!pwdModalHtml.includes('پایان پرونده'), 'Password modal must NOT mention end of case (spoiler)');
     assert.ok(!pwdModalHtml.includes('آخرین جلسه'), 'Password modal must NOT mention final session (spoiler)');
@@ -51,5 +52,6 @@ test('Slot 4 Full-Bleed 3D Vault, Zero-Spoiler Policy, and Reset-on-Refresh Veri
     assert.ok(js.includes('is-unlocking-wheel'), 'vault-3d.js must trigger slow 3.5s wheel rotation class');
     assert.ok(js.includes('is-unlocked'), 'vault-3d.js must trigger 3D door open class');
     assert.ok(js.includes('changeVaultGallerySlide'), 'vault-3d.js must support multi-photo gallery navigation');
+    assert.ok(js.includes('گاوصندوق اسناد محرمانه'), 'vault-3d.js must use classified documents vault error messages');
   });
 });
