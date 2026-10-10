@@ -17,6 +17,7 @@ const {
 
 const WeeklyContent = require('../src/models/WeeklyContent');
 const { query } = require('../src/db/pool');
+const { ensureMp4FastStart } = require('../src/utils/mp4FastStart');
 
 // اطمینان از وجود پوشه آپلود هفتگی در سرور
 if (!fs.existsSync(UPLOAD_DIR)) {
@@ -367,6 +368,7 @@ class MohtavaTelegramBot {
       });
     });
 
+    ensureMp4FastStart(destFilePath);
     return remotePath;
   }
 

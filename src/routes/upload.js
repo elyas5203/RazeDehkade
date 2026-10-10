@@ -144,9 +144,12 @@ async function ensureBrowserCompatibleImage(filePath) {
   }
 }
 
+const { ensureMp4FastStart } = require('../utils/mp4FastStart');
+const VIDEO_EXTENSIONS = new Set(['mp4', 'webm', '3gp', 'mov', 'mkv', 'm4v']);
+
 /**
  * POST /api/upload
- * آپلود فایل تک‌آیتمی (عکس، ویس یا فایل عمومی)
+ * آپلود فایل تک‌آیتمی (عکس، ویدیو، ویس یا فایل عمومی)
  */
 router.post('/', authenticateToken, (req, res) => {
   upload.single('file')(req, res, async (err) => {
@@ -165,6 +168,7 @@ router.post('/', authenticateToken, (req, res) => {
 
     const fullUploadedPath = path.join(uploadDir, req.file.filename);
     await ensureBrowserCompatibleImage(fullUploadedPath);
+    ensureMp4FastStart(fullUploadedPath);
 
     const fileUrl = `/uploads/${req.file.filename}`;
     const fileName = decodeOriginalFilename(req.file.originalname);
@@ -175,7 +179,9 @@ router.post('/', authenticateToken, (req, res) => {
     let messageType = 'file';
     if (IMAGE_EXTENSIONS.has(ext) || mime.startsWith('image/')) {
       messageType = 'image';
-    } else if (AUDIO_VIDEO_EXTENSIONS.has(ext)) {
+    } else if ((VIDEO_EXTENSIONS.has(ext) || mime.startsWith('video/')) && !mime.startsWith('audio/')) {
+      messageType = 'video';
+    } else if (AUDIO_VIDEO_EXTENSIONS.has(ext) || mime.startsWith('audio/')) {
       messageType = 'voice';
     }
 
@@ -299,6 +305,7 @@ async function processChunkUpload(payload = {}) {
       const finalPath = path.join(uploadDir, finalFilename);
       fs.renameSync(tempPath, finalPath);
       await ensureBrowserCompatibleImage(finalPath);
+      ensureMp4FastStart(finalPath);
       const finalStat = fs.statSync(finalPath);
 
       return {

@@ -2119,7 +2119,7 @@
   cursor: pointer;
 }
 
-.evidence-dialog img, .evidence-dialog video {
+.evidence-dialog img {
   display: block;
   max-width: 100%;
   max-height: 60dvh;
@@ -2127,6 +2127,121 @@
   object-fit: contain;
   background: #000;
   border-radius: 4px;
+}
+
+.evidence-media-stage {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin: 0 0 16px;
+  background: #03070d;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.75);
+}
+
+.evidence-media-stage.is-voice {
+  padding: 12px 14px 0;
+  background: rgba(8, 16, 28, 0.96);
+}
+
+.evidence-dialog video {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: min(62dvh, 500px);
+  margin: 0 auto;
+  object-fit: contain;
+  background: #000;
+  border-radius: 0;
+}
+
+.media-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(14, 25, 42, 0.95);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.16);
+  color: #38bdf8;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.media-loading.is-ready {
+  display: none !important;
+}
+
+.media-loading-spinner {
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(56, 189, 248, 0.25);
+  border-top-color: #38bdf8;
+  border-radius: 50%;
+  animation: media-spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes media-spin {
+  to { transform: rotate(360deg); }
+}
+
+.media-stream-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 9px 14px 11px;
+  background: rgba(11, 20, 34, 0.96);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  direction: rtl;
+}
+
+.media-stream-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 11.5px;
+}
+
+.media-stream-status {
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.media-stream-percent {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #00ff88;
+  background: rgba(0, 255, 136, 0.1);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  padding: 1px 7px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.media-stream-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.media-stream-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #00f0ff, #00ff88);
+  border-radius: 999px;
+  transition: width 0.25s ease;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.45);
+}
+
+.media-stream-fill.is-complete {
+  background: linear-gradient(90deg, #10b981, #00ff88);
 }
 
 /* ابزار زوم و بازرسی هوشمند مدارک تصویری */
