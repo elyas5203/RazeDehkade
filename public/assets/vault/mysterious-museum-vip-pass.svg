@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" width="1000" height="600">
+  <defs>
+    <linearGradient id="passBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="50%" stop-color="#090f1a"/>
+      <stop offset="100%" stop-color="#172554"/>
+    </linearGradient>
+    <linearGradient id="goldBorder" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="50%" stop-color="#fef08a"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1000" height="600" rx="24" fill="url(#passBg)"/>
+  <rect x="24" y="24" width="952" height="552" rx="18" fill="none" stroke="url(#goldBorder)" stroke-width="4"/>
+  <line x1="280" y1="24" x2="280" y2="576" stroke="#fde68a" stroke-width="2" stroke-dasharray="12 8" opacity="0.6"/>
+
+  <!-- سمت راست کارت: اطلاعات بلیت ورود -->
+  <text x="630" y="110" text-anchor="middle" fill="#38bdf8" font-family="Tahoma, sans-serif" font-size="20" font-weight="bold">VIP DETECTIVE PASS // مجوز ورود ویژه</text>
+  <text x="630" y="185" text-anchor="middle" fill="#fde68a" font-family="Tahoma, sans-serif" font-size="44" font-weight="bold">کارت دعوت حضوری «موزه اسرارآمیز»</text>
+  <text x="630" y="255" text-anchor="middle" fill="#e2e8f0" font-family="Tahoma, sans-serif" font-size="22">ویژه گروه کارآگاهی پیروز در کشف رمز گاوصندوق اسرار</text>
+
+  <rect x="360" y="300" width="540" height="150" rx="14" fill="#050b14" stroke="#38bdf8" stroke-width="1.5" opacity="0.9"/>
+  <text x="630" y="355" text-anchor="middle" fill="#fde68a" font-family="Tahoma, sans-serif" font-size="22" font-weight="bold">🎟️ دارنده این کارت مجاز به حضور در نمایش ویژه است</text>
+  <text x="630" y="405" text-anchor="middle" fill="#94a3b8" font-family="Tahoma, sans-serif" font-size="18">این تصویر را نزد گروه خود نگه دارید و در روز برنامه همراه داشته باشید.</text>
+
+  <text x="630" y="520" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="18" font-weight="bold">CLEARANCE LEVEL: OMEGA // MYSTERIOUS MUSEUM</text>
+
+  <!-- سمت چپ کارت: بارکد و مهر -->
+  <g transform="translate(152, 300)">
+    <circle cx="0" cy="-90" r="64" fill="#091322" stroke="url(#goldBorder)" stroke-width="3"/>
+    <text x="0" y="-82" text-anchor="middle" fill="#fde68a" font-family="Tahoma, sans-serif" font-size="26" font-weight="bold">VIP</text>
+    <text x="0" y="20" text-anchor="middle" fill="#cbd5e1" font-family="Tahoma, sans-serif" font-size="18" font-weight="bold">موزه اسرارآمیز</text>
+    <text x="0" y="60" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="16">CODE: MUSEUM-1405</text>
+    <rect x="-75" y="100" width="150" height="50" fill="#f8fafc" rx="6"/>
+    <path d="M-60 108 v34 M-48 108 v34 M-40 108 v34 M-26 108 v34 M-14 108 v34 M0 108 v34 M10 108 v34 M24 108 v34 M38 108 v34 M50 108 v34 M62 108 v34" stroke="#0f172a" stroke-width="4"/>
+  </g>
+</svg>

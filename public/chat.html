@@ -6,15 +6,17 @@
   <title>اتاق تحقیقات | راز دهکده</title>
   <link rel="preload" href="/assets/scene/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/investigation.css">
-  <link rel="stylesheet" href="/assets/css/terminal.css?v=3.8">
+  <link rel="stylesheet" href="/assets/css/terminal.css?v=3.9">
+  <link rel="stylesheet" href="/assets/css/vault-3d.css?v=3.9">
   <link rel="stylesheet" href="/assets/css/breach.css">
   <link rel="stylesheet" href="/assets/css/voice-player.css">
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="/assets/js/hack-sequence.js" defer></script>
   <script src="/assets/js/voice-recorder.js" defer></script>
-  <script src="/assets/js/user-chat.js?v=3.8" defer></script>
-  <script src="/assets/js/terminal-stream.js?v=3.8" defer></script>
-  <script src="/assets/js/terminal.js?v=3.8" defer></script>
+  <script src="/assets/js/user-chat.js?v=3.9" defer></script>
+  <script src="/assets/js/terminal-stream.js?v=3.9" defer></script>
+  <script src="/assets/js/terminal.js?v=3.9" defer></script>
+  <script src="/assets/js/vault-3d.js?v=3.9" defer></script>
 </head>
 <body class="terminal-page">
   <!-- فضای اصلی کار تمام‌صفحه (بدون هدر بالا و بدون فوتر پایین جهت حداکثر فضا): چت در سمت راست و ستون چپ دوگانه -->
@@ -191,11 +193,60 @@
           </footer>
         </section>
 
-        <!-- قسمت ۴: کارت خالی (رزرو شده برای دستور بعدی کارفرما) -->
-        <section class="quad-card quad-empty-card" aria-label="کارت خالی رزرو">
-          <div class="quad-empty-placeholder">
-            <span class="quad-empty-code technical">SLOT // 04</span>
-          </div>
+        <!-- قسمت ۴: گاوصندوق سه‌بعدی اسرار و دعوت‌نامه «موزه اسرارآمیز» (مطابق VAULT_SLOT4_MASTER.md) -->
+        <section class="quad-card quad-vault-card" id="quad-vault-card" aria-label="گاوصندوق اسرار">
+          <header class="vault-card-topbar">
+            <span class="vault-card-title">
+              <i class="vault-led-dot" aria-hidden="true"></i>
+              <span>گاوصندوق اسرار</span>
+            </span>
+            <span class="vault-status-pill" id="vault-status-pill">LOCKED // 04</span>
+          </header>
+
+          <button type="button" class="vault-3d-trigger-btn" id="vault-3d-trigger-btn" onclick="openVaultInteraction()" aria-label="باز کردن گاوصندوق اسرار">
+            <!-- شاسی و درب سه‌بعدی گاوصندوق -->
+            <div class="vault-3d-chassis" aria-hidden="true">
+              <span class="vault-corner-rivet tl"></span>
+              <span class="vault-corner-rivet tr"></span>
+              <span class="vault-corner-rivet bl"></span>
+              <span class="vault-corner-rivet br"></span>
+
+              <!-- محفظه داخلی درخشان که با باز شدن درب سه‌بعدی نمایان می‌شود -->
+              <div class="vault-interior-chamber">
+                <div class="vault-interior-rays"></div>
+                <span class="vault-interior-treasure">🏛️</span>
+              </div>
+
+              <!-- درب سنگین سه‌بعدی به همراه لولا، زبانه‌ها و دستگیره چرخشی -->
+              <div class="vault-3d-door" id="vault-3d-door">
+                <span class="vault-door-hinge top"></span>
+                <span class="vault-door-hinge bottom"></span>
+                <div class="vault-locking-bolts">
+                  <i></i><i></i><i></i>
+                </div>
+                <div class="vault-dial-plate">
+                  <div class="vault-handle-wheel" id="vault-3d-handle">
+                    <span class="vault-wheel-rim"></span>
+                    <span class="vault-wheel-spoke s1"></span>
+                    <span class="vault-wheel-spoke s2"></span>
+                    <span class="vault-wheel-spoke s3"></span>
+                    <span class="vault-wheel-hub"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- اطلاعات و علامت سؤال هوک کنجکاوی -->
+            <div class="vault-hook-info">
+              <span class="vault-mystery-badge">
+                <span class="vault-question-mark" id="vault-question-mark">؟</span>
+                <span>راز سر به مهر</span>
+              </span>
+              <h3 class="vault-hook-heading" id="vault-hook-heading">داخل گاوصندوق چیست؟</h3>
+              <span class="vault-hook-sub" id="vault-hook-sub">با دریافت رمز از کارآگاه قفل را بگشایید</span>
+              <span class="vault-cta-chip" id="vault-cta-chip">🔑 وارد کردن رمز</span>
+            </div>
+          </button>
         </section>
 
       </div>
@@ -231,6 +282,93 @@
     </div>
     <div class="themed-modal-footer">
       <button type="button" class="themed-btn secondary" onclick="closeAssistantsPhotoPopup()">بستن پنجره</button>
+    </div>
+  </dialog>
+
+  <!-- پاپ‌آپ ورود رمز / فلگ گاوصندوق سه‌بعدی اسلات ۴ -->
+  <dialog id="vault-password-dialog" class="themed-modal-dialog vault-password-dialog">
+    <div class="themed-modal-header">
+      <div class="themed-modal-title-group">
+        <span class="eyebrow">قفل امنیتی سطح امگا // SLOT 04</span>
+        <h3>🔐 رمزگشایی گاوصندوق اسرار</h3>
+      </div>
+      <button class="dialog-close" type="button" onclick="closeVaultPasswordModal()" aria-label="بستن پنجره رمز">×</button>
+    </div>
+    <form id="vault-password-form" onsubmit="submitVaultPassword(event)" class="themed-modal-body">
+      <div class="vault-modal-hero">
+        <div class="vault-modal-hero-icon" aria-hidden="true">🔐</div>
+        <div class="vault-modal-hero-text">
+          <h4>رمز گاوصندوق را وارد کنید</h4>
+          <p>رمزی که کارآگاه در پایان پرونده یا جلسه برایتان ارسال کرده را وارد نمایید تا قفل مکانیکی گاوصندوق باز شود.</p>
+        </div>
+      </div>
+
+      <div class="vault-code-input-wrap">
+        <input
+          type="text"
+          id="vault-code-input"
+          autocomplete="off"
+          placeholder="رمز یا فلگ گاوصندوق…"
+          maxlength="32"
+          aria-label="رمز گاوصندوق"
+        >
+        <button type="button" class="vault-clear-input-btn" onclick="clearVaultCodeInput()" title="پاک کردن">پاک کردن</button>
+      </div>
+
+      <div class="vault-keypad-grid" aria-label="صفحه کلید اعداد گاوصندوق">
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('1')">۱</button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('2')">۲</button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('3')">۳</button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('4')">۴</button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('5')">۵</button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('6')">۶</button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('7')">۷</button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('8')">۸</button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('9')">۹</button>
+        <button type="button" class="vault-key-btn" onclick="appendVaultKeypadChar('0')">۰</button>
+      </div>
+
+      <div id="vault-feedback-banner" class="vault-feedback-banner" role="alert" hidden></div>
+
+      <div class="themed-modal-footer">
+        <button type="button" class="themed-btn secondary" onclick="closeVaultPasswordModal()">انصراف</button>
+        <button type="submit" class="themed-btn primary" id="vault-unlock-submit-btn">🔓 چرخاندن دستگیره و بازگشایی</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- پاپ‌آپ نمایش عکس یا گالری چندعکسی داخل گاوصندوق (دعوت‌نامه نمایش حضوری «موزه اسرارآمیز») -->
+  <dialog id="vault-reward-dialog" class="themed-modal-dialog vault-reward-dialog">
+    <div class="themed-modal-header">
+      <div class="themed-modal-title-group">
+        <span class="eyebrow" id="vault-reward-eyebrow">دعوت‌نامه رسمی // پایان پرونده</span>
+        <h3 id="vault-reward-title">🏛️ دعوت‌نامه ویژه نمایش حضوری «موزه اسرارآمیز»</h3>
+      </div>
+      <button class="dialog-close" type="button" onclick="closeVaultRewardModal()" aria-label="بستن دعوت‌نامه">×</button>
+    </div>
+    <div class="themed-modal-body vault-reward-body">
+      <div class="vault-reward-banner">
+        <h4>✨ راز گاوصندوق برای گروه شما گشوده شد!</h4>
+        <p id="vault-reward-subtitle">تبریک دستیاران کارآگاه! شما تمام معماهای پرونده را حل کردید و به برنامه حضوری «موزه اسرارآمیز» دعوت شدید.</p>
+      </div>
+
+      <div class="vault-gallery-stage">
+        <button type="button" class="vault-gallery-nav-btn prev" id="vault-gallery-prev" onclick="changeVaultGallerySlide(-1)" aria-label="تصویر قبلی" hidden>❯</button>
+        <img id="vault-reward-main-img" src="/assets/vault/mysterious-museum-poster.svg" alt="دعوت‌نامه موزه اسرارآمیز">
+        <button type="button" class="vault-gallery-nav-btn next" id="vault-gallery-next" onclick="changeVaultGallerySlide(1)" aria-label="تصویر بعدی" hidden>❮</button>
+      </div>
+
+      <div class="vault-gallery-controls" id="vault-gallery-controls" hidden>
+        <span class="vault-slide-counter" id="vault-slide-counter">تصویر ۱ از ۲</span>
+        <div class="vault-thumbs-row" id="vault-thumbs-row"></div>
+      </div>
+    </div>
+    <div class="themed-modal-footer vault-reward-footer">
+      <button type="button" class="themed-btn secondary" onclick="openVaultPasswordModal()">🔑 ثبت رمز مرحله / جلسه دیگر</button>
+      <div class="vault-reward-footer-actions">
+        <a id="vault-reward-download-btn" class="themed-btn primary" href="/assets/vault/mysterious-museum-poster.svg" download style="text-decoration:none;">⬇ دریافت پوستر</a>
+        <button type="button" class="themed-btn secondary" onclick="closeVaultRewardModal()">بستن</button>
+      </div>
     </div>
   </dialog>
 
