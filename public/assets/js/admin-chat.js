@@ -52,6 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadAdminSessions();
   loadWeeklyContent(1);
   initAdminSocket();
+  initAdminEmojiPicker();
 
   const adminMsgInput = document.getElementById('admin-msg-input');
   if (adminMsgInput) {
@@ -436,9 +437,25 @@ function renderAdminMessage(msg) {
   box.scrollTop = box.scrollHeight;
 }
 
+let pendingAdminEditMessageId = null;
+
 function editChatMessage(messageId) {
   const contentEl = document.getElementById(`msg-content-${messageId}`);
   const oldText = contentEl ? contentEl.textContent.trim() : '';
+  const dialog = document.getElementById('admin-edit-msg-dialog');
+  const textarea = document.getElementById('admin-edit-msg-textarea');
+
+  if (dialog && textarea) {
+    pendingAdminEditMessageId = messageId;
+    textarea.value = oldText;
+    dialog.showModal();
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    }, 30);
+    return;
+  }
+
   const newText = prompt('متن جدید پیام را وارد کنید:', oldText);
   if (newText === null || !newText.trim()) return;
 
@@ -446,6 +463,33 @@ function editChatMessage(messageId) {
     socket.emit('edit_message', { messageId, content: newText.trim() }, (res) => {
       if (res && res.success) {
         if (contentEl) contentEl.textContent = newText.trim();
+      } else {
+        alert((res && res.message) || 'خطا در ویرایش پیام.');
+      }
+    });
+  }
+}
+
+function closeAdminEditDialog() {
+  pendingAdminEditMessageId = null;
+  const dialog = document.getElementById('admin-edit-msg-dialog');
+  if (dialog && dialog.open) dialog.close();
+}
+
+function submitAdminEditMessage(event) {
+  if (event) event.preventDefault();
+  if (!pendingAdminEditMessageId) return;
+  const messageId = pendingAdminEditMessageId;
+  const textarea = document.getElementById('admin-edit-msg-textarea');
+  const newText = textarea ? textarea.value.trim() : '';
+  if (!newText) return;
+
+  if (socket) {
+    socket.emit('edit_message', { messageId, content: newText }, (res) => {
+      if (res && res.success) {
+        const contentEl = document.getElementById(`msg-content-${messageId}`);
+        if (contentEl) contentEl.textContent = newText;
+        closeAdminEditDialog();
       } else {
         alert((res && res.message) || 'خطا در ویرایش پیام.');
       }
@@ -1405,4 +1449,64 @@ function updateChatLockBtnUI(isLocked) {
     }
   });
 }
+
+/* ==========================================================================
+   پنل انتخاب ایموجی (Emoji Picker) در ترمینال فرماندهی (ادمین)
+   ========================================================================== */
+const ADMIN_EMOJI_CATEGORIES = {
+  faces: ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😋', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐'],
+  detective: ['🕵️', '🕵️‍♂️', '🕵️‍♀️', '🔍', '🔎', '🕯️', '🔦', '📜', '📃', '📄', '📁', '📂', '🗂️', '📌', '📍', '📎', '🗝️', '🔑', '🔒', '🔓', '🔐', '🛡️', '⚠️', '🚨', '🩸', '🧬', '🔬', '🔭', '📡', '💻', '🖥️', '⌨️', '📷', '📹', '🎙️', '☎️', '🕰️', '⏳', '⌛', '🗺️', '🧭', '🏚️', '🌲', '🌑', '🦉', '🐾', '👣', '💀', '☠️', '👻', '🎭', '🧩', '♟️', '🎯'],
+  hands: ['👍', '👎', '👊', '✊', '🤛', '🤜', '🤞', '✌️', '🤟', '🤘', '👌', '🤌', '🤏', '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️', '🖖', '👋', '🤙', '💪', '🙏', '🤝', '👏', '🙌', '👐', '🤲', '✍️', '👀', '👁️', '🧠', '🗣️', '👤', '👥'],
+  symbols: ['❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔', '❣️', '💯', '💢', '💥', '💫', '💦', '💨', '🕳️', '💬', '👁️‍🗨️', '🗨️', '🗯️', '💭', '💤', '⚡', '🔥', '✨', '🌟', '⭐', '✅', '☑️', '✔️', '❌', '❎', '❓', '❔', '❕', '❗', '⭕', '🛑', '⛔', '📛', '🚫', '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '⚫', '⚪']
+};
+
+function initAdminEmojiPicker() {
+  switchAdminEmojiTab('faces');
+  document.addEventListener('click', (e) => {
+    const picker = document.getElementById('admin-emoji-picker');
+    const btn = document.getElementById('admin-emoji-btn');
+    if (!picker || picker.hidden) return;
+    if (!picker.contains(e.target) && (!btn || !btn.contains(e.target))) {
+      picker.hidden = true;
+    }
+  });
+}
+
+function toggleAdminEmojiPicker(event) {
+  if (event) event.stopPropagation();
+  const picker = document.getElementById('admin-emoji-picker');
+  if (!picker) return;
+  picker.hidden = !picker.hidden;
+}
+
+function switchAdminEmojiTab(category) {
+  const grid = document.getElementById('admin-emoji-grid');
+  const tabs = document.querySelectorAll('#admin-emoji-tabs .admin-emoji-tab');
+  if (!grid) return;
+
+  tabs.forEach(t => {
+    t.classList.toggle('active', t.getAttribute('data-cat') === category);
+  });
+
+  const list = ADMIN_EMOJI_CATEGORIES[category] || ADMIN_EMOJI_CATEGORIES.faces;
+  grid.innerHTML = list.map(emoji =>
+    `<button type="button" class="admin-emoji-item" onclick="insertAdminEmoji('${emoji}')">${emoji}</button>`
+  ).join('');
+}
+
+function insertAdminEmoji(emoji) {
+  const input = document.getElementById('admin-msg-input');
+  if (!input) return;
+  const start = typeof input.selectionStart === 'number' ? input.selectionStart : input.value.length;
+  const end = typeof input.selectionEnd === 'number' ? input.selectionEnd : input.value.length;
+  const text = input.value;
+  input.value = text.slice(0, start) + emoji + text.slice(end);
+  input.focus();
+  const nextPos = start + emoji.length;
+  if (input.setSelectionRange) {
+    input.setSelectionRange(nextPos, nextPos);
+  }
+  input.dispatchEvent(new Event('input'));
+}
+
 

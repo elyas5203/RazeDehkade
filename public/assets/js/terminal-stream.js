@@ -99,12 +99,17 @@
     init() {
       if (!this.containerEl) return;
 
-      // شروع استریم با تاخیر اولیه ملایم
+      // بارگذاری اولیه ۶ خط لاگ تا از همان ابتدا چندین خط در ترمینال دیده شود
       this.addLog({
         type: 'sys',
         tag: 'BOOT',
-        text: '*** NEXUS SECURITY SUBSYSTEM ONLINE // QUANTUM ENCRYPTION ACTIVE ***'
+        text: 'NEXUS SECURITY SUBSYSTEM ONLINE // QUANTUM ENCRYPTION ACTIVE'
       });
+      for (let i = 0; i < 5; i++) {
+        const item = LOG_POOL[this.currentIndex % LOG_POOL.length];
+        this.currentIndex++;
+        this.addLog(item);
+      }
 
       this.scheduleNextLog();
 
@@ -130,15 +135,15 @@
       if (!this.containerEl) return;
 
       const now = new Date();
-      const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0').slice(0, 2);
+      const timeStr = now.toTimeString().split(' ')[0];
 
       const line = document.createElement('div');
       line.className = `term-line term-${item.type || 'sys'}`;
 
       line.innerHTML = `
-        <span class="term-time">[${timeStr}]</span>
+        <span class="term-time">${timeStr}</span>
         <span class="term-badge">${item.tag}</span>
-        <span class="term-msg">${this.escape(item.text)}</span>
+        <span class="term-msg" title="${this.escape(item.text)}">${this.escape(item.text)}</span>
       `;
 
       this.containerEl.appendChild(line);

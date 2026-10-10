@@ -714,4 +714,107 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
       admin.disconnect();
     }
   });
+
+  it('15. Student (user) can edit and delete their own messages, and cannot edit/delete admin messages', async function () {
+    const user = ioClient(serverUrl, { auth: { token: userToken } });
+    const admin = ioClient(serverUrl, { auth: { token: adminToken } });
+    try {
+      await Promise.all([user, admin].map(c => new Promise((resolve, reject) => {
+        c.once('connect', resolve);
+        c.once('connect_error', reject);
+      })));
+
+      await new Promise(resolve => {
+        admin.emit('join_session', { sessionId });
+        admin.once('joined_session', resolve);
+      });
+
+      // 1. User sends a message
+      const userMsgPromise = new Promise(resolve => {
+        admin.on('new_message', (msg) => {
+          if (msg.sender_type === 'user' && msg.content === 'گزارش اولیه دستیار') resolve(msg);
+        });
+      });
+
+      user.emit('send_message', {
+        sessionId,
+        content: 'گزارش اولیه دستیار',
+        senderType: 'user',
+        messageType: 'text',
+      });
+
+      const userMsg = await userMsgPromise;
+      assert.ok(userMsg.id);
+
+      // 2. Admin sends a message
+      const adminMsgPromise = new Promise(resolve => {
+        user.on('new_message', (msg) => {
+          if (msg.sender_type === 'admin' && msg.content === 'دستور محرمانه کارگاه') resolve(msg);
+        });
+      });
+
+      admin.emit('send_message', {
+        sessionId,
+        content: 'دستور محرمانه کارگاه',
+        senderType: 'admin',
+        messageType: 'text',
+      });
+
+      const adminMsg = await adminMsgPromise;
+      assert.ok(adminMsg.id);
+
+      // 3. User edits their own message
+      const editedEventPromise = new Promise(resolve => {
+        admin.once('message_edited', resolve);
+      });
+
+      const editRes = await new Promise(resolve => {
+        user.emit('edit_message', {
+          messageId: userMsg.id,
+          content: 'گزارش اصلاح‌شده دستیار 🔍',
+        }, resolve);
+      });
+      assert.strictEqual(editRes.success, true);
+
+      const editedEvent = await editedEventPromise;
+      assert.strictEqual(Number(editedEvent.messageId), Number(userMsg.id));
+      assert.strictEqual(editedEvent.content, 'گزارش اصلاح‌شده دستیار 🔍');
+
+      // 4. User CANNOT edit admin's message
+      const forbiddenEdit = await new Promise(resolve => {
+        user.emit('edit_message', {
+          messageId: adminMsg.id,
+          content: 'تلاش برای تغییر پیام ادمین',
+        }, resolve);
+      });
+      assert.strictEqual(forbiddenEdit.success, false);
+
+      // 5. User CANNOT delete admin's message
+      const forbiddenDelete = await new Promise(resolve => {
+        user.emit('delete_message', {
+          messageId: adminMsg.id,
+        }, resolve);
+      });
+      assert.strictEqual(forbiddenDelete.success, false);
+
+      // 6. User deletes their own message
+      const deletedEventPromise = new Promise(resolve => {
+        admin.once('message_deleted', resolve);
+      });
+
+      const deleteRes = await new Promise(resolve => {
+        user.emit('delete_message', {
+          messageId: userMsg.id,
+        }, resolve);
+      });
+      assert.strictEqual(deleteRes.success, true);
+
+      const deletedEvent = await deletedEventPromise;
+      assert.strictEqual(Number(deletedEvent.messageId), Number(userMsg.id));
+    } finally {
+      user.disconnect();
+      admin.disconnect();
+    }
+  });
 });
+

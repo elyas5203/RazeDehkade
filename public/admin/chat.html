@@ -70,9 +70,24 @@
       <div class="messages-list" id="admin-messages-box"></div>
       <div id="admin-typing-indicator" class="admin-typing"></div>
 
-      <div class="admin-composer">
+      <div class="admin-composer" style="position:relative;">
+        <!-- پنل انتخاب ایموجی سمت ادمین -->
+        <div id="admin-emoji-picker" class="admin-emoji-picker" hidden aria-label="انتخاب ایموجی">
+          <div class="admin-emoji-header">
+            <span>انتخاب ایموجی</span>
+            <div class="admin-emoji-tabs" id="admin-emoji-tabs">
+              <button type="button" class="admin-emoji-tab active" data-cat="faces" onclick="switchAdminEmojiTab('faces')">😊</button>
+              <button type="button" class="admin-emoji-tab" data-cat="detective" onclick="switchAdminEmojiTab('detective')">🕵️</button>
+              <button type="button" class="admin-emoji-tab" data-cat="hands" onclick="switchAdminEmojiTab('hands')">👍</button>
+              <button type="button" class="admin-emoji-tab" data-cat="symbols" onclick="switchAdminEmojiTab('symbols')">⚡</button>
+            </div>
+          </div>
+          <div class="admin-emoji-grid" id="admin-emoji-grid"></div>
+        </div>
+
         <input type="file" id="admin-file-input" hidden onchange="handleAdminFileUpload(event)">
         <button type="button" onclick="triggerAdminFileInput('*')" class="command-button icon" title="آپلود فوری">پیوست</button>
+        <button type="button" id="admin-emoji-btn" onclick="toggleAdminEmojiPicker(event)" class="command-button icon" title="افزودن ایموجی" aria-label="افزودن ایموجی">😊</button>
         <select id="admin-sender-type" aria-label="نقش فرستنده">
           <option value="admin">مرکز</option>
           <option value="system">سیستم</option>
@@ -174,6 +189,21 @@
       <div style="display:flex;gap:8px;margin-top:10px;">
         <button type="submit" class="command-button primary" style="flex:1;">ذخیره مرحله</button>
         <button type="button" onclick="closeAddStepDialog()" class="command-button" style="flex:1;">انصراف</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- مودال ویرایش پیام در پنل فرماندهی -->
+  <dialog id="admin-edit-msg-dialog" style="margin:auto;padding:22px;background:#15191b;color:#e8e5dc;border:1px solid var(--command-amber);border-radius:8px;max-width:440px;width:92%;box-shadow:0 20px 50px rgba(0,0,0,0.8);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h3 style="margin:0;color:var(--command-amber);font-size:15px;">✏️ ویرایش پیام</h3>
+      <button type="button" onclick="closeAdminEditDialog()" style="background:none;border:none;color:#8d9699;cursor:pointer;font-size:16px;">✕</button>
+    </div>
+    <form id="admin-edit-msg-form" onsubmit="submitAdminEditMessage(event)" style="display:flex;flex-direction:column;gap:12px;">
+      <textarea id="admin-edit-msg-textarea" rows="4" required style="width:100%;padding:10px;background:#0c1012;color:#fff;border:1px solid #3a4043;border-radius:6px;font-family:inherit;font-size:13.5px;line-height:1.6;resize:vertical;"></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" onclick="closeAdminEditDialog()" class="command-button">انصراف</button>
+        <button type="submit" class="command-button primary">ذخیره تغییرات</button>
       </div>
     </form>
   </dialog>

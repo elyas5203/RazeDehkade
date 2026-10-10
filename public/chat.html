@@ -6,67 +6,33 @@
   <title>اتاق تحقیقات | راز دهکده</title>
   <link rel="preload" href="/assets/scene/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/investigation.css">
-  <link rel="stylesheet" href="/assets/css/terminal.css?v=3.0">
+  <link rel="stylesheet" href="/assets/css/terminal.css?v=3.3">
   <link rel="stylesheet" href="/assets/css/breach.css">
   <link rel="stylesheet" href="/assets/css/voice-player.css">
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="/assets/js/hack-sequence.js" defer></script>
   <script src="/assets/js/voice-recorder.js" defer></script>
-  <script src="/assets/js/user-chat.js" defer></script>
-  <script src="/assets/js/terminal-stream.js?v=3.0" defer></script>
-  <script src="/assets/js/terminal.js" defer></script>
+  <script src="/assets/js/user-chat.js?v=3.3" defer></script>
+  <script src="/assets/js/terminal-stream.js?v=3.3" defer></script>
+  <script src="/assets/js/terminal.js?v=3.3" defer></script>
 </head>
 <body class="terminal-page">
-  <!-- نوار بالای صفحه (Header) -->
-  <header class="case-bar">
-    <div class="case-brand">
-      <span class="brand-symbol">N</span>
-      <div>
-        <small>مرکز تحقیقات نکسوس</small>
-        <strong id="active-case-title">راز دهکده</strong>
-      </div>
-      <span class="case-divider"></span>
-      <span class="technical" id="active-case-code">CASE / 02</span>
-    </div>
-
-    <div class="case-session">
-      <span id="session-title">دستیاران کارآگاه</span>
-      <code id="session-code-display">------</code>
-      <span id="socket-status" class="status-indicator offline">
-        <span class="status-dot"></span>در حال اتصال…
-      </span>
-    </div>
-
-    <a class="archive-back" href="/archive.html">
-      بایگانی پرونده‌ها 
-      <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
-    </a>
-  </header>
-
-  <!-- نوار وضعیت عملیات -->
-  <div class="operation-strip">
-    <span>
-      <i class="status-dot"></i> اتاق عملیات <b>/</b> <span>حقیقت در جزئیات پنهان است.</span>
-    </span>
-    <span class="operation-clock">
-      زمان حضور در اتاق <time id="session-clock">00:00:00</time>
-    </span>
-  </div>
-
-  <!-- فضای اصلی کار: چت در سمت راست (بزرگ‌تر) و ستون چپ دوگانه (مدارک + ترمینال) -->
+  <!-- فضای اصلی کار تمام‌صفحه (بدون هدر بالا و بدون فوتر پایین جهت حداکثر فضا): چت در سمت راست و ستون چپ دوگانه -->
   <main class="case-workspace">
     
-    <!-- ستون راست: چت تعاملی کارآگاهان (طراحی Liquid Glass با گزارش صوتی) -->
+    <!-- ستون راست: چت تعاملی کارآگاهان (پیام‌های کاربر سمت راست، پیام‌های کارآگاه/ادمین سمت چپ) -->
     <section class="field-chat" aria-labelledby="chat-title">
       <header>
         <span class="radio-icon" aria-hidden="true">
           <svg class="icon" viewBox="0 0 24 24"><path d="M12 13v7m-4 0h8M5 5a10 10 0 0 0 0 12M19 5a10 10 0 0 1 0 12M8 8a6 6 0 0 0 0 6m8-6a6 6 0 0 1 0 6"/><circle cx="12" cy="11" r="2"/></svg>
         </span>
         <div>
-          <span class="eyebrow">خط ارتباطی گروه</span>
+          <span class="eyebrow">خط ارتباطی گروه · <span id="session-title">دستیاران کارآگاه</span></span>
           <h2 id="chat-title">مرکز فرماندهی</h2>
         </div>
-        <span class="channel-label technical">COMMS<br>01</span>
+        <div class="chat-header-meta">
+          <time id="neon-digital-clock" class="neon-digital-clock" aria-label="ساعت دقیق">--:--:--</time>
+        </div>
       </header>
 
       <div class="channel-notice">
@@ -78,15 +44,22 @@
       <div id="typing-indicator" class="typing-line" aria-live="polite"></div>
       <div id="chat-feedback" role="status" class="chat-feedback"></div>
 
-      <!-- کادر ارسال پیام و ویس -->
+      <!-- کادر ارسال پیام و ایموجی (بدون ارسال ویس کاربر) -->
       <form class="composer" id="message-form">
         <label for="msg-input" class="sr-only">گزارش شما به مرکز</label>
+
+        <!-- پاپ‌آپ انتخابگر ایموجی دانش‌آموز -->
+        <div id="user-emoji-picker" class="emoji-picker-popover" hidden aria-label="انتخاب ایموجی"></div>
         
         <div class="composer-controls">
           <input type="file" id="user-file-input" hidden onchange="handleUserFileUpload(event)">
           
-          <button type="button" class="attach-button" onclick="triggerFileInput('*')" aria-label="پیوست مدرک">
+          <button type="button" class="attach-button" onclick="triggerFileInput('*')" title="پیوست مدرک" aria-label="پیوست مدرک">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 12 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7l9-9m-6 12 8-8"/></svg>
+          </button>
+
+          <button type="button" id="user-emoji-btn" class="emoji-button" onclick="toggleUserEmojiPicker(event)" title="افزودن ایموجی" aria-label="افزودن ایموجی">
+            <span aria-hidden="true">😊</span>
           </button>
           
           <textarea 
@@ -97,8 +70,6 @@
             maxlength="10000"
           ></textarea>
 
-          <!-- دکمه ضبط گزارش صوتی توسط voice-recorder.js تزریق می‌شود -->
-
           <button type="submit" class="send-button" aria-label="ارسال گزارش">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m20 4-6 16-4-6-6-4 16-6ZM10 14 20 4"/></svg>
           </button>
@@ -106,12 +77,12 @@
 
         <span class="composer-hint">
           <span>Enter برای ارسال · Shift+Enter خط جدید</span>
-          <span>🎙️ پیام صوتی به مرکز فرماندهی</span>
+          <span>😊 درج ایموجی · 📎 پیوست مدرک</span>
         </span>
       </form>
     </section>
 
-    <!-- ستون چپ: نیمه بالا برد مدارک، نیمه پایین ترمینال لاگ زنده -->
+    <!-- ستون چپ: نیمه بالا برد مدارک، نیمه پایین تقسیم‌شده به چهار قسمت -->
     <div class="left-operations-column">
       
       <!-- نیمه بالا: میز بررسی شواهد پرونده (Evidence Wall) -->
@@ -158,40 +129,80 @@
         </footer>
       </section>
 
-      <!-- نیمه پایین: پایانه پایش زنده امنیتی (Live Streaming Cyber Terminal) -->
-      <section class="security-terminal" aria-labelledby="terminal-title">
-        <header class="terminal-bar">
-          <div class="term-title-box">
-            <span class="term-traffic-lights"><i></i><i></i><i></i></span>
-            <span id="terminal-title" class="term-heading">پایانه پایش زنده امنیتی // N-LOG-STREAM</span>
+      <!-- نیمه پایین: چهار قسمت زیر برد مدارک (۱. تقویم واقعی شمسی، ۲. دکمه پاپ‌آپ عکس دستیاران، ۳. ترمینال کد چندخطی ریز، ۴. کارت خالی) -->
+      <div class="under-board-quad-grid" aria-label="پنل چهارگانه عملیاتی">
+        
+        <!-- قسمت ۱: تقویم واقعی شمسی (با ماه‌های واقعی مهر، آبان و... و روزهای واقعی هفته) -->
+        <section class="quad-card quad-calendar-card" aria-labelledby="shamsi-calendar-title">
+          <header class="quad-card-header calendar-sheet-header">
+            <div class="calendar-nav-group">
+              <button type="button" class="cal-nav-btn" onclick="changeShamsiMonth(-1)" title="ماه قبل" aria-label="ماه قبل">‹</button>
+              <h3 id="shamsi-calendar-title">مهر ۱۴۰۵</h3>
+              <button type="button" class="cal-nav-btn" onclick="changeShamsiMonth(1)" title="ماه بعد" aria-label="ماه بعد">›</button>
+            </div>
+            <button type="button" id="shamsi-today-badge" class="calendar-sheet-badge" onclick="goToTodayShamsi()" title="بازگشت به امروز">امروز</button>
+          </header>
+          <div class="shamsi-calendar-sheet">
+            <div class="shamsi-weekdays" role="row">
+              <span title="شنبه">ش</span>
+              <span title="یکشنبه">ی</span>
+              <span title="دوشنبه">د</span>
+              <span title="سه‌شنبه">س</span>
+              <span title="چهارشنبه">چ</span>
+              <span title="پنج‌شنبه">پ</span>
+              <span class="friday-col" title="جمعه">ج</span>
+            </div>
+            <div class="shamsi-days-grid" id="shamsi-days-grid" role="grid" aria-label="روزهای ماه شمسی"></div>
           </div>
-          <div class="term-meta">
-            <span class="status-indicator online">
-              <span class="status-dot"></span> <span id="terminal-status-text">LIVE STREAM</span>
-            </span>
-            <span id="terminal-log-counter" class="terminal-counter technical">۰ LOGS</span>
-          </div>
-        </header>
+        </section>
 
-        <div class="terminal-body" id="live-terminal-content" role="log" aria-live="polite">
-          <!-- لاگ‌ها به صورت خودکار توسط terminal-stream.js با تاخیر تصادفی ۰.۵ تا ۱.۵ ثانیه چاپ می‌شوند -->
+        <!-- قسمت ۲: دکمه پاپ‌آپ «عکس دستیاران» -->
+        <div class="quad-card quad-assistants-card">
+          <button type="button" class="assistants-popup-btn" id="open-assistants-popup-btn" onclick="openAssistantsPhotoPopup()">
+            <span class="assistants-btn-glow" aria-hidden="true"></span>
+            <span class="assistants-btn-icon" aria-hidden="true">🕵️‍♂️</span>
+            <strong class="assistants-btn-label">عکس دستیاران</strong>
+            <small class="assistants-btn-sub">مشاهده در پنجره جدید ↗</small>
+          </button>
         </div>
 
-        <footer class="terminal-controls-bar">
-          <span class="technical">RATE: 500ms-1500ms DYNAMIC</span>
-          <span class="term-blink-cursor">▮ RUNNING DIAGNOSTICS</span>
-        </footer>
-      </section>
+        <!-- قسمت ۳: ترمینال کد امنیتی (نسخه کوچک‌تر شده) -->
+        <section class="security-terminal quad-card" aria-labelledby="terminal-title">
+          <header class="terminal-bar">
+            <div class="term-title-box">
+              <span class="term-traffic-lights"><i></i><i></i><i></i></span>
+              <span id="terminal-title" class="term-heading">N-LOG // TERMINAL</span>
+            </div>
+            <div class="term-meta">
+              <span class="status-indicator online">
+                <span class="status-dot"></span> <span id="terminal-status-text">LIVE</span>
+              </span>
+              <span id="terminal-log-counter" class="terminal-counter technical">۰ LOGS</span>
+            </div>
+          </header>
+
+          <div class="terminal-body" id="live-terminal-content" role="log" aria-live="polite">
+            <!-- لاگ‌ها به صورت خودکار توسط terminal-stream.js چاپ می‌شوند -->
+          </div>
+
+          <footer class="terminal-controls-bar">
+            <span class="technical">STREAM: 0.5s-1.5s</span>
+            <span class="term-blink-cursor">▮ ACTIVE</span>
+          </footer>
+        </section>
+
+        <!-- قسمت ۴: کارت خالی (رزرو شده برای دستور بعدی کارفرما) -->
+        <section class="quad-card quad-empty-card" aria-label="کارت خالی رزرو">
+          <div class="quad-empty-placeholder">
+            <span class="quad-empty-code technical">SLOT // 04</span>
+          </div>
+        </section>
+
+      </div>
 
     </div>
 
   </main>
-
-  <footer class="terminal-footer">
-    <span class="technical">SYSTEM / FIELD OPERATIONS</span>
-    <span>با دقت ببینید. با هم گفتگو و کشف کنید.</span>
-    <span class="technical">CLASSIFIED MATERIAL</span>
-  </footer>
 
   <!-- مودال نمایش تمام‌صفحه مدرک -->
   <dialog id="evidence-dialog" class="evidence-dialog">
@@ -200,6 +211,79 @@
       <button class="dialog-close" type="button" onclick="closeEvidence()" aria-label="بستن مدرک">×</button>
     </div>
     <div id="evidence-dialog-content"></div>
+  </dialog>
+
+  <!-- پاپ‌آپ صفحه جدید «عکس دستیاران» -->
+  <dialog id="assistants-photo-dialog" class="themed-modal-dialog assistants-modal-dialog">
+    <div class="themed-modal-header">
+      <div class="themed-modal-title-group">
+        <span class="eyebrow">پرونده ویژه کارآگاهی</span>
+        <h3>🕵️‍♂️ عکس دستیاران کارآگاه</h3>
+      </div>
+      <button class="dialog-close" type="button" onclick="closeAssistantsPhotoPopup()" aria-label="بستن پنجره">×</button>
+    </div>
+    <div class="themed-modal-body assistants-modal-body" id="assistants-photo-modal-content">
+      <div class="assistants-placeholder-stage">
+        <div class="assistants-placeholder-icon">📸</div>
+        <h4>بخش عکس دستیاران کارآگاه</h4>
+        <p>این پنجره آماده قرارگیری محتوا و تصاویر دستیاران کارآگاه است.</p>
+      </div>
+    </div>
+    <div class="themed-modal-footer">
+      <button type="button" class="themed-btn secondary" onclick="closeAssistantsPhotoPopup()">بستن پنجره</button>
+    </div>
+  </dialog>
+
+  <!-- پاپ‌آپ خوشگل و هم‌تم سایت برای ویرایش پیام دانش‌آموز -->
+  <dialog id="user-edit-msg-dialog" class="themed-modal-dialog edit-msg-modal-dialog">
+    <div class="themed-modal-header">
+      <div class="themed-modal-title-group">
+        <span class="eyebrow">اصلاح مخابره</span>
+        <h3>✏️ ویرایش پیام ارسالی</h3>
+      </div>
+      <button class="dialog-close" type="button" onclick="closeUserEditModal()" aria-label="بستن ویرایش">×</button>
+    </div>
+    <form id="user-edit-msg-form" onsubmit="submitUserEditMessage(event)" class="themed-modal-body">
+      <label for="user-edit-msg-textarea" class="themed-modal-label">متن جدید گزارش یا پیام خود را وارد کنید:</label>
+      <div class="edit-textarea-wrapper">
+        <textarea id="user-edit-msg-textarea" rows="4" maxlength="10000" required placeholder="متن پیام…"></textarea>
+        <div class="edit-quick-emojis" aria-label="ایموجی سریع در ویرایش">
+          <button type="button" onclick="insertEmojiIntoEdit('🕵️‍♂️')">🕵️‍♂️</button>
+          <button type="button" onclick="insertEmojiIntoEdit('🔍')">🔍</button>
+          <button type="button" onclick="insertEmojiIntoEdit('📌')">📌</button>
+          <button type="button" onclick="insertEmojiIntoEdit('💡')">💡</button>
+          <button type="button" onclick="insertEmojiIntoEdit('✅')">✅</button>
+          <button type="button" onclick="insertEmojiIntoEdit('⚠️')">⚠️</button>
+          <button type="button" onclick="insertEmojiIntoEdit('🤔')">🤔</button>
+          <button type="button" onclick="insertEmojiIntoEdit('👍')">👍</button>
+          <button type="button" onclick="insertEmojiIntoEdit('😂')">😂</button>
+          <button type="button" onclick="insertEmojiIntoEdit('❤️')">❤️</button>
+        </div>
+      </div>
+      <div class="themed-modal-footer">
+        <button type="button" class="themed-btn secondary" onclick="closeUserEditModal()">انصراف</button>
+        <button type="submit" class="themed-btn primary" id="user-edit-save-btn">✨ ذخیره و بروزرسانی پیام</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- پاپ‌آپ خوشگل و هم‌تم سایت برای تایید حذف پیام دانش‌آموز -->
+  <dialog id="user-delete-msg-dialog" class="themed-modal-dialog delete-msg-modal-dialog">
+    <div class="themed-modal-header">
+      <div class="themed-modal-title-group">
+        <span class="eyebrow">حذف مخابره</span>
+        <h3>🗑️ حذف پیام از خط ارتباطی</h3>
+      </div>
+      <button class="dialog-close" type="button" onclick="closeUserDeleteModal()" aria-label="بستن">×</button>
+    </div>
+    <div class="themed-modal-body">
+      <p class="delete-confirm-text">آیا مطمئن هستید که می‌خواهید این پیام را برای همیشه حذف کنید؟</p>
+      <div class="delete-preview-box" id="user-delete-msg-preview"></div>
+    </div>
+    <div class="themed-modal-footer">
+      <button type="button" class="themed-btn secondary" onclick="closeUserDeleteModal()">انصراف</button>
+      <button type="button" class="themed-btn danger" id="user-delete-confirm-btn" onclick="confirmUserDeleteMessage()">🗑️ بله، پیام حذف شود</button>
+    </div>
   </dialog>
 </body>
 </html>

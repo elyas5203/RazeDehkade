@@ -42,9 +42,25 @@ if (!userToken || !sessionData.id) {
   window.location.href = '/enter-code.html';
 }
 
+const userMessagesMap = new Map();
+let activeEditMessageId = null;
+let activeDeleteMessageId = null;
+
+function syncSessionCache() {
+  try {
+    const list = Array.from(userMessagesMap.values()).sort((a, b) => Number(a.id) - Number(b.id));
+    sessionStorage.setItem(`cached_msgs_${sessionData.id}`, JSON.stringify(list));
+  } catch (_) {}
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('session-title').innerText = sessionData.name || 'دستیاران کارآگاه';
-  document.getElementById('session-code-display').innerText = sessionData.code;
+  const sessionTitleEl = document.getElementById('session-title');
+  if (sessionTitleEl) sessionTitleEl.innerText = sessionData.name || 'دستیاران کارآگاه';
+  const sessionCodeEl = document.getElementById('session-code-display');
+  if (sessionCodeEl) sessionCodeEl.innerText = sessionData.code;
+
+  // راه‌اندازی ساعت دیجیتالی نئونی دقیق در هدر چت
+  initNeonDigitalClock();
 
   // بارگذاری فوری از کش مرورگر برای نمایش آنی و بدون تاخیر پیام‌ها
   try {
@@ -52,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cached) {
       const cachedList = JSON.parse(cached);
       if (Array.isArray(cachedList) && cachedList.length) {
-        cachedList.forEach(m => renderMessage(m, { skipScroll: true, skipThreads: true }));
+        cachedList.forEach(m => renderMessage(m, { skipScroll: true, skipThreads: true, isHistory: true }));
         const box = document.getElementById('messages-box');
         if (box) box.scrollTop = box.scrollHeight;
         requestAnimationFrame(updateEvidenceThreads);
@@ -63,14 +79,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // دریافت سریع پیام‌ها از سرور به صورت موازی (بدون انتظار برای اتصال سوکت)
   loadHistory();
 
-  // درخواست یک‌باره دسترسی میکروفون قبل از شروع جلسه جهت جلوگیری از نمایش مجدد پرمپت در طول بازی
+  // درخواست یک‌باره دسترسی میکروفون قبل از شروع جلسه جهت شنود زنده ادمین (بدون دکمه ارسال ویس توسط کاربر)
   initUserMicrophone();
   initSocket();
 
-  // راه‌اندازی ضبط ویس صوتی دانش‌آموزان
-  if (typeof VoiceRecorder !== 'undefined') {
-    window.voiceRecorder = new VoiceRecorder();
-  }
+  // راه‌اندازی پنل ایموجی، تقویم شمسی و مودال‌ها
+  initUserEmojiPicker();
+  initCalendarAndModals();
 
   // مدیریت فرم ارسال پیام و کلید Enter و Shift+Enter
   const msgForm = document.getElementById('message-form');
@@ -122,7 +137,8 @@ function applyChatLock(isLocked) {
   const msgInput = document.getElementById('msg-input');
   const sendBtn = document.querySelector('.send-button');
   const attachBtn = document.querySelector('.attach-button');
-  const micBtn = document.getElementById('voice-record-btn');
+  const emojiBtn = document.getElementById('user-emoji-btn');
+  const emojiPicker = document.getElementById('user-emoji-picker');
   let lockBanner = document.getElementById('chat-lock-banner');
 
   if (isLocked) {
@@ -132,7 +148,8 @@ function applyChatLock(isLocked) {
     }
     if (sendBtn) sendBtn.disabled = true;
     if (attachBtn) attachBtn.disabled = true;
-    if (micBtn) micBtn.disabled = true;
+    if (emojiBtn) emojiBtn.disabled = true;
+    if (emojiPicker) emojiPicker.hidden = true;
 
     if (!lockBanner) {
       lockBanner = document.createElement('div');
@@ -152,7 +169,7 @@ function applyChatLock(isLocked) {
     }
     if (sendBtn) sendBtn.disabled = false;
     if (attachBtn) attachBtn.disabled = false;
-    if (micBtn) micBtn.disabled = false;
+    if (emojiBtn) emojiBtn.disabled = false;
     if (lockBanner) lockBanner.style.display = 'none';
   }
 }
@@ -179,7 +196,7 @@ async function loadHistory() {
     const data = await res.json();
     if (data.success && Array.isArray(data.data)) {
       const box = document.getElementById('messages-box');
-      data.data.forEach(msg => renderMessage(msg, { skipScroll: true, skipThreads: true }));
+      data.data.forEach(msg => renderMessage(msg, { skipScroll: true, skipThreads: true, isHistory: true }));
       if (box) box.scrollTop = box.scrollHeight;
       requestAnimationFrame(updateEvidenceThreads);
 
@@ -199,6 +216,21 @@ async function loadHistory() {
   }
 }
 
+// ساعت دیجیتالی نئونی دقیق و زنده در هدر چت
+function initNeonDigitalClock() {
+  const clockEl = document.getElementById('neon-digital-clock');
+  if (!clockEl) return;
+  const tick = () => {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    clockEl.textContent = `${hh}:${mm}:${ss}`;
+  };
+  tick();
+  setInterval(tick, 1000);
+}
+
 // مقداردهی اولیه سوکت
 function initSocket() {
   socket = io({
@@ -206,29 +238,13 @@ function initSocket() {
   });
   window.socket = socket;
 
-  window.sendUserVoiceMessage = function(fileUrl, fileName) {
-    if (!socket || !socket.connected) {
-      alert('اتصال به سرور چت برقرار نیست. لطفاً چند لحظه دیگر امتحان کنید.');
-      return;
-    }
-    socket.emit('send_message', {
-      sessionId: sessionData.id,
-      content: 'پیام صوتی',
-      messageType: 'user_voice',
-      fileUrl: fileUrl,
-      fileName: fileName || 'voice.webm',
-    }, (ack) => {
-      if (ack && !ack.success) {
-        alert(ack.message || 'خطا در ارسال پیام صوتی به مرکز فرماندهی');
-      }
-    });
-  };
-
   const statusEl = document.getElementById('socket-status');
 
   socket.on('connect', () => {
-    statusEl.className = 'status-indicator online';
-    statusEl.innerHTML = '<span class="status-dot"></span> متصل';
+    if (statusEl) {
+      statusEl.className = 'status-indicator online';
+      statusEl.innerHTML = '<span class="status-dot"></span> متصل';
+    }
     socket.emit('join_session', { sessionId: sessionData.id });
     if (!isHistoryLoaded) {
       loadHistory();
@@ -236,14 +252,18 @@ function initSocket() {
   });
 
   socket.io.on('reconnect', () => {
-    statusEl.className = 'status-indicator online';
-    statusEl.innerHTML = '<span class="status-dot"></span> اتصال مجدد برقرار شد';
+    if (statusEl) {
+      statusEl.className = 'status-indicator online';
+      statusEl.innerHTML = '<span class="status-dot"></span> اتصال مجدد برقرار شد';
+    }
     socket.emit('join_session', { sessionId: sessionData.id });
   });
 
   socket.on('disconnect', () => {
-    statusEl.className = 'status-indicator offline';
-    statusEl.innerHTML = '<span class="status-dot"></span> در حال وصل شدن مجدد...';
+    if (statusEl) {
+      statusEl.className = 'status-indicator offline';
+      statusEl.innerHTML = '<span class="status-dot"></span> در حال وصل شدن مجدد...';
+    }
   });
 
   socket.on('new_message', (msg) => {
@@ -258,21 +278,35 @@ function initSocket() {
 
   socket.on('message_edited', (data) => {
     if (Number(data.sessionId) === Number(sessionData.id)) {
-      const contentEl = document.getElementById(`user-msg-content-${data.messageId}`);
-      if (contentEl) contentEl.textContent = data.content;
+      const mId = Number(data.messageId);
+      const contentEl = document.getElementById(`user-msg-content-${mId}`);
+      if (contentEl) {
+        contentEl.textContent = data.content;
+      }
+      if (userMessagesMap.has(mId)) {
+        const stored = userMessagesMap.get(mId);
+        stored.content = data.content;
+        userMessagesMap.set(mId, stored);
+        syncSessionCache();
+      }
     }
   });
 
   socket.on('message_deleted', (data) => {
     if (Number(data.sessionId) === Number(sessionData.id)) {
-      const msgEl = document.querySelector(`[data-message-id="${data.messageId}"]`);
+      const mId = Number(data.messageId);
+      const msgEl = document.querySelector(`[data-message-id="${mId}"]`);
       if (msgEl) msgEl.remove();
+      if (userMessagesMap.has(mId)) {
+        userMessagesMap.delete(mId);
+        syncSessionCache();
+      }
     }
   });
 
   socket.on('user_typing', (data) => {
     const typingEl = document.getElementById('typing-indicator');
-    if (data.senderType === 'admin') {
+    if (typingEl && data.senderType === 'admin') {
       typingEl.innerText = data.isTyping ? 'مرکز در حال نوشتن است…' : '';
     }
   });
@@ -325,9 +359,68 @@ function renderMessage(msg, options = {}) {
   const box = document.getElementById('messages-box');
   if (!box) return;
   if (Number(msg.session_id) !== Number(sessionData.id)) return;
-  if (box.querySelector(`[data-message-id="${Number(msg.id)}"]`)) return;
+  const msgId = Number(msg.id);
+  userMessagesMap.set(msgId, { ...msg });
+
+  const isUserVoice = msg.message_type === 'user_voice';
+  const fileUrl = safeFileUrl(msg.file_url);
+  const isEvidence = !isUserVoice && ['image', 'voice', 'video', 'file'].includes(msg.message_type) && fileUrl !== '#';
+
+  // ۱. اگر پیام از نوع مدرک (تصویر، ویدیو، صوت، سند) است: همیشه روی برد مدارک پین شود
+  if (isEvidence) {
+    renderEvidence(msg, options);
+
+    // اگر در حال بارگذاری تاریخچه قدیمی هستیم، کارت هشدار موقت دیگر نباید در چت بماند
+    const createdTime = msg.created_at ? new Date(msg.created_at).getTime() : 0;
+    const ageMs = createdTime ? (Date.now() - createdTime) : 0;
+    if (options.isHistory && (!createdTime || ageMs > 10000)) {
+      return;
+    }
+
+    if (box.querySelector(`[data-message-id="${msgId}"]`)) return;
+
+    // نمایش کارت هشدار کوچک و جمع‌وجور در چت که بعد از ۱۰ ثانیه خودکار حذف می‌شود
+    const alertDiv = document.createElement('div');
+    alertDiv.dataset.messageId = msgId;
+    alertDiv.className = 'message-bubble evidence-alert-card';
+    const subTitle = (msg.content && msg.content !== msg.file_name)
+      ? msg.content
+      : 'برای مشاهده روی برد شواهد کلیک کنید';
+
+    alertDiv.innerHTML = `
+      <div class="evidence-alert-inner">
+        <span class="evidence-alert-icon" aria-hidden="true">📌</span>
+        <div class="evidence-alert-texts">
+          <strong>کارآگاه مدرک جدیدی به برد اسناد اضافه کرد</strong>
+          <small>${escapeHtml(subTitle)}</small>
+        </div>
+      </div>
+      <div class="evidence-alert-timer-bar"></div>
+    `;
+    alertDiv.title = 'کلیک برای باز کردن مدرک';
+    alertDiv.addEventListener('click', () => openEvidence(msg));
+
+    const laterMsg = [...box.children].find(child => Number(child.dataset.messageId) > msgId);
+    box.insertBefore(alertDiv, laterMsg || null);
+    if (!options.skipScroll) {
+      box.scrollTop = box.scrollHeight;
+    }
+
+    const remainingMs = (options.isHistory && ageMs > 0 && ageMs < 10000) ? (10000 - ageMs) : 10000;
+    setTimeout(() => {
+      alertDiv.classList.add('is-fading-out');
+      setTimeout(() => {
+        if (alertDiv.parentNode) alertDiv.remove();
+      }, 350);
+    }, remainingMs);
+
+    return;
+  }
+
+  if (box.querySelector(`[data-message-id="${msgId}"]`)) return;
+
   const div = document.createElement('div');
-  div.dataset.messageId = Number(msg.id);
+  div.dataset.messageId = msgId;
   div.className = `message-bubble ${msg.sender_type}`;
 
   let senderTitle = 'دستیاران کارآگاه';
@@ -335,65 +428,12 @@ function renderMessage(msg, options = {}) {
   if (msg.sender_type === 'system') senderTitle = 'پیام سیستم';
   if (msg.sender_type === 'hacker') senderTitle = 'مزداک';
 
-  const isUserVoice = msg.message_type === 'user_voice';
-  const fileUrl = safeFileUrl(msg.file_url);
-  const isEvidence = !isUserVoice && ['image', 'voice', 'video', 'file'].includes(msg.message_type) && fileUrl !== '#';
-
-  if (isEvidence) {
-    div.classList.add('evidence-receipt');
-    renderEvidence(msg, options);
-  }
-
   const timeFormatted = new Date(msg.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
   let bodyContent = '';
   if (isUserVoice) {
     div.classList.add('has-user-voice');
     div.classList.add('has-voice-message');
     bodyContent = window.createTelegramVoiceMarkup ? window.createTelegramVoiceMarkup(msg, timeFormatted) : `<audio controls src="${fileUrl}"></audio>`;
-  } else if (isEvidence) {
-    const caption = msg.content && msg.content !== msg.file_name ? `<p class="message-caption">${escapeHtml(msg.content)}</p>` : '';
-    if (msg.message_type === 'image') {
-      bodyContent = `
-        ${caption}
-        <div class="chat-media-attachment chat-image-attachment">
-          <a href="${fileUrl}" target="_blank" rel="noopener" class="chat-media-link" title="مشاهده اندازه کامل">
-            <img src="${fileUrl}" alt="${escapeHtml(msg.content || msg.file_name || 'تصویر ارسالی')}" loading="lazy" class="chat-media-preview-img">
-          </a>
-          <div class="message-evidence-note">📌 این تصویر روی برد سرنخ‌ها سنجاق شد.</div>
-        </div>
-      `;
-    } else if (msg.message_type === 'video') {
-      bodyContent = `
-        ${caption}
-        <div class="chat-media-attachment chat-video-attachment">
-          <video controls playsinline preload="metadata" src="${fileUrl}" class="chat-media-preview-video"></video>
-          <div class="message-evidence-note">📌 این ویدیو روی برد سرنخ‌ها سنجاق شد.</div>
-        </div>
-      `;
-    } else if (msg.message_type === 'voice') {
-      div.classList.add('has-voice-message');
-      const voiceMarkup = window.createTelegramVoiceMarkup 
-        ? window.createTelegramVoiceMarkup(msg, timeFormatted) 
-        : `<audio controls preload="metadata" src="${fileUrl}" class="chat-media-preview-audio"></audio>`;
-      bodyContent = `
-        ${caption}
-        <div class="chat-media-attachment chat-voice-attachment">
-          ${voiceMarkup}
-          <div class="message-evidence-note">📌 این صوت روی برد سرنخ‌ها سنجاق شد.</div>
-        </div>
-      `;
-    } else {
-      bodyContent = `
-        ${caption}
-        <div class="chat-media-attachment chat-file-attachment">
-          <a href="${fileUrl}" download target="_blank" rel="noopener" class="chat-download-btn">
-            <span class="file-icon">📁</span>
-            <span class="file-name">${escapeHtml(msg.file_name || msg.content || 'دریافت سند')}</span>
-          </a>
-          <div class="message-evidence-note">📌 این سند روی برد سرنخ‌ها سنجاق شد.</div>
-        </div>
-      `;
-    }
   } else {
     bodyContent = escapeHtml(msg.content);
   }
@@ -403,9 +443,17 @@ function renderMessage(msg, options = {}) {
     ? `<div class="message-sender"><span>${escapeHtml(senderTitle)}</span></div>`
     : '';
 
-  div.innerHTML = `${senderMarkup}<div id="user-msg-content-${msg.id}" class="message-content">${bodyContent}</div><span class="message-time">${timeFormatted}</span>`;
+  const canEditText = isUser && (!msg.message_type || msg.message_type === 'text');
+  const userActionsMarkup = isUser
+    ? `<div class="user-msg-actions">
+        ${canEditText ? `<button type="button" class="user-msg-action-btn edit" onclick="openUserEditModal(${msgId})" title="ویرایش پیام" aria-label="ویرایش پیام">✏️ <span>ویرایش</span></button>` : ''}
+        <button type="button" class="user-msg-action-btn delete" onclick="openUserDeleteModal(${msgId})" title="حذف پیام" aria-label="حذف پیام">🗑️ <span>حذف</span></button>
+      </div>`
+    : '';
 
-  const laterMessage = [...box.children].find(child => Number(child.dataset.messageId) > Number(msg.id));
+  div.innerHTML = `${senderMarkup}<div id="user-msg-content-${msgId}" class="message-content">${bodyContent}</div><div class="message-footer-row">${userActionsMarkup}<span class="message-time">${timeFormatted}</span></div>`;
+
+  const laterMessage = [...box.children].find(child => Number(child.dataset.messageId) > msgId);
   box.insertBefore(div, laterMessage || null);
   if (!options.skipScroll) {
     box.scrollTop = box.scrollHeight;
@@ -926,3 +974,465 @@ function logoutUser() {
   sessionStorage.removeItem('userSession');
   window.location.href = '/enter-code.html';
 }
+
+/* ==========================================================================
+   سیستم ایموجی (Emoji Picker) در ترمینال دانش‌آموز
+   ========================================================================== */
+const USER_EMOJI_CATEGORIES = [
+  {
+    id: 'detective',
+    label: '🕵️ کارآگاهی',
+    emojis: ['🕵️‍♂️', '🔍', '🔎', '🧩', '📌', '📁', '🗂️', '📜', '🗝️', '🔒', '🔓', '⚠️', '🚨', '💡', '🎯', '🩸', '👣', '🕰️', '🕯️', '🏚️', '🌲', '📡', '💻', '🛡️', '☠️', '👁️', '🤫', '🤔', '🧐', '😎']
+  },
+  {
+    id: 'faces',
+    label: '😊 صورتک‌ها',
+    emojis: ['😀', '😄', '😂', '🤣', '😊', '😇', '🙂', '😉', '😍', '🤩', '🥳', '😏', '😒', '😔', '😟', '😕', '🙁', '😣', '😫', '🥺', '😢', '😭', '😤', '😡', '🤯', '😳', '😱', '😨', '🤗', '🫡', '🤝', '👍', '👎', '👏', '🙌', '🙏', '💪', '✌️', '👌', '✋']
+  },
+  {
+    id: 'symbols',
+    label: '⚡ علائم',
+    emojis: ['✅', '❌', '❓', '❗', '‼️', '💯', '🔥', '⚡', '✨', '⭐', '🌟', '💥', '🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '⏳', '⌛', '🔔', '📢', '💬', '💭', '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '💔']
+  }
+];
+
+function initUserEmojiPicker() {
+  const picker = document.getElementById('user-emoji-picker');
+  if (!picker) return;
+
+  const tabsHtml = USER_EMOJI_CATEGORIES.map((cat, idx) =>
+    `<button type="button" class="emoji-tab-btn ${idx === 0 ? 'active' : ''}" data-cat="${cat.id}" onclick="switchUserEmojiTab('${cat.id}')">${cat.label}</button>`
+  ).join('');
+
+  const gridsHtml = USER_EMOJI_CATEGORIES.map((cat, idx) =>
+    `<div class="emoji-cat-grid ${idx === 0 ? 'active' : ''}" data-cat-grid="${cat.id}">
+      ${cat.emojis.map(em => `<button type="button" class="emoji-item-btn" onclick="insertUserEmoji('${em}')">${em}</button>`).join('')}
+    </div>`
+  ).join('');
+
+  picker.innerHTML = `
+    <div class="emoji-picker-header">
+      <div class="emoji-tabs-row">${tabsHtml}</div>
+      <button type="button" class="emoji-close-btn" onclick="closeUserEmojiPicker()" aria-label="بستن">×</button>
+    </div>
+    <div class="emoji-picker-body">${gridsHtml}</div>
+  `;
+
+  document.addEventListener('click', (e) => {
+    if (picker.hidden) return;
+    const btn = document.getElementById('user-emoji-btn');
+    if (!picker.contains(e.target) && (!btn || !btn.contains(e.target))) {
+      picker.hidden = true;
+    }
+  });
+}
+
+function toggleUserEmojiPicker(e) {
+  if (e) e.stopPropagation();
+  const picker = document.getElementById('user-emoji-picker');
+  if (!picker) return;
+  if (sessionData.is_chat_locked) return;
+  picker.hidden = !picker.hidden;
+}
+
+function closeUserEmojiPicker() {
+  const picker = document.getElementById('user-emoji-picker');
+  if (picker) picker.hidden = true;
+}
+
+function switchUserEmojiTab(catId) {
+  const picker = document.getElementById('user-emoji-picker');
+  if (!picker) return;
+  picker.querySelectorAll('.emoji-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.cat === catId);
+  });
+  picker.querySelectorAll('.emoji-cat-grid').forEach(grid => {
+    grid.classList.toggle('active', grid.dataset.catGrid === catId);
+  });
+}
+
+function insertUserEmoji(emoji) {
+  const input = document.getElementById('msg-input');
+  if (!input || input.disabled) return;
+  const start = typeof input.selectionStart === 'number' ? input.selectionStart : input.value.length;
+  const end = typeof input.selectionEnd === 'number' ? input.selectionEnd : input.value.length;
+  const before = input.value.slice(0, start);
+  const after = input.value.slice(end);
+  input.value = before + emoji + after;
+  const nextPos = start + emoji.length;
+  input.focus();
+  try {
+    input.setSelectionRange(nextPos, nextPos);
+  } catch (_) {}
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  handleTyping();
+}
+
+/* ==========================================================================
+   تقویم واقعی شمسی (جلالی) با ماه‌های واقعی (مهر، آبان و...) و روزهای واقعی هفته
+   ========================================================================== */
+const SHAMSI_MONTH_NAMES = [
+  'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+  'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+];
+
+const SHAMSI_WEEKDAY_NAMES = [
+  'شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'
+];
+
+function toPersianDigits(val) {
+  return String(val ?? '').replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
+}
+
+function gregorianToJalali(gy, gm, gd) {
+  const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+  const gy2 = (gm > 2) ? (gy + 1) : gy;
+  let days = 355666 + (365 * gy) + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400) + gd + g_d_m[gm - 1];
+  let jy = -1595 + (33 * Math.floor(days / 12053));
+  days %= 12053;
+  jy += 4 * Math.floor(days / 1461);
+  days %= 1461;
+  if (days > 365) {
+    jy += Math.floor((days - 1) / 365);
+    days = (days - 1) % 365;
+  }
+  const jm = (days < 186) ? 1 + Math.floor(days / 31) : 7 + Math.floor((days - 186) / 30);
+  const jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
+  return { jy, jm, jd };
+}
+
+function jalaliToGregorian(jy, jm, jd) {
+  const jy1 = jy + 1595;
+  let days = -355668 + (365 * jy1) + (Math.floor(jy1 / 33) * 8) + Math.floor(((jy1 % 33) + 3) / 4) + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+  let gy = 400 * Math.floor(days / 146097);
+  days %= 146097;
+  if (days > 36524) {
+    gy += 100 * Math.floor(--days / 36524);
+    days %= 36524;
+    if (days >= 365) days++;
+  }
+  gy += 4 * Math.floor(days / 1461);
+  days %= 1461;
+  if (days > 365) {
+    gy += Math.floor((days - 1) / 365);
+    days = (days - 1) % 365;
+  }
+  let gd = days + 1;
+  const sal_a = [0, 31, ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  let gm;
+  for (gm = 0; gm < 13 && gd > sal_a[gm]; gm++) {
+    gd -= sal_a[gm];
+  }
+  return { gy, gm, gd };
+}
+
+function isJalaliLeapYear(jy) {
+  const g1 = jalaliToGregorian(jy, 12, 30);
+  const back = gregorianToJalali(g1.gy, g1.gm, g1.gd);
+  return back.jy === jy && back.jm === 12 && back.jd === 30;
+}
+
+function getJalaliMonthLength(jy, jm) {
+  if (jm >= 1 && jm <= 6) return 31;
+  if (jm >= 7 && jm <= 11) return 30;
+  return isJalaliLeapYear(jy) ? 30 : 29;
+}
+
+// بازگشت ایندکس روز هفته شمسی: شنبه = 0، یکشنبه = 1، ...، جمعه = 6
+function getJalaliWeekdayIndex(jy, jm, jd) {
+  const { gy, gm, gd } = jalaliToGregorian(jy, jm, jd);
+  const jsDay = new Date(gy, gm - 1, gd).getDay(); // یکشنبه = 0 ... شنبه = 6
+  return (jsDay + 1) % 7;
+}
+
+let shamsiState = {
+  todayJy: 1405,
+  todayJm: 7,
+  todayJd: 18,
+  viewJy: 1405,
+  viewJm: 7,
+  selectedJy: 1405,
+  selectedJm: 7,
+  selectedJd: 18,
+};
+
+function initCalendarAndModals() {
+  const now = new Date();
+  const realToday = gregorianToJalali(now.getFullYear(), now.getMonth() + 1, now.getDate());
+  shamsiState = {
+    todayJy: realToday.jy,
+    todayJm: realToday.jm,
+    todayJd: realToday.jd,
+    viewJy: realToday.jy,
+    viewJm: realToday.jm,
+    selectedJy: realToday.jy,
+    selectedJm: realToday.jm,
+    selectedJd: realToday.jd,
+  };
+  renderShamsiCalendar();
+
+  // بستن مودال‌ها با کلیک روی بک‌دراپ
+  ['assistants-photo-dialog', 'user-edit-msg-dialog', 'user-delete-msg-dialog'].forEach(dialogId => {
+    const dlg = document.getElementById(dialogId);
+    if (dlg) {
+      dlg.addEventListener('click', (e) => {
+        if (e.target === dlg) dlg.close();
+      });
+    }
+  });
+}
+
+function changeShamsiMonth(delta) {
+  let nextMonth = shamsiState.viewJm + delta;
+  let nextYear = shamsiState.viewJy;
+  if (nextMonth > 12) {
+    nextMonth = 1;
+    nextYear++;
+  } else if (nextMonth < 1) {
+    nextMonth = 12;
+    nextYear--;
+  }
+  shamsiState.viewJm = nextMonth;
+  shamsiState.viewJy = nextYear;
+  renderShamsiCalendar();
+}
+
+function goToTodayShamsi() {
+  shamsiState.viewJy = shamsiState.todayJy;
+  shamsiState.viewJm = shamsiState.todayJm;
+  shamsiState.selectedJy = shamsiState.todayJy;
+  shamsiState.selectedJm = shamsiState.todayJm;
+  shamsiState.selectedJd = shamsiState.todayJd;
+  renderShamsiCalendar();
+}
+
+function selectShamsiDay(jy, jm, jd) {
+  shamsiState.selectedJy = jy;
+  shamsiState.selectedJm = jm;
+  shamsiState.selectedJd = jd;
+  if (jy !== shamsiState.viewJy || jm !== shamsiState.viewJm) {
+    shamsiState.viewJy = jy;
+    shamsiState.viewJm = jm;
+  }
+  renderShamsiCalendar();
+}
+
+function renderShamsiCalendar() {
+  const titleEl = document.getElementById('shamsi-calendar-title');
+  const badgeEl = document.getElementById('shamsi-today-badge');
+  const gridEl = document.getElementById('shamsi-days-grid');
+  if (!gridEl) return;
+
+  const { viewJy, viewJm, todayJy, todayJm, todayJd, selectedJy, selectedJm, selectedJd } = shamsiState;
+  const monthName = SHAMSI_MONTH_NAMES[viewJm - 1] || 'مهر';
+
+  if (titleEl) {
+    titleEl.textContent = `${monthName} ${toPersianDigits(viewJy)}`;
+  }
+
+  if (badgeEl) {
+    const selMonthName = SHAMSI_MONTH_NAMES[selectedJm - 1] || monthName;
+    const selWeekday = SHAMSI_WEEKDAY_NAMES[getJalaliWeekdayIndex(selectedJy, selectedJm, selectedJd)];
+    badgeEl.textContent = `${selWeekday} ${toPersianDigits(selectedJd)} ${selMonthName}`;
+  }
+
+  const daysInMonth = getJalaliMonthLength(viewJy, viewJm);
+  const firstDayOffset = getJalaliWeekdayIndex(viewJy, viewJm, 1); // 0=شنبه ... 6=جمعه
+
+  const prevJm = viewJm === 1 ? 12 : viewJm - 1;
+  const prevJy = viewJm === 1 ? viewJy - 1 : viewJy;
+  const prevMonthDays = getJalaliMonthLength(prevJy, prevJm);
+
+  const cells = [];
+
+  // روزهای پایانی ماه قبل (کمرنگ) برای تراز دقیق روز اول ماه با روز واقعی هفته
+  for (let i = firstDayOffset - 1; i >= 0; i--) {
+    const d = prevMonthDays - i;
+    cells.push(
+      `<button type="button" class="cal-day-cell is-outside" onclick="selectShamsiDay(${prevJy}, ${prevJm}, ${d})" title="${toPersianDigits(d)} ${SHAMSI_MONTH_NAMES[prevJm - 1]}">${toPersianDigits(d)}</button>`
+    );
+  }
+
+  // روزهای واقعی ماه جاری
+  for (let d = 1; d <= daysInMonth; d++) {
+    const colIdx = (firstDayOffset + d - 1) % 7;
+    const isFriday = colIdx === 6;
+    const isToday = (viewJy === todayJy && viewJm === todayJm && d === todayJd);
+    const isSelected = (viewJy === selectedJy && viewJm === selectedJm && d === selectedJd);
+    const classes = [
+      'cal-day-cell',
+      isFriday ? 'is-friday' : '',
+      isToday ? 'is-today' : '',
+      isSelected ? 'is-selected' : '',
+    ].filter(Boolean).join(' ');
+
+    const weekdayName = SHAMSI_WEEKDAY_NAMES[colIdx];
+    cells.push(
+      `<button type="button" class="${classes}" data-day="${d}" onclick="selectShamsiDay(${viewJy}, ${viewJm}, ${d})" title="${weekdayName} ${toPersianDigits(d)} ${monthName} ${toPersianDigits(viewJy)}">${toPersianDigits(d)}</button>`
+    );
+  }
+
+  // پر کردن انتهای جدول با روزهای ابتدایی ماه بعد (مثلاً آبان بعد از مهر)
+  const totalSlots = cells.length <= 35 ? 35 : 42;
+  const nextJm = viewJm === 12 ? 1 : viewJm + 1;
+  const nextJy = viewJm === 12 ? viewJy + 1 : viewJy;
+  const remaining = totalSlots - cells.length;
+  for (let d = 1; d <= remaining; d++) {
+    cells.push(
+      `<button type="button" class="cal-day-cell is-outside" onclick="selectShamsiDay(${nextJy}, ${nextJm}, ${d})" title="${toPersianDigits(d)} ${SHAMSI_MONTH_NAMES[nextJm - 1]}">${toPersianDigits(d)}</button>`
+    );
+  }
+
+  gridEl.style.gridTemplateRows = `repeat(${totalSlots / 7}, minmax(0, 1fr))`;
+  gridEl.innerHTML = cells.join('');
+}
+
+function openAssistantsPhotoPopup() {
+  const dlg = document.getElementById('assistants-photo-dialog');
+  if (dlg) dlg.showModal();
+}
+
+function closeAssistantsPhotoPopup() {
+  const dlg = document.getElementById('assistants-photo-dialog');
+  if (dlg) dlg.close();
+}
+
+/* ==========================================================================
+   پاپ‌آپ خوشگل ویرایش و حذف پیام‌های خود دانش‌آموز
+   ========================================================================== */
+function openUserEditModal(messageId) {
+  if (sessionData.is_chat_locked) {
+    alert('خط ارتباطی با مرکز فرماندهی موقتاً مسدود شده است.');
+    return;
+  }
+  const mId = Number(messageId);
+  const stored = userMessagesMap.get(mId);
+  const domEl = document.getElementById(`user-msg-content-${mId}`);
+  const currentText = (stored && typeof stored.content === 'string')
+    ? stored.content
+    : (domEl ? domEl.textContent : '');
+
+  activeEditMessageId = mId;
+  const textarea = document.getElementById('user-edit-msg-textarea');
+  const dlg = document.getElementById('user-edit-msg-dialog');
+  if (!textarea || !dlg) return;
+
+  textarea.value = currentText;
+  dlg.showModal();
+  setTimeout(() => {
+    textarea.focus();
+    try {
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    } catch (_) {}
+  }, 40);
+}
+
+function closeUserEditModal() {
+  activeEditMessageId = null;
+  const dlg = document.getElementById('user-edit-msg-dialog');
+  if (dlg) dlg.close();
+}
+
+function insertEmojiIntoEdit(emoji) {
+  const textarea = document.getElementById('user-edit-msg-textarea');
+  if (!textarea) return;
+  const start = typeof textarea.selectionStart === 'number' ? textarea.selectionStart : textarea.value.length;
+  const end = typeof textarea.selectionEnd === 'number' ? textarea.selectionEnd : textarea.value.length;
+  textarea.value = textarea.value.slice(0, start) + emoji + textarea.value.slice(end);
+  const pos = start + emoji.length;
+  textarea.focus();
+  try {
+    textarea.setSelectionRange(pos, pos);
+  } catch (_) {}
+}
+
+function submitUserEditMessage(e) {
+  if (e) e.preventDefault();
+  if (!activeEditMessageId) return;
+
+  const textarea = document.getElementById('user-edit-msg-textarea');
+  const saveBtn = document.getElementById('user-edit-save-btn');
+  const newContent = textarea ? textarea.value.trim() : '';
+  if (!newContent) return;
+
+  if (!socket || !socket.connected) {
+    alert('ارتباط با سرور برقرار نیست. لطفاً چند لحظه دیگر تلاش کنید.');
+    return;
+  }
+
+  const targetId = activeEditMessageId;
+  if (saveBtn) saveBtn.disabled = true;
+
+  socket.emit('edit_message', { messageId: targetId, content: newContent }, (res) => {
+    if (saveBtn) saveBtn.disabled = false;
+    if (res && res.success) {
+      const contentEl = document.getElementById(`user-msg-content-${targetId}`);
+      if (contentEl) contentEl.textContent = res.content || newContent;
+      if (userMessagesMap.has(targetId)) {
+        const msgObj = userMessagesMap.get(targetId);
+        msgObj.content = res.content || newContent;
+        userMessagesMap.set(targetId, msgObj);
+        syncSessionCache();
+      }
+      closeUserEditModal();
+    } else {
+      alert((res && res.message) || 'خطا در ویرایش پیام.');
+    }
+  });
+}
+
+function openUserDeleteModal(messageId) {
+  if (sessionData.is_chat_locked) {
+    alert('خط ارتباطی با مرکز فرماندهی موقتاً مسدود شده است.');
+    return;
+  }
+  const mId = Number(messageId);
+  activeDeleteMessageId = mId;
+
+  const stored = userMessagesMap.get(mId);
+  const domEl = document.getElementById(`user-msg-content-${mId}`);
+  const previewText = (stored && stored.content) ? stored.content : (domEl ? domEl.textContent : 'پیام ارسالی');
+
+  const previewEl = document.getElementById('user-delete-msg-preview');
+  if (previewEl) {
+    previewEl.textContent = previewText.length > 140 ? previewText.slice(0, 140) + '…' : previewText;
+  }
+
+  const dlg = document.getElementById('user-delete-msg-dialog');
+  if (dlg) dlg.showModal();
+}
+
+function closeUserDeleteModal() {
+  activeDeleteMessageId = null;
+  const dlg = document.getElementById('user-delete-msg-dialog');
+  if (dlg) dlg.close();
+}
+
+function confirmUserDeleteMessage() {
+  if (!activeDeleteMessageId) return;
+  if (!socket || !socket.connected) {
+    alert('ارتباط با سرور برقرار نیست. لطفاً چند لحظه دیگر تلاش کنید.');
+    return;
+  }
+
+  const targetId = activeDeleteMessageId;
+  const confirmBtn = document.getElementById('user-delete-confirm-btn');
+  if (confirmBtn) confirmBtn.disabled = true;
+
+  socket.emit('delete_message', { messageId: targetId }, (res) => {
+    if (confirmBtn) confirmBtn.disabled = false;
+    if (res && res.success) {
+      const msgEl = document.querySelector(`[data-message-id="${targetId}"]`);
+      if (msgEl) msgEl.remove();
+      if (userMessagesMap.has(targetId)) {
+        userMessagesMap.delete(targetId);
+        syncSessionCache();
+      }
+      closeUserDeleteModal();
+    } else {
+      alert((res && res.message) || 'خطا در حذف پیام.');
+    }
+  });
+}
+

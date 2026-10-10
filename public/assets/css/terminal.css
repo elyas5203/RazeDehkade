@@ -148,9 +148,9 @@
    ========================================================================== */
 .case-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(360px, 1fr);
-  gap: 18px;
-  margin: 0 24px 12px;
+  grid-template-columns: minmax(0, 1.4fr) minmax(380px, 1fr);
+  gap: 12px;
+  margin: 10px 14px 10px;
   flex: 1;
   min-height: 0;
   direction: rtl;
@@ -175,15 +175,15 @@
 .field-chat > header {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 12px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(15, 26, 40, 0.95);
 }
 
 .radio-icon {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   background: rgba(245, 158, 11, 0.12);
   border: 1px solid rgba(245, 158, 11, 0.35);
   display: grid;
@@ -194,7 +194,7 @@
 }
 
 .field-chat h2 {
-  font-size: 18px;
+  font-size: 16.5px;
   font-weight: 800;
   color: #f8fafc;
 }
@@ -205,20 +205,36 @@
   margin-bottom: 2px;
 }
 
-.channel-label {
+.chat-header-meta {
   margin-right: auto;
-  text-align: center;
-  color: #94a3b8;
-  font-size: 10px;
-  line-height: 1.6;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+}
+
+.neon-digital-clock {
+  font-family: var(--font-code);
+  direction: ltr;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  color: #38bdf8;
+  text-shadow:
+    0 0 6px rgba(56, 189, 248, 0.85),
+    0 0 14px rgba(56, 189, 248, 0.55),
+    0 0 28px rgba(14, 165, 233, 0.35);
+  background: linear-gradient(145deg, rgba(6, 15, 26, 0.92), rgba(10, 24, 40, 0.88));
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  box-shadow:
+    0 0 14px rgba(56, 189, 248, 0.2),
+    inset 0 0 10px rgba(56, 189, 248, 0.12);
+  padding: 5px 14px;
+  border-radius: 7px;
+  line-height: 1.2;
+  user-select: none;
 }
 
 .channel-notice {
-  padding: 8px 20px;
+  padding: 6px 18px;
   font-size: 11px;
   color: #94a3b8;
   display: flex;
@@ -242,12 +258,13 @@
   flex-direction: column;
   gap: 10px;
   padding: 16px 20px;
+  direction: rtl;
   scrollbar-width: thin;
   scrollbar-color: rgba(245, 158, 11, 0.25) transparent;
 }
 
 .messages-list:empty::before {
-  content: 'خط ارتباط رادیویی آماده است.\A اولین گزارش یا فرضیه را بنویسید یا ویس بفرستید.';
+  content: 'خط ارتباط رادیویی آماده است.\A اولین گزارش یا فرضیه خود را بنویسید.';
   white-space: pre-line;
   margin: auto;
   text-align: center;
@@ -289,26 +306,33 @@
   color: inherit;
 }
 
-/* پیام کاربر دانش‌آموز (سمت چپ در چت راست‌چین) */
+/* پیام خود کاربر / دانش‌آموز: حتماً سمت راست (در چیدمان RTL، flex-start یعنی سمت راست) */
 .message-bubble.user {
-  align-self: flex-end;
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.22), rgba(6, 95, 70, 0.38));
-  border: 1px solid rgba(16, 185, 129, 0.38);
-  border-bottom-left-radius: 3px;
+  align-self: flex-start !important;
+  margin-right: 0 !important;
+  margin-left: auto !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.24), rgba(6, 95, 70, 0.42));
+  border: 1px solid rgba(16, 185, 129, 0.42);
+  border-bottom-right-radius: 3px;
+  border-bottom-left-radius: 14px;
   color: #ecfdf5;
 }
 
-/* پیام ادمین / مرکز فرماندهی (سمت راست در چت راست‌چین) */
+/* پیام کارآگاه / ادمین / مرکز فرماندهی: حتماً سمت چپ (در چیدمان RTL، flex-end یعنی سمت چپ) */
 .message-bubble.admin {
-  align-self: flex-start;
-  background: linear-gradient(135deg, rgba(26, 38, 56, 0.92), rgba(15, 23, 40, 0.96));
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-bottom-right-radius: 3px;
+  align-self: flex-end !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  background: linear-gradient(135deg, rgba(26, 38, 56, 0.94), rgba(15, 23, 40, 0.98));
+  border: 1px solid rgba(245, 158, 11, 0.34);
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 14px;
   color: #f8fafc;
 }
 
 .message-bubble.system {
-  align-self: center;
+  align-self: center !important;
+  margin-inline: auto !important;
   font-size: 11.5px;
   text-align: center;
   background: rgba(245, 158, 11, 0.08);
@@ -320,12 +344,15 @@
 }
 
 .message-bubble.hacker {
+  align-self: flex-end !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
   background: linear-gradient(135deg, #3d141c, #260c12);
   border: 1px solid #ef4444;
-  border-right: 3px solid #ef4444;
+  border-left: 3px solid #ef4444;
   color: #fee2e2;
-  align-self: flex-start;
-  border-bottom-right-radius: 3px;
+  border-bottom-left-radius: 3px;
+  border-bottom-right-radius: 14px;
 }
 
 .message-sender {
@@ -340,13 +367,61 @@
   line-height: 1.3;
 }
 
+.message-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.user-msg-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.72;
+  transition: opacity 0.18s ease;
+}
+
+.message-bubble.user:hover .user-msg-actions,
+.message-bubble.user:focus-within .user-msg-actions {
+  opacity: 1;
+}
+
+.user-msg-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(6, 18, 28, 0.45);
+  color: #d1fae5;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.user-msg-action-btn.edit:hover {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: rgba(245, 158, 11, 0.55);
+  color: #fde68a;
+}
+
+.user-msg-action-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #fecaca;
+}
+
 .message-time {
   font-size: 9.5px;
   color: rgba(255, 255, 255, 0.45);
   font-family: var(--font-code);
-  margin-top: 3px;
   line-height: 1.2;
-  align-self: flex-end;
+  margin-right: auto;
   direction: ltr;
 }
 
@@ -358,89 +433,91 @@
   color: rgba(253, 230, 138, 0.65);
 }
 
-.message-evidence-note {
-  font-size: 11px;
-  color: var(--gold-light);
-  margin-top: 4px;
+/* کارت هشدار کوچک و موقت ۱۰ ثانیه‌ای برای افزوده شدن مدرک جدید توسط کارآگاه */
+.evidence-alert-card {
+  align-self: flex-end !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  width: fit-content;
+  max-width: min(82%, 340px);
+  min-width: 210px;
+  padding: 8px 12px 10px;
+  border-radius: 10px;
+  border-bottom-left-radius: 3px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+  border: 1px solid rgba(245, 158, 11, 0.48);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 12px rgba(245, 158, 11, 0.14);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.evidence-alert-card:hover {
+  border-color: var(--gold);
+  transform: translateY(-1px);
+}
+
+.evidence-alert-card.is-fading-out {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.96);
+  pointer-events: none;
+}
+
+.evidence-alert-inner {
   display: flex;
   align-items: center;
-  gap: 4px;
-  opacity: 0.9;
+  gap: 9px;
 }
 
-.message-evidence-note::before {
-  content: '↗ ';
-  margin-left: 4px;
+.evidence-alert-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  flex-shrink: 0;
 }
 
-/* پیوست‌های رسانه‌ای درون حباب پیام‌های چت */
-.message-caption {
-  margin: 0 0 6px 0;
-  font-size: 13.5px;
-  line-height: 1.5;
-}
-
-.chat-media-attachment {
-  margin-top: 6px;
+.evidence-alert-texts {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
+  min-width: 0;
 }
 
-.chat-image-attachment .chat-media-link {
-  display: block;
-  border-radius: 8px;
+.evidence-alert-texts strong {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #fde68a;
+  line-height: 1.35;
+}
+
+.evidence-alert-texts small {
+  font-size: 10px;
+  color: #94a3b8;
+  white-space: nowrap;
   overflow: hidden;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  background: rgba(0, 0, 0, 0.35);
-  max-width: 320px;
+  text-overflow: ellipsis;
 }
 
-.chat-image-attachment .chat-media-preview-img {
-  display: block;
+.evidence-alert-timer-bar {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  height: 2.5px;
   width: 100%;
-  max-height: 220px;
-  object-fit: cover;
-  transition: transform 0.2s ease;
+  background: linear-gradient(90deg, #f59e0b, #38bdf8);
+  transform-origin: right center;
+  animation: evidence-alert-countdown 10s linear forwards;
 }
 
-.chat-image-attachment .chat-media-preview-img:hover {
-  transform: scale(1.02);
-}
-
-.chat-video-attachment .chat-media-preview-video {
-  width: 100%;
-  max-width: 340px;
-  max-height: 220px;
-  border-radius: 8px;
-  background: #000;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.chat-voice-attachment .chat-media-preview-audio {
-  width: 100%;
-  min-width: 240px;
-  height: 36px;
-  border-radius: 6px;
-}
-
-.chat-download-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  color: #f8fafc;
-  padding: 8px 12px;
-  border-radius: 6px;
-  text-decoration: none;
-  font-size: 12px;
-  transition: background 0.2s;
-}
-
-.chat-download-btn:hover {
-  background: rgba(245, 158, 11, 0.25);
-  color: var(--gold);
+@keyframes evidence-alert-countdown {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
 }
 
 /* تایپینگ و بازخورد */
@@ -455,8 +532,9 @@
   padding-block: 6px;
 }
 
-/* کادر ارسال پیام */
+/* کادر ارسال پیام و پنل ایموجی */
 .composer {
+  position: relative;
   padding: 14px 18px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(9, 17, 26, 0.98);
@@ -498,23 +576,34 @@
   color: #64748b;
 }
 
-.attach-button, .send-button {
-  min-width: 42px;
-  height: 42px;
+.attach-button, .emoji-button, .send-button {
+  min-width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
   border: 0;
   border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
 }
 
-.attach-button {
+.attach-button, .emoji-button {
   background: rgba(255, 255, 255, 0.05);
   color: #94a3b8;
+  font-size: 18px;
 }
 
-.attach-button:hover {
+.attach-button:hover, .emoji-button:hover {
   background: rgba(245, 158, 11, 0.15);
   color: var(--gold);
+  transform: translateY(-1px);
+}
+
+.attach-button:disabled, .emoji-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .send-button {
@@ -533,6 +622,124 @@
   transform: none;
 }
 
+/* پاپ‌آپ انتخابگر ایموجی */
+.emoji-picker-popover {
+  position: absolute;
+  bottom: calc(100% - 8px);
+  right: 18px;
+  width: min(320px, calc(100% - 36px));
+  background: rgba(11, 21, 34, 0.98);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  border-radius: 10px;
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.75);
+  z-index: 60;
+  overflow: hidden;
+  animation: bubble-appear 0.18s ease-out;
+}
+
+.emoji-picker-popover[hidden] {
+  display: none !important;
+}
+
+.emoji-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  background: rgba(16, 29, 46, 0.98);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 6px;
+}
+
+.emoji-tabs-row {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.emoji-tab-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 6px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.emoji-tab-btn.active,
+.emoji-tab-btn:hover {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fde68a;
+}
+
+.emoji-close-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.emoji-close-btn:hover {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.emoji-picker-body {
+  padding: 8px;
+  max-height: 185px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 158, 11, 0.3) transparent;
+}
+
+.emoji-cat-grid {
+  display: none;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.emoji-cat-grid.active {
+  display: grid;
+}
+
+.emoji-item-btn {
+  height: 36px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  font-size: 19px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.emoji-item-btn:hover {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.4);
+  transform: scale(1.14);
+}
+
+/* مخفی‌سازی کامل دکمه ضبط ویس کاربر در صورت تزریق احتمالی */
+#voice-record-btn,
+#voice-record-bar {
+  display: none !important;
+}
+
 .composer-hint {
   display: flex;
   justify-content: space-between;
@@ -544,20 +751,20 @@
 }
 
 /* ==========================================================================
-   ستون چپ: ستون دوگانه (نیمه بالا برد مدارک + نیمه پایین ترمینال زنده)
+   ستون چپ: ستون دوگانه (نیمه بالا برد مدارک + نیمه پایین ۴ قسمتی)
    ========================================================================== */
 .left-operations-column {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
   min-height: 0;
   height: 100%;
 }
 
-/* 1. نیمه بالا: میز بررسی شواهد پرونده (Evidence Board - فضای بازتر و بزرگ‌تر) */
+/* 1. نیمه بالا: میز بررسی شواهد پرونده (Evidence Board) */
 .evidence-board {
-  flex: 1.5;
+  flex: 1.15;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -902,83 +1109,350 @@
 }
 
 /* ==========================================================================
-   2. نیمه پایین: پایانه پایش زنده امنیتی (Live Cyber Terminal)
+   2. نیمه پایین: پنل ۴ قسمتی زیر برد مدارک (2x2 Quad Grid)
    ========================================================================== */
-.security-terminal {
-  flex: 0.65;
+.under-board-quad-grid {
+  flex: 1.05;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.quad-card {
+  min-width: 0;
+  min-height: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.48);
+  position: relative;
+}
+
+/* --- قسمت ۱: تقویم واقعی شمسی (ماه‌های واقعی مهر، آبان و... با روزهای واقعی هفته) --- */
+.quad-calendar-card {
+  background: linear-gradient(160deg, #16212c 0%, #0b131c 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.calendar-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: linear-gradient(90deg, rgba(185, 28, 28, 0.3), rgba(245, 158, 11, 0.18));
+  border-bottom: 1px solid rgba(245, 158, 11, 0.28);
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.calendar-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cal-nav-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  background: rgba(10, 18, 28, 0.65);
+  color: #fde68a;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cal-nav-btn:hover {
+  background: var(--gold);
+  color: #09121a;
+  border-color: #fde68a;
+}
+
+.calendar-sheet-header h3 {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fde68a;
+  margin: 0;
+  min-width: 58px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.calendar-sheet-badge {
+  font-family: inherit;
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #f8fafc;
+  background: rgba(245, 158, 11, 0.22);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.calendar-sheet-badge:hover {
+  background: rgba(245, 158, 11, 0.35);
+  color: #fde68a;
+}
+
+.shamsi-calendar-sheet {
+  flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  background: rgba(6, 11, 18, 0.96);
-  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 4px 6px 5px;
+  gap: 2px;
+}
+
+.shamsi-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+  font-size: 8.5px;
+  font-weight: 800;
+  color: #94a3b8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 2px;
+  flex-shrink: 0;
+}
+
+.shamsi-weekdays .friday-col {
+  color: #f87171;
+}
+
+.shamsi-days-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.cal-day-cell {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.035);
+  color: #e2e8f0;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.14s ease;
+  line-height: 1;
+}
+
+.cal-day-cell.is-outside {
+  opacity: 0.28;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.03);
+  color: #64748b;
+}
+
+.cal-day-cell.is-friday {
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.09);
+  border-color: rgba(239, 68, 68, 0.22);
+}
+
+.cal-day-cell.is-today {
+  border-color: #38bdf8;
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.65);
+  color: #7dd3fc;
+}
+
+.cal-day-cell:hover {
+  background: rgba(245, 158, 11, 0.24);
+  border-color: rgba(245, 158, 11, 0.6);
+  color: #fde68a;
+  opacity: 1;
+}
+
+.cal-day-cell.is-selected {
+  background: var(--gold);
+  border-color: #fde68a;
+  color: #09121a;
+  font-weight: 900;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+  opacity: 1;
+}
+
+/* --- قسمت ۲: دکمه پاپ‌آپ «عکس دستیاران» --- */
+.quad-assistants-card {
+  background: radial-gradient(circle at 50% 25%, rgba(245, 158, 11, 0.16), rgba(11, 20, 32, 0.96) 75%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.assistants-popup-btn {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: #f8fafc;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.22s ease;
+}
+
+.assistants-btn-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(245, 158, 11, 0.22) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.assistants-popup-btn:hover .assistants-btn-glow {
+  opacity: 1;
+}
+
+.assistants-popup-btn:hover {
+  transform: translateY(-1px);
+}
+
+.assistants-btn-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.assistants-popup-btn:hover .assistants-btn-icon {
+  transform: scale(1.08);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.45);
+}
+
+.assistants-btn-label {
+  font-size: 14px;
+  font-weight: 900;
+  color: #fde68a;
+  letter-spacing: -0.2px;
+}
+
+.assistants-btn-sub {
+  font-size: 10px;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+/* --- قسمت ۳: پایانه پایش زنده امنیتی (Live Cyber Terminal - فونت ریز و چندخطی) --- */
+.security-terminal {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #03070c;
+  border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55);
 }
 
 .terminal-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 14px;
-  background: rgba(11, 20, 32, 0.98);
-  border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+  padding: 3px 8px;
+  background: rgba(10, 18, 29, 0.98);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.18);
   flex-shrink: 0;
 }
 
 .term-title-box {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
 }
 
 .term-traffic-lights {
   display: inline-flex;
-  gap: 5px;
+  gap: 3px;
 }
 
 .term-traffic-lights i {
-  width: 9px;
-  height: 9px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   display: inline-block;
 }
 
 .term-traffic-lights i:nth-child(1) {
   background: #ef4444;
-  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 4px rgba(239, 68, 68, 0.6);
 }
 
 .term-traffic-lights i:nth-child(2) {
   background: #f59e0b;
-  box-shadow: 0 0 6px rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 4px rgba(245, 158, 11, 0.6);
 }
 
 .term-traffic-lights i:nth-child(3) {
   background: #10b981;
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+  box-shadow: 0 0 4px rgba(16, 185, 129, 0.6);
 }
 
 .term-heading {
-  font-size: 11px;
+  font-size: 8px;
   font-weight: 700;
-  color: #cbd5e1;
+  color: #94a3b8;
   font-family: var(--font-code);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
 }
 
 .term-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 5px;
+}
+
+.term-meta .status-indicator {
+  font-size: 7.5px;
+  gap: 4px;
+}
+
+.term-meta .status-dot {
+  width: 5px;
+  height: 5px;
 }
 
 .terminal-counter {
   color: var(--gold);
-  font-size: 10px;
+  font-size: 7.5px;
   font-weight: 700;
   background: rgba(245, 158, 11, 0.12);
-  padding: 2px 7px;
+  padding: 1px 4px;
   border-radius: 3px;
   border: 1px solid rgba(245, 158, 11, 0.25);
 }
@@ -988,56 +1462,68 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 10px 14px;
-  background: #04080e;
+  padding: 4px 6px;
+  background: radial-gradient(circle at 50% 0%, rgba(14, 30, 48, 0.35), #03070c 80%);
   font-family: var(--font-code);
-  font-size: 11px;
-  line-height: 1.65;
+  font-size: 8px;
+  line-height: 1.3;
   direction: ltr;
   text-align: left;
   scrollbar-width: thin;
-  scrollbar-color: rgba(56, 189, 248, 0.3) transparent;
+  scrollbar-color: rgba(56, 189, 248, 0.25) transparent;
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
-/* خطوط لاگ ترمینال */
+/* خطوط لاگ ترمینال: تک‌خطی و مرتب برای نمایش هم‌زمان ۶ تا ۸ خط */
 .term-line {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  padding: 3px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  animation: term-appear 0.2s ease-out;
+  align-items: center;
+  gap: 4px;
+  padding: 1.5px 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.015);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.025);
+  animation: term-appear 0.18s ease-out;
   direction: ltr;
+  white-space: nowrap;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 @keyframes term-appear {
-  from { opacity: 0; transform: translateX(4px); }
+  from { opacity: 0; transform: translateX(3px); }
   to { opacity: 1; transform: translateX(0); }
 }
 
 .term-time {
-  color: #64748b;
-  font-size: 10px;
+  color: #475569;
+  font-size: 7.5px;
   direction: ltr;
   font-family: var(--font-code);
   flex-shrink: 0;
 }
 
 .term-badge {
-  font-size: 9px;
+  font-size: 7px;
   font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 3px;
+  padding: 0 3px;
+  min-width: 44px;
+  text-align: center;
+  border-radius: 2px;
   flex-shrink: 0;
   font-family: var(--font-code);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.2px;
+  line-height: 1.35;
 }
 
 .term-msg {
-  color: #e2e8f0;
-  word-break: break-word;
+  color: #cbd5e1;
+  font-size: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   flex: 1;
   direction: ltr;
   unicode-bidi: plaintext;
@@ -1045,38 +1531,38 @@
 
 /* تم رنگی تگ‌های لاگ */
 .term-sys .term-badge {
-  background: rgba(59, 130, 246, 0.2);
+  background: rgba(59, 130, 246, 0.18);
   color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.35);
+  border: 1px solid rgba(59, 130, 246, 0.32);
 }
 
 .term-net .term-badge {
-  background: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.18);
   color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  border: 1px solid rgba(16, 185, 129, 0.32);
 }
 
 .term-sec .term-badge {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.18);
   color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.35);
+  border: 1px solid rgba(239, 68, 68, 0.32);
 }
 
 .term-det .term-badge {
-  background: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.18);
   color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  border: 1px solid rgba(245, 158, 11, 0.32);
 }
 
 .terminal-controls-bar {
-  padding: 6px 14px;
-  background: rgba(9, 16, 26, 0.98);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 2px 8px;
+  background: rgba(8, 14, 23, 0.98);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 10px;
-  color: #64748b;
+  font-size: 7.5px;
+  color: #475569;
   flex-shrink: 0;
 }
 
@@ -1090,6 +1576,253 @@
 @keyframes term-cursor-blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.2; }
+}
+
+/* --- قسمت ۴: کارت خالی (رزرو توسعه آینده) --- */
+.quad-empty-card {
+  background: rgba(11, 19, 29, 0.72);
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  display: grid;
+  place-items: center;
+}
+
+.quad-empty-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.35;
+  user-select: none;
+}
+
+.quad-empty-code {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: #94a3b8;
+}
+
+/* ==========================================================================
+   پاپ‌آپ‌های اختصاصی و خوشگل هم‌تم سایت (ویرایش پیام، حذف پیام، عکس دستیاران)
+   ========================================================================== */
+.themed-modal-dialog {
+  width: min(500px, 92vw);
+  margin: auto;
+  padding: 0;
+  background: linear-gradient(155deg, rgba(16, 28, 44, 0.98) 0%, rgba(8, 15, 24, 0.99) 100%);
+  color: #f8fafc;
+  border: 1px solid rgba(245, 158, 11, 0.42);
+  border-radius: 14px;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.85), 0 0 30px rgba(245, 158, 11, 0.12);
+  overflow: hidden;
+  direction: rtl;
+}
+
+.assistants-modal-dialog {
+  width: min(680px, 92vw);
+}
+
+.themed-modal-dialog::backdrop {
+  background: rgba(3, 8, 15, 0.82);
+  backdrop-filter: blur(8px);
+}
+
+.themed-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: rgba(12, 22, 35, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.themed-modal-title-group .eyebrow {
+  display: block;
+  font-size: 10px;
+  color: var(--gold);
+  margin-bottom: 2px;
+}
+
+.themed-modal-title-group h3 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.themed-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.themed-modal-label {
+  font-size: 12.5px;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.edit-textarea-wrapper {
+  background: rgba(6, 12, 20, 0.9);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.edit-textarea-wrapper:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.22);
+}
+
+#user-edit-msg-textarea {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 12px 14px;
+  color: #f8fafc;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  outline: none;
+  resize: vertical;
+  min-height: 95px;
+  max-height: 240px;
+}
+
+.edit-quick-emojis {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  background: rgba(15, 26, 40, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  overflow-x: auto;
+}
+
+.edit-quick-emojis button {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  height: 30px;
+  min-width: 30px;
+  font-size: 16px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all 0.15s;
+}
+
+.edit-quick-emojis button:hover {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.45);
+  transform: scale(1.12);
+}
+
+.delete-confirm-text {
+  font-size: 13.5px;
+  color: #e2e8f0;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.delete-preview-box {
+  padding: 10px 14px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  border-radius: 8px;
+  color: #fecaca;
+  font-size: 12.5px;
+  line-height: 1.5;
+  max-height: 90px;
+  overflow-y: auto;
+  word-break: break-word;
+}
+
+.assistants-placeholder-stage {
+  min-height: 220px;
+  border: 1px dashed rgba(245, 158, 11, 0.35);
+  background: radial-gradient(circle at center, rgba(245, 158, 11, 0.08), rgba(5, 10, 16, 0.6));
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px;
+  text-align: center;
+}
+
+.assistants-placeholder-icon {
+  font-size: 40px;
+  margin-bottom: 4px;
+}
+
+.assistants-placeholder-stage h4 {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fde68a;
+  margin: 0;
+}
+
+.assistants-placeholder-stage p {
+  font-size: 13px;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.themed-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(9, 17, 26, 0.6);
+}
+
+.themed-btn {
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.18s ease;
+}
+
+.themed-btn.primary {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #09121a;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+}
+
+.themed-btn.primary:hover {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  transform: translateY(-1px);
+}
+
+.themed-btn.secondary {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #cbd5e1;
+}
+
+.themed-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.themed-btn.danger {
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+}
+
+.themed-btn.danger:hover {
+  background: linear-gradient(135deg, #f87171, #dc2626);
+  transform: translateY(-1px);
 }
 
 /* ==========================================================================
@@ -1149,6 +1882,7 @@
   color: #e2e8f0;
   font-size: 24px;
   border-radius: 6px;
+  cursor: pointer;
 }
 
 .evidence-dialog img, .evidence-dialog video {

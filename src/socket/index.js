@@ -364,18 +364,29 @@ function setupSocketIO(io) {
     });
 
     /**
-     * رویداد edit_message: ویرایش پیام توسط ادمین
+     * رویداد edit_message: ویرایش پیام توسط ادمین یا خود دانش‌آموز (فقط پیام‌های خودش)
      */
     socket.on('edit_message', async (data, ack = () => {}) => {
-      if (user.role !== 'admin') {
-        if (typeof ack === 'function') ack({ success: false, message: 'دسترسی غیرمجاز.' });
-        return;
-      }
       try {
-        const { messageId, content } = data;
+        const { messageId, content } = data || {};
         const msg = await Message.findById(messageId);
         if (!msg) {
           if (typeof ack === 'function') ack({ success: false, message: 'پیام پیدا نشد.' });
+          return;
+        }
+
+        if (user.role === 'user') {
+          if (Number(msg.session_id) !== Number(user.sessionId) || msg.sender_type !== 'user') {
+            if (typeof ack === 'function') ack({ success: false, message: 'شما فقط مجاز به ویرایش پیام‌های خودتان هستید.' });
+            return;
+          }
+          const isLocked = await Session.isChatLocked(msg.session_id);
+          if (isLocked) {
+            if (typeof ack === 'function') ack({ success: false, message: 'خط ارتباطی با مرکز فرماندهی موقتاً مسدود شده است.', code: 'CHAT_LOCKED' });
+            return;
+          }
+        } else if (user.role !== 'admin') {
+          if (typeof ack === 'function') ack({ success: false, message: 'دسترسی غیرمجاز.' });
           return;
         }
 
@@ -388,13 +399,15 @@ function setupSocketIO(io) {
         await Message.updateContent(messageId, safeContent);
 
         const roomName = `session_${msg.session_id}`;
-        io.to(roomName).emit('message_edited', {
-          messageId,
-          sessionId: msg.session_id,
+        const payload = {
+          messageId: Number(messageId),
+          sessionId: Number(msg.session_id),
           content: safeContent,
-        });
+        };
+        io.to(roomName).emit('message_edited', payload);
+        io.to('admins').emit('message_edited', payload);
 
-        if (typeof ack === 'function') ack({ success: true, messageId, content: safeContent });
+        if (typeof ack === 'function') ack({ success: true, messageId: Number(messageId), content: safeContent });
       } catch (err) {
         console.error('Error in edit_message socket handler:', err);
         if (typeof ack === 'function') ack({ success: false });
@@ -402,30 +415,43 @@ function setupSocketIO(io) {
     });
 
     /**
-     * رویداد delete_message: حذف پیام توسط ادمین
+     * رویداد delete_message: حذف پیام توسط ادمین یا خود دانش‌آموز (فقط پیام‌های خودش)
      */
     socket.on('delete_message', async (data, ack = () => {}) => {
-      if (user.role !== 'admin') {
-        if (typeof ack === 'function') ack({ success: false, message: 'دسترسی غیرمجاز.' });
-        return;
-      }
       try {
-        const { messageId } = data;
+        const { messageId } = data || {};
         const msg = await Message.findById(messageId);
         if (!msg) {
           if (typeof ack === 'function') ack({ success: false, message: 'پیام پیدا نشد.' });
           return;
         }
 
+        if (user.role === 'user') {
+          if (Number(msg.session_id) !== Number(user.sessionId) || msg.sender_type !== 'user') {
+            if (typeof ack === 'function') ack({ success: false, message: 'شما فقط مجاز به حذف پیام‌های خودتان هستید.' });
+            return;
+          }
+          const isLocked = await Session.isChatLocked(msg.session_id);
+          if (isLocked) {
+            if (typeof ack === 'function') ack({ success: false, message: 'خط ارتباطی با مرکز فرماندهی موقتاً مسدود شده است.', code: 'CHAT_LOCKED' });
+            return;
+          }
+        } else if (user.role !== 'admin') {
+          if (typeof ack === 'function') ack({ success: false, message: 'دسترسی غیرمجاز.' });
+          return;
+        }
+
         await Message.delete(messageId);
 
         const roomName = `session_${msg.session_id}`;
-        io.to(roomName).emit('message_deleted', {
-          messageId,
-          sessionId: msg.session_id,
-        });
+        const payload = {
+          messageId: Number(messageId),
+          sessionId: Number(msg.session_id),
+        };
+        io.to(roomName).emit('message_deleted', payload);
+        io.to('admins').emit('message_deleted', payload);
 
-        if (typeof ack === 'function') ack({ success: true, messageId });
+        if (typeof ack === 'function') ack({ success: true, messageId: Number(messageId) });
       } catch (err) {
         console.error('Error in delete_message socket handler:', err);
         if (typeof ack === 'function') ack({ success: false });
