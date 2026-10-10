@@ -1,7 +1,9 @@
 /**
  * public/assets/js/vault-3d.js
- * منطق کامل گاوصندوق سه‌بعدی اسلات ۴ و سیستم دعوت‌نامه «موزه اسرارآمیز»
+ * منطق کامل گاوصندوق سه‌بعدی تمام‌قد اسلات ۴ و سیستم دعوت‌نامه «موزه اسرارآمیز»
  * پیاده‌سازی‌شده طبق مرجع VAULT_SLOT4_MASTER.md
+ * - ۱۰۰٪ فضای اسلات چهارم فقط خود گاوصندوق سه‌بعدی است (بدون هیچ متن لو دهنده)
+ * - با هر بار رفرش شدن صفحه، گاوصندوق مجدداً بسته و قفل می‌شود (عدم ذخیره وضعیت باز در localStorage)
  */
 
 (function () {
@@ -9,17 +11,15 @@
 
   /**
    * جدول تنظیمات رمزها (فلگ‌های هر جلسه و فلگ نهایی دعوت‌نامه «موزه اسرارآمیز»)
-   * هر رمز (code) می‌تواند یک عکس یا چند عکس مجزا در آرایه images داشته باشد.
-   * برای جایگزینی پوستر اصلی «موزه اسرارآمیز»، کافی است فایل پوستر خود را در
-   * پوشه public/assets/vault/ قرار داده و مسیر آن را در آرایه images بگذارید.
+   * هر رمز (codes) می‌تواند یک عکس یا چند عکس مجزا در آرایه images داشته باشد.
    */
   const DEFAULT_VAULT_FLAGS = [
     {
       id: 'mysterious-museum-finale',
       codes: ['1405', '6062', 'museum', 'موزه', 'موزه اسرارآمیز', 'موزه اسرار امیز'],
-      badge: 'دعوت‌نامه رسمی // پایان پرونده',
+      badge: 'دعوت‌نامه رسمی // موزه اسرارآمیز',
       title: '🏛️ دعوت‌نامه ویژه نمایش حضوری «موزه اسرارآمیز»',
-      subtitle: 'تبریک دستیاران کارآگاه! شما تمام معماهای پرونده را حل کردید و به برنامه حضوری «موزه اسرارآمیز» دعوت شدید.',
+      subtitle: 'تبریک! قفل گاوصندوق باز شد و شما به برنامه حضوری «موزه اسرارآمیز» دعوت شدید.',
       images: [
         '/assets/vault/mysterious-museum-poster.svg',
         '/assets/vault/mysterious-museum-vip-pass.svg'
@@ -28,9 +28,9 @@
     {
       id: 'session-flag-1',
       codes: ['1001', 'flag1', 'فلگ ۱', 'فلگ 1'],
-      badge: 'سرنخ ویژه // مرحله اول',
-      title: '🔍 مدرک طبقه‌بندی‌شده گاوصندوق (جلسه اول)',
-      subtitle: 'فلگ مرحله اول تایید شد! این تصویر محرمانه از داخل گاوصندوق برای گروه شما آزاد گردید.',
+      badge: 'فایل محرمانه // مرحله اول',
+      title: '🔍 سند آزادشده از گاوصندوق (مرحله اول)',
+      subtitle: 'قفل مرحله اول بازگشایی شد.',
       images: [
         '/assets/vault/mysterious-museum-poster.svg'
       ]
@@ -38,9 +38,9 @@
     {
       id: 'session-flag-2',
       codes: ['2002', 'flag2', 'فلگ ۲', 'فلگ 2'],
-      badge: 'اسناد محرمانه // مرحله دوم',
-      title: '📂 گالری اسناد ویژه گاوصندوق (جلسه دوم)',
-      subtitle: 'فلگ مرحله دوم تایید شد! از دکمه‌های چپ و راست برای مشاهده تمام تصاویر داخل گاوصندوق استفاده کنید.',
+      badge: 'گالری محرمانه // مرحله دوم',
+      title: '📂 اسناد آزادشده از گاوصندوق (مرحله دوم)',
+      subtitle: 'قفل مرحله دوم بازگشایی شد. از دکمه‌های چپ و راست برای ورق زدن تصاویر استفاده کنید.',
       images: [
         '/assets/vault/mysterious-museum-poster.svg',
         '/assets/vault/mysterious-museum-vip-pass.svg'
@@ -66,15 +66,6 @@
       out = out.replace(new RegExp(arabicDigits[i], 'g'), String(i));
     }
     return out.replace(/\s+/g, ' ').toLowerCase();
-  }
-
-  function getSessionStorageKey() {
-    try {
-      const sd = JSON.parse(localStorage.getItem('session_data') || '{}');
-      return `raze_vault_unlocked_${sd.id || sd.code || 'guest'}`;
-    } catch (_) {
-      return 'raze_vault_unlocked_guest';
-    }
   }
 
   function getAllConfiguredFlags() {
@@ -173,7 +164,6 @@
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
-      // فواصل زمانی تیک‌های مکانیکی متناسب با منحنی چرخش آرام دستگیره
       const clickTimes = [
         0.08, 0.24, 0.42, 0.62, 0.84, 1.08, 1.34, 1.62,
         1.92, 2.24, 2.58, 2.92, 3.25
@@ -193,7 +183,7 @@
         osc.stop(ctx.currentTime + t + 0.07);
       });
 
-      // صدای آزاد شدن زبانه‌های فولادی در ثانیه ۳.۳
+      // صدای عقب رفتن پیستون‌های فولادی قفل
       const boltOsc = ctx.createOscillator();
       const boltGain = ctx.createGain();
       boltOsc.type = 'triangle';
@@ -238,7 +228,6 @@
   function openVaultInteraction() {
     if (isUnlockAnimationRunning) return;
 
-    // اگر قبلاً در این جلسه رمزی باز شده است، مستقیم گالری را نشان بده (با دکمه امکان وارد کردن رمز جدید)
     if (activeRewardFlag) {
       openVaultRewardModal(activeRewardFlag, 0);
       return;
@@ -259,13 +248,13 @@
     const banner = document.getElementById('vault-feedback-banner');
     if (!dialog) return;
 
-    dialog.classList.remove('is-error-shake');
     if (banner) {
       banner.hidden = true;
       banner.textContent = '';
       banner.className = 'vault-feedback-banner';
     }
     if (input) {
+      input.classList.remove('is-error');
       input.value = '';
     }
 
@@ -287,10 +276,11 @@
     const input = document.getElementById('vault-code-input');
     const banner = document.getElementById('vault-feedback-banner');
     if (!input) return;
+    input.classList.remove('is-error');
     if (banner && !banner.hidden) {
       banner.hidden = true;
     }
-    if (input.value.length < 24) {
+    if (input.value.length < 32) {
       input.value += String(char);
       input.focus();
     }
@@ -301,6 +291,7 @@
     const input = document.getElementById('vault-code-input');
     const banner = document.getElementById('vault-feedback-banner');
     if (input) {
+      input.classList.remove('is-error');
       input.value = '';
       input.focus();
     }
@@ -311,119 +302,76 @@
 
   function triggerVaultWrongPasswordError(customMsg) {
     playVaultErrorSound();
-    const dialog = document.getElementById('vault-password-dialog');
-    const card = document.getElementById('quad-vault-card');
     const banner = document.getElementById('vault-feedback-banner');
     const input = document.getElementById('vault-code-input');
 
-    if (dialog) {
-      dialog.classList.remove('is-error-shake');
-      void dialog.offsetWidth;
-      dialog.classList.add('is-error-shake');
-    }
-
-    if (card) {
-      card.classList.add('is-error-flash');
-      setTimeout(() => card.classList.remove('is-error-flash'), 900);
+    if (input) {
+      input.classList.remove('is-error');
+      void input.offsetWidth;
+      input.classList.add('is-error');
+      input.select();
     }
 
     if (banner) {
-      banner.className = 'vault-feedback-banner is-error';
+      banner.className = 'vault-feedback-banner error';
       banner.textContent = customMsg || '⛔ رمز واردشده اشتباه است! قفل گاوصندوق باز نشد.';
       banner.hidden = false;
-    }
-
-    if (input) {
-      input.select();
     }
   }
 
   /**
    * اجرای دقیق توالی سینمایی پس از وارد کردن رمز صحیح طبق VAULT_SLOT4_MASTER.md:
    * ۱. بسته شدن فوری پاپ‌آپ رمز
-   * ۲. چرخش آرام و واضح دستگیره گاوصندوق (۳.۵ ثانیه)
-   * ۳. باز شدن سه‌بعدی درب گاوصندوق (۱.۴ ثانیه)
+   * ۲. چرخش آرام و با سرعت پایین فلکه ۶ پره گاوصندوق + چرخش معکوس چرخ‌دنده‌ها و جمع شدن پیستون‌ها (۳.۵ ثانیه)
+   * ۳. باز شدن سه‌بعدی کل درب گاوصندوق در اسلات ۴ (۱.۴۵ ثانیه)
    * ۴. باز شدن پاپ‌آپ دعوت‌نامه «موزه اسرارآمیز» (تک‌عکس یا چندعکس)
    */
   function runVaultUnlockChoreography(matchedFlag) {
     isUnlockAnimationRunning = true;
     activeRewardFlag = matchedFlag;
 
-    try {
-      localStorage.setItem(getSessionStorageKey(), JSON.stringify({
-        flagId: matchedFlag.id,
-        unlockedAt: Date.now()
-      }));
-    } catch (_) {}
-
-    // ۱. بستن فوری پاپ‌آپ رمز تا چشم کاربر به گاوصندوق در اسلات ۴ دوخته شود
+    // ۱. بستن فوری پاپ‌آپ رمز تا چشم کاربر به گاوصندوق سه‌بعدی در اسلات ۴ دوخته شود
     closeVaultPasswordModal();
 
     const card = document.getElementById('quad-vault-card');
-    const statusPill = document.getElementById('vault-status-pill');
-    const hookHeading = document.getElementById('vault-hook-heading');
-    const hookSub = document.getElementById('vault-hook-sub');
-    const ctaChip = document.getElementById('vault-cta-chip');
     const qMark = document.getElementById('vault-question-mark');
 
     if (card) {
-      // ریست وضعیت قبلی در صورتی که کاربر رمز مرحله جدیدی را وارد کرده باشد
-      card.classList.remove('is-unlocked', 'is-door-open', 'is-bolts-retracted', 'is-turning-handle');
+      card.classList.remove('is-unlocked', 'is-unlocking-wheel');
       void card.offsetWidth;
-
-      card.classList.add('is-unlocking-spotlight');
       card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
+    if (qMark) {
+      qMark.textContent = '؟';
+    }
 
-    if (statusPill) statusPill.textContent = 'GEAR // TURNING';
-    if (hookHeading) hookHeading.textContent = 'در حال چرخش قفل...';
-    if (hookSub) hookSub.textContent = 'چرخ‌دنده‌های گاوصندوق در حال آزادسازی هستند';
-    if (ctaChip) ctaChip.textContent = '⏳ صبر کنید...';
-
-    // ۲. شروع چرخش آرام دستگیره با سرعت پایین (۳.۵ ثانیه)
+    // ۲. شروع چرخش آرام فلکه ۶ پره با سرعت پایین (۳.۵ ثانیه) + چرخش معکوس چرخ‌دنده برنجی + جمع شدن ۴ پیستون قفل
     setTimeout(() => {
-      if (card) card.classList.add('is-turning-handle');
+      if (card) {
+        card.classList.add('is-unlocking-wheel');
+      }
       playVaultSlowHandleTurnSound();
-    }, 120);
+    }, 100);
 
-    // عقب رفتن زبانه‌های فولادی در اواخر چرخش دستگیره
+    // ۳. باز شدن سه‌بعدی کل درب گاوصندوق پس از تکمیل چرخش آرام دستگیره
     setTimeout(() => {
-      if (card) card.classList.add('is-bolts-retracted');
-    }, 3150);
-
-    // ۳. باز شدن سه‌بعدی درب گاوصندوق پس از تکمیل چرخش آرام دستگیره
-    setTimeout(() => {
-      if (card) card.classList.add('is-door-open');
-      if (statusPill) statusPill.textContent = 'OPENING // 3D';
-      if (hookHeading) hookHeading.textContent = 'گاوصندوق باز شد!';
+      if (card) {
+        card.classList.add('is-unlocked');
+      }
+      if (qMark) {
+        qMark.textContent = '✓';
+      }
       playVaultDoorOpenAndRevealSound();
     }, 3650);
 
     // ۴. نمایش پوستر / گالری چندعکسی دعوت‌نامه «موزه اسرارآمیز»
     setTimeout(() => {
       isUnlockAnimationRunning = false;
-      applyUnlockedCardVisuals(matchedFlag);
+      if (card) {
+        card.classList.remove('is-unlocking-wheel');
+      }
       openVaultRewardModal(matchedFlag, 0);
     }, 5050);
-  }
-
-  function applyUnlockedCardVisuals(flagItem) {
-    const card = document.getElementById('quad-vault-card');
-    const statusPill = document.getElementById('vault-status-pill');
-    const hookHeading = document.getElementById('vault-hook-heading');
-    const hookSub = document.getElementById('vault-hook-sub');
-    const ctaChip = document.getElementById('vault-cta-chip');
-    const qMark = document.getElementById('vault-question-mark');
-
-    if (card) {
-      card.classList.remove('is-unlocking-spotlight');
-      card.classList.add('is-turning-handle', 'is-bolts-retracted', 'is-door-open', 'is-unlocked');
-    }
-    if (statusPill) statusPill.textContent = 'UNLOCKED // باز';
-    if (qMark) qMark.textContent = '✓';
-    if (hookHeading) hookHeading.textContent = 'موزه اسرارآمیز';
-    if (hookSub) hookSub.textContent = 'دعوت‌نامه ویژه شما داخل گاوصندوق آماده است';
-    if (ctaChip) ctaChip.textContent = '🏛️ مشاهده دعوت‌نامه';
   }
 
   function submitVaultPassword(event) {
@@ -434,7 +382,7 @@
     const rawCode = input ? input.value.trim() : '';
 
     if (!rawCode) {
-      triggerVaultWrongPasswordError('⚠️ لطفاً ابتدا رمز گاوصندوق را وارد کنید.');
+      triggerVaultWrongPasswordError('⚠️ لطفاً ابتدا رمز عبور را وارد کنید.');
       return;
     }
 
@@ -465,7 +413,7 @@
     const titleEl = document.getElementById('vault-reward-title');
     const subtitleEl = document.getElementById('vault-reward-subtitle');
 
-    if (eyebrowEl) eyebrowEl.textContent = flagItem.badge || 'دعوت‌نامه رسمی // گاوصندوق اسرار';
+    if (eyebrowEl) eyebrowEl.textContent = flagItem.badge || 'موزه اسرارآمیز';
     if (titleEl) titleEl.textContent = flagItem.title || '🏛️ دعوت‌نامه نمایش حضوری «موزه اسرارآمیز»';
     if (subtitleEl) subtitleEl.textContent = flagItem.subtitle || '';
 
@@ -511,7 +459,7 @@
       }
       if (thumbsRow) {
         thumbsRow.innerHTML = images.map((imgUrl, idx) => `
-          <button type="button" class="vault-thumb-btn${idx === activeSlideIndex ? ' is-active' : ''}" onclick="selectVaultGallerySlide(${idx})" aria-label="تصویر ${idx + 1}">
+          <button type="button" class="vault-thumb-btn${idx === activeSlideIndex ? ' active' : ''}" onclick="selectVaultGallerySlide(${idx})" aria-label="تصویر ${idx + 1}">
             <img src="${imgUrl}" alt="">
           </button>
         `).join('');
@@ -541,21 +489,37 @@
     }
   }
 
-  function restoreSavedVaultState() {
+  /**
+   * قانون قطعی VAULT_SLOT4_MASTER.md:
+   * با هر بار رفرش شدن صفحه، گاوصندوق حتماً باید بسته و قفل شود (پاک‌سازی کامل کلیدهای قدیمی localStorage).
+   */
+  function resetVaultToLockedOnRefresh() {
+    activeRewardFlag = null;
+    activeSlideIndex = 0;
+    isUnlockAnimationRunning = false;
+
     try {
-      const raw = localStorage.getItem(getSessionStorageKey());
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      if (!parsed || !parsed.flagId) return;
-      const found = getAllConfiguredFlags().find(f => f.id === parsed.flagId);
-      if (found) {
-        activeRewardFlag = found;
-        applyUnlockedCardVisuals(found);
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('raze_vault_unlocked')) {
+          keysToRemove.push(k);
+        }
       }
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
     } catch (_) {}
+
+    const card = document.getElementById('quad-vault-card');
+    const qMark = document.getElementById('vault-question-mark');
+    if (card) {
+      card.classList.remove('is-unlocked', 'is-unlocking-wheel');
+    }
+    if (qMark) {
+      qMark.textContent = '؟';
+    }
   }
 
-  document.addEventListener('DOMContentLoaded', restoreSavedVaultState);
+  document.addEventListener('DOMContentLoaded', resetVaultToLockedOnRefresh);
 
   // اتصال توابع به window برای فراخوانی از HTML
   window.openVaultInteraction = openVaultInteraction;
@@ -567,5 +531,6 @@
   window.changeVaultGallerySlide = changeVaultGallerySlide;
   window.selectVaultGallerySlide = selectVaultGallerySlide;
   window.closeVaultRewardModal = closeVaultRewardModal;
+  window.resetVaultToLockedOnRefresh = resetVaultToLockedOnRefresh;
   window.VAULT_FLAGS_CONFIG = DEFAULT_VAULT_FLAGS;
 })();

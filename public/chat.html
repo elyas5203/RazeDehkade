@@ -6,17 +6,17 @@
   <title>اتاق تحقیقات | راز دهکده</title>
   <link rel="preload" href="/assets/scene/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/investigation.css">
-  <link rel="stylesheet" href="/assets/css/terminal.css?v=3.9">
-  <link rel="stylesheet" href="/assets/css/vault-3d.css?v=3.9">
+  <link rel="stylesheet" href="/assets/css/terminal.css?v=4.0">
+  <link rel="stylesheet" href="/assets/css/vault-3d.css?v=4.0">
   <link rel="stylesheet" href="/assets/css/breach.css">
   <link rel="stylesheet" href="/assets/css/voice-player.css">
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="/assets/js/hack-sequence.js" defer></script>
   <script src="/assets/js/voice-recorder.js" defer></script>
-  <script src="/assets/js/user-chat.js?v=3.9" defer></script>
-  <script src="/assets/js/terminal-stream.js?v=3.9" defer></script>
-  <script src="/assets/js/terminal.js?v=3.9" defer></script>
-  <script src="/assets/js/vault-3d.js?v=3.9" defer></script>
+  <script src="/assets/js/user-chat.js?v=4.0" defer></script>
+  <script src="/assets/js/terminal-stream.js?v=4.0" defer></script>
+  <script src="/assets/js/terminal.js?v=4.0" defer></script>
+  <script src="/assets/js/vault-3d.js?v=4.0" defer></script>
 </head>
 <body class="terminal-page">
   <!-- فضای اصلی کار تمام‌صفحه (بدون هدر بالا و بدون فوتر پایین جهت حداکثر فضا): چت در سمت راست و ستون چپ دوگانه -->
@@ -193,58 +193,154 @@
           </footer>
         </section>
 
-        <!-- قسمت ۴: گاوصندوق سه‌بعدی اسرار و دعوت‌نامه «موزه اسرارآمیز» (مطابق VAULT_SLOT4_MASTER.md) -->
-        <section class="quad-card quad-vault-card" id="quad-vault-card" aria-label="گاوصندوق اسرار">
-          <header class="vault-card-topbar">
-            <span class="vault-card-title">
-              <i class="vault-led-dot" aria-hidden="true"></i>
-              <span>گاوصندوق اسرار</span>
-            </span>
-            <span class="vault-status-pill" id="vault-status-pill">LOCKED // 04</span>
-          </header>
-
-          <button type="button" class="vault-3d-trigger-btn" id="vault-3d-trigger-btn" onclick="openVaultInteraction()" aria-label="باز کردن گاوصندوق اسرار">
-            <!-- شاسی و درب سه‌بعدی گاوصندوق -->
+        <!-- قسمت ۴: گاوصندوق سه‌بعدی تمام‌قد (۱۰۰٪ فضای اسلات چهارم فقط خود گاوصندوق بدون هیچ متن اضافی — مطابق VAULT_SLOT4_MASTER.md) -->
+        <section class="quad-card quad-vault-card" id="quad-vault-card" aria-label="گاوصندوق">
+          <button type="button" class="vault-3d-trigger-btn" id="vault-3d-trigger-btn" onclick="openVaultInteraction()" aria-label="گاوصندوق">
             <div class="vault-3d-chassis" aria-hidden="true">
-              <span class="vault-corner-rivet tl"></span>
-              <span class="vault-corner-rivet tr"></span>
-              <span class="vault-corner-rivet bl"></span>
-              <span class="vault-corner-rivet br"></span>
 
-              <!-- محفظه داخلی درخشان که با باز شدن درب سه‌بعدی نمایان می‌شود -->
-              <div class="vault-interior-chamber">
+              <!-- محفظه داخلی گاوصندوق (زمانی که درب سه‌بعدی باز می‌شود نمایان می‌گردد) -->
+              <div class="vault-interior-chamber" id="vault-interior-chamber">
+                <div class="vault-interior-grid"></div>
                 <div class="vault-interior-rays"></div>
-                <span class="vault-interior-treasure">🏛️</span>
+                <div class="vault-interior-shelf"></div>
+                <div class="vault-interior-envelope">
+                  <span class="vault-envelope-seal">؟</span>
+                </div>
               </div>
 
-              <!-- درب سنگین سه‌بعدی به همراه لولا، زبانه‌ها و دستگیره چرخشی -->
+              <!-- چهارچوب زرهی محیطی و پرچ‌های فولادی گوشه‌ها -->
+              <div class="vault-outer-bezel">
+                <span class="vault-corner-gusset tl"><i></i></span>
+                <span class="vault-corner-gusset tr"><i></i></span>
+                <span class="vault-corner-gusset bl"><i></i></span>
+                <span class="vault-corner-gusset br"><i></i></span>
+                <span class="vault-frame-bolt top-mid"></span>
+                <span class="vault-frame-bolt bottom-mid"></span>
+                <span class="vault-frame-bolt left-mid"></span>
+                <span class="vault-frame-bolt right-mid"></span>
+              </div>
+
+              <!-- درب سه‌بعدی تمام‌قد گاوصندوق که کل اسلات ۴ را می‌پوشاند -->
               <div class="vault-3d-door" id="vault-3d-door">
-                <span class="vault-door-hinge top"></span>
-                <span class="vault-door-hinge bottom"></span>
-                <div class="vault-locking-bolts">
+                <!-- ضخامت لبه درب هنگام باز شدن سه‌بعدی -->
+                <span class="vault-door-edge-thickness"></span>
+
+                <!-- ورق‌های زرهی، خطوط برش صنعتی و شیدر فلزی SVG روی کل درب -->
+                <svg class="vault-door-armor-svg" viewBox="0 0 400 260" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="vaultArmorPlateGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#2c3545" />
+                      <stop offset="28%" stop-color="#181e29" />
+                      <stop offset="55%" stop-color="#0f141d" />
+                      <stop offset="82%" stop-color="#1d2432" />
+                      <stop offset="100%" stop-color="#0a0e15" />
+                    </linearGradient>
+                    <linearGradient id="vaultGoldSeamGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stop-color="rgba(245, 158, 11, 0.12)" />
+                      <stop offset="50%" stop-color="rgba(245, 158, 11, 0.55)" />
+                      <stop offset="100%" stop-color="rgba(245, 158, 11, 0.12)" />
+                    </linearGradient>
+                  </defs>
+                  <!-- صفحه زرهی هشت‌ضلعی فرورفته -->
+                  <polygon points="28,12 372,12 388,28 388,232 372,248 28,248 12,232 12,28"
+                           fill="url(#vaultArmorPlateGrad)"
+                           stroke="rgba(148, 163, 184, 0.22)"
+                           stroke-width="2" />
+                  <!-- کادر زرهی داخلی دوم -->
+                  <polygon points="48,26 352,26 368,42 368,218 352,234 48,234 32,218 32,42"
+                           fill="none"
+                           stroke="url(#vaultGoldSeamGrad)"
+                           stroke-width="1.4"
+                           stroke-dasharray="14 6" />
+                  <!-- خطوط شاسی هیدرولیک چهار طرف به سمت مرکز -->
+                  <line x1="36" y1="130" x2="122" y2="130" stroke="rgba(15, 23, 42, 0.9)" stroke-width="18" stroke-linecap="round" />
+                  <line x1="278" y1="130" x2="364" y2="130" stroke="rgba(15, 23, 42, 0.9)" stroke-width="18" stroke-linecap="round" />
+                  <line x1="200" y1="22" x2="200" y2="62" stroke="rgba(15, 23, 42, 0.9)" stroke-width="16" stroke-linecap="round" />
+                  <line x1="200" y1="198" x2="200" y2="238" stroke="rgba(15, 23, 42, 0.9)" stroke-width="16" stroke-linecap="round" />
+                  <!-- پیچ‌های آلن روی صفحه زرهی -->
+                  <circle cx="58" cy="48" r="4.5" fill="#0b0f17" stroke="rgba(203,213,225,0.35)" stroke-width="1.5" />
+                  <circle cx="342" cy="48" r="4.5" fill="#0b0f17" stroke="rgba(203,213,225,0.35)" stroke-width="1.5" />
+                  <circle cx="58" cy="212" r="4.5" fill="#0b0f17" stroke="rgba(203,213,225,0.35)" stroke-width="1.5" />
+                  <circle cx="342" cy="212" r="4.5" fill="#0b0f17" stroke="rgba(203,213,225,0.35)" stroke-width="1.5" />
+                  <circle cx="96" cy="82" r="3.5" fill="#0b0f17" stroke="rgba(245,158,11,0.35)" stroke-width="1.2" />
+                  <circle cx="304" cy="82" r="3.5" fill="#0b0f17" stroke="rgba(245,158,11,0.35)" stroke-width="1.2" />
+                  <circle cx="96" cy="178" r="3.5" fill="#0b0f17" stroke="rgba(245,158,11,0.35)" stroke-width="1.2" />
+                  <circle cx="304" cy="178" r="3.5" fill="#0b0f17" stroke="rgba(245,158,11,0.35)" stroke-width="1.2" />
+                </svg>
+
+                <!-- لولاهای عظیم صنعتی چندمفصلی در سمت چپ درب -->
+                <span class="vault-door-hinge top">
                   <i></i><i></i><i></i>
+                </span>
+                <span class="vault-door-hinge bottom">
+                  <i></i><i></i><i></i>
+                </span>
+
+                <!-- ۴ پیستون و زبانه قفل‌کننده فولادی کروم که هنگام چرخش فلکه به داخل جمع می‌شوند -->
+                <div class="vault-locking-bolts">
+                  <span class="vault-piston left"><i></i></span>
+                  <span class="vault-piston right"><i></i></span>
+                  <span class="vault-piston top"><i></i></span>
+                  <span class="vault-piston bottom"><i></i></span>
                 </div>
+
+                <!-- مکانیزم مرکزی: حلقه مدرج ۳۶۰ درجه + چرخ‌دنده برنجی معکوس + فلکه سه‌بعدی ۶ پره بزرگ -->
                 <div class="vault-dial-plate">
+                  <!-- حلقه مدرج ثابت و نشانگرهای درجه قفل -->
+                  <svg class="vault-dial-bezel-svg" viewBox="0 0 200 200">
+                    <defs>
+                      <radialGradient id="vaultWellDepth" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#04070d" />
+                        <stop offset="72%" stop-color="#0a0f18" />
+                        <stop offset="92%" stop-color="#1e293b" />
+                        <stop offset="100%" stop-color="#334155" />
+                      </radialGradient>
+                      <linearGradient id="vaultBrassRim" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#fde68a" />
+                        <stop offset="30%" stop-color="#d97706" />
+                        <stop offset="55%" stop-color="#78350f" />
+                        <stop offset="80%" stop-color="#f59e0b" />
+                        <stop offset="100%" stop-color="#451a03" />
+                      </linearGradient>
+                    </defs>
+                    <!-- چاهک عمیق مرکزی زیر فلکه -->
+                    <circle cx="100" cy="100" r="95" fill="url(#vaultWellDepth)" stroke="url(#vaultBrassRim)" stroke-width="4" />
+                    <!-- حلقه نوری وضعیت قفل -->
+                    <circle class="vault-status-ring-svg" cx="100" cy="100" r="88" fill="none" stroke="rgba(245, 158, 11, 0.45)" stroke-width="1.5" stroke-dasharray="3 6" />
+                    <circle cx="100" cy="100" r="81" fill="none" stroke="rgba(226, 232, 240, 0.35)" stroke-width="5" stroke-dasharray="1.5 3.78" />
+                    <circle cx="100" cy="100" r="81" fill="none" stroke="rgba(251, 191, 36, 0.85)" stroke-width="8" stroke-dasharray="2.2 40.2" />
+                    <circle cx="100" cy="100" r="72" fill="none" stroke="rgba(148, 163, 184, 0.2)" stroke-width="1.2" />
+                  </svg>
+
+                  <!-- چرخ‌دنده برنجی نمایان در عمق که هنگام چرخش دستگیره، در جهت معکوس می‌چرخد -->
+                  <div class="vault-inner-gear" id="vault-inner-gear">
+                    <svg viewBox="0 0 160 160">
+                      <defs>
+                        <linearGradient id="vaultGearBrass" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stop-color="#fbbf24" />
+                          <stop offset="50%" stop-color="#92400e" />
+                          <stop offset="100%" stop-color="#d97706" />
+                        </linearGradient>
+                      </defs>
+                      <circle cx="80" cy="80" r="56" fill="none" stroke="url(#vaultGearBrass)" stroke-width="12" stroke-dasharray="7 6.74" />
+                      <circle cx="80" cy="80" r="48" fill="rgba(10, 14, 23, 0.85)" stroke="url(#vaultGearBrass)" stroke-width="3" />
+                      <circle cx="80" cy="80" r="36" fill="none" stroke="rgba(251, 191, 36, 0.35)" stroke-width="5" stroke-dasharray="10 8.8" />
+                    </svg>
+                  </div>
+
+                  <!-- دستگیره / فلکه چرخشی سه‌بعدی ۶ پره بزرگ گاوصندوق (#vault-3d-handle) -->
                   <div class="vault-handle-wheel" id="vault-3d-handle">
                     <span class="vault-wheel-rim"></span>
-                    <span class="vault-wheel-spoke s1"></span>
-                    <span class="vault-wheel-spoke s2"></span>
-                    <span class="vault-wheel-spoke s3"></span>
-                    <span class="vault-wheel-hub"></span>
+                    <span class="vault-wheel-spoke s1"><i></i></span>
+                    <span class="vault-wheel-spoke s2"><i></i></span>
+                    <span class="vault-wheel-spoke s3"><i></i></span>
+                    <!-- توپی مرکزی سه‌بعدی دستگیره با علامت سؤال هولوگرافیک «؟» -->
+                    <span class="vault-wheel-hub">
+                      <span class="vault-question-mark" id="vault-question-mark">؟</span>
+                    </span>
                   </div>
                 </div>
               </div>
-            </div>
-
-            <!-- اطلاعات و علامت سؤال هوک کنجکاوی -->
-            <div class="vault-hook-info">
-              <span class="vault-mystery-badge">
-                <span class="vault-question-mark" id="vault-question-mark">؟</span>
-                <span>راز سر به مهر</span>
-              </span>
-              <h3 class="vault-hook-heading" id="vault-hook-heading">داخل گاوصندوق چیست؟</h3>
-              <span class="vault-hook-sub" id="vault-hook-sub">با دریافت رمز از کارآگاه قفل را بگشایید</span>
-              <span class="vault-cta-chip" id="vault-cta-chip">🔑 وارد کردن رمز</span>
             </div>
           </button>
         </section>
@@ -285,30 +381,22 @@
     </div>
   </dialog>
 
-  <!-- پاپ‌آپ ورود رمز / فلگ گاوصندوق سه‌بعدی اسلات ۴ -->
+  <!-- پاپ‌آپ ورود رمز گاوصندوق (بدون هیچ‌گونه متن لو دهنده یا اشاره به کارآگاه/جلسه آخر) -->
   <dialog id="vault-password-dialog" class="themed-modal-dialog vault-password-dialog">
     <div class="themed-modal-header">
       <div class="themed-modal-title-group">
-        <span class="eyebrow">قفل امنیتی سطح امگا // SLOT 04</span>
-        <h3>🔐 رمزگشایی گاوصندوق اسرار</h3>
+        <span class="eyebrow">SECURITY LOCK</span>
+        <h3>🔐 قفل امنیتی گاوصندوق</h3>
       </div>
       <button class="dialog-close" type="button" onclick="closeVaultPasswordModal()" aria-label="بستن پنجره رمز">×</button>
     </div>
     <form id="vault-password-form" onsubmit="submitVaultPassword(event)" class="themed-modal-body">
-      <div class="vault-modal-hero">
-        <div class="vault-modal-hero-icon" aria-hidden="true">🔐</div>
-        <div class="vault-modal-hero-text">
-          <h4>رمز گاوصندوق را وارد کنید</h4>
-          <p>رمزی که کارآگاه در پایان پرونده یا جلسه برایتان ارسال کرده را وارد نمایید تا قفل مکانیکی گاوصندوق باز شود.</p>
-        </div>
-      </div>
-
       <div class="vault-code-input-wrap">
         <input
           type="text"
           id="vault-code-input"
           autocomplete="off"
-          placeholder="رمز یا فلگ گاوصندوق…"
+          placeholder="رمز عبور را وارد کنید…"
           maxlength="32"
           aria-label="رمز گاوصندوق"
         >
@@ -332,7 +420,7 @@
 
       <div class="themed-modal-footer">
         <button type="button" class="themed-btn secondary" onclick="closeVaultPasswordModal()">انصراف</button>
-        <button type="submit" class="themed-btn primary" id="vault-unlock-submit-btn">🔓 چرخاندن دستگیره و بازگشایی</button>
+        <button type="submit" class="themed-btn primary" id="vault-unlock-submit-btn">🔓 بازگشایی قفل</button>
       </div>
     </form>
   </dialog>

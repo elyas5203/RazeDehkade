@@ -1,649 +1,768 @@
-/**
- * public/assets/css/vault-3d.css
- * استایل‌های اختصاصی گاوصندوق سه‌بعدی اسلات ۴ و سیستم دعوت‌نامه «موزه اسرارآمیز»
- * طراحی‌شده بر اساس مرجع VAULT_SLOT4_MASTER.md و اسکیل ui-ux-3d-vault-design
- */
-
 /* ==========================================================================
-   ۱. کارت اسلات ۴: گاوصندوق سه‌بعدی اسرار (.quad-vault-card)
+   🔐 SLOT 04: FULL-BLEED 3D BANK VAULT & MYSTERY MUSEUM REWARD SYSTEM
+   Reference Doctrine: VAULT_SLOT4_MASTER.md
+   Skill: .agents/skills/ui-ux-3d-vault-design/SKILL.md
+   100% of Slot 4 (.quad-vault-card) IS the 3D Safe/Vault itself!
    ========================================================================== */
+
 .quad-vault-card {
-  position: relative;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  background:
-    radial-gradient(circle at 50% 42%, rgba(245, 158, 11, 0.16) 0%, rgba(56, 189, 248, 0.08) 42%, rgba(6, 11, 19, 0.98) 85%),
-    linear-gradient(145deg, #0d1726 0%, #050a12 100%);
-  border: 1px solid rgba(245, 158, 11, 0.42);
-  border-radius: 8px;
+  position: relative !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 148px;
+  display: block !important;
   overflow: hidden;
+  border-radius: 14px !important;
+  background:
+    radial-gradient(circle at 50% 50%, #1a2230 0%, #0d121b 70%, #06090f 100%) !important;
+  border: 2px solid rgba(148, 163, 184, 0.28) !important;
   box-shadow:
-    0 8px 24px rgba(0, 0, 0, 0.65),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.35s ease;
-  user-select: none;
+    0 16px 36px rgba(0, 0, 0, 0.8),
+    inset 0 2px 3px rgba(255, 255, 255, 0.14),
+    inset 0 -4px 12px rgba(0, 0, 0, 0.9) !important;
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease,
+    transform 0.35s ease;
+  z-index: 2;
 }
 
 .quad-vault-card:hover {
-  border-color: rgba(245, 158, 11, 0.78);
+  border-color: rgba(245, 158, 11, 0.65) !important;
   box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.75),
-    0 0 22px rgba(245, 158, 11, 0.22),
-    inset 0 0 18px rgba(245, 158, 11, 0.06);
+    0 18px 42px rgba(0, 0, 0, 0.88),
+    0 0 26px rgba(245, 158, 11, 0.22),
+    inset 0 2px 4px rgba(255, 255, 255, 0.2) !important;
 }
 
-/* افکت برجسته‌سازی هنگام چرخش آرام دستگیره و باز شدن درب گاوصندوق */
-.quad-vault-card.is-unlocking-spotlight {
-  z-index: 35;
-  transform: scale(1.06) translateY(-3px);
-  border-color: #fbbf24;
+/* Spotlight state while the wheel is slowly rotating (3.5s) */
+.quad-vault-card.is-unlocking-wheel {
+  border-color: rgba(251, 191, 36, 0.95) !important;
   box-shadow:
-    0 0 0 2px rgba(251, 191, 36, 0.8),
-    0 14px 42px rgba(0, 0, 0, 0.9),
-    0 0 42px rgba(245, 158, 11, 0.65),
-    0 0 75px rgba(56, 189, 248, 0.4);
+    0 0 0 2px rgba(251, 191, 36, 0.4),
+    0 0 42px rgba(245, 158, 11, 0.45),
+    0 18px 45px rgba(0, 0, 0, 0.92) !important;
+  z-index: 15;
 }
 
 .quad-vault-card.is-unlocked {
-  border-color: rgba(16, 185, 129, 0.65);
-  background:
-    radial-gradient(circle at 50% 45%, rgba(16, 185, 129, 0.16) 0%, rgba(245, 158, 11, 0.12) 48%, rgba(6, 12, 20, 0.98) 88%);
+  border-color: rgba(16, 185, 129, 0.75) !important;
+  box-shadow:
+    0 0 34px rgba(16, 185, 129, 0.28),
+    0 18px 42px rgba(0, 0, 0, 0.9) !important;
 }
 
-/* هدر باریک بالای کارت گاوصندوق */
-.vault-card-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 3px 8px;
-  background: rgba(8, 14, 24, 0.92);
-  border-bottom: 1px solid rgba(245, 158, 11, 0.22);
-  font-size: 8.5px;
-  flex-shrink: 0;
-  z-index: 3;
-}
-
-.vault-card-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 800;
-  color: #fde68a;
-  letter-spacing: -0.1px;
-}
-
-.vault-led-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #f59e0b;
-  box-shadow: 0 0 6px #f59e0b;
-  animation: vault-led-pulse 1.8s infinite ease-in-out;
-}
-
-.quad-vault-card.is-unlocking-spotlight .vault-led-dot {
-  background: #38bdf8;
-  box-shadow: 0 0 8px #38bdf8;
-}
-
-.quad-vault-card.is-unlocked .vault-led-dot {
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981;
-}
-
-.quad-vault-card.is-error-flash .vault-led-dot {
-  background: #ef4444;
-  box-shadow: 0 0 10px #ef4444;
-}
-
-@keyframes vault-led-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.45; transform: scale(0.88); }
-}
-
-.vault-status-pill {
-  font-family: var(--font-code, monospace);
-  font-size: 7.5px;
-  font-weight: 800;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: rgba(245, 158, 11, 0.14);
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  color: #fbbf24;
-}
-
-.quad-vault-card.is-unlocked .vault-status-pill {
-  background: rgba(16, 185, 129, 0.16);
-  border-color: rgba(16, 185, 129, 0.45);
-  color: #34d399;
-}
-
-/* ==========================================================================
-   ۲. صحنه سه‌بعدی گاوصندوق (.vault-3d-trigger-btn & .vault-3d-chassis)
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   Full-Bleed Interactive Trigger & 3D Perspective Stage (100% of Slot 4)
+   -------------------------------------------------------------------------- */
 .vault-3d-trigger-btn {
-  flex: 1;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  border: 0;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: none;
   background: transparent;
-  padding: 4px 8px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  position: relative;
-  perspective: 850px;
-  font-family: inherit;
-  color: inherit;
+  display: block;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .vault-3d-trigger-btn:focus-visible {
-  outline: 2px solid #fbbf24;
-  outline-offset: -2px;
+  box-shadow: inset 0 0 0 2px #fbbf24;
 }
 
-/* شاسی و بدنه فلزی سه‌بعدی گاوصندوق */
 .vault-3d-chassis {
-  position: relative;
-  width: 96px;
-  height: 82px;
-  border-radius: 10px;
-  padding: 5px;
-  background:
-    linear-gradient(135deg, #475569 0%, #1e293b 38%, #0f172a 72%, #334155 100%);
-  border: 1.5px solid rgba(251, 191, 36, 0.55);
-  box-shadow:
-    0 8px 18px rgba(0, 0, 0, 0.8),
-    -3px 4px 0 #090f18,
-    inset 0 1px 2px rgba(255, 255, 255, 0.28),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.85);
-  transform-style: preserve-3d;
-  transform: rotateX(5deg) rotateY(-6deg);
-  transition: transform 0.35s ease, box-shadow 0.35s ease;
-  flex-shrink: 0;
-}
-
-.vault-3d-trigger-btn:hover .vault-3d-chassis {
-  transform: rotateX(2deg) rotateY(-2deg) scale(1.03);
-  box-shadow:
-    0 10px 22px rgba(0, 0, 0, 0.85),
-    0 0 18px rgba(245, 158, 11, 0.3),
-    inset 0 1px 2px rgba(255, 255, 255, 0.35);
-}
-
-/* پیچ‌های پرچ گوشه‌های شاسی */
-.vault-corner-rivet {
   position: absolute;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, #fde68a, #92400e);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.9);
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  perspective: 1100px;
+  transform-style: preserve-3d;
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, #242d3d 0%, #111621 48%, #090d14 100%);
+  box-shadow:
+    inset 0 0 0 4px #161d2a,
+    inset 0 0 0 6px rgba(245, 158, 11, 0.22),
+    inset 0 10px 26px rgba(0, 0, 0, 0.92);
+}
+
+/* --------------------------------------------------------------------------
+   Outer Armored Steel Bezel, Corner Gussets & Perimeter Bolts
+   -------------------------------------------------------------------------- */
+.vault-outer-bezel {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   z-index: 4;
 }
-.vault-corner-rivet.tl { top: 3px; left: 3px; }
-.vault-corner-rivet.tr { top: 3px; right: 3px; }
-.vault-corner-rivet.bl { bottom: 3px; left: 3px; }
-.vault-corner-rivet.br { bottom: 3px; right: 3px; }
 
-/* محفظه داخلی درخشان گاوصندوق (پشت درب که هنگام باز شدن درب دیده می‌شود) */
+.vault-corner-gusset {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #334155 0%, #1e293b 55%, #0f172a 100%);
+  border: 1px solid rgba(203, 213, 225, 0.28);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vault-corner-gusset.tl {
+  top: 0;
+  left: 0;
+  border-bottom-right-radius: 10px;
+}
+.vault-corner-gusset.tr {
+  top: 0;
+  right: 0;
+  border-bottom-left-radius: 10px;
+}
+.vault-corner-gusset.bl {
+  bottom: 0;
+  left: 0;
+  border-top-right-radius: 10px;
+}
+.vault-corner-gusset.br {
+  bottom: 0;
+  right: 0;
+  border-top-left-radius: 10px;
+}
+
+/* Hex Bolt inside each corner gusset */
+.vault-corner-gusset i,
+.vault-frame-bolt {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 30%, #f8fafc 0%, #94a3b8 45%, #334155 80%, #0f172a 100%);
+  border: 1px solid #090d14;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.9),
+    inset 0 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+.vault-frame-bolt {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+}
+.vault-frame-bolt.top-mid { top: 4px; left: calc(50% - 3.5px); }
+.vault-frame-bolt.bottom-mid { bottom: 4px; left: calc(50% - 3.5px); }
+.vault-frame-bolt.left-mid { left: 4px; top: calc(50% - 3.5px); }
+.vault-frame-bolt.right-mid { right: 4px; top: calc(50% - 3.5px); }
+
+/* --------------------------------------------------------------------------
+   Vault Interior Chamber (Revealed behind the door when it swings open)
+   -------------------------------------------------------------------------- */
 .vault-interior-chamber {
   position: absolute;
-  inset: 5px;
-  border-radius: 6px;
+  inset: 8px;
+  border-radius: 9px;
   background:
-    radial-gradient(circle at 50% 50%, rgba(254, 240, 138, 0.95) 0%, rgba(245, 158, 11, 0.55) 38%, rgba(56, 189, 248, 0.25) 68%, #040811 100%);
-  box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.9);
+    radial-gradient(circle at 50% 48%, rgba(251, 191, 36, 0.35) 0%, rgba(180, 83, 9, 0.16) 45%, #04060a 88%);
+  box-shadow:
+    inset 0 0 32px rgba(0, 0, 0, 0.98),
+    inset 0 0 12px rgba(245, 158, 11, 0.25);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   z-index: 1;
 }
 
-.vault-interior-rays {
+.vault-interior-grid {
   position: absolute;
-  inset: -20px;
-  background: repeating-conic-gradient(
-    from 0deg,
-    rgba(254, 240, 138, 0.26) 0deg 15deg,
-    transparent 15deg 30deg
-  );
-  animation: vault-rays-spin 10s linear infinite;
-  opacity: 0;
-  transition: opacity 0.5s ease;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(245, 158, 11, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245, 158, 11, 0.08) 1px, transparent 1px);
+  background-size: 18px 18px;
+  opacity: 0.6;
 }
 
-.quad-vault-card.is-door-open .vault-interior-rays,
+.vault-interior-rays {
+  position: absolute;
+  width: 220%;
+  height: 220%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 20deg,
+    rgba(251, 191, 36, 0.26) 20deg 40deg,
+    transparent 40deg 80deg,
+    rgba(56, 189, 248, 0.2) 80deg 105deg,
+    transparent 105deg 150deg,
+    rgba(251, 191, 36, 0.28) 150deg 175deg,
+    transparent 175deg 230deg,
+    rgba(245, 158, 11, 0.24) 230deg 260deg,
+    transparent 260deg 310deg,
+    rgba(56, 189, 248, 0.22) 310deg 335deg,
+    transparent 335deg 360deg
+  );
+  animation: vault-rays-rotate 14s linear infinite;
+  opacity: 0.25;
+  transition: opacity 0.6s ease;
+}
+
 .quad-vault-card.is-unlocked .vault-interior-rays {
   opacity: 1;
 }
 
-@keyframes vault-rays-spin {
-  to { transform: rotate(360deg); }
+.vault-interior-shelf {
+  position: absolute;
+  bottom: 22%;
+  left: 14%;
+  right: 14%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, rgba(245, 158, 11, 0.55), transparent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.9);
 }
 
-.vault-interior-treasure {
+.vault-interior-envelope {
   position: relative;
-  z-index: 2;
-  font-size: 20px;
-  filter: drop-shadow(0 0 8px rgba(254, 240, 138, 0.95));
-  transform: scale(0.7);
-  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  width: 68px;
+  height: 46px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #fef3c7 0%, #f59e0b 55%, #b45309 100%);
+  border: 1.5px solid #fde68a;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.85),
+    0 0 24px rgba(251, 191, 36, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(0.75);
+  opacity: 0.4;
+  transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
 }
 
-.quad-vault-card.is-door-open .vault-interior-treasure,
-.quad-vault-card.is-unlocked .vault-interior-treasure {
-  transform: scale(1.12);
+.vault-envelope-seal {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ef4444, #991b1b);
+  border: 1px solid #fca5a5;
+  color: #fef2f2;
+  font-weight: 900;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 
-/* ==========================================================================
-   ۳. درب سه‌بعدی گاوصندوق (.vault-3d-door) و دستگیره چرخشی آرام (#vault-3d-handle)
-   ========================================================================== */
+.quad-vault-card.is-unlocked .vault-interior-envelope {
+  transform: scale(1.06);
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Full-Slot 3D Hinged Armored Vault Door (#vault-3d-door)
+   -------------------------------------------------------------------------- */
 .vault-3d-door {
   position: absolute;
-  inset: 5px;
-  border-radius: 6px;
+  inset: 7px;
+  border-radius: 9px;
   background:
-    radial-gradient(circle at 30% 25%, rgba(148, 163, 184, 0.22), transparent 55%),
-    linear-gradient(160deg, #334155 0%, #1e293b 45%, #0f172a 85%, #1e293b 100%);
-  border: 1.5px solid rgba(245, 158, 11, 0.48);
+    radial-gradient(circle at 50% 50%, rgba(51, 65, 85, 0.35) 0%, transparent 72%),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.018) 0px,
+      rgba(255, 255, 255, 0.018) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    linear-gradient(155deg, #2b3546 0%, #171e2b 38%, #0e131d 72%, #1d2636 100%);
+  border: 2px solid #475569;
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.25),
-    inset 0 -2px 5px rgba(0, 0, 0, 0.8),
-    0 3px 10px rgba(0, 0, 0, 0.75);
+    inset 0 2px 3px rgba(255, 255, 255, 0.25),
+    inset 0 -4px 10px rgba(0, 0, 0, 0.9),
+    0 10px 24px rgba(0, 0, 0, 0.85);
   transform-origin: 4% 50%;
   transform-style: preserve-3d;
-  /* باز شدن نرم و سنگین درب سه‌بعدی پس از اتمام چرخش دستگیره */
-  transition: transform 1.45s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 1.45s ease;
+  transform: rotateY(0deg);
+  transition:
+    transform 1.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 1.2s ease,
+    border-color 0.5s ease;
   z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
-.quad-vault-card.is-door-open .vault-3d-door,
-.quad-vault-card.is-unlocked .vault-3d-door {
-  transform: rotateY(-112deg);
-  box-shadow: 10px 6px 24px rgba(0, 0, 0, 0.85);
+.quad-vault-card:hover .vault-3d-door {
+  border-color: rgba(251, 191, 36, 0.65);
 }
 
-/* لولاهای سمت چپ درب گاوصندوق */
-.vault-door-hinge {
+/* 3D Door Edge Thickness visible when swinging open */
+.vault-door-edge-thickness {
   position: absolute;
-  left: -4px;
-  width: 6px;
-  height: 15px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #78350f, #fbbf24 50%, #78350f);
-  border: 1px solid rgba(0, 0, 0, 0.7);
-  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
-}
-.vault-door-hinge.top { top: 10px; }
-.vault-door-hinge.bottom { bottom: 10px; }
-
-/* زبانه‌های فولادی سمت راست درب (هنگام چرخش دستگیره به داخل کشیده می‌شوند) */
-.vault-locking-bolts {
-  position: absolute;
-  right: -3px;
-  top: 12px;
-  bottom: 12px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  background: linear-gradient(180deg, #475569 0%, #1e293b 50%, #0f172a 100%);
+  border-left: 1px solid rgba(255, 255, 255, 0.22);
   pointer-events: none;
 }
 
-.vault-locking-bolts i {
+/* SVG Armor Plating Overlay */
+.vault-door-armor-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Door Open State (Stage 3) */
+.quad-vault-card.is-unlocked .vault-3d-door {
+  transform: rotateY(-106deg);
+  box-shadow:
+    18px 12px 32px rgba(0, 0, 0, 0.92),
+    inset 0 1px 2px rgba(255, 255, 255, 0.22);
+}
+
+/* --------------------------------------------------------------------------
+   Heavy Multi-Knuckle Left Industrial Hinges
+   -------------------------------------------------------------------------- */
+.vault-door-hinge {
+  position: absolute;
+  left: 2px;
+  width: 14px;
+  height: 36px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #0f172a 0%, #64748b 35%, #cbd5e1 52%, #334155 82%, #0f172a 100%);
+  border: 1px solid #090d14;
+  box-shadow:
+    3px 3px 8px rgba(0, 0, 0, 0.85),
+    inset 0 1px 1px rgba(255, 255, 255, 0.45);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 2px 0;
+  z-index: 5;
+}
+
+.vault-door-hinge.top { top: 14%; }
+.vault-door-hinge.bottom { bottom: 14%; }
+
+.vault-door-hinge i {
   display: block;
-  width: 5px;
-  height: 7px;
-  border-radius: 1px;
-  background: linear-gradient(180deg, #e2e8f0, #64748b);
-  border: 1px solid #0f172a;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #78350f, #fbbf24, #78350f);
+  border-top: 1px solid rgba(0, 0, 0, 0.7);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.7);
+}
+
+/* --------------------------------------------------------------------------
+   4 Heavy Chromed Steel Locking Pistons (Retract inward when wheel turns!)
+   -------------------------------------------------------------------------- */
+.vault-locking-bolts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.vault-piston {
+  position: absolute;
+  background: linear-gradient(180deg, #334155 0%, #f1f5f9 36%, #94a3b8 62%, #0f172a 100%);
+  border: 1px solid #090d14;
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.85),
+    inset 0 1px 1px rgba(255, 255, 255, 0.75);
+  transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1) 1.7s;
+}
+
+.vault-piston.left {
+  left: 0;
+  top: calc(50% - 7px);
+  width: 26%;
+  height: 14px;
+  border-radius: 0 5px 5px 0;
+}
+
+.vault-piston.right {
+  right: 0;
+  top: calc(50% - 7px);
+  width: 26%;
+  height: 14px;
+  border-radius: 5px 0 0 5px;
+}
+
+.vault-piston.top {
+  top: 0;
+  left: calc(50% - 7px);
+  width: 14px;
+  height: 18%;
+  background: linear-gradient(90deg, #334155 0%, #f1f5f9 36%, #94a3b8 62%, #0f172a 100%);
+  border-radius: 0 0 5px 5px;
+}
+
+.vault-piston.bottom {
+  bottom: 0;
+  left: calc(50% - 7px);
+  width: 14px;
+  height: 18%;
+  background: linear-gradient(90deg, #334155 0%, #f1f5f9 36%, #94a3b8 62%, #0f172a 100%);
+  border-radius: 5px 5px 0 0;
+}
+
+/* Brass collar on each piston */
+.vault-piston i {
+  position: absolute;
+  background: linear-gradient(180deg, #fde68a, #d97706, #78350f);
+}
+.vault-piston.left i,
+.vault-piston.right i {
+  top: 0;
+  bottom: 0;
+  width: 6px;
+}
+.vault-piston.left i { right: 6px; }
+.vault-piston.right i { left: 6px; }
+
+.vault-piston.top i,
+.vault-piston.bottom i {
+  left: 0;
+  right: 0;
+  height: 5px;
+}
+.vault-piston.top i { bottom: 4px; }
+.vault-piston.bottom i { top: 4px; }
+
+/* Pistons retract inward toward the center mechanism as the wheel turns */
+.quad-vault-card.is-unlocking-wheel .vault-piston.left,
+.quad-vault-card.is-unlocked .vault-piston.left {
+  transform: translateX(48%);
+}
+.quad-vault-card.is-unlocking-wheel .vault-piston.right,
+.quad-vault-card.is-unlocked .vault-piston.right {
+  transform: translateX(-48%);
+}
+.quad-vault-card.is-unlocking-wheel .vault-piston.top,
+.quad-vault-card.is-unlocked .vault-piston.top {
+  transform: translateY(55%);
+}
+.quad-vault-card.is-unlocking-wheel .vault-piston.bottom,
+.quad-vault-card.is-unlocked .vault-piston.bottom {
+  transform: translateY(-55%);
+}
+
+/* --------------------------------------------------------------------------
+   Central Precision Combination Dial & 6-Spoke Rotary Wheel (#vault-3d-handle)
+   -------------------------------------------------------------------------- */
+.vault-dial-plate {
+  position: relative;
+  width: clamp(114px, 78%, 144px);
+  height: clamp(114px, 78%, 144px);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-style: preserve-3d;
+  z-index: 6;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.92),
+    0 0 0 3px #0f172a,
+    0 0 22px rgba(245, 158, 11, 0.18);
+}
+
+.vault-dial-bezel-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
+}
+
+.quad-vault-card.is-unlocking-wheel .vault-status-ring-svg {
+  stroke: #38bdf8;
+  stroke-width: 2.4;
+}
+
+.quad-vault-card.is-unlocked .vault-status-ring-svg {
+  stroke: #10b981;
+  stroke-width: 2.4;
+}
+
+/* Counter-rotating inner brass gear wheel */
+.vault-inner-gear {
+  position: absolute;
+  width: 76%;
+  height: 76%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  transform: rotate(0deg);
   transition: transform 0.6s ease;
 }
 
-.quad-vault-card.is-bolts-retracted .vault-locking-bolts i,
-.quad-vault-card.is-door-open .vault-locking-bolts i,
-.quad-vault-card.is-unlocked .vault-locking-bolts i {
-  transform: translateX(-5px);
+.vault-inner-gear svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.85));
 }
 
-/* صفحه مدرج زیر دستگیره (Dial Ring) */
-.vault-dial-plate {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle, #090f18 0%, #1e293b 68%, #0f172a 100%);
-  border: 2px solid rgba(245, 158, 11, 0.62);
-  box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.85),
-    inset 0 0 8px rgba(0, 0, 0, 0.95);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-}
-
-/* خطوط مدرج دور صفحه رمز گاوصندوق */
-.vault-dial-plate::before {
-  content: '';
-  position: absolute;
-  inset: 2px;
-  border-radius: 50%;
-  border: 1.5px dashed rgba(253, 230, 138, 0.45);
-  pointer-events: none;
-}
-
-/* ==========================================================================
-   ۴. دستگیره چرخشی سه‌بعدی گاوصندوق (#vault-3d-handle)
-   چرخش بسیار آرام، سنگین و واضح (۳.۵ ثانیه) طبق دستور کارفرما
-   ========================================================================== */
-.vault-handle-wheel {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transform: rotate(0deg);
-  /* انیمیشن چرخش آرام با سرعت پایین (3.5 ثانیه) تا چرخش پره‌ها کاملاً دیده شود */
+.quad-vault-card.is-unlocking-wheel .vault-inner-gear {
+  transform: rotate(-360deg);
   transition: transform 3.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.quad-vault-card.is-unlocked .vault-inner-gear {
+  transform: rotate(-360deg);
+}
+
+/* --------------------------------------------------------------------------
+   Massive 6-Spoke 3D Rotary Handle Wheel (#vault-3d-handle)
+   -------------------------------------------------------------------------- */
+.vault-handle-wheel {
+  position: relative;
+  width: 82%;
+  height: 82%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateZ(14px) rotate(0deg);
+  transition: transform 0.65s cubic-bezier(0.34, 1.56, 0.64, 1);
   will-change: transform;
+  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.88));
 }
 
-.quad-vault-card.is-turning-handle .vault-handle-wheel,
-.quad-vault-card.is-door-open .vault-handle-wheel,
+/* Subtle mechanical tease when hovering over the locked safe */
+.quad-vault-card:not(.is-unlocking-wheel):not(.is-unlocked):hover .vault-handle-wheel {
+  transform: translateZ(14px) rotate(-18deg);
+}
+
+.quad-vault-card:not(.is-unlocking-wheel):not(.is-unlocked):hover .vault-inner-gear {
+  transform: rotate(12deg);
+}
+
+/* STAGE 2: SLOW, DELIBERATE, LOW-SPEED HANDLE ROTATION (3.5 SECONDS) */
+.quad-vault-card.is-unlocking-wheel .vault-handle-wheel {
+  transform: translateZ(14px) rotate(540deg);
+  transition: transform 3.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
 .quad-vault-card.is-unlocked .vault-handle-wheel {
-  transform: rotate(540deg);
+  transform: translateZ(14px) rotate(540deg);
 }
 
-/* حلقه فلزی دور دستگیره */
+/* Heavy Machined Steel & Brass Wheel Rim */
 .vault-wheel-rim {
   position: absolute;
-  inset: 4px;
+  inset: 10%;
   border-radius: 50%;
-  border: 3.5px solid #f59e0b;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.12), transparent 70%);
+  border: 6px solid transparent;
+  background:
+    linear-gradient(#0b0f17, #0b0f17) padding-box,
+    conic-gradient(
+      from 20deg,
+      #f8fafc 0deg,
+      #64748b 55deg,
+      #1e293b 110deg,
+      #e2e8f0 175deg,
+      #475569 235deg,
+      #0f172a 295deg,
+      #f8fafc 360deg
+    ) border-box;
   box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.9),
-    inset 0 1px 1px rgba(254, 240, 138, 0.8);
+    0 5px 14px rgba(0, 0, 0, 0.9),
+    inset 0 0 10px rgba(0, 0, 0, 0.95);
 }
 
-/* ۳ پره متقاطع دستگیره (Spokes) */
+/* 3 Full-Diameter Steel Spokes = 6 Radial Spokes with Knurled Brass Grips at Both Ends */
 .vault-wheel-spoke {
   position: absolute;
-  width: 42px;
-  height: 4px;
-  border-radius: 3px;
-  background: linear-gradient(90deg, #fde68a 0%, #d97706 20%, #78350f 50%, #d97706 80%, #fde68a 100%);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f8fafc 0%, #94a3b8 45%, #334155 85%, #0f172a 100%);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.85);
+}
+
+/* Knurled Brass Cylindrical Handle Grips on the outer ends of all 6 spokes */
+.vault-wheel-spoke::before,
+.vault-wheel-spoke::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  width: 15px;
+  height: 13px;
+  border-radius: 4px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.28) 0px,
+      rgba(0, 0, 0, 0.28) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    linear-gradient(180deg, #fef08a 0%, #f59e0b 42%, #b45309 78%, #451a03 100%);
+  border: 1px solid #451a03;
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.9),
+    inset 0 1px 1px rgba(255, 255, 255, 0.65);
+}
+
+.vault-wheel-spoke::before {
+  left: -3px;
+}
+
+.vault-wheel-spoke::after {
+  right: -3px;
 }
 
 .vault-wheel-spoke.s1 { transform: rotate(0deg); }
 .vault-wheel-spoke.s2 { transform: rotate(60deg); }
 .vault-wheel-spoke.s3 { transform: rotate(120deg); }
 
-/* سرپوش برنجی برجسته مرکز دستگیره */
+/* --------------------------------------------------------------------------
+   Center Hub of the Wheel with Glowing Mystery Question Mark («؟»)
+   -------------------------------------------------------------------------- */
 .vault-wheel-hub {
   position: relative;
-  z-index: 2;
-  width: 14px;
-  height: 14px;
+  width: 42%;
+  height: 42%;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #fef08a 0%, #f59e0b 55%, #78350f 100%);
-  border: 1.5px solid #451a03;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
-}
-
-/* ==========================================================================
-   ۵. بخش اطلاعات و علامت سؤال هوک روانی کنار گاوصندوق (.vault-hook-info)
-   ========================================================================== */
-.vault-hook-info {
-  flex: 1;
-  min-width: 0;
+  background:
+    radial-gradient(circle at 35% 30%, #1e293b 0%, #090d16 70%, #020408 100%);
+  border: 3px solid #f59e0b;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.95),
+    0 0 16px rgba(245, 158, 11, 0.5),
+    inset 0 2px 5px rgba(255, 255, 255, 0.35),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.9);
+  z-index: 3;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 3px;
-  text-align: right;
-  padding-left: 2px;
-}
-
-.vault-mystery-badge {
-  display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.4);
-  color: #7dd3fc;
-  font-size: 9px;
-  font-weight: 900;
-  padding: 1.5px 6px;
-  border-radius: 999px;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+  justify-content: center;
 }
 
 .vault-question-mark {
-  display: inline-grid;
-  place-items: center;
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: #09121a;
-  font-weight: 900;
-  font-size: 11px;
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.75);
-  animation: vault-q-float 2.2s ease-in-out infinite;
-}
-
-@keyframes vault-q-float {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-1.5px) scale(1.1); }
-}
-
-.vault-hook-heading {
-  font-size: 11.5px;
-  font-weight: 900;
-  color: #fde68a;
-  line-height: 1.25;
-  margin: 0;
-}
-
-.vault-hook-sub {
-  font-size: 8.5px;
-  color: #94a3b8;
-  line-height: 1.35;
-}
-
-.vault-cta-chip {
-  margin-top: 2px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 8.5px;
-  font-weight: 800;
-  color: #09121a;
-  background: linear-gradient(135deg, #fbbf24, #d97706);
-  padding: 2px 7px;
-  border-radius: 5px;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  justify-content: center;
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #fef3c7;
+  text-shadow:
+    0 0 10px rgba(251, 191, 36, 0.95),
+    0 0 20px rgba(245, 158, 11, 0.65);
+  animation: vault-question-float 2.4s ease-in-out infinite;
+  user-select: none;
 }
 
-.vault-3d-trigger-btn:hover .vault-cta-chip {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.55);
+.quad-vault-card.is-unlocked .vault-wheel-hub {
+  border-color: #10b981;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.95),
+    0 0 18px rgba(16, 185, 129, 0.65);
 }
 
-.quad-vault-card.is-unlocked .vault-cta-chip {
-  background: linear-gradient(135deg, #34d399, #059669);
-  color: #04130e;
-  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
+.quad-vault-card.is-unlocked .vault-question-mark {
+  color: #a7f3d0;
+  text-shadow: 0 0 12px rgba(16, 185, 129, 0.9);
 }
 
-/* ==========================================================================
-   ۶. مودال پاپ‌آپ رمز گاوصندوق (#vault-password-dialog)
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   Vault Password Modal (#vault-password-dialog) — Zero Spoilers
+   -------------------------------------------------------------------------- */
 .vault-password-dialog {
-  width: min(460px, 92vw);
-  border-color: rgba(245, 158, 11, 0.55);
-  box-shadow:
-    0 30px 95px rgba(0, 0, 0, 0.92),
-    0 0 40px rgba(245, 158, 11, 0.18);
+  width: min(440px, 94vw) !important;
 }
 
-.vault-password-dialog.is-error-shake {
-  animation: vault-error-shake 0.46s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-  border-color: #ef4444;
-  box-shadow:
-    0 30px 95px rgba(0, 0, 0, 0.92),
-    0 0 35px rgba(239, 68, 68, 0.45);
-}
-
-@keyframes vault-error-shake {
-  10%, 90% { transform: translate3d(-4px, 0, 0); }
-  20%, 80% { transform: translate3d(6px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
-  40%, 60% { transform: translate3d(8px, 0, 0); }
-}
-
-.vault-modal-hero {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  background: radial-gradient(circle at 85% 50%, rgba(245, 158, 11, 0.16), rgba(7, 13, 22, 0.92));
-  border: 1px solid rgba(245, 158, 11, 0.28);
-  border-radius: 10px;
-}
-
-.vault-modal-hero-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, rgba(245, 158, 11, 0.28), rgba(15, 23, 42, 0.95));
-  border: 2px solid rgba(245, 158, 11, 0.6);
-  display: grid;
-  place-items: center;
-  font-size: 22px;
-  flex-shrink: 0;
-  box-shadow: 0 0 16px rgba(245, 158, 11, 0.28);
-}
-
-.vault-modal-hero-text h4 {
-  margin: 0 0 3px;
-  font-size: 14px;
-  font-weight: 800;
-  color: #fde68a;
-}
-
-.vault-modal-hero-text p {
-  margin: 0;
-  font-size: 11.5px;
-  color: #cbd5e1;
-  line-height: 1.5;
-}
-
-/* کادر ورود رمز / فلگ */
 .vault-code-input-wrap {
   position: relative;
   display: flex;
   align-items: center;
-  background: #040911;
-  border: 1.5px solid rgba(56, 189, 248, 0.42);
-  border-radius: 10px;
-  padding: 4px 10px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.vault-code-input-wrap:focus-within {
-  border-color: #fbbf24;
-  box-shadow: 0 0 18px rgba(245, 158, 11, 0.28);
-}
-
-.vault-password-dialog.is-error-shake .vault-code-input-wrap {
-  border-color: #ef4444;
-  box-shadow: 0 0 18px rgba(239, 68, 68, 0.4);
+  gap: 8px;
 }
 
 #vault-code-input {
   width: 100%;
-  border: 0;
-  background: transparent;
-  color: #fef08a;
-  font-family: var(--font-code, monospace);
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: 4px;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(245, 158, 11, 0.38);
+  background: rgba(5, 8, 15, 0.92);
+  color: #fef3c7;
+  font-family: var(--font-mono, monospace), var(--font-sans, sans-serif);
+  font-size: 1.15rem;
+  font-weight: 800;
   text-align: center;
-  padding: 10px 8px;
+  letter-spacing: 0.14em;
   outline: none;
-  direction: ltr;
+  box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.75);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
 }
 
 #vault-code-input::placeholder {
-  font-family: var(--font-ui, Tahoma, sans-serif);
-  font-size: 13px;
+  font-size: 0.84rem;
+  font-weight: 500;
   letter-spacing: 0;
-  color: #64748b;
-  font-weight: 600;
+  color: rgba(148, 163, 184, 0.55);
 }
 
-.vault-clear-input-btn {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  color: #94a3b8;
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-family: inherit;
-  cursor: pointer;
-  flex-shrink: 0;
+#vault-code-input:focus {
+  border-color: #fbbf24;
+  box-shadow:
+    0 0 0 3px rgba(245, 158, 11, 0.2),
+    inset 0 3px 10px rgba(0, 0, 0, 0.75);
 }
 
-.vault-clear-input-btn:hover {
-  background: rgba(239, 68, 68, 0.18);
-  color: #fca5a5;
-  border-color: rgba(239, 68, 68, 0.35);
+#vault-code-input.is-error {
+  border-color: #ef4444 !important;
+  color: #fecaca !important;
+  box-shadow:
+    0 0 0 3px rgba(239, 68, 68, 0.28),
+    0 0 22px rgba(239, 68, 68, 0.35) !important;
+  animation: vault-error-shake 0.46s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
-/* صفحه کلید لمسی کمکی (Tactile Keypad) */
 .vault-keypad-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
+  margin-top: 2px;
   direction: ltr;
 }
 
 .vault-key-btn {
-  height: 36px;
-  border-radius: 7px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: linear-gradient(180deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
-  color: #f8fafc;
-  font-family: var(--font-code, monospace);
-  font-size: 14px;
+  padding: 8px 0;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.92));
+  color: #e2e8f0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.92rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
   transition: all 0.14s ease;
 }
 
 .vault-key-btn:hover {
-  border-color: rgba(245, 158, 11, 0.6);
+  border-color: rgba(245, 158, 11, 0.5);
   color: #fde68a;
-  background: rgba(245, 158, 11, 0.16);
   transform: translateY(-1px);
 }
 
@@ -651,102 +770,122 @@
   transform: translateY(1px);
 }
 
-/* بنر خطای رمز اشتباه یا تایید رمز */
+.vault-clear-input-btn {
+  padding: 13px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.32);
+  background: rgba(239, 68, 68, 0.12);
+  color: #fca5a5;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.vault-clear-input-btn:hover {
+  background: rgba(239, 68, 68, 0.24);
+  border-color: rgba(239, 68, 68, 0.55);
+}
+
 .vault-feedback-banner {
   min-height: 36px;
-  border-radius: 8px;
   padding: 8px 12px;
-  font-size: 12px;
+  border-radius: 10px;
+  font-size: 0.8rem;
   font-weight: 700;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  line-height: 1.4;
+  text-align: center;
+  transition: all 0.22s ease;
 }
 
 .vault-feedback-banner[hidden] {
   display: none !important;
 }
 
-.vault-feedback-banner.is-error {
-  background: rgba(239, 68, 68, 0.14);
-  border: 1px solid rgba(239, 68, 68, 0.45);
+.vault-feedback-banner.error {
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid rgba(239, 68, 68, 0.48);
   color: #fecaca;
 }
 
-.vault-feedback-banner.is-success {
+.vault-feedback-banner.success {
   background: rgba(16, 185, 129, 0.16);
   border: 1px solid rgba(16, 185, 129, 0.48);
   color: #a7f3d0;
 }
 
-/* ==========================================================================
-   ۷. مودال نمایش پوستر و گالری چندعکسی «موزه اسرارآمیز» (#vault-reward-dialog)
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   Vault Reward / Mystery Museum Modal (#vault-reward-dialog)
+   -------------------------------------------------------------------------- */
 .vault-reward-dialog {
-  width: min(760px, 94vw);
-  max-height: 92dvh;
-  border: 1.5px solid rgba(245, 158, 11, 0.65);
-  box-shadow:
-    0 32px 110px rgba(0, 0, 0, 0.95),
-    0 0 55px rgba(245, 158, 11, 0.22);
+  width: min(760px, 95vw) !important;
+  max-height: 92vh !important;
 }
 
 .vault-reward-body {
-  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 18px !important;
   overflow-y: auto;
-  max-height: calc(92dvh - 135px);
 }
 
 .vault-reward-banner {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   padding: 10px 14px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(56, 189, 248, 0.1));
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(16, 185, 129, 0.1));
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  text-align: center;
 }
 
 .vault-reward-banner h4 {
-  margin: 0 0 4px;
-  font-size: 16px;
+  margin: 0;
+  font-size: 0.98rem;
   font-weight: 900;
-  color: #fde68a;
+  color: #fef3c7;
 }
 
 .vault-reward-banner p {
   margin: 0;
-  font-size: 12.5px;
-  color: #e2e8f0;
-  line-height: 1.55;
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  line-height: 1.6;
 }
 
-/* صحنه نمایش عکس یا اسلایدر چندعکسی */
+/* Image / Multi-Image Gallery Stage */
 .vault-gallery-stage {
   position: relative;
   width: 100%;
-  min-height: 280px;
-  max-height: min(60dvh, 490px);
-  background: radial-gradient(circle at center, #08111d 0%, #020509 100%);
-  border: 1px solid rgba(245, 158, 11, 0.32);
-  border-radius: 10px;
+  min-height: 290px;
+  max-height: 56vh;
+  border-radius: 14px;
+  background: radial-gradient(circle at center, #111827 0%, #05080f 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
   overflow: hidden;
+  padding: 10px;
 }
 
 #vault-reward-main-img {
-  display: block;
-  width: auto !important;
-  height: auto !important;
-  max-width: 100% !important;
-  max-height: min(56dvh, 465px) !important;
-  object-fit: contain !important;
-  margin: auto;
-  border-radius: 6px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
-  transition: opacity 0.22s ease, transform 0.22s ease;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 52vh;
+  object-fit: contain;
+  border-radius: 10px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.75);
+  transition: transform 0.3s ease, opacity 0.25s ease;
 }
 
 .vault-gallery-nav-btn {
@@ -756,22 +895,23 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: rgba(9, 16, 28, 0.88);
-  border: 1px solid rgba(245, 158, 11, 0.55);
-  color: #fde68a;
-  font-size: 18px;
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  background: rgba(10, 14, 23, 0.85);
+  color: #fef3c7;
+  font-size: 1.1rem;
   font-weight: 900;
   cursor: pointer;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 4;
-  transition: all 0.18s ease;
+  transition: all 0.2s ease;
 }
 
 .vault-gallery-nav-btn:hover {
-  background: var(--gold);
-  color: #09121a;
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+  background: rgba(245, 158, 11, 0.9);
+  color: #090d16;
+  transform: translateY(-50%) scale(1.08);
 }
 
 .vault-gallery-nav-btn.prev { right: 12px; }
@@ -781,7 +921,7 @@
   display: none !important;
 }
 
-/* نوار بندانگشتی و شمارنده اسلاید (وقتی چند عکس وجود دارد) */
+/* Gallery Thumbnails & Slide Counter */
 .vault-gallery-controls {
   display: flex;
   align-items: center;
@@ -795,50 +935,54 @@
 }
 
 .vault-slide-counter {
-  font-size: 11.5px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.76rem;
   font-weight: 800;
-  color: #7dd3fc;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.32);
-  padding: 3px 10px;
+  color: #fde68a;
+  padding: 4px 10px;
   border-radius: 999px;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.32);
 }
 
 .vault-thumbs-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   overflow-x: auto;
 }
 
 .vault-thumb-btn {
-  width: 46px;
-  height: 36px;
-  border-radius: 5px;
-  border: 1.5px solid rgba(255, 255, 255, 0.18);
-  background: #050a12;
-  padding: 2px;
+  width: 54px;
+  height: 38px;
+  border-radius: 7px;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  padding: 0;
+  overflow: hidden;
   cursor: pointer;
+  background: #090d16;
   opacity: 0.6;
-  transition: all 0.18s ease;
+  transition: all 0.2s ease;
 }
 
-.vault-thumb-btn.is-active,
+.vault-thumb-btn.active,
 .vault-thumb-btn:hover {
-  opacity: 1;
   border-color: #fbbf24;
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.45);
+  opacity: 1;
+  transform: translateY(-1px);
 }
 
 .vault-thumb-btn img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 3px;
 }
 
 .vault-reward-footer {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
@@ -848,20 +992,28 @@
   gap: 8px;
 }
 
-@media (max-width: 640px) {
-  .vault-3d-chassis {
-    width: 82px;
-    height: 72px;
+/* --------------------------------------------------------------------------
+   Keyframe Animations
+   -------------------------------------------------------------------------- */
+@keyframes vault-question-float {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.85));
   }
-  .vault-dial-plate {
-    width: 48px;
-    height: 48px;
+  50% {
+    transform: scale(1.14);
+    filter: drop-shadow(0 0 14px rgba(56, 189, 248, 0.95));
   }
-  .vault-handle-wheel {
-    width: 38px;
-    height: 38px;
-  }
-  .vault-hook-heading {
-    font-size: 10.5px;
-  }
+}
+
+@keyframes vault-rays-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes vault-error-shake {
+  0%, 100% { transform: translateX(0); }
+  18%, 54% { transform: translateX(-8px); }
+  36%, 72% { transform: translateX(8px); }
+  90% { transform: translateX(-4px); }
 }
