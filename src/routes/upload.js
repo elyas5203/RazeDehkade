@@ -108,12 +108,48 @@ const upload = multer({
   fileFilter: fileFilter,
 });
 
+let heicConvert = null;
+try {
+  heicConvert = require('heic-convert');
+} catch (_) {}
+
+function isHeicOrHeifBuffer(buf) {
+  if (!buf || buf.length < 16) return false;
+  const boxType = buf.subarray(4, 8).toString('ascii');
+  if (boxType !== 'ftyp') return false;
+  const brandHeader = buf.subarray(8, 24).toString('ascii').toLowerCase();
+  return /heic|heix|hevc|hevx|mif1|msf1/.test(brandHeader);
+}
+
+async function ensureBrowserCompatibleImage(filePath) {
+  if (!heicConvert || !fs.existsSync(filePath)) return;
+  try {
+    const fd = fs.openSync(filePath, 'r');
+    const header = Buffer.alloc(32);
+    const bytesRead = fs.readSync(fd, header, 0, 32, 0);
+    fs.closeSync(fd);
+    if (bytesRead < 16 || !isHeicOrHeifBuffer(header)) return;
+
+    const inputBuffer = fs.readFileSync(filePath);
+    const outputBuffer = await heicConvert({
+      buffer: inputBuffer,
+      format: 'JPEG',
+      quality: 0.88,
+    });
+    if (outputBuffer && outputBuffer.length > 0) {
+      fs.writeFileSync(filePath, Buffer.from(outputBuffer));
+    }
+  } catch (err) {
+    console.warn('HEIC conversion warning:', err.message);
+  }
+}
+
 /**
  * POST /api/upload
  * آپلود فایل تک‌آیتمی (عکس، ویس یا فایل عمومی)
  */
 router.post('/', authenticateToken, (req, res) => {
-  upload.single('file')(req, res, (err) => {
+  upload.single('file')(req, res, async (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
         return res.status(400).json({ success: false, message: 'حجم فایل بیشتر از حد مجاز (۲۰ مگابایت) است.' });
@@ -126,6 +162,9 @@ router.post('/', authenticateToken, (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'هیچ فایلی ارسال نشده است.' });
     }
+
+    const fullUploadedPath = path.join(uploadDir, req.file.filename);
+    await ensureBrowserCompatibleImage(fullUploadedPath);
 
     const fileUrl = `/uploads/${req.file.filename}`;
     const fileName = decodeOriginalFilename(req.file.originalname);
@@ -140,6 +179,9 @@ router.post('/', authenticateToken, (req, res) => {
       messageType = 'voice';
     }
 
+    let finalSize = req.file.size;
+    try { finalSize = fs.statSync(fullUploadedPath).size; } catch (_) {}
+
     return res.json({
       success: true,
       message: 'فایل با موفقیت آپلود شد.',
@@ -147,7 +189,7 @@ router.post('/', authenticateToken, (req, res) => {
         fileUrl,
         fileName,
         messageType,
-        size: req.file.size,
+        size: finalSize,
       },
     });
   });
@@ -203,7 +245,7 @@ function sanitizeUploadId(uploadId) {
   return str;
 }
 
-function processChunkUpload(payload = {}) {
+async function processChunkUpload(payload = {}) {
   const safeId = sanitizeUploadId(payload.uploadId);
   if (!safeId) {
     return { success: false, message: 'شناسه آپلود نامعتبر است.' };
@@ -249,9 +291,14 @@ function processChunkUpload(payload = {}) {
 
     if (chunkIndex + 1 === totalChunks) {
       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      const finalFilename = `file-${uniqueSuffix}${info.ext}`;
+      let finalExt = info.ext;
+      if (finalExt === '.heic' || finalExt === '.heif') {
+        finalExt = '.jpg';
+      }
+      const finalFilename = `file-${uniqueSuffix}${finalExt}`;
       const finalPath = path.join(uploadDir, finalFilename);
       fs.renameSync(tempPath, finalPath);
+      await ensureBrowserCompatibleImage(finalPath);
       const finalStat = fs.statSync(finalPath);
 
       return {
@@ -296,8 +343,8 @@ function cancelChunkUpload(uploadId) {
  * POST /api/upload/chunk
  * آپلود تکه‌ای (Chunked Upload) برای عبور از محدودیت حجم پروکسی/Nginx و نمایش درصد دقیق
  */
-router.post('/chunk', authenticateToken, (req, res) => {
-  const result = processChunkUpload(req.body || {});
+router.post('/chunk', authenticateToken, async (req, res) => {
+  const result = await processChunkUpload(req.body || {});
   if (!result.success) {
     return res.status(400).json(result);
   }

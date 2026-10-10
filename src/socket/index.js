@@ -645,9 +645,9 @@ function setupSocketIO(io) {
     /**
      * آپلود تکه‌ای فایل از طریق Socket.io (فال‌بک ضدخطای Nginx/پروکسی و نمایش درصد دقیق)
      */
-    socket.on('upload_file_chunk', (data = {}, ack = () => {}) => {
+    socket.on('upload_file_chunk', async (data = {}, ack = () => {}) => {
       try {
-        const result = uploadRoutes.processChunkUpload(data);
+        const result = await uploadRoutes.processChunkUpload(data);
         if (typeof ack === 'function') ack(result);
       } catch (err) {
         console.error('Error in socket upload_file_chunk:', err);
