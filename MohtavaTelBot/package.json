@@ -1,0 +1,9 @@
+{
+  "name": "mohtava-tel-bot",
+  "version": "1.0.0",
+  "description": "بات تلگرام اختصاصی مدیریت پیام‌های آماده و محتوای ۵ هفته سناریوی راز دهکده",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  }
+}

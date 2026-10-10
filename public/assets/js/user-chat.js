@@ -980,55 +980,404 @@ function triggerFileInput(acceptType) {
   }
 }
 
+let activeUserUpload = null;
+
+function formatFileSizeFa(bytes) {
+  const num = Number(bytes) || 0;
+  if (num < 1024) return `${num.toLocaleString('fa-IR')} بایت`;
+  if (num < 1024 * 1024) return `${Math.max(1, Math.round(num / 1024)).toLocaleString('fa-IR')} کیلوبایت`;
+  return `${(num / (1024 * 1024)).toLocaleString('fa-IR', { maximumFractionDigits: 1 })} مگابایت`;
+}
+
+function renderUploadProgressUI(fileName, fileSize, percent = 0, statusLabel = 'در حال آپلود فایل...') {
+  const feedbackEl = document.getElementById('chat-feedback');
+  if (!feedbackEl) return;
+  const clamped = Math.min(100, Math.max(0, Math.round(percent)));
+  const cleanName = fixMojibakeText(fileName || 'فایل پیوست');
+  feedbackEl.innerHTML = `
+    <div class="upload-progress-card" id="user-upload-progress-card">
+      <div class="upload-progress-top">
+        <div class="upload-file-meta">
+          <span class="upload-file-icon" aria-hidden="true">📎</span>
+          <div class="upload-file-texts">
+            <strong class="upload-file-name" title="${escapeHtml(cleanName)}">${escapeHtml(cleanName)}</strong>
+            <small class="upload-file-status" id="user-upload-status-label">${escapeHtml(statusLabel)} (${formatFileSizeFa(fileSize)})</small>
+          </div>
+        </div>
+        <div class="upload-progress-actions">
+          <span class="upload-percent-badge" id="user-upload-percent-badge">${clamped.toLocaleString('fa-IR')}٪</span>
+          <button type="button" class="upload-cancel-btn" onclick="cancelCurrentUserUpload()" title="لغو ارسال فایل">
+            <span>✕</span>
+            <span>لغو ارسال</span>
+          </button>
+        </div>
+      </div>
+      <div class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${clamped}">
+        <div class="upload-progress-fill" id="user-upload-progress-fill" style="width: ${clamped}%;"></div>
+      </div>
+    </div>
+  `;
+}
+
+function updateUploadProgressUI(percent, statusLabel, fileSize) {
+  const clamped = Math.min(100, Math.max(0, Math.round(percent)));
+  const badge = document.getElementById('user-upload-percent-badge');
+  const fill = document.getElementById('user-upload-progress-fill');
+  const label = document.getElementById('user-upload-status-label');
+  if (badge) badge.textContent = `${clamped.toLocaleString('fa-IR')}٪`;
+  if (fill) fill.style.width = `${clamped}%`;
+  if (label && statusLabel) {
+    label.textContent = fileSize ? `${statusLabel} (${formatFileSizeFa(fileSize)})` : statusLabel;
+  }
+}
+
+function cancelCurrentUserUpload() {
+  if (!activeUserUpload) return;
+  const uploadToCancel = activeUserUpload;
+  uploadToCancel.cancelled = true;
+  activeUserUpload = null;
+
+  if (uploadToCancel.xhr) {
+    try { uploadToCancel.xhr.abort(); } catch (_) {}
+  }
+
+  if (uploadToCancel.uploadId) {
+    fetch('/api/upload/cancel', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${userToken}`,
+      },
+      body: JSON.stringify({ uploadId: uploadToCancel.uploadId }),
+    }).catch(() => {});
+
+    if (socket && socket.connected) {
+      socket.emit('cancel_file_upload', { uploadId: uploadToCancel.uploadId });
+    }
+  }
+
+  const fileInput = document.getElementById('user-file-input');
+  if (fileInput) fileInput.value = '';
+
+  const feedbackEl = document.getElementById('chat-feedback');
+  if (feedbackEl) {
+    feedbackEl.innerHTML = `<div class="upload-cancelled-notice">⛔ ارسال فایل «${escapeHtml(fixMojibakeText(uploadToCancel.fileName || ''))}» لغو شد.</div>`;
+    setTimeout(() => {
+      if (!activeUserUpload && feedbackEl.querySelector('.upload-cancelled-notice')) {
+        feedbackEl.innerHTML = '';
+      }
+    }, 2500);
+  }
+}
+
+function blobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const res = String(reader.result || '');
+      const commaIdx = res.indexOf(',');
+      resolve(commaIdx >= 0 ? res.slice(commaIdx + 1) : res);
+    };
+    reader.onerror = () => reject(new Error('خطا در خواندن فایل'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function sendChunkViaXhr(payload, uploadState, onProgressRatio) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    uploadState.xhr = xhr;
+    xhr.open('POST', '/api/upload/chunk', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('Authorization', `Bearer ${userToken}`);
+    xhr.timeout = 25000;
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && typeof onProgressRatio === 'function') {
+        onProgressRatio(Math.min(1, e.loaded / e.total));
+      }
+    };
+
+    xhr.onload = () => {
+      uploadState.xhr = null;
+      try {
+        const data = JSON.parse(xhr.responseText || '{}');
+        if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+          resolve(data);
+        } else {
+          const err = new Error(data.message || `HTTP ${xhr.status}`);
+          err.isValidationError = xhr.status === 400 && Boolean(data.message);
+          err.status = xhr.status;
+          reject(err);
+        }
+      } catch (_) {
+        const err = new Error(`خطای سرور (${xhr.status})`);
+        err.status = xhr.status;
+        reject(err);
+      }
+    };
+
+    xhr.onerror = () => {
+      uploadState.xhr = null;
+      reject(new Error('NETWORK_ERROR'));
+    };
+
+    xhr.ontimeout = () => {
+      uploadState.xhr = null;
+      reject(new Error('TIMEOUT'));
+    };
+
+    xhr.onabort = () => {
+      uploadState.xhr = null;
+      reject(new Error('ABORTED'));
+    };
+
+    xhr.send(JSON.stringify(payload));
+  });
+}
+
+function sendChunkViaSocket(payload) {
+  return new Promise((resolve, reject) => {
+    if (!socket || !socket.connected) {
+      return reject(new Error('SOCKET_DISCONNECTED'));
+    }
+    socket.timeout(20000).emit('upload_file_chunk', payload, (err, response) => {
+      if (err) return reject(new Error('SOCKET_TIMEOUT'));
+      if (response && response.success) {
+        resolve(response);
+      } else {
+        const error = new Error((response && response.message) || 'خطا در آپلود سوکتی');
+        error.isValidationError = Boolean(response && response.message);
+        reject(error);
+      }
+    });
+  });
+}
+
+async function compressImageIfNeededForLegacyFallback(file) {
+  if (!file || !String(file.type || '').startsWith('image/') || file.size <= 750 * 1024) {
+    return file;
+  }
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      try {
+        const maxDim = 1600;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (blob && blob.size < file.size) {
+            const safeName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+            resolve(new File([blob], safeName, { type: 'image/jpeg' }));
+          } else {
+            resolve(file);
+          }
+        }, 'image/jpeg', 0.84);
+      } catch (_) {
+        resolve(file);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file);
+    };
+    img.src = url;
+  });
+}
+
+function uploadLegacyMultipartWithXhr(fileToUpload, uploadState, originalSize) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    uploadState.xhr = xhr;
+    const formData = new FormData();
+    formData.append('file', fileToUpload);
+
+    xhr.open('POST', '/api/upload', true);
+    xhr.setRequestHeader('Authorization', `Bearer ${userToken}`);
+    xhr.timeout = 45000;
+
+    xhr.upload.onprogress = (e) => {
+      if (uploadState.cancelled) return;
+      if (e.lengthComputable) {
+        const pct = Math.min(99, Math.round((e.loaded / e.total) * 100));
+        updateUploadProgressUI(pct, 'در حال ارسال فایل...', originalSize);
+      }
+    };
+
+    xhr.onload = () => {
+      uploadState.xhr = null;
+      try {
+        const data = JSON.parse(xhr.responseText || '{}');
+        if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+          resolve(data);
+        } else {
+          reject(new Error(data.message || `خطای سرور (${xhr.status})`));
+        }
+      } catch (_) {
+        reject(new Error(xhr.status === 413 ? 'حجم فایل بیش از محدودیت سرور است.' : `خطا در پاسخ سرور (${xhr.status})`));
+      }
+    };
+
+    xhr.onerror = () => {
+      uploadState.xhr = null;
+      reject(new Error('خطا در شبکه هنگام ارسال فایل.'));
+    };
+
+    xhr.ontimeout = () => {
+      uploadState.xhr = null;
+      reject(new Error('زمان ارسال فایل به پایان رسید.'));
+    };
+
+    xhr.onabort = () => {
+      uploadState.xhr = null;
+      reject(new Error('ABORTED'));
+    };
+
+    xhr.send(formData);
+  });
+}
+
 async function handleUserFileUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const feedbackEl = document.getElementById('chat-feedback');
-  if (feedbackEl) feedbackEl.textContent = 'در حال ارسال فایل در گفتگو...';
+  if (activeUserUpload) {
+    cancelCurrentUserUpload();
+  }
 
-  const formData = new FormData();
-  formData.append('file', file);
+  const cleanOriginalName = fixMojibakeText(file.name || 'فایل ارسالی');
+  const uploadState = {
+    uploadId: `up_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+    cancelled: false,
+    xhr: null,
+    fileName: cleanOriginalName,
+  };
+  activeUserUpload = uploadState;
+
+  renderUploadProgressUI(cleanOriginalName, file.size, 0, 'در حال آماده‌سازی و ارسال...');
+
+  const CHUNK_SIZE = 160 * 1024; // قطعات ۱۶۰ کیلوبایتی برای عبور تضمینی از Nginx/Cloudflare و نمایش دقیق درصد
+  const totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
+  let finalResult = null;
+  let useSocketTransport = false;
 
   try {
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${userToken}`,
-      },
-      body: formData,
+    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+      if (uploadState.cancelled) return;
+
+      const start = chunkIndex * CHUNK_SIZE;
+      const end = Math.min(file.size, start + CHUNK_SIZE);
+      const blobSlice = file.slice(start, end);
+      const chunkBase64 = await blobToBase64(blobSlice);
+
+      if (uploadState.cancelled) return;
+
+      const payload = {
+        uploadId: uploadState.uploadId,
+        chunkIndex,
+        totalChunks,
+        chunkBase64,
+        fileName: cleanOriginalName,
+        mimeType: file.type || 'application/octet-stream',
+      };
+
+      let chunkResponse = null;
+
+      if (!useSocketTransport) {
+        try {
+          chunkResponse = await sendChunkViaXhr(payload, uploadState, (chunkRatio) => {
+            if (uploadState.cancelled) return;
+            const overallPct = ((chunkIndex + chunkRatio) / totalChunks) * 100;
+            updateUploadProgressUI(overallPct, 'در حال ارسال فایل در گفتگو...', file.size);
+          });
+        } catch (xhrErr) {
+          if (uploadState.cancelled || xhrErr.message === 'ABORTED') return;
+          if (xhrErr.isValidationError) throw xhrErr;
+          // در صورت خطای پروکسی یا مسدود بودن مسیر HTTP، سوییچ خودکار روی سوکت
+          useSocketTransport = true;
+        }
+      }
+
+      if (useSocketTransport && !chunkResponse) {
+        chunkResponse = await sendChunkViaSocket(payload);
+        if (uploadState.cancelled) return;
+        const overallPct = ((chunkIndex + 1) / totalChunks) * 100;
+        updateUploadProgressUI(overallPct, 'در حال ارسال امن فایل...', file.size);
+      }
+
+      if (chunkResponse && chunkResponse.completed && chunkResponse.data) {
+        finalResult = chunkResponse;
+      }
+    }
+  } catch (chunkFlowErr) {
+    if (uploadState.cancelled || chunkFlowErr.message === 'ABORTED') return;
+    if (chunkFlowErr.isValidationError) {
+      activeUserUpload = null;
+      const feedbackEl = document.getElementById('chat-feedback');
+      if (feedbackEl) feedbackEl.innerHTML = '';
+      alert('خطا در آپلود فایل: ' + chunkFlowErr.message);
+      event.target.value = '';
+      return;
+    }
+
+    // فال‌بک نهایی به مسیر استاندارد /api/upload همراه با بهینه‌سازی حجم تصویر
+    try {
+      updateUploadProgressUI(10, 'در حال بهینه‌سازی و ارسال تصویر...', file.size);
+      const optimizedFile = await compressImageIfNeededForLegacyFallback(file);
+      if (uploadState.cancelled) return;
+      finalResult = await uploadLegacyMultipartWithXhr(optimizedFile, uploadState, file.size);
+    } catch (legacyErr) {
+      if (uploadState.cancelled || legacyErr.message === 'ABORTED') return;
+      activeUserUpload = null;
+      const feedbackEl = document.getElementById('chat-feedback');
+      if (feedbackEl) feedbackEl.innerHTML = '';
+      console.error('Error uploading file:', legacyErr);
+      alert('خطا در آپلود فایل: ' + (legacyErr.message || 'ارتباط با سرور برقرار نشد.'));
+      event.target.value = '';
+      return;
+    }
+  }
+
+  if (uploadState.cancelled) return;
+
+  if (finalResult && finalResult.success && finalResult.data) {
+    updateUploadProgressUI(100, 'تکمیل شد — ثبت در گفتگو...', file.size);
+    const { fileUrl, fileName, messageType } = finalResult.data;
+    const cleanName = fixMojibakeText(fileName || cleanOriginalName);
+
+    socket.emit('send_message', {
+      sessionId: sessionData.id,
+      content: cleanName,
+      messageType: messageType,
+      fileUrl: fileUrl,
+      fileName: cleanName,
+    }, (ack) => {
+      if (activeUserUpload === uploadState) {
+        activeUserUpload = null;
+      }
+      const feedbackEl = document.getElementById('chat-feedback');
+      if (feedbackEl) feedbackEl.innerHTML = '';
+      if (ack && ack.success && ack.message) {
+        renderMessage(ack.message);
+      }
     });
 
-    const data = await res.json();
-    if (data.success) {
-      const { fileUrl, fileName, messageType } = data.data;
-      const cleanName = fixMojibakeText(fileName || file.name || 'فایل ارسالی');
-
-      // ارسال مستقیم پیام دارای مدیا از طریق سوکت و نمایش ماندگار در باکس چت کاربر
-      socket.emit('send_message', {
-        sessionId: sessionData.id,
-        content: cleanName,
-        messageType: messageType,
-        fileUrl: fileUrl,
-        fileName: cleanName,
-      }, (ack) => {
-        if (feedbackEl) feedbackEl.textContent = '';
-        if (ack && ack.success && ack.message) {
-          renderMessage(ack.message);
-        }
-      });
-
-      // ریسِت ورودی فایل
-      event.target.value = '';
-    } else {
-      if (feedbackEl) feedbackEl.textContent = '';
-      alert('خطا در آپلود فایل: ' + (data.message || 'فرمت نامعتبر'));
-      event.target.value = '';
-    }
-  } catch (err) {
-    if (feedbackEl) feedbackEl.textContent = '';
-    console.error('Error uploading file:', err);
-    alert('خطا در برقراری ارتباط با سرور هنگام آپلود.');
+    event.target.value = '';
+  } else {
+    activeUserUpload = null;
+    const feedbackEl = document.getElementById('chat-feedback');
+    if (feedbackEl) feedbackEl.innerHTML = '';
     event.target.value = '';
   }
 }

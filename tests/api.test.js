@@ -190,6 +190,64 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     assert.strictEqual(okData.data.messageType, 'file');
     fs.unlinkSync(path.join(__dirname, '..', 'public', 'uploads', path.basename(okData.data.fileUrl)));
 
+    // Test chunked upload (/api/upload/chunk) with Persian filename and image extension
+    const chunkUploadId = `test_chunk_${Date.now()}`;
+    const chunk1 = await fetch(`${serverUrl}/api/upload/chunk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+      body: JSON.stringify({
+        uploadId: chunkUploadId,
+        chunkIndex: 0,
+        totalChunks: 2,
+        chunkBase64: Buffer.from('fake-image-part-1-').toString('base64'),
+        fileName: 'فاکتور خرید - پنجم.jfif',
+        mimeType: 'image/jpeg',
+      }),
+    });
+    const chunk1Data = await chunk1.json();
+    assert.strictEqual(chunk1.status, 200);
+    assert.strictEqual(chunk1Data.completed, false);
+
+    const chunk2 = await fetch(`${serverUrl}/api/upload/chunk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+      body: JSON.stringify({
+        uploadId: chunkUploadId,
+        chunkIndex: 1,
+        totalChunks: 2,
+        chunkBase64: Buffer.from('fake-image-part-2').toString('base64'),
+        fileName: 'فاکتور خرید - پنجم.jfif',
+        mimeType: 'image/jpeg',
+      }),
+    });
+    const chunk2Data = await chunk2.json();
+    assert.strictEqual(chunk2.status, 200);
+    assert.strictEqual(chunk2Data.completed, true);
+    assert.strictEqual(chunk2Data.data.messageType, 'image');
+    assert.strictEqual(chunk2Data.data.fileName, 'فاکتور خرید - پنجم.jfif');
+    fs.unlinkSync(path.join(__dirname, '..', 'public', 'uploads', path.basename(chunk2Data.data.fileUrl)));
+
+    // Test cancel upload (/api/upload/cancel)
+    const cancelUploadId = `test_cancel_${Date.now()}`;
+    await fetch(`${serverUrl}/api/upload/chunk`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+      body: JSON.stringify({
+        uploadId: cancelUploadId,
+        chunkIndex: 0,
+        totalChunks: 3,
+        chunkBase64: Buffer.from('partial-data').toString('base64'),
+        fileName: 'تصویر.webp',
+        mimeType: 'image/webp',
+      }),
+    });
+    const cancelRes = await fetch(`${serverUrl}/api/upload/cancel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+      body: JSON.stringify({ uploadId: cancelUploadId }),
+    });
+    assert.strictEqual(cancelRes.status, 200);
+
     const badForm = new FormData();
     badForm.append('file', new Blob(['bad']), 'payload.exe');
     const bad = await fetch(`${serverUrl}/api/upload`, {
@@ -526,7 +584,6 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     assert.strictEqual(week1Res.status, 200);
     assert.strictEqual(week1Data.success, true);
     assert.ok(Array.isArray(week1Data.data));
-    assert.ok(week1Data.data.length > 0);
 
     const createRes = await fetch(`${serverUrl}/api/weekly-content`, {
       method: 'POST',
@@ -546,6 +603,13 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     assert.strictEqual(createRes.status, 201);
     assert.strictEqual(createData.success, true);
     const newId = createData.data.id;
+
+    const week2Res = await fetch(`${serverUrl}/api/weekly-content?week=2`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const week2Data = await week2Res.json();
+    assert.strictEqual(week2Res.status, 200);
+    assert.ok(week2Data.data.length > 0);
 
     const delRes = await fetch(`${serverUrl}/api/weekly-content/${newId}`, {
       method: 'DELETE',
@@ -816,5 +880,97 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
       admin.disconnect();
     }
   });
+
+  it('16. MohtavaTelBot restricts to admin 5490508090 and saves sequential messages/media per week', async function () {
+    const fs = require('fs');
+    const { MohtavaTelegramBot, BTN_WEEK_1, BTN_END_WEEK, BTN_UNDO_LAST } = require('../MohtavaTelBot/bot');
+    const sentMessages = [];
+    const bot = new MohtavaTelegramBot({ adminId: 5490508090 });
+
+    bot.sendMessage = async (chatId, text, replyMarkup) => {
+      sentMessages.push({ chatId, text, replyMarkup });
+      return { ok: true };
+    };
+    bot.downloadTelegramFile = async (fileId, destFilePath) => {
+      fs.writeFileSync(destFilePath, Buffer.from('fake-image-bytes'));
+      return 'photos/file_1.jpg';
+    };
+
+    // 1. Reject unauthorized user
+    await bot.handleMessage({
+      chat: { id: 999 },
+      from: { id: 111222333 },
+      text: '/start',
+    });
+    assert.ok(sentMessages[sentMessages.length - 1].text.includes('دسترسی غیرمجاز'));
+
+    // 2. Authorized admin 5490508090 selects Week 1
+    await bot.handleMessage({
+      chat: { id: 5490508090 },
+      from: { id: 5490508090 },
+      text: BTN_WEEK_1,
+    });
+    assert.strictEqual(bot.adminState.mode, 'WAIT_TITLE');
+    assert.strictEqual(bot.adminState.week, 1);
+
+    // 3. Admin sends title
+    await bot.handleMessage({
+      chat: { id: 5490508090 },
+      from: { id: 5490508090 },
+      text: 'وصیت‌نامه و نقشه',
+    });
+    assert.strictEqual(bot.adminState.mode, 'WAIT_CONTENT');
+    assert.strictEqual(bot.adminState.currentTitle, 'وصیت‌نامه و نقشه');
+
+    // 4. Admin forwards 2 text messages and 1 photo (just like the user's screenshot)
+    await bot.handleMessage({
+      chat: { id: 5490508090 },
+      from: { id: 5490508090 },
+      text: 'بابا باریکلا خوشم اومد که این کاره این.. این نقشه خیلی مهمه',
+    });
+    await bot.handleMessage({
+      chat: { id: 5490508090 },
+      from: { id: 5490508090 },
+      text: 'من بهش گفتم که نقشه رو پیدا کردیم بهم جواب داد الان براتون میفرستم',
+    });
+    await bot.handleMessage({
+      chat: { id: 5490508090 },
+      from: { id: 5490508090 },
+      photo: [
+        { file_id: 'small_id', width: 90, height: 90 },
+        { file_id: 'large_id', width: 800, height: 1200 },
+      ],
+    });
+
+    // Verify via API that Week 1 now has 3 items in exact order (#1 text, #2 text, #3 image)
+    const week1Res = await fetch(`${serverUrl}/api/weekly-content?week=1`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const week1Data = await week1Res.json();
+    assert.strictEqual(week1Data.success, true);
+    assert.strictEqual(week1Data.data.length, 3);
+    assert.strictEqual(week1Data.data[0].step_order, 1);
+    assert.strictEqual(week1Data.data[0].content_type, 'text');
+    assert.strictEqual(week1Data.data[0].title, 'وصیت‌نامه و نقشه');
+    assert.strictEqual(week1Data.data[1].step_order, 2);
+    assert.strictEqual(week1Data.data[1].content_type, 'text');
+    assert.strictEqual(week1Data.data[2].step_order, 3);
+    assert.strictEqual(week1Data.data[2].content_type, 'image');
+    assert.ok(week1Data.data[2].payload.startsWith('/uploads/weekly/'));
+
+    // 5. Undo last step and finish week
+    await bot.handleMessage({
+      chat: { id: 5490508090 },
+      from: { id: 5490508090 },
+      text: BTN_UNDO_LAST,
+    });
+    await bot.handleMessage({
+      chat: { id: 5490508090 },
+      from: { id: 5490508090 },
+      text: BTN_END_WEEK,
+    });
+    assert.strictEqual(bot.adminState.mode, 'IDLE');
+  });
 });
+
 

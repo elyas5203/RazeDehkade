@@ -616,12 +616,153 @@
 .typing-line, .chat-feedback {
   font-size: 12px;
   color: var(--gold);
-  padding: 0 20px;
+  padding: 0 18px;
   line-height: 1.8;
 }
 
 .typing-line:not(:empty), .chat-feedback:not(:empty) {
   padding-block: 6px;
+}
+
+/* کارت نوار پیشرفت درصدی آپلود فایل + دکمه لغو ارسال */
+.upload-progress-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(14, 27, 43, 0.96), rgba(9, 18, 29, 0.98));
+  border: 1px solid rgba(52, 211, 153, 0.45);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45), 0 0 14px rgba(16, 185, 129, 0.14);
+}
+
+.upload-progress-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.upload-file-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.upload-file-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.upload-file-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.upload-file-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: #ecfdf5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.35;
+}
+
+.upload-file-status {
+  font-size: 10.5px;
+  color: #94a3b8;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-progress-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.upload-percent-badge {
+  min-width: 44px;
+  text-align: center;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  color: #6ee7b7;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.upload-cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(239, 68, 68, 0.55);
+  background: rgba(239, 68, 68, 0.16);
+  color: #fca5a5;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  line-height: 1.3;
+}
+
+.upload-cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.32);
+  border-color: #f87171;
+  color: #fef2f2;
+  transform: translateY(-1px);
+}
+
+.upload-progress-track {
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.upload-progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #10b981, #34d399, #fbbf24);
+  box-shadow: 0 0 10px rgba(52, 211, 153, 0.55);
+  transition: width 0.16s ease-out;
+}
+
+.upload-cancelled-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 7px;
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-size: 11.5px;
+  font-weight: 700;
 }
 
 /* کادر ارسال پیام و پنل ایموجی */

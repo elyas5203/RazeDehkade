@@ -237,6 +237,13 @@ function initAdminSocket() {
       }
     }
   });
+
+  // بروزرسانی بلادرنگ پنل پیام‌های آماده ۵ هفته‌ای هنگام ثبت محتوا در بات تلگرام (MohtavaTelBot)
+  socket.on('weekly_content_updated', (data) => {
+    if (!data || !data.week || Number(data.week) === Number(currentSelectedWeek)) {
+      loadWeeklyContent(currentSelectedWeek);
+    }
+  });
 }
 
 async function loadAdminSessions() {
@@ -1006,6 +1013,154 @@ function triggerAdminFileInput(acceptType) {
   }
 }
 
+let activeAdminUpload = null;
+
+function formatAdminFileSizeFa(bytes) {
+  const num = Number(bytes) || 0;
+  if (num < 1024) return `${num.toLocaleString('fa-IR')} بایت`;
+  if (num < 1024 * 1024) return `${Math.max(1, Math.round(num / 1024)).toLocaleString('fa-IR')} کیلوبایت`;
+  return `${(num / (1024 * 1024)).toLocaleString('fa-IR', { maximumFractionDigits: 1 })} مگابایت`;
+}
+
+function renderAdminUploadProgress(fileName, fileSize, percent = 0, statusText = 'در حال آپلود فایل...') {
+  const container = document.getElementById('admin-typing-indicator');
+  if (!container) return;
+  const clamped = Math.min(100, Math.max(0, Math.round(percent)));
+  const cleanName = fixMojibakeText(fileName || 'فایل');
+  container.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:6px;padding:8px 12px;margin:4px 10px;border-radius:8px;background:rgba(14,24,38,0.96);border:1px solid rgba(56,189,248,0.45);">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1;">
+          <span>📎</span>
+          <strong style="font-size:12px;color:#f8fafc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(cleanName)}</strong>
+          <small id="admin-upload-status-label" style="font-size:11px;color:#94a3b8;white-space:nowrap;">${escapeHtml(statusText)} (${formatAdminFileSizeFa(fileSize)})</small>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <span id="admin-upload-percent-badge" style="padding:2px 8px;border-radius:5px;background:rgba(56,189,248,0.18);border:1px solid rgba(56,189,248,0.45);color:#7dd3fc;font-size:11.5px;font-weight:800;">${clamped.toLocaleString('fa-IR')}٪</span>
+          <button type="button" onclick="cancelCurrentAdminUpload()" style="padding:3px 9px;border-radius:5px;border:1px solid rgba(239,68,68,0.55);background:rgba(239,68,68,0.18);color:#fca5a5;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;">✕ لغو ارسال</button>
+        </div>
+      </div>
+      <div style="width:100%;height:6px;border-radius:999px;background:rgba(255,255,255,0.08);overflow:hidden;">
+        <div id="admin-upload-progress-fill" style="height:100%;width:${clamped}%;background:linear-gradient(90deg,#0ea5e9,#34d399);transition:width 0.15s ease-out;"></div>
+      </div>
+    </div>
+  `;
+}
+
+function updateAdminUploadProgress(percent, statusText, fileSize) {
+  const clamped = Math.min(100, Math.max(0, Math.round(percent)));
+  const badge = document.getElementById('admin-upload-percent-badge');
+  const fill = document.getElementById('admin-upload-progress-fill');
+  const label = document.getElementById('admin-upload-status-label');
+  if (badge) badge.textContent = `${clamped.toLocaleString('fa-IR')}٪`;
+  if (fill) fill.style.width = `${clamped}%`;
+  if (label && statusText) label.textContent = fileSize ? `${statusText} (${formatAdminFileSizeFa(fileSize)})` : statusText;
+}
+
+function cancelCurrentAdminUpload() {
+  if (!activeAdminUpload) return;
+  const uploadToCancel = activeAdminUpload;
+  uploadToCancel.cancelled = true;
+  activeAdminUpload = null;
+
+  if (uploadToCancel.xhr) {
+    try { uploadToCancel.xhr.abort(); } catch (_) {}
+  }
+
+  if (uploadToCancel.uploadId) {
+    fetch('/api/upload/cancel', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({ uploadId: uploadToCancel.uploadId }),
+    }).catch(() => {});
+
+    if (socket && socket.connected) {
+      socket.emit('cancel_file_upload', { uploadId: uploadToCancel.uploadId });
+    }
+  }
+
+  const fileInput = document.getElementById('admin-file-input');
+  if (fileInput) fileInput.value = '';
+
+  const container = document.getElementById('admin-typing-indicator');
+  if (container) {
+    container.innerHTML = `<span style="color:#fca5a5;font-size:11.5px;padding:4px 12px;">⛔ ارسال فایل لغو شد.</span>`;
+    setTimeout(() => {
+      if (!activeAdminUpload) container.innerHTML = '';
+    }, 2200);
+  }
+}
+
+function adminBlobToBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const res = String(reader.result || '');
+      const commaIdx = res.indexOf(',');
+      resolve(commaIdx >= 0 ? res.slice(commaIdx + 1) : res);
+    };
+    reader.onerror = () => reject(new Error('خطا در خواندن فایل'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function sendAdminChunkViaXhr(payload, uploadState, onProgressRatio) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    uploadState.xhr = xhr;
+    xhr.open('POST', '/api/upload/chunk', true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.setRequestHeader('Authorization', `Bearer ${adminToken}`);
+    xhr.timeout = 25000;
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable && typeof onProgressRatio === 'function') {
+        onProgressRatio(Math.min(1, e.loaded / e.total));
+      }
+    };
+
+    xhr.onload = () => {
+      uploadState.xhr = null;
+      try {
+        const data = JSON.parse(xhr.responseText || '{}');
+        if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+          resolve(data);
+        } else {
+          const err = new Error(data.message || `HTTP ${xhr.status}`);
+          err.isValidationError = xhr.status === 400 && Boolean(data.message);
+          reject(err);
+        }
+      } catch (_) {
+        reject(new Error(`HTTP ${xhr.status}`));
+      }
+    };
+
+    xhr.onerror = () => { uploadState.xhr = null; reject(new Error('NETWORK_ERROR')); };
+    xhr.ontimeout = () => { uploadState.xhr = null; reject(new Error('TIMEOUT')); };
+    xhr.onabort = () => { uploadState.xhr = null; reject(new Error('ABORTED')); };
+
+    xhr.send(JSON.stringify(payload));
+  });
+}
+
+function sendAdminChunkViaSocket(payload) {
+  return new Promise((resolve, reject) => {
+    if (!socket || !socket.connected) return reject(new Error('SOCKET_DISCONNECTED'));
+    socket.timeout(20000).emit('upload_file_chunk', payload, (err, response) => {
+      if (err) return reject(new Error('SOCKET_TIMEOUT'));
+      if (response && response.success) resolve(response);
+      else {
+        const error = new Error((response && response.message) || 'خطا در آپلود سوکتی');
+        error.isValidationError = Boolean(response && response.message);
+        reject(error);
+      }
+    });
+  });
+}
+
 async function handleAdminFileUpload(event) {
   if (!activeSessionId) {
     alert('لطفا ابتدا یک جلسه را انتخاب کنید.');
@@ -1014,46 +1169,107 @@ async function handleAdminFileUpload(event) {
 
   const file = event.target.files[0];
   if (!file) return;
+
+  if (activeAdminUpload) {
+    cancelCurrentAdminUpload();
+  }
+
   const uploadSessionId = activeSessionId;
   const uploadSenderType = document.getElementById('admin-sender-type').value;
+  const cleanOriginalName = fixMojibakeText(file.name || 'فایل ارسالی');
 
-  const formData = new FormData();
-  formData.append('file', file);
+  const uploadState = {
+    uploadId: `adm_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
+    cancelled: false,
+    xhr: null,
+    fileName: cleanOriginalName,
+  };
+  activeAdminUpload = uploadState;
+
+  renderAdminUploadProgress(cleanOriginalName, file.size, 0, 'در حال ارسال...');
+
+  const CHUNK_SIZE = 160 * 1024;
+  const totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
+  let finalResult = null;
+  let useSocketTransport = false;
 
   try {
-    const res = await fetch('/api/upload', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${adminToken}`,
-      },
-      body: formData,
-    });
+    for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+      if (uploadState.cancelled) return;
+      const start = chunkIndex * CHUNK_SIZE;
+      const end = Math.min(file.size, start + CHUNK_SIZE);
+      const chunkBase64 = await adminBlobToBase64(file.slice(start, end));
+      if (uploadState.cancelled) return;
 
-    const data = await res.json();
-    if (data.success) {
-      const { fileUrl, fileName, messageType } = data.data;
-      const senderTypeSelect = document.getElementById('admin-sender-type');
+      const payload = {
+        uploadId: uploadState.uploadId,
+        chunkIndex,
+        totalChunks,
+        chunkBase64,
+        fileName: cleanOriginalName,
+        mimeType: file.type || 'application/octet-stream',
+      };
 
-      socket.emit('send_message', {
-        sessionId: uploadSessionId,
-        content: fileName,
-        senderType: uploadSenderType,
-        messageType: messageType,
-        fileUrl: fileUrl,
-        fileName: fileName,
-      }, (ack) => {
-        if (ack && !ack.success) {
-          alert(ack.message || 'خطا در ارسال فایل به چت');
+      let chunkResponse = null;
+      if (!useSocketTransport) {
+        try {
+          chunkResponse = await sendAdminChunkViaXhr(payload, uploadState, (chunkRatio) => {
+            if (uploadState.cancelled) return;
+            const pct = ((chunkIndex + chunkRatio) / totalChunks) * 100;
+            updateAdminUploadProgress(pct, 'در حال آپلود فایل...', file.size);
+          });
+        } catch (xhrErr) {
+          if (uploadState.cancelled || xhrErr.message === 'ABORTED') return;
+          if (xhrErr.isValidationError) throw xhrErr;
+          useSocketTransport = true;
         }
-      });
+      }
 
-      event.target.value = '';
-    } else {
-      alert('خطا در آپلود فایل: ' + data.message);
+      if (useSocketTransport && !chunkResponse) {
+        chunkResponse = await sendAdminChunkViaSocket(payload);
+        if (uploadState.cancelled) return;
+        const pct = ((chunkIndex + 1) / totalChunks) * 100;
+        updateAdminUploadProgress(pct, 'در حال ارسال امن فایل...', file.size);
+      }
+
+      if (chunkResponse && chunkResponse.completed && chunkResponse.data) {
+        finalResult = chunkResponse;
+      }
     }
   } catch (err) {
-    console.error('Error uploading admin file:', err);
-    alert('خطا در برقراری ارتباط با سرور هنگام آپلود.');
+    if (uploadState.cancelled || err.message === 'ABORTED') return;
+    activeAdminUpload = null;
+    const container = document.getElementById('admin-typing-indicator');
+    if (container) container.innerHTML = '';
+    alert('خطا در آپلود فایل: ' + (err.message || 'ارتباط با سرور برقرار نشد.'));
+    event.target.value = '';
+    return;
+  }
+
+  if (uploadState.cancelled) return;
+
+  if (finalResult && finalResult.success && finalResult.data) {
+    updateAdminUploadProgress(100, 'تکمیل شد — ارسال به جلسه...', file.size);
+    const { fileUrl, fileName, messageType } = finalResult.data;
+    const cleanName = fixMojibakeText(fileName || cleanOriginalName);
+
+    socket.emit('send_message', {
+      sessionId: uploadSessionId,
+      content: cleanName,
+      senderType: uploadSenderType,
+      messageType: messageType,
+      fileUrl: fileUrl,
+      fileName: cleanName,
+    }, (ack) => {
+      if (activeAdminUpload === uploadState) activeAdminUpload = null;
+      const container = document.getElementById('admin-typing-indicator');
+      if (container) container.innerHTML = '';
+      if (ack && !ack.success) {
+        alert(ack.message || 'خطا در ارسال فایل به چت');
+      }
+    });
+
+    event.target.value = '';
   }
 }
 
@@ -1222,6 +1438,7 @@ async function loadWeeklyContent(week = currentSelectedWeek) {
       const safeTitle = escapeHtml(item.title);
       const safeText = stepText ? escapeHtml(stepText) : '';
       const safeFile = stepFile ? escapeHtml(item.file_name || stepFile) : '';
+      const resolvedThumbUrl = item.content_type === 'image' ? safeFileUrl(stepFile) : '#';
 
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;">
@@ -1232,6 +1449,7 @@ async function loadWeeklyContent(week = currentSelectedWeek) {
         </div>
         <strong style="font-size:13px;color:#f8fafc;">${safeTitle}</strong>
         ${safeText ? `<p style="font-size:11px;color:#94a3b8;line-height:1.6;margin:0;max-height:54px;overflow:hidden;text-overflow:ellipsis;">${safeText}</p>` : ''}
+        ${resolvedThumbUrl !== '#' ? `<img src="${resolvedThumbUrl}" alt="${safeTitle}" style="width:100%;max-height:95px;object-fit:cover;border-radius:4px;border:1px solid #2d3538;margin-top:2px;" loading="lazy">` : ''}
         ${safeFile ? `<small style="font-size:10px;color:#64748b;direction:ltr;text-align:right;">${safeFile}</small>` : ''}
         <div style="display:flex;gap:6px;margin-top:4px;">
           ${item.content_type === 'text'
@@ -1296,10 +1514,13 @@ async function sendWeeklyMedia(item) {
       return;
     }
 
+    const senderTypeSelect = document.getElementById('admin-sender-type');
+    const selectedSenderType = senderTypeSelect ? senderTypeSelect.value : 'admin';
+
     socket.emit('send_message', {
       sessionId: activeSessionId,
       content: item.title,
-      senderType: 'admin',
+      senderType: selectedSenderType,
       messageType: item.content_type,
       fileUrl: resolvedUrl,
       fileName: item.file_name || item.title,

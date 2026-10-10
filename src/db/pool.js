@@ -24,6 +24,7 @@ class InMemoryDatabase {
       media_registry: [],
       teachers: [],
       weekly_content: [],
+      app_migrations: [],
     };
     this.autoIds = {
       admins: 1,
@@ -366,6 +367,11 @@ class InMemoryDatabase {
     }
 
     if (/^DELETE FROM canned_responses/i.test(cleanSql)) {
+      if (!/WHERE/i.test(cleanSql)) {
+        const count = this.tables.canned_responses.length;
+        this.tables.canned_responses = [];
+        return [{ affectedRows: count }, []];
+      }
       const [id] = params;
       const idx = this.tables.canned_responses.findIndex(x => x.id == id);
       let deleted = null;
@@ -501,6 +507,17 @@ class InMemoryDatabase {
     }
 
     if (/^DELETE FROM weekly_content/i.test(cleanSql)) {
+      if (!/WHERE/i.test(cleanSql)) {
+        const count = this.tables.weekly_content.length;
+        this.tables.weekly_content = [];
+        return [{ affectedRows: count }, []];
+      }
+      if (/WHERE week_number = \?/i.test(cleanSql)) {
+        const weekNum = params[0];
+        const before = this.tables.weekly_content.length;
+        this.tables.weekly_content = this.tables.weekly_content.filter(x => x.week_number != weekNum);
+        return [{ affectedRows: before - this.tables.weekly_content.length }, []];
+      }
       const [id] = params;
       const idx = this.tables.weekly_content.findIndex(x => x.id == id);
       let deleted = null;
@@ -508,6 +525,21 @@ class InMemoryDatabase {
         deleted = this.tables.weekly_content.splice(idx, 1)[0];
       }
       return [{ affectedRows: deleted ? 1 : 0 }, []];
+    }
+
+    // 15. App Migrations
+    if (/^SELECT .* FROM app_migrations/i.test(cleanSql)) {
+      const key = params[0];
+      const found = this.tables.app_migrations.filter(m => m.migration_key === key);
+      return [found, []];
+    }
+
+    if (/^INSERT INTO app_migrations/i.test(cleanSql)) {
+      const key = params[0];
+      if (!this.tables.app_migrations.some(m => m.migration_key === key)) {
+        this.tables.app_migrations.push({ migration_key: key, applied_at: new Date() });
+      }
+      return [{ affectedRows: 1 }, []];
     }
 
     return [[], []];

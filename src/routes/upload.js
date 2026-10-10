@@ -153,4 +153,167 @@ router.post('/', authenticateToken, (req, res) => {
   });
 });
 
+function resolveExtAndMessageType(rawFileName, rawMimeType) {
+  const cleanName = decodeOriginalFilename(rawFileName || 'file');
+  const mime = String(rawMimeType || '').toLowerCase();
+  let ext = path.extname(cleanName).toLowerCase();
+  if (!ext && mime && MIME_TO_IMAGE_EXT[mime]) {
+    ext = MIME_TO_IMAGE_EXT[mime];
+  }
+  const bareExt = ext.replace('.', '');
+
+  if (bareExt && BLOCKED_EXTENSIONS.has(bareExt)) {
+    return { allowed: false, error: `پسوند فایل انتخابی مجاز نمی‌باشد (${bareExt}).` };
+  }
+
+  const isAllowedExt = IMAGE_EXTENSIONS.has(bareExt) || AUDIO_VIDEO_EXTENSIONS.has(bareExt) || DOC_EXTENSIONS.has(bareExt);
+  const isSafeImageMime = mime.startsWith('image/') && !BLOCKED_EXTENSIONS.has(bareExt) && !mime.includes('html') && !mime.includes('script');
+  const isSafeMediaMime = (mime.startsWith('audio/') || mime.startsWith('video/')) && !BLOCKED_EXTENSIONS.has(bareExt);
+
+  if (!isAllowedExt && !isSafeImageMime && !isSafeMediaMime) {
+    return { allowed: false, error: `فرمت فایل انتخابی مجاز نمی‌باشد (${bareExt || mime || 'نامشخص'}).` };
+  }
+
+  if (!ext && isSafeImageMime) {
+    ext = '.jpg';
+  }
+
+  const finalBareExt = ext.replace('.', '');
+  const VIDEO_EXTS = new Set(['mp4', 'webm', '3gp', 'mov', 'mkv']);
+  let messageType = 'file';
+  if (IMAGE_EXTENSIONS.has(finalBareExt) || mime.startsWith('image/')) {
+    messageType = 'image';
+  } else if (VIDEO_EXTS.has(finalBareExt) && !mime.startsWith('audio/')) {
+    messageType = 'video';
+  } else if (AUDIO_VIDEO_EXTENSIONS.has(finalBareExt) || mime.startsWith('audio/')) {
+    messageType = 'voice';
+  }
+
+  return {
+    allowed: true,
+    cleanName,
+    ext: ext || '',
+    messageType,
+  };
+}
+
+function sanitizeUploadId(uploadId) {
+  const str = String(uploadId || '').trim();
+  if (!/^[a-zA-Z0-9_-]{6,80}$/.test(str)) return null;
+  return str;
+}
+
+function processChunkUpload(payload = {}) {
+  const safeId = sanitizeUploadId(payload.uploadId);
+  if (!safeId) {
+    return { success: false, message: 'شناسه آپلود نامعتبر است.' };
+  }
+
+  const chunkIndex = Number(payload.chunkIndex);
+  const totalChunks = Number(payload.totalChunks);
+  if (!Number.isInteger(chunkIndex) || chunkIndex < 0 || !Number.isInteger(totalChunks) || totalChunks < 1 || totalChunks > 500 || chunkIndex >= totalChunks) {
+    return { success: false, message: 'اطلاعات قطعه آپلود نامعتبر است.' };
+  }
+
+  const info = resolveExtAndMessageType(payload.fileName, payload.mimeType);
+  if (!info.allowed) {
+    return { success: false, message: info.error };
+  }
+
+  const rawBase64 = String(payload.chunkBase64 || '').replace(/^data:[^;]+;base64,/, '');
+  if (!rawBase64) {
+    return { success: false, message: 'داده قطعه خالی است.' };
+  }
+
+  const chunkBuffer = Buffer.from(rawBase64, 'base64');
+  if (!chunkBuffer.length || chunkBuffer.length > 2 * 1024 * 1024) {
+    return { success: false, message: 'اندازه قطعه نامعتبر است.' };
+  }
+
+  const tempPath = path.join(uploadDir, `.tmp-chunk-${safeId}`);
+
+  try {
+    if (chunkIndex === 0) {
+      fs.writeFileSync(tempPath, chunkBuffer);
+    } else {
+      if (!fs.existsSync(tempPath)) {
+        return { success: false, message: 'قطعات قبلی آپلود یافت نشد یا آپلود لغو شده است.' };
+      }
+      const stat = fs.statSync(tempPath);
+      if (stat.size + chunkBuffer.length > 25 * 1024 * 1024) {
+        try { fs.unlinkSync(tempPath); } catch (_) {}
+        return { success: false, message: 'حجم فایل بیشتر از حد مجاز (۲۵ مگابایت) است.' };
+      }
+      fs.appendFileSync(tempPath, chunkBuffer);
+    }
+
+    if (chunkIndex + 1 === totalChunks) {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const finalFilename = `file-${uniqueSuffix}${info.ext}`;
+      const finalPath = path.join(uploadDir, finalFilename);
+      fs.renameSync(tempPath, finalPath);
+      const finalStat = fs.statSync(finalPath);
+
+      return {
+        success: true,
+        completed: true,
+        message: 'فایل با موفقیت آپلود شد.',
+        data: {
+          fileUrl: `/uploads/${finalFilename}`,
+          fileName: info.cleanName,
+          messageType: info.messageType,
+          size: finalStat.size,
+        },
+      };
+    }
+
+    return {
+      success: true,
+      completed: false,
+      chunkIndex,
+    };
+  } catch (err) {
+    console.error('Chunk upload error:', err);
+    return { success: false, message: 'خطا در ذخیره‌سازی فایل روی سرور.' };
+  }
+}
+
+function cancelChunkUpload(uploadId) {
+  const safeId = sanitizeUploadId(uploadId);
+  if (!safeId) return { success: false, message: 'شناسه آپلود نامعتبر است.' };
+  const tempPath = path.join(uploadDir, `.tmp-chunk-${safeId}`);
+  try {
+    if (fs.existsSync(tempPath)) {
+      fs.unlinkSync(tempPath);
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, message: 'خطا در لغو آپلود.' };
+  }
+}
+
+/**
+ * POST /api/upload/chunk
+ * آپلود تکه‌ای (Chunked Upload) برای عبور از محدودیت حجم پروکسی/Nginx و نمایش درصد دقیق
+ */
+router.post('/chunk', authenticateToken, (req, res) => {
+  const result = processChunkUpload(req.body || {});
+  if (!result.success) {
+    return res.status(400).json(result);
+  }
+  return res.json(result);
+});
+
+/**
+ * POST /api/upload/cancel
+ * لغو آپلود در حال انجام و پاکسازی فایل موقت
+ */
+router.post('/cancel', authenticateToken, (req, res) => {
+  const result = cancelChunkUpload(req.body?.uploadId);
+  return res.json(result);
+});
+
+router.processChunkUpload = processChunkUpload;
+router.cancelChunkUpload = cancelChunkUpload;
+
 module.exports = router;

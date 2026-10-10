@@ -9,6 +9,7 @@ const { JWT_SECRET } = require('../middleware/auth');
 const Message = require('../models/Message');
 const Session = require('../models/Session');
 const SessionLog = require('../models/SessionLog');
+const uploadRoutes = require('../routes/upload');
 
 /**
  * راه‌اندازی و تعاریف Socket.io
@@ -638,6 +639,28 @@ function setupSocketIO(io) {
       } catch (err) {
         console.error('Error in toggle_chat_lock:', err);
         if (typeof ack === 'function') ack({ success: false, message: 'خطا در تغییر وضعیت قفل چت.' });
+      }
+    });
+
+    /**
+     * آپلود تکه‌ای فایل از طریق Socket.io (فال‌بک ضدخطای Nginx/پروکسی و نمایش درصد دقیق)
+     */
+    socket.on('upload_file_chunk', (data = {}, ack = () => {}) => {
+      try {
+        const result = uploadRoutes.processChunkUpload(data);
+        if (typeof ack === 'function') ack(result);
+      } catch (err) {
+        console.error('Error in socket upload_file_chunk:', err);
+        if (typeof ack === 'function') ack({ success: false, message: 'خطا در پردازش قطعه فایل.' });
+      }
+    });
+
+    socket.on('cancel_file_upload', (data = {}, ack = () => {}) => {
+      try {
+        const result = uploadRoutes.cancelChunkUpload(data?.uploadId);
+        if (typeof ack === 'function') ack(result);
+      } catch (err) {
+        if (typeof ack === 'function') ack({ success: false });
       }
     });
 

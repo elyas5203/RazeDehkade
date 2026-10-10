@@ -23,8 +23,8 @@ const server = http.createServer(app);
 app.disable('x-powered-by');
 app.use(compression());
 app.use(cors({ origin: process.env.CORS_ORIGIN || true }));
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // سرو کردن بهینه فایل‌های استاتیک پوشه public (کش بلندمدت برای عکس‌ها و فونت‌ها، نو-کش برای اسکریپت‌ها و استایل‌ها)
 app.use(express.static(path.join(__dirname, 'public'), {
@@ -77,6 +77,7 @@ app.get('/api/health', (req, res) => {
 
 // کانفیگ و راه‌اندازی Socket.io
 const io = new Server(server, {
+  maxHttpBufferSize: 5 * 1024 * 1024,
   cors: {
     origin: '*',
     methods: ['GET', 'POST'],
@@ -85,6 +86,8 @@ const io = new Server(server, {
 
 app.set('io', io);
 setupSocketIO(io);
+
+const { startMohtavaBot } = require('./MohtavaTelBot');
 
 const PORT = process.env.PORT || 3000;
 
@@ -97,6 +100,12 @@ async function startServer() {
       console.log(`🚀 سرور با موفقیت روی پورت ${PORT} اجرا شد.`);
       console.log(`🌐 آدرس تست پنل: http://localhost:${PORT}`);
       console.log(`==================================================`);
+
+      if (process.env.NODE_ENV !== 'test' && process.env.DISABLE_TELEGRAM_BOT !== 'true') {
+        startMohtavaBot({ io }).catch(err => {
+          console.error('⚠️ خطا در راه‌اندازی بات تلگرام MohtavaTelBot:', err.message);
+        });
+      }
     });
   } catch (err) {
     console.error('❌ خطا در راه‌اندازی سرور:', err);

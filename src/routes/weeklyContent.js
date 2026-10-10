@@ -91,6 +91,8 @@ router.post('/', async (req, res) => {
       file_name: item.file_name,
       created_at: item.created_at,
     };
+    const io = req.app.get('io');
+    if (io) io.to('admins').emit('weekly_content_updated', { week: week_number });
     res.status(201).json({ success: true, data: normalizedItem });
   } catch (error) {
     console.error('Error creating weekly content item:', error);
@@ -109,6 +111,8 @@ router.put('/:id', async (req, res) => {
     if (!updated) {
       return res.status(404).json({ success: false, message: 'مرحله پیدا نشد.' });
     }
+    const io = req.app.get('io');
+    if (io) io.to('admins').emit('weekly_content_updated', { week: updated.week_number });
     res.json({ success: true, data: updated });
   } catch (error) {
     console.error('Error updating weekly content item:', error);
@@ -127,6 +131,8 @@ router.delete('/:id', async (req, res) => {
     if (!deleted) {
       return res.status(404).json({ success: false, message: 'مرحله پیدا نشد.' });
     }
+    const io = req.app.get('io');
+    if (io) io.to('admins').emit('weekly_content_updated', { week: deleted.week_number });
     res.json({ success: true, message: 'مرحله با موفقیت حذف شد.', data: deleted });
   } catch (error) {
     console.error('Error deleting weekly content item:', error);
@@ -135,3 +141,4 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
+

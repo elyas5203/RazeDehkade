@@ -61,6 +61,23 @@ async function runMigrations() {
       await ensureColumn('teacher_phone', 'teacher_phone VARCHAR(20) NULL AFTER is_chat_locked');
     }
 
+    // ساخت جدول ردیابی مایگریشن‌های یک‌بار مصرف و پاکسازی پیام‌های آماده قدیمی
+    await query(`
+      CREATE TABLE IF NOT EXISTS app_migrations (
+        migration_key VARCHAR(100) PRIMARY KEY,
+        applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    const legacyClearKey = 'clear_legacy_canned_and_weekly_v1';
+    const existingMigration = await query('SELECT * FROM app_migrations WHERE migration_key = ?', [legacyClearKey]);
+    if (!existingMigration.rows || existingMigration.rows.length === 0) {
+      await query('DELETE FROM weekly_content');
+      await query('DELETE FROM canned_responses');
+      await query('INSERT INTO app_migrations (migration_key) VALUES (?)', [legacyClearKey]);
+      console.log('🧹 تمام پیام‌های آماده و مراحل پیش‌فرض قبلی به طور کامل پاکسازی شدند.');
+    }
+
     // ساخت ادمین اولیه در صورت عدم وجود
     const defaultAdminUsername = process.env.ADMIN_USERNAME || 'admin';
     const defaultAdminPassword = process.env.ADMIN_PASSWORD || 'admin123';
