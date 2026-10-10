@@ -58,14 +58,28 @@ app.use(['/uploads', '/media-library'], (req, res, next) => {
   next();
 });
 
-// سرو کردن بهینه فایل‌های استاتیک پوشه public (کش بلندمدت و استریم بدون بافر Nginx برای ویدیو، صوت، عکس و فونت‌ها)
+// سرو کردن بهینه فایل‌های استاتیک پوشه public (استریم آنی HTTP 206 بدون بافر Nginx/Cloudflare برای ویدیو و صوت)
 app.use(express.static(path.join(__dirname, 'public'), {
   etag: true,
   lastModified: true,
   acceptRanges: true,
   setHeaders: (res, filePath) => {
     if (MEDIA_STREAM_REGEX.test(filePath)) {
-      res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+      const ext = path.extname(filePath).toLowerCase();
+      if (ext === '.ogg' || ext === '.oga' || ext === '.opus') {
+        res.setHeader('Content-Type', 'audio/ogg');
+      } else if (ext === '.mp3') {
+        res.setHeader('Content-Type', 'audio/mpeg');
+      } else if (ext === '.m4a') {
+        res.setHeader('Content-Type', 'audio/mp4');
+      } else if (ext === '.aac') {
+        res.setHeader('Content-Type', 'audio/aac');
+      } else if (ext === '.wav') {
+        res.setHeader('Content-Type', 'audio/wav');
+      } else if (ext === '.mp4' || ext === '.m4v') {
+        res.setHeader('Content-Type', 'video/mp4');
+      }
+      res.setHeader('Cache-Control', 'public, max-age=3600, no-transform');
       res.setHeader('Accept-Ranges', 'bytes');
       res.setHeader('X-Accel-Buffering', 'no');
     } else if (STATIC_CACHE_REGEX.test(filePath)) {

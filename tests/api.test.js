@@ -987,6 +987,78 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     });
     assert.strictEqual(bot.adminState.mode, 'IDLE');
   });
+
+  it('17. Student UI hides admin-only bot titles and streams audio/video via HTTP 206 without tail-probe 100% false positive', async function () {
+    const userChatJs = fs.readFileSync(path.join(__dirname, '../public/assets/js/user-chat.js'), 'utf8');
+    const serverJs = fs.readFileSync(path.join(__dirname, '../server.js'), 'utf8');
+
+    // 1. Ensure competing JS fetch/blob cache locks and src swapping were removed
+    assert.ok(!userChatJs.includes('runProgressiveMediaJob'), 'Competing JS fetch chunk job should be removed');
+    assert.ok(!userChatJs.includes('swapToMemoryBlobIfNeeded'), 'Mid-playback blob src swap should be removed');
+    assert.ok(userChatJs.includes('function getPublicEvidenceTitle(msg)'), 'getPublicEvidenceTitle helper must exist');
+    assert.ok(userChatJs.includes('function getRealStreamBufferStats(player)'), 'getRealStreamBufferStats helper must exist');
+
+    // 2. Verify server.js configures unbuffered HTTP 206 streaming headers
+    assert.ok(serverJs.includes("res.setHeader('Accept-Ranges', 'bytes')"));
+    assert.ok(serverJs.includes("res.setHeader('X-Accel-Buffering', 'no')"));
+    assert.ok(serverJs.includes("res.setHeader('Cache-Control', 'public, max-age=3600, no-transform')"));
+
+    // 3. Extract and execute getPublicEvidenceTitle & getRealStreamBufferStats
+    const fnMatchTitle = userChatJs.match(/function getPublicEvidenceTitle\(msg\)\s*\{[\s\S]*?\n\}/);
+    const fnMatchStats = userChatJs.match(/function getRealStreamBufferStats\(player\)\s*\{[\s\S]*?\n\}/);
+    assert.ok(fnMatchTitle && fnMatchStats);
+
+    const sandbox = new Function(
+      'fixMojibakeText',
+      `${fnMatchTitle[0]}\n${fnMatchStats[0]}\nreturn { getPublicEvidenceTitle, getRealStreamBufferStats };`
+    )(v => String(v || ''));
+
+    // Admin title from bot ("بعد از 5 دقیقه بعد از دریافت شماره 1") must NEVER be returned for student view
+    assert.strictEqual(
+      sandbox.getPublicEvidenceTitle({
+        sender_type: 'admin',
+        message_type: 'voice',
+        content: 'بعد از 5 دقیقه بعد از دریافت شماره 1',
+      }),
+      'فایل صوتی محرمانه'
+    );
+    assert.strictEqual(
+      sandbox.getPublicEvidenceTitle({
+        sender_type: 'admin',
+        message_type: 'video',
+        content: 'ویدیو 1',
+      }),
+      'ویدیوی ضبط‌شده پرونده'
+    );
+
+    // Chrome tail-probe test: 284s (4:44) audio with [0..2s] buffered at start and [282.5..284s] metadata probe at end
+    const fakePlayerAtStart = {
+      duration: 284,
+      currentTime: 2,
+      ended: false,
+      buffered: {
+        length: 2,
+        start: (i) => (i === 0 ? 0 : 282.5),
+        end: (i) => (i === 0 ? 2 : 284),
+      },
+    };
+    const startStats = sandbox.getRealStreamBufferStats(fakePlayerAtStart);
+    assert.strictEqual(startStats.isComplete, false, 'Must NOT report 100% complete on tail probe');
+    assert.ok(startStats.percent <= 2, `Expected <= 2% buffered at 0:02, got ${startStats.percent}%`);
+
+    // Fully buffered player test: [0..284s]
+    const fakePlayerFull = {
+      duration: 284,
+      currentTime: 45,
+      ended: false,
+      buffered: {
+        length: 1,
+        start: () => 0,
+        end: () => 284,
+      },
+    };
+    const fullStats = sandbox.getRealStreamBufferStats(fakePlayerFull);
+    assert.strictEqual(fullStats.isComplete, true);
+    assert.strictEqual(fullStats.percent, 100);
+  });
 });
-
-

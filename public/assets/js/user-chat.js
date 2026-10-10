@@ -398,12 +398,11 @@ function renderMessage(msg, options = {}) {
     if (box.querySelector(`[data-message-id="${msgId}"]`)) return;
 
     // نمایش کارت هشدار کوچک، شکیل و جمع‌وجور در چت که بعد از ۱۰ ثانیه خودکار حذف می‌شود
+    // عناوین داخلی ادمین در بات تلگرام هرگز نباید به مخاطب نمایش داده شوند
     const alertDiv = document.createElement('div');
     alertDiv.dataset.messageId = msgId;
     alertDiv.className = 'message-bubble evidence-alert-card';
-    const rawSub = (msg.content && msg.content !== msg.file_name)
-      ? fixMojibakeText(msg.content)
-      : 'در برد شواهد (سمت چپ) پین شد';
+    const rawSub = `${getPublicEvidenceTitle(msg)} — در برد شواهد (سمت چپ) پین شد`;
 
     alertDiv.innerHTML = `
       <div class="evidence-alert-inner">
@@ -504,213 +503,86 @@ function openUserMediaById(messageId) {
 }
 window.openUserMediaById = openUserMediaById;
 
-// ============================================================================
-// موتور استریم پیش‌رونده و دانلود خودکار پس‌زمینه (Play-While-Downloading)
-// برای شروع آنی ویدیو/صوت و جلوگیری کامل از گیر کردن وسط پخش
-// ============================================================================
-const mediaBlobCache = new Map();
-const mediaDownloadJobs = new Map();
-const preloadedLinks = new Set();
-const mediaWarmupQueue = [];
-let isWarmupProcessing = false;
-
-function injectMediaPreloadHint(url, kind) {
-  if (!url || url === '#' || preloadedLinks.has(url)) return;
-  preloadedLinks.add(url);
-  try {
-    const link = document.createElement('link');
-    link.rel = 'preload';
-    link.as = kind === 'video' ? 'video' : 'audio';
-    link.href = url;
-    document.head?.appendChild(link);
-  } catch (_) {}
-}
-
-function notifyMediaJobListeners(job) {
-  if (!job || !job.listeners) return;
-  for (const fn of job.listeners) {
-    try { fn(job); } catch (_) {}
+/**
+ * تولید عنوان استاندارد و داستانی برای نمایش به مخاطب/دانش‌آموز
+ * عناوینی که ادمین در بات تلگرام (MohtavaTelBot) وارد می‌کند (مثل «بعد از 5 دقیقه...»)
+ * صرفاً راهنمای داخلی ادمین هستند و هرگز نباید به مخاطب نمایش داده شوند.
+ */
+function getPublicEvidenceTitle(msg) {
+  if (!msg) return 'مدرک پرونده';
+  if (msg.sender_type === 'user') {
+    return fixMojibakeText(msg.content || msg.file_name || 'تصویر ارسالی');
+  }
+  switch (msg.message_type) {
+    case 'voice':
+      return 'فایل صوتی محرمانه';
+    case 'video':
+      return 'ویدیوی ضبط‌شده پرونده';
+    case 'image':
+      return 'تصویر مدرک پرونده';
+    case 'file':
+      return 'سند پیوست پرونده';
+    default:
+      return 'مدرک محرمانه پرونده';
   }
 }
+window.getPublicEvidenceTitle = getPublicEvidenceTitle;
 
-async function runProgressiveMediaJob(job) {
-  const CHUNK_BYTES = 1024 * 1024; // قطعات ۱ مگابایتی برای دانلود پیوسته بدون اشغال پهنای باند لحظه اول پخش
-  const MAX_BLOB_SIZE = 100 * 1024 * 1024; // نگهداری در حافظه RAM تا سقف ۱۰۰ مگابایت
-  let offset = 0;
-  let totalBytes = 0;
-  let mimeType = job.kind === 'video' ? 'video/mp4' : 'audio/mpeg';
-  const chunks = [];
-  let keepChunksInRam = true;
-
-  // اگر کاربر همین الان مودال ویدیو را باز کرده، ۱.۲ ثانیه اول را کامل به تگ <video> بده تا فریم اول درجا پخش شود
-  if (job.highPriority) {
-    await new Promise(r => setTimeout(r, 900));
-  } else {
-    await new Promise(r => setTimeout(r, 400));
-  }
-
+/**
+ * محاسبه دقیق درصد بافر استریم آنلاین (HTTP 206 Byte-Range)
+ * با حذف بازه کوچک Tail-Probe انتهای فایل در مرورگر کروم تا هرگز در ثانیه اول به اشتباه ۱۰۰٪ نشان ندهد.
+ */
+function getRealStreamBufferStats(player) {
   try {
-    while (!job.aborted) {
-      const endByte = totalBytes > 0
-        ? Math.min(offset + CHUNK_BYTES - 1, totalBytes - 1)
-        : offset + CHUNK_BYTES - 1;
+    const dur = Number(player?.duration);
+    if (!dur || !Number.isFinite(dur) || dur <= 0 || !player.buffered || player.buffered.length === 0) {
+      return { percent: 0, contiguousEnd: 0, isComplete: false };
+    }
+    const current = Number(player.currentTime) || 0;
+    let totalBufferedSec = 0;
+    let contiguousEnd = current;
 
-      const res = await fetch(job.url, {
-        method: 'GET',
-        headers: { Range: `bytes=${offset}-${endByte}` },
-        cache: 'force-cache',
-      });
+    const ranges = [];
+    for (let i = 0; i < player.buffered.length; i++) {
+      const start = Math.max(0, player.buffered.start(i));
+      const end = Math.min(dur, player.buffered.end(i));
+      if (end <= start) continue;
 
-      if (!res.ok && res.status !== 206) {
-        break;
-      }
+      // کروم هنگام باز کردن استریم صوت/ویدیو، چند کیلوبایت انتهای فایل را هم برای متادیتا می‌خواند.
+      // اگر بازه‌ای در انتهای فایل باشد که به بازه اول وصل نیست و طولش کوتاه است، نباید ۱۰۰٪ حساب شود!
+      const isDetachedTailProbe =
+        i > 0 &&
+        start > current + 4 &&
+        end >= dur - 2.5 &&
+        (end - start) < Math.min(6, Math.max(2.5, dur * 0.04));
 
-      const contentType = res.headers.get('content-type');
-      if (contentType) mimeType = contentType.split(';')[0].trim();
+      if (isDetachedTailProbe) continue;
 
-      // اگر سرور به جای 206 کل فایل (200) را استریم کرد، با ReadableStream درصد را جلو ببر
-      if (res.status === 200) {
-        const contentLen = Number(res.headers.get('content-length')) || 0;
-        totalBytes = contentLen;
-        job.totalBytes = totalBytes;
-        if (totalBytes > MAX_BLOB_SIZE) keepChunksInRam = false;
-
-        if (res.body && typeof res.body.getReader === 'function') {
-          const reader = res.body.getReader();
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            if (value) {
-              offset += value.byteLength;
-              job.loadedBytes = offset;
-              if (keepChunksInRam) chunks.push(value);
-              if (totalBytes > 0) {
-                job.percent = Math.min(99, Math.round((offset / totalBytes) * 100));
-                notifyMediaJobListeners(job);
-              }
-            }
-          }
-        } else {
-          const buf = new Uint8Array(await res.arrayBuffer());
-          offset = buf.byteLength;
-          totalBytes = offset;
-          if (keepChunksInRam && totalBytes <= MAX_BLOB_SIZE) chunks.push(buf);
-        }
-        break;
-      }
-
-      // پاسخ استاندارد 206 Partial Content
-      const contentRange = res.headers.get('content-range') || '';
-      const match = contentRange.match(/\/(\d+)$/);
-      if (match) {
-        totalBytes = Number(match[1]) || 0;
-        job.totalBytes = totalBytes;
-        if (totalBytes > MAX_BLOB_SIZE) {
-          keepChunksInRam = false;
-          chunks.length = 0;
-        }
-      }
-
-      const buf = new Uint8Array(await res.arrayBuffer());
-      if (!buf.byteLength) break;
-
-      if (keepChunksInRam) {
-        chunks.push(buf);
-      }
-
-      offset += buf.byteLength;
-      job.loadedBytes = offset;
-
-      if (totalBytes > 0) {
-        job.percent = Math.min(99, Math.round((offset / totalBytes) * 100));
+      if (ranges.length > 0 && start <= ranges[ranges.length - 1].end + 0.25) {
+        ranges[ranges.length - 1].end = Math.max(ranges[ranges.length - 1].end, end);
       } else {
-        job.percent = Math.min(95, job.percent + 10);
+        ranges.push({ start, end });
       }
-      notifyMediaJobListeners(job);
-
-      if (totalBytes > 0 && offset >= totalBytes) {
-        break;
-      }
-      if (buf.byteLength < CHUNK_BYTES && !totalBytes) {
-        break;
-      }
-
-      // مکث بسیار کوتاه بین قطعات تا استریم زنده تگ <video> همیشه اولویت اول شبکه باشد
-      await new Promise(r => setTimeout(r, job.highPriority ? 60 : 180));
     }
 
-    if (!job.aborted && (totalBytes === 0 || offset >= totalBytes)) {
-      job.percent = 100;
-      job.done = true;
-      if (keepChunksInRam && chunks.length > 0) {
-        try {
-          const blob = new Blob(chunks, { type: mimeType });
-          const blobUrl = URL.createObjectURL(blob);
-          job.blobUrl = blobUrl;
-          mediaBlobCache.set(job.url, blobUrl);
-        } catch (_) {}
+    for (const r of ranges) {
+      totalBufferedSec += (r.end - r.start);
+      if (r.start <= current + 1.5 && r.end > contiguousEnd) {
+        contiguousEnd = r.end;
       }
-      notifyMediaJobListeners(job);
     }
+
+    const rawPct = Math.round((totalBufferedSec / dur) * 100);
+    const isFullyCovered = ranges.length === 1 && ranges[0].start <= 0.5 && ranges[0].end >= dur - 0.5;
+    const isComplete = Boolean(player.ended || isFullyCovered || rawPct >= 99);
+    const percent = isComplete ? 100 : Math.min(99, Math.max(0, rawPct));
+
+    return { percent, contiguousEnd, isComplete };
   } catch (_) {
-    // در صورت خطای شبکه موقت، پخش استریم اصلی <video> بدون اختلال ادامه می‌یابد
-  } finally {
-    job.running = false;
+    return { percent: 0, contiguousEnd: 0, isComplete: false };
   }
 }
-
-async function processWarmupQueue() {
-  if (isWarmupProcessing) return;
-  isWarmupProcessing = true;
-  try {
-    while (mediaWarmupQueue.length > 0) {
-      const nextJob = mediaWarmupQueue.shift();
-      if (!nextJob || nextJob.done || nextJob.running) continue;
-      nextJob.running = true;
-      await runProgressiveMediaJob(nextJob);
-    }
-  } finally {
-    isWarmupProcessing = false;
-  }
-}
-
-function ensureProgressiveMediaDownload(url, kind = 'video', highPriority = false) {
-  if (!url || url === '#') return null;
-  injectMediaPreloadHint(url, kind);
-
-  let job = mediaDownloadJobs.get(url);
-  if (!job) {
-    job = {
-      url,
-      kind,
-      percent: mediaBlobCache.has(url) ? 100 : 0,
-      loadedBytes: 0,
-      totalBytes: 0,
-      done: mediaBlobCache.has(url),
-      blobUrl: mediaBlobCache.get(url) || null,
-      highPriority: Boolean(highPriority),
-      running: false,
-      aborted: false,
-      listeners: new Set(),
-    };
-    mediaDownloadJobs.set(url, job);
-  } else if (highPriority) {
-    job.highPriority = true;
-  }
-
-  if (!job.done && !job.running) {
-    if (highPriority) {
-      // اگر کاربر روی ویدیو کلیک کرده، فوراً دانلود پیش‌رونده همان ویدیو را آغاز کن
-      job.running = true;
-      runProgressiveMediaJob(job);
-    } else if (!mediaWarmupQueue.includes(job)) {
-      mediaWarmupQueue.push(job);
-      processWarmupQueue();
-    }
-  }
-
-  return job;
-}
+window.getRealStreamBufferStats = getRealStreamBufferStats;
 
 function evidenceFileIcon(type, label) {
   const paths = {
@@ -723,6 +595,7 @@ function evidenceFileIcon(type, label) {
 
 function evidenceMediaMarkup(msg, expanded = false) {
   const url = safeFileUrl(msg.file_url);
+  const publicTitle = getPublicEvidenceTitle(msg);
   if (msg.message_type === 'image') {
     if (!expanded) {
       return `<img src="${url}" alt="" loading="lazy">`;
@@ -748,29 +621,27 @@ function evidenceMediaMarkup(msg, expanded = false) {
           <span class="zoom-hint">اسکرول موس برای زوم · کشیدن (Drag) برای جابه‌جایی روی عکس</span>
         </div>
         <div class="zoom-viewport" id="zoomViewport">
-          <img id="zoomTargetImage" src="${url}" alt="${escapeHtml(fixMojibakeText(msg.content || 'تصویر مدرک'))}" draggable="false">
+          <img id="zoomTargetImage" src="${url}" alt="${escapeHtml(publicTitle)}" draggable="false">
         </div>
       </div>
     `;
   }
   if (msg.message_type === 'video') {
     if (!expanded) return evidenceFileIcon('video', 'فیلم ضبط‌شده');
-    const activeSrc = mediaBlobCache.get(url) || url;
-    const isCached = mediaBlobCache.has(url);
     return `
       <div class="evidence-media-stage" id="evidenceMediaStage" data-media-kind="video">
-        <div class="media-loading${isCached ? ' is-ready' : ''}" id="mediaLoadingOverlay">
+        <div class="media-loading" id="mediaLoadingOverlay">
           <span class="media-loading-spinner"></span>
-          <span id="mediaLoadingText">در حال بارگذاری اطلاعات فیلم…</span>
+          <span id="mediaLoadingText">در حال اتصال آنی به استریم ویدیو…</span>
         </div>
-        <video id="evidenceMediaPlayer" controls playsinline webkit-playsinline preload="auto" autoplay src="${activeSrc}" data-original-url="${url}"></video>
+        <video id="evidenceMediaPlayer" controls playsinline webkit-playsinline preload="auto" autoplay src="${url}" data-original-url="${url}"></video>
         <div class="media-stream-bar" id="mediaStreamBar">
           <div class="media-stream-info">
-            <span class="media-stream-status" id="mediaBufferStatus">${isCached ? '✅ کل ویدیو در حافظه مرورگر آماده است — پخش بدون هیچ‌گونه توقف' : '⚡ در حال پخش و دانلود پیوسته در پس‌زمینه برای جلوگیری از گیر کردن…'}</span>
-            <span class="media-stream-percent" id="mediaBufferPercent">${isCached ? '۱۰۰٪' : '۰٪'}</span>
+            <span class="media-stream-status" id="mediaBufferStatus">⚡ پخش آنلاین (استریم زنده) — در حال دریافت و بافر هم‌زمان…</span>
+            <span class="media-stream-percent" id="mediaBufferPercent">۰٪</span>
           </div>
           <div class="media-stream-track">
-            <div class="media-stream-fill${isCached ? ' is-complete' : ''}" id="mediaBufferFill" style="width: ${isCached ? '100%' : '0%'}"></div>
+            <div class="media-stream-fill" id="mediaBufferFill" style="width: 0%"></div>
           </div>
         </div>
       </div>
@@ -778,28 +649,26 @@ function evidenceMediaMarkup(msg, expanded = false) {
   }
   if (msg.message_type === 'voice') {
     if (!expanded) return evidenceFileIcon('voice', 'صدای ضبط‌شده');
-    const activeSrc = mediaBlobCache.get(url) || url;
-    const isCached = mediaBlobCache.has(url);
     return `
       <div class="evidence-media-stage is-voice" id="evidenceMediaStage" data-media-kind="voice">
-        <div class="media-loading${isCached ? ' is-ready' : ''}" id="mediaLoadingOverlay">
+        <div class="media-loading is-ready" id="mediaLoadingOverlay" hidden>
           <span class="media-loading-spinner"></span>
-          <span id="mediaLoadingText">در حال بارگذاری اطلاعات صدا…</span>
+          <span id="mediaLoadingText">در حال اتصال آنی به استریم صوتی…</span>
         </div>
-        <audio id="evidenceMediaPlayer" controls playsinline webkit-playsinline preload="auto" autoplay src="${activeSrc}" data-original-url="${url}"></audio>
+        <audio id="evidenceMediaPlayer" controls playsinline webkit-playsinline preload="auto" autoplay src="${url}" data-original-url="${url}"></audio>
         <div class="media-stream-bar" id="mediaStreamBar">
           <div class="media-stream-info">
-            <span class="media-stream-status" id="mediaBufferStatus">${isCached ? '✅ فایل صوتی کامل بافر شد — پخش بدون توقف' : '⚡ در حال بافر و دانلود پیوسته فایل صوتی…'}</span>
-            <span class="media-stream-percent" id="mediaBufferPercent">${isCached ? '۱۰۰٪' : '۰٪'}</span>
+            <span class="media-stream-status" id="mediaBufferStatus">⚡ پخش آنلاین (استریم زنده) — در حال دریافت و بافر هم‌زمان…</span>
+            <span class="media-stream-percent" id="mediaBufferPercent">۰٪</span>
           </div>
           <div class="media-stream-track">
-            <div class="media-stream-fill${isCached ? ' is-complete' : ''}" id="mediaBufferFill" style="width: ${isCached ? '100%' : '0%'}"></div>
+            <div class="media-stream-fill" id="mediaBufferFill" style="width: 0%"></div>
           </div>
         </div>
       </div>
     `;
   }
-  return expanded ? `<div class="evidence-file-icon">سند</div><a class="download-evidence" href="${url}" download>دریافت ${escapeHtml(fixMojibakeText(msg.file_name || 'فایل'))}</a>` : evidenceFileIcon('file', 'سند پرونده');
+  return expanded ? `<div class="evidence-file-icon">سند</div><a class="download-evidence" href="${url}" download>دریافت ${escapeHtml(publicTitle)}</a>` : evidenceFileIcon('file', 'سند پرونده');
 }
 
 function renderEvidence(msg, options = {}) {
@@ -813,18 +682,12 @@ function renderEvidence(msg, options = {}) {
   card.className = 'evidence-card';
   card.dataset.evidenceId = Number(msg.id);
   card.dataset.kind = msg.message_type;
-  const cleanTitle = fixMojibakeText(msg.content || msg.file_name || 'مدرک بدون عنوان');
+  const cleanTitle = getPublicEvidenceTitle(msg);
   card.innerHTML = `${evidenceMediaMarkup(msg)}<h3>${escapeHtml(cleanTitle)}</h3><small><span>مدرک ${Number(msg.id).toLocaleString('fa-IR')}</span><span>${new Date(msg.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span></small>`;
   card.addEventListener('click', () => openEvidence(msg));
   const later = [...grid.children].find(child => Number(child.dataset.evidenceId) > Number(msg.id));
   grid.insertBefore(card, later || null);
   document.getElementById('evidence-count').textContent = `${grid.querySelectorAll('.evidence-card').length.toLocaleString('fa-IR')} مدرک`;
-
-  // پیش‌دانلود و بافر خودکار ویدیو و ویس در پس‌زمینه به محض قرار گرفتن روی برد مدارک
-  if (msg.message_type === 'video' || msg.message_type === 'voice') {
-    const mediaUrl = safeFileUrl(msg.file_url);
-    ensureProgressiveMediaDownload(mediaUrl, msg.message_type, false);
-  }
 
   if (typeof applyEvidenceFilter === 'function') applyEvidenceFilter();
   if (!options.skipThreads) {
@@ -1023,10 +886,8 @@ function initEvidenceMediaPlayer(msg) {
 
   if (!player) return;
 
-  const url = safeFileUrl(msg.file_url);
   const isVoice = msg.message_type === 'voice';
-  let switchedToBlob = Boolean(mediaBlobCache.has(url) && player.src === mediaBlobCache.get(url));
-  let stallRecoverTimer = null;
+  let maxObservedPct = 0;
 
   const hideLoading = () => {
     if (loadingEl && !loadingEl.classList.contains('is-ready')) {
@@ -1035,52 +896,17 @@ function initEvidenceMediaPlayer(msg) {
     }
   };
 
-  if (player.readyState >= 1 || switchedToBlob) {
+  if (isVoice || player.readyState >= 1) {
     hideLoading();
   }
 
-  const getNativeBufferPercent = () => {
-    try {
-      const dur = player.duration;
-      if (!dur || !Number.isFinite(dur) || dur <= 0 || !player.buffered || player.buffered.length === 0) {
-        return 0;
-      }
-      let maxEnd = 0;
-      for (let i = 0; i < player.buffered.length; i++) {
-        const end = player.buffered.end(i);
-        if (end > maxEnd) maxEnd = end;
-      }
-      return Math.min(100, Math.round((maxEnd / dur) * 100));
-    } catch (_) {
-      return 0;
-    }
-  };
-
-  const job = ensureProgressiveMediaDownload(url, msg.message_type, true);
-
-  const swapToMemoryBlobIfNeeded = () => {
-    if (switchedToBlob) return;
-    const blobUrl = mediaBlobCache.get(url) || job?.blobUrl;
-    if (!blobUrl) return;
-    try {
-      const savedTime = player.currentTime || 0;
-      const wasPaused = player.paused;
-      const savedRate = player.playbackRate || 1;
-      switchedToBlob = true;
-      player.src = blobUrl;
-      player.currentTime = savedTime;
-      player.playbackRate = savedRate;
-      if (!wasPaused) {
-        player.play().catch(() => {});
-      }
-    } catch (_) {}
-  };
-
   const updateStreamUi = () => {
-    const nativePct = getNativeBufferPercent();
-    const jobPct = job ? Number(job.percent) || 0 : 0;
-    const isComplete = Boolean(mediaBlobCache.has(url) || job?.done || nativePct >= 100);
-    const effectivePct = isComplete ? 100 : Math.min(99, Math.max(nativePct, jobPct));
+    const stats = getRealStreamBufferStats(player);
+    const isComplete = stats.isComplete;
+    if (stats.percent > maxObservedPct) {
+      maxObservedPct = stats.percent;
+    }
+    const effectivePct = isComplete ? 100 : maxObservedPct;
 
     if (fillEl) {
       fillEl.style.width = `${effectivePct}%`;
@@ -1092,12 +918,20 @@ function initEvidenceMediaPlayer(msg) {
     if (statusEl) {
       if (isComplete) {
         statusEl.textContent = isVoice
-          ? '✅ فایل صوتی کامل دانلود و بافر شد — پخش بدون توقف'
-          : '✅ کل ویدیو در حافظه مرورگر بافر و دانلود شد — پخش بدون هیچ‌گونه توقف';
+          ? '✅ پخش آنلاین صوتی — کل فایل در حین پخش کامل بافر شد (۱۰۰٪)'
+          : '✅ پخش آنلاین ویدیو — کل ویدیو در حین پخش کامل بافر شد (۱۰۰٪)';
+      } else if (!player.paused && player.currentTime > 0) {
+        statusEl.textContent = isVoice
+          ? `🟢 در حال پخش آنلاین صوت و دانلود هم‌زمان در پس‌زمینه (${effectivePct.toLocaleString('fa-IR')}٪ بافر شده)`
+          : `🟢 در حال پخش آنلاین ویدیو و دانلود هم‌زمان در پس‌زمینه (${effectivePct.toLocaleString('fa-IR')}٪ بافر شده)`;
       } else if (effectivePct > 0) {
         statusEl.textContent = isVoice
-          ? `⚡ در حال پخش و دانلود هم‌زمان صوت (${effectivePct.toLocaleString('fa-IR')}٪ آماده)`
-          : `⚡ در حال پخش و دانلود خودکار ویدیو برای جلوگیری از گیر کردن (${effectivePct.toLocaleString('fa-IR')}٪)`;
+          ? `⚡ آماده پخش آنلاین صوت (${effectivePct.toLocaleString('fa-IR')}٪ بافر شده — ادامه دانلود حین پخش)`
+          : `⚡ آماده پخش آنلاین ویدیو (${effectivePct.toLocaleString('fa-IR')}٪ بافر شده — ادامه دانلود حین پخش)`;
+      } else {
+        statusEl.textContent = isVoice
+          ? '⚡ در حال اتصال آنی به استریم صوتی و شروع پخش آنلاین…'
+          : '⚡ در حال اتصال آنی به استریم ویدیو و شروع پخش آنلاین…';
       }
     }
   };
@@ -1108,26 +942,12 @@ function initEvidenceMediaPlayer(msg) {
   };
 
   const onWaiting = () => {
-    clearTimeout(stallRecoverTimer);
-    if (mediaBlobCache.has(url) && !switchedToBlob) {
-      swapToMemoryBlobIfNeeded();
-      hideLoading();
-      return;
-    }
-    stallRecoverTimer = setTimeout(() => {
-      if (mediaBlobCache.has(url) && !switchedToBlob) {
-        swapToMemoryBlobIfNeeded();
-      }
-    }, 650);
-  };
-
-  const onJobProgress = () => {
     updateStreamUi();
-    // اگر تگ ویدیو در حالت انتظار/بافر گیر کرده بود و دانلود کامل شد، بلافاصله سورس را از RAM جایگزین کن
-    if (job?.done && job?.blobUrl && !switchedToBlob && (player.readyState < 3 || player.networkState === 2)) {
-      if (player.paused && player.currentTime === 0) {
-        swapToMemoryBlobIfNeeded();
-      }
+    if (statusEl && !player.paused) {
+      const pctText = maxObservedPct > 0 ? ` (${maxObservedPct.toLocaleString('fa-IR')}٪)` : '';
+      statusEl.textContent = isVoice
+        ? `⏳ در حال بافر ادامه استریم آنلاین صوتی${pctText}…`
+        : `⏳ در حال بافر ادامه استریم آنلاین ویدیو${pctText}…`;
     }
   };
 
@@ -1138,56 +958,53 @@ function initEvidenceMediaPlayer(msg) {
   player.addEventListener('playing', onReadyEvent);
   player.addEventListener('progress', updateStreamUi);
   player.addEventListener('timeupdate', onReadyEvent);
+  player.addEventListener('seeking', updateStreamUi);
+  player.addEventListener('seeked', onReadyEvent);
+  player.addEventListener('ended', onReadyEvent);
   player.addEventListener('waiting', onWaiting);
   player.addEventListener('stalled', onWaiting);
   player.addEventListener('error', () => {
-    if (loadingEl) {
-      loadingEl.classList.remove('is-ready');
-      loadingEl.hidden = false;
-      const txt = document.getElementById('mediaLoadingText');
-      if (txt) txt.textContent = 'در حال تلاش مجدد برای اتصال به استریم رسانه…';
+    if (statusEl) {
+      statusEl.textContent = '⚠️ اختلال موقت در ارتباط شبکه؛ لطفاً روی دکمه پخش کلیک کنید.';
     }
-    if (mediaBlobCache.has(url) && !switchedToBlob) {
-      swapToMemoryBlobIfNeeded();
-    }
+    hideLoading();
   });
-
-  if (job && job.listeners) {
-    job.listeners.add(onJobProgress);
-  }
 
   updateStreamUi();
 
-  // شروع خودکار پخش به محض باز شدن مودال
+  // شروع درجا و آنی پخش به محض کلیک کاربر روی مدرک (استریم مستقیم HTTP 206)
   const playPromise = player.play();
   if (playPromise && typeof playPromise.catch === 'function') {
     playPromise.catch(() => {
-      // اگر مرورگر پخش خودکار با صدا را محدود کرد، حداقل لودینگ را پس از آماده شدن متادیتا بردار
-      if (player.readyState >= 1) hideLoading();
+      hideLoading();
+      updateStreamUi();
     });
   }
 
-  const safetyTimer = setTimeout(() => {
+  const bufferPollTimer = setInterval(() => {
+    if (!document.body.contains(player)) {
+      clearInterval(bufferPollTimer);
+      return;
+    }
     if (player.readyState >= 1 || player.duration > 0) {
       hideLoading();
     }
-  }, 1200);
+    updateStreamUi();
+  }, 250);
 
   activeMediaCleanup = () => {
-    clearTimeout(safetyTimer);
-    clearTimeout(stallRecoverTimer);
-    if (job && job.listeners) {
-      job.listeners.delete(onJobProgress);
-    }
+    clearInterval(bufferPollTimer);
     try {
       player.pause();
+      player.removeAttribute('src');
+      player.load();
     } catch (_) {}
   };
 }
 
 function openEvidence(msg) {
   const dialog = document.getElementById('evidence-dialog');
-  const titleText = fixMojibakeText(msg.content || msg.file_name || 'مدرک پرونده');
+  const titleText = getPublicEvidenceTitle(msg);
   const subtitleText = msg.sender_type === 'user'
     ? 'تصویر ارسالی توسط گروه شما در گفتگوی پرونده.'
     : 'ارسال‌شده از مرکز فرماندهی برای بررسی گروه.';
