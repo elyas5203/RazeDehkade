@@ -393,6 +393,21 @@ function updateActiveHeader() {
   }
 }
 
+function fixMojibakeText(value) {
+  const str = String(value || '');
+  if (!str) return '';
+  if (/[ØÙÚÛÜÝÞßà-ÿ]/.test(str)) {
+    try {
+      const bytes = new Uint8Array([...str].map(ch => ch.charCodeAt(0) & 0xff));
+      const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+      if (decoded && !decoded.includes('\uFFFD')) {
+        return decoded;
+      }
+    } catch (_) {}
+  }
+  return str;
+}
+
 function renderAdminMessage(msg) {
   const box = document.getElementById('admin-messages-box');
   if (Number(msg.session_id) !== Number(activeSessionId)) return;
@@ -406,27 +421,30 @@ function renderAdminMessage(msg) {
   if (msg.sender_type === 'system') senderTitle = 'سیستم';
   if (msg.sender_type === 'hacker') senderTitle = 'شبکه مزداک';
 
-  let bodyContent = escapeHtml(msg.content);
+  const cleanContent = fixMojibakeText(msg.content);
+  const cleanFileName = fixMojibakeText(msg.file_name);
+
+  let bodyContent = escapeHtml(cleanContent);
   if (msg.message_type === 'image') {
     const imageUrl = safeFileUrl(msg.file_url);
-    const caption = msg.content && msg.content !== msg.file_name ? `<p style="margin:0 0 4px;font-size:12.5px;">${escapeHtml(msg.content)}</p>` : '';
+    const caption = cleanContent ? `<p style="margin:0 0 4px;font-size:12.5px;">${escapeHtml(cleanContent)}</p>` : '';
     bodyContent = `${caption}<a href="${imageUrl}" target="_blank" rel="noopener" class="admin-media-thumb" title="مشاهده تصویر"><img src="${imageUrl}" alt="تصویر ارسالی" class="admin-thumb-img"></a>`;
   } else if (msg.message_type === 'voice' || msg.message_type === 'user_voice') {
     div.classList.add('has-voice-message');
     const voiceUrl = safeFileUrl(msg.file_url);
-    const hasNote = msg.content && msg.content !== 'پیام صوتی' && msg.content !== msg.file_name;
-    const noteMarkup = hasNote ? `<p style="margin:0 0 4px;font-size:12px;color:#cbd5e1;">${escapeHtml(msg.content)}</p>` : '';
+    const hasNote = cleanContent && cleanContent !== 'پیام صوتی' && cleanContent !== cleanFileName;
+    const noteMarkup = hasNote ? `<p style="margin:0 0 4px;font-size:12px;color:#cbd5e1;">${escapeHtml(cleanContent)}</p>` : '';
     const voiceMarkup = window.createTelegramVoiceMarkup 
       ? window.createTelegramVoiceMarkup({ ...msg, file_url: voiceUrl }) 
       : `<audio controls preload="metadata" src="${voiceUrl}" style="height:32px;max-width:240px;"></audio>`;
     bodyContent = `${noteMarkup}${voiceMarkup}`;
   } else if (msg.message_type === 'video') {
     const videoUrl = safeFileUrl(msg.file_url);
-    const caption = msg.content && msg.content !== msg.file_name ? `<p style="margin:0 0 4px;font-size:12.5px;">${escapeHtml(msg.content)}</p>` : '';
+    const caption = cleanContent && cleanContent !== cleanFileName ? `<p style="margin:0 0 4px;font-size:12.5px;">${escapeHtml(cleanContent)}</p>` : '';
     bodyContent = `${caption}<video controls preload="metadata" src="${videoUrl}" class="admin-thumb-video"></video>`;
   } else if (msg.message_type === 'file') {
     const fileUrl = safeFileUrl(msg.file_url);
-    bodyContent = `<a href="${fileUrl}" download target="_blank" rel="noopener" class="admin-file-badge"><span style="font-size:14px;">📁</span><span>${escapeHtml(msg.file_name || msg.content || 'دریافت فایل')}</span></a>`;
+    bodyContent = `<a href="${fileUrl}" download target="_blank" rel="noopener" class="admin-file-badge"><span style="font-size:14px;">📁</span><span>${escapeHtml(cleanFileName || cleanContent || 'دریافت فایل')}</span></a>`;
   }
 
   div.innerHTML = `

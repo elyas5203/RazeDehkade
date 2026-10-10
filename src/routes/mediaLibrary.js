@@ -9,9 +9,12 @@ const { requireAdmin } = require('../middleware/auth');
 const router = express.Router();
 const libraryRoot = path.resolve(__dirname, '..', '..', 'public', 'media-library');
 const extensionTypes = {
-  '.mp4': 'video', '.webm': 'video', '.mov': 'video',
-  '.jpg': 'image', '.jpeg': 'image', '.png': 'image', '.gif': 'image', '.webp': 'image',
-  '.mp3': 'audio', '.wav': 'audio', '.ogg': 'audio', '.m4a': 'audio',
+  '.mp4': 'video', '.webm': 'video', '.mov': 'video', '.mkv': 'video',
+  '.jpg': 'image', '.jpeg': 'image', '.jfif': 'image', '.pjpeg': 'image', '.pjp': 'image',
+  '.png': 'image', '.apng': 'image', '.gif': 'image', '.webp': 'image', '.avif': 'image',
+  '.bmp': 'image', '.svg': 'image', '.ico': 'image', '.tif': 'image', '.tiff': 'image',
+  '.heic': 'image', '.heif': 'image',
+  '.mp3': 'audio', '.wav': 'audio', '.ogg': 'audio', '.m4a': 'audio', '.aac': 'audio', '.flac': 'audio',
 };
 
 router.use(requireAdmin);

@@ -9,6 +9,22 @@ let sessionData = JSON.parse(sessionStorage.getItem('userSession') || '{}');
 let localStream = null;
 let peerConnection = null;
 
+function fixMojibakeText(value) {
+  const str = String(value ?? '');
+  if (!str) return '';
+  if (/[\u0080-\u00ff]/.test(str) && !/[^\u0000-\u00ff]/.test(str)) {
+    try {
+      const bytes = new Uint8Array(str.length);
+      for (let i = 0; i < str.length; i++) {
+        bytes[i] = str.charCodeAt(i) & 0xff;
+      }
+      const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+      if (decoded) return decoded;
+    } catch (_) {}
+  }
+  return str;
+}
+
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char]));
 }
@@ -362,11 +378,13 @@ function renderMessage(msg, options = {}) {
   const msgId = Number(msg.id);
   userMessagesMap.set(msgId, { ...msg });
 
+  const isUser = msg.sender_type === 'user';
   const isUserVoice = msg.message_type === 'user_voice';
   const fileUrl = safeFileUrl(msg.file_url);
-  const isEvidence = !isUserVoice && ['image', 'voice', 'video', 'file'].includes(msg.message_type) && fileUrl !== '#';
+  // فقط مدارک ارسالی از سمت کارآگاه/ادمین (غیر از کاربر) روی برد شواهد پین می‌شوند؛ عکس‌های ارسالی کاربر در خود چت می‌مانند
+  const isEvidence = !isUser && !isUserVoice && ['image', 'voice', 'video', 'file'].includes(msg.message_type) && fileUrl !== '#';
 
-  // ۱. اگر پیام از نوع مدرک (تصویر، ویدیو، صوت، سند) است: همیشه روی برد مدارک پین شود
+  // ۱. اگر پیام از نوع مدرک کارآگاه/ادمین است: روی برد مدارک پین شود و کارت هشدار ۱۰ ثانیه‌ای نشان دهد
   if (isEvidence) {
     renderEvidence(msg, options);
 
@@ -383,8 +401,8 @@ function renderMessage(msg, options = {}) {
     const alertDiv = document.createElement('div');
     alertDiv.dataset.messageId = msgId;
     alertDiv.className = 'message-bubble evidence-alert-card';
-    const subTitle = (msg.content && msg.content !== msg.file_name)
-      ? msg.content
+    const rawSub = (msg.content && msg.content !== msg.file_name)
+      ? fixMojibakeText(msg.content)
       : 'در برد شواهد (سمت چپ) پین شد';
 
     alertDiv.innerHTML = `
@@ -392,7 +410,7 @@ function renderMessage(msg, options = {}) {
         <span class="evidence-alert-icon" aria-hidden="true">📌</span>
         <div class="evidence-alert-texts">
           <strong>کارآگاه مدرک جدیدی به برد اسناد اضافه کرد</strong>
-          <small>${escapeHtml(subTitle)}</small>
+          <small>${escapeHtml(rawSub)}</small>
         </div>
         <span class="evidence-alert-cta">مشاهده ↗</span>
       </div>
@@ -438,11 +456,27 @@ function renderMessage(msg, options = {}) {
     div.classList.add('has-user-voice');
     div.classList.add('has-voice-message');
     bodyContent = window.createTelegramVoiceMarkup ? window.createTelegramVoiceMarkup(msg, timeFormatted) : `<audio controls src="${fileUrl}"></audio>`;
+  } else if (isUser && msg.message_type === 'image' && fileUrl !== '#') {
+    div.classList.add('has-user-media');
+    const cleanFileName = fixMojibakeText(msg.file_name || '');
+    const cleanContent = fixMojibakeText(msg.content || '');
+    const showCaption = cleanContent && cleanContent !== cleanFileName;
+    bodyContent = `
+      <div class="user-chat-media-box" onclick="openUserMediaById(${msgId})" title="کلیک برای بزرگ‌نمایی تصویر">
+        <img src="${fileUrl}" alt="${escapeHtml(cleanFileName || 'تصویر ارسالی')}" class="user-chat-image" loading="lazy">
+      </div>
+      ${showCaption ? `<div class="user-chat-caption">${escapeHtml(cleanContent)}</div>` : ''}
+    `;
+  } else if (isUser && msg.message_type === 'video' && fileUrl !== '#') {
+    div.classList.add('has-user-media');
+    bodyContent = `<video controls playsinline preload="metadata" src="${fileUrl}" class="user-chat-video"></video>`;
+  } else if (isUser && (msg.message_type === 'file' || msg.message_type === 'voice') && fileUrl !== '#') {
+    const cleanLabel = fixMojibakeText(msg.file_name || msg.content || 'فایل پیوست');
+    bodyContent = `<a href="${fileUrl}" download target="_blank" rel="noopener" class="user-chat-file-chip">📎 <span>${escapeHtml(cleanLabel)}</span></a>`;
   } else {
-    bodyContent = escapeHtml(msg.content);
+    bodyContent = escapeHtml(fixMojibakeText(msg.content));
   }
 
-  const isUser = msg.sender_type === 'user';
   const senderMarkup = !isUser && msg.sender_type !== 'system'
     ? `<div class="message-sender"><span>${escapeHtml(senderTitle)}</span></div>`
     : '';
@@ -463,6 +497,12 @@ function renderMessage(msg, options = {}) {
     box.scrollTop = box.scrollHeight;
   }
 }
+
+function openUserMediaById(messageId) {
+  const msg = userMessagesMap.get(Number(messageId));
+  if (msg) openEvidence(msg);
+}
+window.openUserMediaById = openUserMediaById;
 
 function evidenceFileIcon(type, label) {
   const paths = {
@@ -500,17 +540,19 @@ function evidenceMediaMarkup(msg, expanded = false) {
           <span class="zoom-hint">اسکرول موس برای زوم · کشیدن (Drag) برای جابه‌جایی روی عکس</span>
         </div>
         <div class="zoom-viewport" id="zoomViewport">
-          <img id="zoomTargetImage" src="${url}" alt="${escapeHtml(msg.content || 'تصویر مدرک')}" draggable="false">
+          <img id="zoomTargetImage" src="${url}" alt="${escapeHtml(fixMojibakeText(msg.content || 'تصویر مدرک'))}" draggable="false">
         </div>
       </div>
     `;
   }
   if (msg.message_type === 'video') return expanded ? `<div class="media-loading">در حال بارگذاری اطلاعات فیلم…</div><video controls playsinline webkit-playsinline preload="metadata" src="${url}"></video>` : evidenceFileIcon('video', 'فیلم ضبط‌شده');
   if (msg.message_type === 'voice') return expanded ? `<div class="media-loading">در حال بارگذاری اطلاعات صدا…</div><audio controls playsinline webkit-playsinline preload="metadata" src="${url}"></audio>` : evidenceFileIcon('voice', 'صدای ضبط‌شده');
-  return expanded ? `<div class="evidence-file-icon">سند</div><a class="download-evidence" href="${url}" download>دریافت ${escapeHtml(msg.file_name || 'فایل')}</a>` : evidenceFileIcon('file', 'سند پرونده');
+  return expanded ? `<div class="evidence-file-icon">سند</div><a class="download-evidence" href="${url}" download>دریافت ${escapeHtml(fixMojibakeText(msg.file_name || 'فایل'))}</a>` : evidenceFileIcon('file', 'سند پرونده');
 }
 
 function renderEvidence(msg, options = {}) {
+  // عکس‌ها و فایل‌های ارسالی خود کاربر هرگز نباید وارد برد شواهد شوند
+  if (!msg || msg.sender_type === 'user') return;
   const grid = document.getElementById('evidence-grid');
   if (!grid || grid.querySelector(`[data-evidence-id="${Number(msg.id)}"]`)) return;
   grid.querySelector('.empty-evidence')?.remove();
@@ -519,7 +561,8 @@ function renderEvidence(msg, options = {}) {
   card.className = 'evidence-card';
   card.dataset.evidenceId = Number(msg.id);
   card.dataset.kind = msg.message_type;
-  card.innerHTML = `${evidenceMediaMarkup(msg)}<h3>${escapeHtml(msg.content || msg.file_name || 'مدرک بدون عنوان')}</h3><small><span>مدرک ${Number(msg.id).toLocaleString('fa-IR')}</span><span>${new Date(msg.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span></small>`;
+  const cleanTitle = fixMojibakeText(msg.content || msg.file_name || 'مدرک بدون عنوان');
+  card.innerHTML = `${evidenceMediaMarkup(msg)}<h3>${escapeHtml(cleanTitle)}</h3><small><span>مدرک ${Number(msg.id).toLocaleString('fa-IR')}</span><span>${new Date(msg.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span></small>`;
   card.addEventListener('click', () => openEvidence(msg));
   const later = [...grid.children].find(child => Number(child.dataset.evidenceId) > Number(msg.id));
   grid.insertBefore(card, later || null);
@@ -707,7 +750,11 @@ function initEvidenceZoom() {
 
 function openEvidence(msg) {
   const dialog = document.getElementById('evidence-dialog');
-  document.getElementById('evidence-dialog-content').innerHTML = `${evidenceMediaMarkup(msg, true)}<h2>${escapeHtml(msg.content || msg.file_name || 'مدرک پرونده')}</h2><p>ارسال‌شده از مرکز فرماندهی برای بررسی گروه.</p>`;
+  const titleText = fixMojibakeText(msg.content || msg.file_name || 'مدرک پرونده');
+  const subtitleText = msg.sender_type === 'user'
+    ? 'تصویر ارسالی توسط گروه شما در گفتگوی پرونده.'
+    : 'ارسال‌شده از مرکز فرماندهی برای بررسی گروه.';
+  document.getElementById('evidence-dialog-content').innerHTML = `${evidenceMediaMarkup(msg, true)}<h2>${escapeHtml(titleText)}</h2><p>${subtitleText}</p>`;
   dialog.showModal();
   if (msg.message_type === 'image') {
     initEvidenceZoom();
@@ -937,6 +984,9 @@ async function handleUserFileUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
+  const feedbackEl = document.getElementById('chat-feedback');
+  if (feedbackEl) feedbackEl.textContent = 'در حال ارسال فایل در گفتگو...';
+
   const formData = new FormData();
   formData.append('file', file);
 
@@ -952,24 +1002,34 @@ async function handleUserFileUpload(event) {
     const data = await res.json();
     if (data.success) {
       const { fileUrl, fileName, messageType } = data.data;
+      const cleanName = fixMojibakeText(fileName || file.name || 'فایل ارسالی');
 
-      // ارسال مستقیم پیام دارای مدیا از طریق سوکت
+      // ارسال مستقیم پیام دارای مدیا از طریق سوکت و نمایش ماندگار در باکس چت کاربر
       socket.emit('send_message', {
         sessionId: sessionData.id,
-        content: fileName,
+        content: cleanName,
         messageType: messageType,
         fileUrl: fileUrl,
-        fileName: fileName,
+        fileName: cleanName,
+      }, (ack) => {
+        if (feedbackEl) feedbackEl.textContent = '';
+        if (ack && ack.success && ack.message) {
+          renderMessage(ack.message);
+        }
       });
 
       // ریسِت ورودی فایل
       event.target.value = '';
     } else {
-      alert('خطا در آپلود فایل: ' + data.message);
+      if (feedbackEl) feedbackEl.textContent = '';
+      alert('خطا در آپلود فایل: ' + (data.message || 'فرمت نامعتبر'));
+      event.target.value = '';
     }
   } catch (err) {
+    if (feedbackEl) feedbackEl.textContent = '';
     console.error('Error uploading file:', err);
     alert('خطا در برقراری ارتباط با سرور هنگام آپلود.');
+    event.target.value = '';
   }
 }
 
