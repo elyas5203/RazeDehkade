@@ -61,7 +61,18 @@ async function runMigrations() {
       await ensureColumn('teacher_phone', 'teacher_phone VARCHAR(20) NULL AFTER is_chat_locked');
     }
 
-    // ساخت جدول ردیابی مایگریشن‌های یک‌بار مصرف و پاکسازی پیام‌های آماده قدیمی
+    // ساخت جدول ذخیره وضعیت بات تلگرام در دیتابیس و پاکسازی موارد تست قبلی
+    await query(`
+      CREATE TABLE IF NOT EXISTS bot_state (
+        admin_id BIGINT PRIMARY KEY,
+        mode VARCHAR(50) NOT NULL DEFAULT 'IDLE',
+        active_week TINYINT NULL,
+        base_title VARCHAR(150) NULL,
+        title_counter INT NOT NULL DEFAULT 0,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     await query(`
       CREATE TABLE IF NOT EXISTS app_migrations (
         migration_key VARCHAR(100) PRIMARY KEY,
@@ -69,13 +80,13 @@ async function runMigrations() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
-    const legacyClearKey = 'clear_legacy_canned_and_weekly_v2';
+    const legacyClearKey = 'clear_legacy_canned_and_weekly_v3';
     const existingMigration = await query('SELECT * FROM app_migrations WHERE migration_key = ?', [legacyClearKey]);
     if (!existingMigration.rows || existingMigration.rows.length === 0) {
       await query('DELETE FROM weekly_content');
       await query('DELETE FROM canned_responses');
       await query('INSERT INTO app_migrations (migration_key) VALUES (?)', [legacyClearKey]);
-      console.log('🧹 تمام پیام‌های آماده و مراحل پیش‌فرض قبلی به طور کامل پاکسازی شدند.');
+      console.log('🧹 تمام پیام‌های آماده و مراحل تست قبلی به طور کامل پاکسازی شدند.');
     }
 
     // ساخت ادمین اولیه در صورت عدم وجود

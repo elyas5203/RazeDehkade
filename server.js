@@ -101,7 +101,14 @@ async function startServer() {
       console.log(`🌐 آدرس تست پنل: http://localhost:${PORT}`);
       console.log(`==================================================`);
 
-      if (process.env.NODE_ENV !== 'test' && process.env.DISABLE_TELEGRAM_BOT !== 'true') {
+      // فقط روی سرور لینوکس (VPS) یا در صورت فعال بودن صریح متغیر، بات تلگرام را خودکار روشن کن
+      // تا اجرای محلی روی ویندوز هرگز پیام‌های تلگرام سرور اصلی را ندزدد!
+      const shouldAutoStartBot =
+        process.env.NODE_ENV !== 'test' &&
+        process.env.DISABLE_TELEGRAM_BOT !== 'true' &&
+        (process.platform === 'linux' || process.env.ENABLE_TELEGRAM_BOT === 'true');
+
+      if (shouldAutoStartBot) {
         startMohtavaBot({ io }).catch(err => {
           console.error('⚠️ خطا در راه‌اندازی بات تلگرام MohtavaTelBot:', err.message);
         });

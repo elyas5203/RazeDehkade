@@ -13,5 +13,7 @@ Thumbs.db
 .DS_Store
 session-codes.txt
 MohtavaTelBot/.bot-state.json
+MohtavaTelBot/.bot.pid
+
 
 

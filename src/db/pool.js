@@ -25,6 +25,7 @@ class InMemoryDatabase {
       teachers: [],
       weekly_content: [],
       app_migrations: [],
+      bot_state: [],
     };
     this.autoIds = {
       admins: 1,
@@ -538,6 +539,36 @@ class InMemoryDatabase {
       const key = params[0];
       if (!this.tables.app_migrations.some(m => m.migration_key === key)) {
         this.tables.app_migrations.push({ migration_key: key, applied_at: new Date() });
+      }
+      return [{ affectedRows: 1 }, []];
+    }
+
+    // 16. Bot State (MySQL persistence for MohtavaTelBot)
+    if (/^SELECT .* FROM bot_state/i.test(cleanSql)) {
+      const adminId = Number(params[0]);
+      const found = this.tables.bot_state.filter(b => Number(b.admin_id) === adminId);
+      return [found, []];
+    }
+
+    if (/^INSERT INTO bot_state/i.test(cleanSql)) {
+      const [admin_id, mode, active_week, base_title, title_counter] = params;
+      let rec = this.tables.bot_state.find(b => Number(b.admin_id) === Number(admin_id));
+      if (rec) {
+        rec.mode = mode;
+        rec.active_week = active_week;
+        rec.base_title = base_title;
+        rec.title_counter = title_counter;
+        rec.updated_at = new Date();
+      } else {
+        rec = {
+          admin_id: Number(admin_id),
+          mode,
+          active_week,
+          base_title,
+          title_counter: Number(title_counter) || 0,
+          updated_at: new Date(),
+        };
+        this.tables.bot_state.push(rec);
       }
       return [{ affectedRows: 1 }, []];
     }

@@ -1,6 +1,6 @@
 /**
  * MohtavaTelBot/bot.js
- * منطق اصلی بات تلگرام مدیریت محتوا و پیام‌های آماده ۵ هفته سناریو
+ * سیستم یکپارچه و بازطراحی‌شده بات تلگرام مدیریت محتوا و پیام‌های آماده ۵ هفته سناریو
  * محدود به آیدی عددی ادمین: 5490508090
  */
 
@@ -23,7 +23,7 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
-const STATE_FILE_PATH = path.join(__dirname, '.bot-state.json');
+const PID_LOCK_FILE = path.join(__dirname, '.bot.pid');
 
 const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.svg', '.heic']);
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.mkv', '.webm', '.3gp', '.avi']);
@@ -157,7 +157,6 @@ function normalizeBaseTitle(rawTitle) {
   let t = String(rawTitle || '').trim();
   if (!t) return 'پیام';
 
-  // تبدیل جمع به مفرد برای شماره‌گذاری تمیز (مثلاً "پیام ها" -> "پیام" تا بشود "پیام 1، پیام 2...")
   if (/^پیام[\s\u200c]*ها$/u.test(t)) return 'پیام';
   if (/^ویدیو[\s\u200c]*ها$/u.test(t)) return 'ویدیو';
   if (/^فیلم[\s\u200c]*ها$/u.test(t)) return 'فیلم';
@@ -166,7 +165,6 @@ function normalizeBaseTitle(rawTitle) {
   if (/^صوت[\s\u200c]*ها$/u.test(t)) return 'صوت';
   if (/^فایل[\s\u200c]*ها$/u.test(t)) return 'فایل';
 
-  // حذف عدد انتهایی احتمالی تا شماره تکراری نخورد
   t = t.replace(/\s+[0-9۰-۹]+$/u, '').trim();
   return t || 'پیام';
 }
@@ -176,15 +174,48 @@ function normalizeBaseTitle(rawTitle) {
  */
 function isLikelyContentInsteadOfTitle(msg, text) {
   if (!msg) return false;
-  // اگر پیام فوروارد شده باشد، قطعاً محتواست نه عنوان
   if (msg.forward_date || msg.forward_origin || msg.forward_from || msg.forward_from_chat || msg.forward_sender_name) {
     return true;
   }
-  // اگر چندخطی باشد یا طولانی‌تر از ۴۰ کاراکتر باشد، متن پیام است نه عنوان
   if (text && (text.includes('\n') || text.length > 40)) {
     return true;
   }
   return false;
+}
+
+/**
+ * بررسی اینکه آیا پروسه دیگری روی همین سرور در حال Polling بات تلگرام هست یا خیر
+ */
+function acquireProcessLock() {
+  try {
+    if (fs.existsSync(PID_LOCK_FILE)) {
+      const existingPid = parseInt(fs.readFileSync(PID_LOCK_FILE, 'utf8').trim(), 10);
+      if (existingPid && existingPid !== process.pid) {
+        try {
+          process.kill(existingPid, 0);
+          // پروسه قبلی هنوز زنده است
+          return false;
+        } catch (_) {
+          // پروسه قبلی بسته شده است؛ قفل را می‌گیریم
+        }
+      }
+    }
+    fs.writeFileSync(PID_LOCK_FILE, String(process.pid), 'utf8');
+    const release = () => {
+      try {
+        if (fs.existsSync(PID_LOCK_FILE)) {
+          const current = parseInt(fs.readFileSync(PID_LOCK_FILE, 'utf8').trim(), 10);
+          if (current === process.pid) fs.unlinkSync(PID_LOCK_FILE);
+        }
+      } catch (_) {}
+    };
+    process.once('exit', release);
+    process.once('SIGINT', () => { release(); process.exit(0); });
+    process.once('SIGTERM', () => { release(); process.exit(0); });
+    return true;
+  } catch (_) {
+    return true;
+  }
 }
 
 class MohtavaTelegramBot {
@@ -202,47 +233,51 @@ class MohtavaTelegramBot {
     this.fileBase = `https://api.telegram.org/file/bot${this.token}`;
     this.offset = 0;
     this.running = false;
-    this.persistState = process.env.NODE_ENV !== 'test';
 
-    // وضعیت مکالمه ادمین
+    // وضعیت مکالمه ادمین (همگام با دیتابیس MySQL)
     this.adminState = {
       mode: 'IDLE', // 'IDLE' | 'WAIT_TITLE' | 'WAIT_CONTENT' | 'WAIT_CLEAR_WEEK' | 'WAIT_CONFIRM_CLEAR_ALL'
       week: null,
       currentTitle: '',
       titleCounter: 0,
     };
-
-    if (this.persistState) {
-      this.loadPersistedState();
-    }
   }
 
-  loadPersistedState() {
+  async syncStateFromDb() {
     try {
-      if (fs.existsSync(STATE_FILE_PATH)) {
-        const raw = JSON.parse(fs.readFileSync(STATE_FILE_PATH, 'utf8'));
-        if (raw && typeof raw === 'object') {
-          this.adminState = {
-            mode: raw.mode || 'IDLE',
-            week: raw.week || null,
-            currentTitle: raw.currentTitle || '',
-            titleCounter: Number(raw.titleCounter) || 0,
-          };
-        }
+      const res = await query('SELECT * FROM bot_state WHERE admin_id = ?', [this.adminId]);
+      if (res.rows && res.rows.length > 0) {
+        const row = res.rows[0];
+        this.adminState = {
+          mode: row.mode || 'IDLE',
+          week: row.active_week ? Number(row.active_week) : null,
+          currentTitle: row.base_title || '',
+          titleCounter: Number(row.title_counter) || 0,
+        };
       }
     } catch (_) {}
   }
 
-  savePersistedState() {
-    if (!this.persistState) return;
-    try {
-      fs.writeFileSync(STATE_FILE_PATH, JSON.stringify(this.adminState, null, 2), 'utf8');
-    } catch (_) {}
-  }
-
-  setState(patch) {
+  async setState(patch) {
     this.adminState = { ...this.adminState, ...patch };
-    this.savePersistedState();
+    try {
+      await query(
+        `INSERT INTO bot_state (admin_id, mode, active_week, base_title, title_counter)
+         VALUES (?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           mode = VALUES(mode),
+           active_week = VALUES(active_week),
+           base_title = VALUES(base_title),
+           title_counter = VALUES(title_counter)`,
+        [
+          this.adminId,
+          this.adminState.mode || 'IDLE',
+          this.adminState.week || null,
+          this.adminState.currentTitle || '',
+          Number(this.adminState.titleCounter) || 0,
+        ]
+      );
+    } catch (_) {}
   }
 
   setSocketIO(io) {
@@ -339,7 +374,6 @@ class MohtavaTelegramBot {
    * تشخیص نوع محتوا و مشخصات فایل از روی پیام تلگرام
    */
   extractMediaInfo(msg) {
-    // ۱. عکس (Photo)
     if (Array.isArray(msg.photo) && msg.photo.length > 0) {
       const largestPhoto = msg.photo[msg.photo.length - 1];
       return {
@@ -350,7 +384,6 @@ class MohtavaTelegramBot {
       };
     }
 
-    // ۲. ویدیو یا ویدیو نوت یا انیمیشن
     if (msg.video) {
       const origExt = path.extname(msg.video.file_name || '').toLowerCase() || '.mp4';
       return {
@@ -379,7 +412,6 @@ class MohtavaTelegramBot {
       };
     }
 
-    // ۳. ویس یا فایل صوتی (Voice / Audio)
     if (msg.voice) {
       return {
         contentType: 'voice',
@@ -399,7 +431,6 @@ class MohtavaTelegramBot {
       };
     }
 
-    // ۴. سند یا فایل (Document)
     if (msg.document) {
       const origName = msg.document.file_name || 'document';
       const origExt = path.extname(origName).toLowerCase();
@@ -448,11 +479,14 @@ class MohtavaTelegramBot {
       return;
     }
 
+    // همگام‌سازی وضعیت با دیتابیس MySQL
+    await this.syncStateFromDb();
+
     const text = typeof msg.text === 'string' ? msg.text.trim() : '';
 
     // ۱. دستور شروع یا بازگشت به منوی اصلی
     if (text === '/start' || text === '/menu' || text === BTN_BACK_MAIN) {
-      this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 });
+      await this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 });
       await this.sendMessage(
         chatId,
         `👋 سلام ادمین عزیز!\nبه ربات مدیریت «پیام‌های آماده و سناریوی ۵ هفته‌ای» خوش آمدید.\n\n۱️⃣ ابتدا هفته مورد نظر (هفته اول تا پنجم) را انتخاب کنید.\n۲️⃣ سپس عنوان دسته را بنویسید (مثلاً: «پیام ها» یا «ویدیو»).\n۳️⃣ حالا پیام‌ها را یکی‌یکی بفرستید؛ بات خودش به عنوان عدد اضافه می‌کند (پیام 1، پیام 2، پیام 3...) و تا وقتی «${BTN_CHANGE_TITLE}» را نزنید، عنوان تغییر نمی‌کند!`,
@@ -476,7 +510,7 @@ class MohtavaTelegramBot {
 
     // ۴. دکمه پاکسازی یک هفته مشخص
     if (text === BTN_CLEAR_ONE_WEEK) {
-      this.setState({ mode: 'WAIT_CLEAR_WEEK', week: null, currentTitle: '', titleCounter: 0 });
+      await this.setState({ mode: 'WAIT_CLEAR_WEEK', week: null, currentTitle: '', titleCounter: 0 });
       await this.sendMessage(
         chatId,
         `🧹 کدام هفته را می‌خواهید به طور کامل پاکسازی کنید؟`,
@@ -492,7 +526,7 @@ class MohtavaTelegramBot {
         const deletedItems = await WeeklyContent.deleteByWeek(weekNum);
         this.deleteUploadedFilesForItems(deletedItems);
         this.notifyAdminPanel(weekNum);
-        this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 });
+        await this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 });
         await this.sendMessage(
           chatId,
           `✅ تمام محتوای «${WEEK_NAMES[weekNum]}» (${deletedItems.length} مرحله) پاکسازی شد.`,
@@ -504,7 +538,7 @@ class MohtavaTelegramBot {
 
     // ۵. دکمه پاکسازی کل پیام‌های آماده (همه هفته‌ها)
     if (text === BTN_CLEAR_ALL) {
-      this.setState({ mode: 'WAIT_CONFIRM_CLEAR_ALL', week: null, currentTitle: '', titleCounter: 0 });
+      await this.setState({ mode: 'WAIT_CONFIRM_CLEAR_ALL', week: null, currentTitle: '', titleCounter: 0 });
       await this.sendMessage(
         chatId,
         `⚠️ آیا مطمئن هستید که می‌خواهید تمام پیام‌های آماده و محتوای هر ۵ هفته به طور کامل پاک شوند؟`,
@@ -518,7 +552,7 @@ class MohtavaTelegramBot {
       await query('DELETE FROM canned_responses');
       this.deleteUploadedFilesForItems(deletedItems);
       this.notifyAdminPanel(null);
-      this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 });
+      await this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 });
       await this.sendMessage(
         chatId,
         `🗑 تمام پیام‌های آماده و محتوای هر ۵ هفته (${deletedItems.length} مورد) به طور کامل از سرور پاک شدند.`,
@@ -537,7 +571,7 @@ class MohtavaTelegramBot {
       // آن را به عنوان «عنوان» اشتباه نگیر! عنوان پیش‌فرض (پیام / ویدیو / عکس) بگذار و مستقیم ذخیره‌اش کن:
       if (mediaInfo || isLikelyContentInsteadOfTitle(msg, text)) {
         const autoBaseTitle = mediaInfo ? defaultBaseTitleForType(mediaInfo.contentType) : 'پیام';
-        this.setState({
+        await this.setState({
           mode: 'WAIT_CONTENT',
           currentTitle: autoBaseTitle,
           titleCounter: 0,
@@ -556,7 +590,7 @@ class MohtavaTelegramBot {
       }
 
       const cleanBaseTitle = normalizeBaseTitle(text);
-      this.setState({
+      await this.setState({
         mode: 'WAIT_CONTENT',
         currentTitle: cleanBaseTitle,
         titleCounter: 0,
@@ -578,7 +612,7 @@ class MohtavaTelegramBot {
       // الف) دکمه پایان هفته
       if (text === BTN_END_WEEK) {
         const items = await WeeklyContent.findByWeek(weekNum);
-        this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 });
+        await this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 });
         await this.sendMessage(
           chatId,
           `🎉 ثبت محتوای «${weekName}» به پایان رسید.\n📊 مجموع مراحل ثبت‌شده در ${weekName}: ${items.length} مرحله.\n\nمی‌توانید هفته بعدی را از منوی زیر انتخاب کنید:`,
@@ -589,7 +623,7 @@ class MohtavaTelegramBot {
 
       // ب) دکمه تغییر عنوان برای دسته بعدی در همان هفته
       if (text === BTN_CHANGE_TITLE) {
-        this.setState({ mode: 'WAIT_TITLE', titleCounter: 0 });
+        await this.setState({ mode: 'WAIT_TITLE', titleCounter: 0 });
         await this.sendMessage(
           chatId,
           `✏️ لطفاً «عنوان جدید» را بنویسید (مثلاً: ویدیو، پیام ها، ویس، عکس):`,
@@ -613,7 +647,7 @@ class MohtavaTelegramBot {
         await WeeklyContent.delete(lastItem.id);
         this.deleteUploadedFilesForItems([lastItem]);
         if (this.adminState.titleCounter > 0) {
-          this.setState({ titleCounter: this.adminState.titleCounter - 1 });
+          await this.setState({ titleCounter: this.adminState.titleCounter - 1 });
         }
         this.notifyAdminPanel(weekNum);
         await this.sendMessage(
@@ -646,7 +680,7 @@ class MohtavaTelegramBot {
   async startWeekSelection(chatId, weekNum) {
     const items = await WeeklyContent.findByWeek(weekNum);
     const weekName = WEEK_NAMES[weekNum];
-    this.setState({
+    await this.setState({
       mode: 'WAIT_TITLE',
       week: weekNum,
       currentTitle: '',
@@ -691,7 +725,7 @@ class MohtavaTelegramBot {
           file_name: safeUniqueName,
         });
 
-        this.setState({ titleCounter: nextCounter });
+        await this.setState({ titleCounter: nextCounter });
         this.notifyAdminPanel(weekNum);
 
         await this.sendMessage(
@@ -723,7 +757,7 @@ class MohtavaTelegramBot {
           file_name: null,
         });
 
-        this.setState({ titleCounter: nextCounter });
+        await this.setState({ titleCounter: nextCounter });
         this.notifyAdminPanel(weekNum);
 
         const preview = textContent.length > 50 ? textContent.slice(0, 50) + '…' : textContent;
@@ -816,8 +850,14 @@ class MohtavaTelegramBot {
       return;
     }
 
+    if (!acquireProcessLock()) {
+      console.log('ℹ️ [MohtavaTelBot] یک نمونه دیگر از بات روی سرور فعال است؛ از اجرای تکراری جلوگیری شد.');
+      return;
+    }
+
     this.running = true;
-    console.log(`🤖 [MohtavaTelBot] بات تلگرام فعال شد (محدود به آیدی ادمین: ${this.adminId})`);
+    await this.syncStateFromDb();
+    console.log(`🤖 [MohtavaTelBot] بات تلگرام فعال شد (PID: ${process.pid} | محدود به آیدی ادمین: ${this.adminId})`);
 
     const pollLoop = async () => {
       while (this.running) {
@@ -833,7 +873,6 @@ class MohtavaTelegramBot {
           );
 
           if (data && data.ok && Array.isArray(data.result) && data.result.length > 0) {
-            // مرتب‌سازی دقیق بر اساس message_id / update_id برای حفظ ۱۰۰٪ ترتیب پیام‌های فورواردشده همزمان
             const sortedUpdates = [...data.result].sort((a, b) => {
               const msgA = a.message?.message_id || 0;
               const msgB = b.message?.message_id || 0;
