@@ -1987,6 +1987,11 @@
   scrollbar-color: rgba(245, 158, 11, 0.35) rgba(8, 15, 24, 0.6);
 }
 
+.assistants-modal-body[hidden],
+.themed-modal-body[hidden] {
+  display: none !important;
+}
+
 .assistants-gallery-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));

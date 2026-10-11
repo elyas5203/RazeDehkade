@@ -2155,8 +2155,8 @@ async function loadSessionAssistants(forceRender = false) {
 }
 
 /**
- * حذف پرده سبز (Chroma-Key) از عکس کارآگاهی متربیان و تولید تصویر PNG شفاف (Transparent)
- * همراه با حذف هاله سبز لبه‌های کلاه و پالتو (Despill)
+ * حذف خودکار انواع بک‌گراند استودیویی (پرده سبز، خاکستری/طوسی استودیویی، سفید و گرادینت)
+ * از عکس کارآگاهی متربیان و تولید تصویر PNG شفاف (Transparent) بدون آسیب به لباس و کلاه
  */
 function getChromaKeyedImageUrl(rawUrl) {
   const safeUrl = safeFileUrl(rawUrl);
@@ -2186,39 +2186,239 @@ function getChromaKeyedImageUrl(rawUrl) {
         const imgData = ctx.getImageData(0, 0, w, h);
         const data = imgData.data;
 
-        // نمونه‌برداری هوشمند از گوشه‌های بالای تصویر برای تشخیص رنگ دقیق پرده سبز استودیو
-        // (در عکس‌های کارآگاهی متربیان، رنگ بک‌گراند سبز حدود R=1..15, G=165..215, B=50..85 است)
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-          const a = data[i + 3];
-          if (a === 0) continue;
+        const getRGB = (x, y) => {
+          const cx = Math.max(0, Math.min(w - 1, Math.round(x)));
+          const cy = Math.max(0, Math.min(h - 1, Math.round(y)));
+          const idx = (cy * w + cx) * 4;
+          return [data[idx], data[idx + 1], data[idx + 2], data[idx + 3]];
+        };
 
-          const maxRB = r > b ? r : b;
-          const greenExcess = g - maxRB;
-          const greenVsRed = g - r;
-          const greenVsBlue = g - b;
+        const tl = getRGB(8, 8);
+        const tr = getRGB(w - 9, 8);
+        const isGreenCorner = (c) => c[1] > 65 && (c[1] - Math.max(c[0], c[2])) > 30;
 
-          // ناحیه اصلی پرده سبز: شفافیت کامل (Alpha = 0)
-          if (g > 70 && greenVsRed > 48 && greenVsBlue > 28 && greenExcess > 38) {
-            data[i + 3] = 0;
-            continue;
+        if (isGreenCorner(tl) || isGreenCorner(tr)) {
+          // حالت ۱: بک‌گراند پرده سبز (Chroma-Key + Despill)
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const a = data[i + 3];
+            if (a === 0) continue;
+
+            const maxRB = r > b ? r : b;
+            const greenExcess = g - maxRB;
+            const greenVsRed = g - r;
+            const greenVsBlue = g - b;
+
+            if (g > 70 && greenVsRed > 48 && greenVsBlue > 28 && greenExcess > 38) {
+              data[i + 3] = 0;
+              continue;
+            }
+
+            if (g > 55 && greenVsRed > 20 && greenVsBlue > 12 && greenExcess > 12) {
+              const ratio = (greenExcess - 12) / (38 - 12);
+              const newAlpha = Math.round(a * Math.max(0, Math.min(1, 1 - ratio)));
+              data[i + 3] = newAlpha;
+              data[i + 1] = Math.round(maxRB * 0.92 + g * 0.08);
+              continue;
+            }
+
+            if (greenExcess > 4 && g > r * 1.08) {
+              data[i + 1] = Math.round(maxRB * 0.96 + g * 0.04);
+            }
+          }
+        } else {
+          // حالت ۲: بک‌گراندهای استودیویی خاکستری، سفید، طوسی یا گرادینت استودیو
+          // استفاده از الگوریتم Flood-Fill تطبیقی از لبه‌های بیرونی تصویر با سد کنتراست لبه کلاه/لباس
+          const totalPx = w * h;
+          const bgMask = new Uint8Array(totalPx); // 0 = unvisited, 1 = background
+          const queue = new Int32Array(totalPx);
+          let qHead = 0;
+          let qTail = 0;
+
+          // پروفایل رنگ بک‌گراند در دو طرف چپ و راست هر سطر برای پشتیبانی کامل از گرادینت نوری استودیو
+          const rowLeftR = new Float32Array(h);
+          const rowLeftG = new Float32Array(h);
+          const rowLeftB = new Float32Array(h);
+          const rowRightR = new Float32Array(h);
+          const rowRightG = new Float32Array(h);
+          const rowRightB = new Float32Array(h);
+
+          let lastLR = tl[0], lastLG = tl[1], lastLB = tl[2];
+          let lastRR = tr[0], lastRG = tr[1], lastRB = tr[2];
+
+          const isNeutralBgSample = (r, g, b, refR, refG, refB) => {
+            const maxC = Math.max(r, g, b);
+            const minC = Math.min(r, g, b);
+            if (maxC - minC > 42) return false;
+            if (maxC < 72) return false; // جلوگیری از ورود به پالتوی مشکی/سرمه‌ای در پایین تصویر
+            const dr = Math.abs(r - refR);
+            const dg = Math.abs(g - refG);
+            const db = Math.abs(b - refB);
+            return (dr + dg + db) < 75;
+          };
+
+          for (let y = 0; y < h; y++) {
+            const lIdx = (y * w + Math.min(4, w - 1)) * 4;
+            const lr = data[lIdx], lg = data[lIdx + 1], lb = data[lIdx + 2];
+            if (isNeutralBgSample(lr, lg, lb, lastLR, lastLG, lastLB)) {
+              lastLR = lr; lastLG = lg; lastLB = lb;
+            }
+            rowLeftR[y] = lastLR; rowLeftG[y] = lastLG; rowLeftB[y] = lastLB;
+
+            const rIdx = (y * w + Math.max(0, w - 5)) * 4;
+            const rr = data[rIdx], rg = data[rIdx + 1], rb = data[rIdx + 2];
+            if (isNeutralBgSample(rr, rg, rb, lastRR, lastRG, lastRB)) {
+              lastRR = rr; lastRG = rg; lastRB = rb;
+            }
+            rowRightR[y] = lastRR; rowRightG[y] = lastRG; rowRightB[y] = lastRB;
           }
 
-          // ناحیه لبه نرم (Feathering) دور موها، کلاه و پالتو
-          if (g > 55 && greenVsRed > 20 && greenVsBlue > 12 && greenExcess > 12) {
-            const ratio = (greenExcess - 12) / (38 - 12); // 0..1
-            const newAlpha = Math.round(a * Math.max(0, Math.min(1, 1 - ratio)));
-            data[i + 3] = newAlpha;
-            // حذف بازتاب سبز روی لبه‌ها (Despill)
-            data[i + 1] = Math.round(maxRB * 0.92 + g * 0.08);
-            continue;
+          const trySeed = (x, y) => {
+            if (x < 0 || x >= w || y < 0 || y >= h) return;
+            const pIdx = y * w + x;
+            if (bgMask[pIdx]) return;
+            const i = pIdx * 4;
+            const r = data[i], g = data[i + 1], b = data[i + 2];
+            const t = w > 1 ? x / (w - 1) : 0;
+            const expR = rowLeftR[y] * (1 - t) + rowRightR[y] * t;
+            const expG = rowLeftG[y] * (1 - t) + rowRightG[y] * t;
+            const expB = rowLeftB[y] * (1 - t) + rowRightB[y] * t;
+            const diff = Math.abs(r - expR) + Math.abs(g - expG) + Math.abs(b - expB);
+            const sat = Math.max(r, g, b) - Math.min(r, g, b);
+            if (diff <= 54 && sat <= 42 && Math.max(r, g, b) >= 75) {
+              bgMask[pIdx] = 1;
+              queue[qTail++] = pIdx;
+            }
+          };
+
+          // بذرگذاری از لبه بالایی و لبه‌های چپ و راست
+          for (let x = 0; x < w; x++) {
+            trySeed(x, 0);
+            trySeed(x, 1);
+          }
+          const sideLimitY = Math.floor(h * 0.92);
+          for (let y = 0; y < sideLimitY; y++) {
+            trySeed(0, y);
+            trySeed(1, y);
+            trySeed(w - 1, y);
+            trySeed(w - 2, y);
           }
 
-          // حذف بازتاب خفیف سبز روی لبه‌های لباس یا پوست
-          if (greenExcess > 4 && g > r * 1.08) {
-            data[i + 1] = Math.round(maxRB * 0.96 + g * 0.04);
+          // انتشار Flood-Fill با سد گرادیان (جلوگیری از ورود به کلاه طوسی، صورت یا پیراهن سفید)
+          while (qHead < qTail) {
+            const curr = queue[qHead++];
+            const cy = (curr / w) | 0;
+            const cx = curr - cy * w;
+            const cOff = curr * 4;
+            const cr = data[cOff], cg = data[cOff + 1], cb = data[cOff + 2];
+
+            const neighbors = [
+              cx > 0 ? curr - 1 : -1,
+              cx + 1 < w ? curr + 1 : -1,
+              cy > 0 ? curr - w : -1,
+              cy + 1 < h ? curr + w : -1,
+            ];
+
+            for (let k = 0; k < 4; k++) {
+              const np = neighbors[k];
+              if (np < 0 || bgMask[np]) continue;
+
+              const ny = (np / w) | 0;
+              const nx = np - ny * w;
+              const nOff = np * 4;
+              const nr = data[nOff], ng = data[nOff + 1], nb = data[nOff + 2];
+
+              // گام همسایگی باید نرم باشد تا از لبه کلاه طوسی، عینک، مو و شانه عبور نکند
+              const stepR = Math.abs(nr - cr);
+              const stepG = Math.abs(ng - cg);
+              const stepB = Math.abs(nb - cb);
+              const maxStep = Math.max(stepR, stepG, stepB);
+              if (maxStep > 9 || (stepR + stepG + stepB) > 19) continue;
+
+              const sat = Math.max(nr, ng, nb) - Math.min(nr, ng, nb);
+              if (sat > 40 || Math.max(nr, ng, nb) < 75) continue;
+
+              const t = w > 1 ? nx / (w - 1) : 0;
+              const expR = rowLeftR[ny] * (1 - t) + rowRightR[ny] * t;
+              const expG = rowLeftG[ny] * (1 - t) + rowRightG[ny] * t;
+              const expB = rowLeftB[ny] * (1 - t) + rowRightB[ny] * t;
+              const modelDiff = Math.abs(nr - expR) + Math.abs(ng - expG) + Math.abs(nb - expB);
+
+              if (modelDiff <= 68) {
+                bgMask[np] = 1;
+                queue[qTail++] = np;
+              }
+            }
+          }
+
+          // پاکسازی واترمارک ستاره کوچک گوشه پایین سمت راست در عکس‌های استودیویی
+          const sparkStartX = Math.floor(w * 0.87);
+          const sparkStartY = Math.floor(h * 0.87);
+          let cornerBgCount = 0;
+          for (let y = sparkStartY; y < h; y += 2) {
+            for (let x = sparkStartX; x < w; x += 2) {
+              if (bgMask[y * w + x]) cornerBgCount++;
+            }
+          }
+          if (cornerBgCount > 25) {
+            for (let y = sparkStartY; y < h; y++) {
+              for (let x = sparkStartX; x < w; x++) {
+                const pIdx = y * w + x;
+                const off = pIdx * 4;
+                if (Math.max(data[off], data[off + 1], data[off + 2]) > 120) {
+                  bgMask[pIdx] = 1;
+                }
+              }
+            }
+          }
+
+          // پاکسازی فضاهای بسته بین بازو و پالتو در نیمه پایینی تصویر (بدون دست زدن به یقه و پیراهن وسط)
+          const centerMinX = Math.floor(w * 0.36);
+          const centerMaxX = Math.ceil(w * 0.64);
+          for (let y = Math.floor(h * 0.52); y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              if (x >= centerMinX && x <= centerMaxX && y < Math.floor(h * 0.72)) continue;
+              const pIdx = y * w + x;
+              if (bgMask[pIdx]) continue;
+              const off = pIdx * 4;
+              const r = data[off], g = data[off + 1], b = data[off + 2];
+              const sat = Math.max(r, g, b) - Math.min(r, g, b);
+              if (sat > 22 || Math.max(r, g, b) < 95) continue;
+              const t = w > 1 ? x / (w - 1) : 0;
+              const expR = rowLeftR[y] * (1 - t) + rowRightR[y] * t;
+              const expG = rowLeftG[y] * (1 - t) + rowRightG[y] * t;
+              const expB = rowLeftB[y] * (1 - t) + rowRightB[y] * t;
+              if (Math.abs(r - expR) + Math.abs(g - expG) + Math.abs(b - expB) <= 22) {
+                bgMask[pIdx] = 1;
+              }
+            }
+          }
+
+          // اعمال شفافیت و نرم‌سازی لبه‌ها (Feathering) برای طبیعی شدن دور کلاه و لباس
+          for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+              const pIdx = y * w + x;
+              const off = pIdx * 4;
+              if (bgMask[pIdx]) {
+                data[off + 3] = 0;
+              } else if (x > 0 && x + 1 < w && y > 0 && y + 1 < h) {
+                const bgNeighbors =
+                  bgMask[pIdx - 1] +
+                  bgMask[pIdx + 1] +
+                  bgMask[pIdx - w] +
+                  bgMask[pIdx + w] +
+                  bgMask[pIdx - w - 1] +
+                  bgMask[pIdx - w + 1] +
+                  bgMask[pIdx + w - 1] +
+                  bgMask[pIdx + w + 1];
+                if (bgNeighbors > 0) {
+                  const factor = Math.max(0.25, 1 - bgNeighbors * 0.11);
+                  data[off + 3] = Math.round(data[off + 3] * factor);
+                }
+              }
+            }
           }
         }
 
@@ -2235,7 +2435,6 @@ function getChromaKeyedImageUrl(rawUrl) {
           resolve(canvas.toDataURL('image/png'));
         }
       } catch (err) {
-        // در صورت هرگونه خطا، تصویر اصلی بدون تغییر برگردانده می‌شود
         resolve(safeUrl);
       }
     };
@@ -2248,26 +2447,11 @@ function getChromaKeyedImageUrl(rawUrl) {
 }
 
 function updateChromaToggleButtonUI() {
-  const btn = document.getElementById('assistants-chroma-toggle-btn');
-  const label = document.getElementById('assistants-chroma-toggle-label');
-  if (!btn || !label) return;
-
-  if (assistantsChromaEnabled) {
-    btn.classList.add('is-active');
-    label.textContent = '✨ حذف بک‌گراند سبز (PNG): فعال';
-  } else {
-    btn.classList.remove('is-active');
-    label.textContent = '🖼 نمایش تصویر اصلی (با بک‌گراند سبز)';
-  }
+  assistantsChromaEnabled = true;
 }
 
 function toggleAssistantsChromaKey() {
-  assistantsChromaEnabled = !assistantsChromaEnabled;
-  updateChromaToggleButtonUI();
-  applyAssistantsImagesDisplayMode();
-  if (activeAssistantLightboxIndex >= 0) {
-    updateAssistantLightboxContent();
-  }
+  assistantsChromaEnabled = true;
 }
 
 function applyAssistantsImagesDisplayMode() {
@@ -2277,15 +2461,11 @@ function applyAssistantsImagesDisplayMode() {
   const imgs = container.querySelectorAll('img.assistant-portrait-img[data-raw-url]');
   imgs.forEach((imgEl) => {
     const rawUrl = imgEl.getAttribute('data-raw-url');
-    if (!assistantsChromaEnabled) {
-      imgEl.src = rawUrl;
-    } else {
-      getChromaKeyedImageUrl(rawUrl).then((processedUrl) => {
-        if (assistantsChromaEnabled && imgEl.isConnected) {
-          imgEl.src = processedUrl;
-        }
-      });
-    }
+    getChromaKeyedImageUrl(rawUrl).then((processedUrl) => {
+      if (imgEl.isConnected) {
+        imgEl.src = processedUrl;
+      }
+    });
   });
 }
 
@@ -2294,7 +2474,6 @@ function renderAssistantsGallery() {
   const badgeEl = document.getElementById('assistants-count-badge');
   if (!container) return;
 
-  updateChromaToggleButtonUI();
   if (badgeEl) {
     badgeEl.textContent = `${toPersianDigits(sessionAssistantsList.length)} نفر`;
   }
@@ -2344,8 +2523,14 @@ function openAssistantLightbox(index) {
 
   const gridBody = document.getElementById('assistants-photo-modal-content');
   const lbView = document.getElementById('assistants-lightbox-view');
-  if (gridBody) gridBody.hidden = true;
-  if (lbView) lbView.hidden = false;
+  if (gridBody) {
+    gridBody.hidden = true;
+    gridBody.style.display = 'none';
+  }
+  if (lbView) {
+    lbView.hidden = false;
+    lbView.style.display = 'flex';
+  }
 
   updateAssistantLightboxContent();
 }
@@ -2354,8 +2539,14 @@ function closeAssistantLightbox() {
   activeAssistantLightboxIndex = -1;
   const gridBody = document.getElementById('assistants-photo-modal-content');
   const lbView = document.getElementById('assistants-lightbox-view');
-  if (lbView) lbView.hidden = true;
-  if (gridBody) gridBody.hidden = false;
+  if (lbView) {
+    lbView.hidden = true;
+    lbView.style.display = 'none';
+  }
+  if (gridBody) {
+    gridBody.hidden = false;
+    gridBody.style.display = '';
+  }
 }
 
 function stepAssistantLightbox(delta) {
@@ -2382,26 +2573,17 @@ function updateAssistantLightboxContent() {
     counterEl.textContent = `نفر ${toPersianDigits(activeAssistantLightboxIndex + 1)} از ${toPersianDigits(sessionAssistantsList.length)}`;
   }
 
-  if (!assistantsChromaEnabled) {
-    if (imgEl) imgEl.src = rawUrl;
-    if (dlBtn) {
-      dlBtn.href = rawUrl;
-      dlBtn.download = `${cleanName}.png`;
-      dlBtn.textContent = '⬇ دانلود تصویر اصلی';
-    }
-  } else {
-    if (imgEl) imgEl.src = rawUrl;
-    getChromaKeyedImageUrl(rawUrl).then((processedUrl) => {
-      if (activeAssistantLightboxIndex >= 0 && sessionAssistantsList[activeAssistantLightboxIndex] === item) {
-        if (imgEl) imgEl.src = processedUrl;
-        if (dlBtn) {
-          dlBtn.href = processedUrl;
-          dlBtn.download = `${cleanName}-بدون-بکگراند.png`;
-          dlBtn.textContent = '⬇ دانلود PNG بدون بک‌گراند';
-        }
+  if (imgEl) imgEl.src = rawUrl;
+  getChromaKeyedImageUrl(rawUrl).then((processedUrl) => {
+    if (activeAssistantLightboxIndex >= 0 && sessionAssistantsList[activeAssistantLightboxIndex] === item) {
+      if (imgEl) imgEl.src = processedUrl;
+      if (dlBtn) {
+        dlBtn.href = processedUrl;
+        dlBtn.download = `${cleanName}-بدون-بکگراند.png`;
+        dlBtn.textContent = '⬇ دانلود PNG بدون بک‌گراند';
       }
-    });
-  }
+    }
+  });
 }
 
 async function openAssistantsPhotoPopup() {
