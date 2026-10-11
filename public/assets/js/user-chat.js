@@ -9,17 +9,50 @@ let sessionData = JSON.parse(sessionStorage.getItem('userSession') || '{}');
 let localStream = null;
 let peerConnection = null;
 
+const WIN1252_REVERSE_MAP = {
+  0x20AC: 0x80, 0x201A: 0x82, 0x0192: 0x83, 0x201E: 0x84, 0x2026: 0x85,
+  0x2020: 0x86, 0x2021: 0x87, 0x02C6: 0x88, 0x2030: 0x89, 0x0160: 0x8A,
+  0x2039: 0x8B, 0x0152: 0x8C, 0x017D: 0x8E, 0x2018: 0x91, 0x2019: 0x92,
+  0x201C: 0x93, 0x201D: 0x94, 0x2022: 0x95, 0x2013: 0x96, 0x2014: 0x97,
+  0x02DC: 0x98, 0x2122: 0x99, 0x0161: 0x9A, 0x203A: 0x9B, 0x0153: 0x9C,
+  0x017E: 0x9E, 0x0178: 0x9F,
+};
+
 function fixMojibakeText(value) {
-  const str = String(value ?? '');
+  let str = String(value ?? '').trim();
   if (!str) return '';
-  if (/[\u0080-\u00ff]/.test(str) && !/[^\u0000-\u00ff]/.test(str)) {
+
+  if (/%[0-9a-fA-F]{2}/.test(str)) {
     try {
-      const bytes = new Uint8Array(str.length);
+      const decodedUri = decodeURIComponent(str);
+      if (decodedUri && decodedUri !== str) str = decodedUri;
+    } catch (_) {}
+  }
+
+  const hasMojibake = /[\u0080-\u00ff]/.test(str) || Object.keys(WIN1252_REVERSE_MAP).some(k => str.includes(String.fromCharCode(Number(k))));
+  if (hasMojibake) {
+    try {
+      const bytes = [];
+      let canDecode = true;
       for (let i = 0; i < str.length; i++) {
-        bytes[i] = str.charCodeAt(i) & 0xff;
+        const code = str.charCodeAt(i);
+        if (code <= 0xff) {
+          bytes.push(code);
+        } else if (WIN1252_REVERSE_MAP[code]) {
+          bytes.push(WIN1252_REVERSE_MAP[code]);
+        } else {
+          canDecode = false;
+          break;
+        }
       }
-      const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-      if (decoded) return decoded;
+      if (canDecode && bytes.length > 0) {
+        const decoded = (typeof TextDecoder !== 'undefined')
+          ? new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(bytes))
+          : decodeURIComponent(escape(String.fromCharCode(...bytes)));
+        if (decoded && !decoded.includes('\ufffd')) {
+          return decoded;
+        }
+      }
     } catch (_) {}
   }
   return str;
@@ -459,12 +492,12 @@ function renderMessage(msg, options = {}) {
     div.classList.add('has-user-media');
     const cleanFileName = fixMojibakeText(msg.file_name || '');
     const cleanContent = fixMojibakeText(msg.content || '');
-    const showCaption = cleanContent && cleanContent !== cleanFileName;
+    const displayCaption = cleanContent || cleanFileName;
     bodyContent = `
       <div class="user-chat-media-box" onclick="openUserMediaById(${msgId})" title="کلیک برای بزرگ‌نمایی تصویر">
         <img src="${fileUrl}" alt="${escapeHtml(cleanFileName || 'تصویر ارسالی')}" class="user-chat-image" loading="lazy">
       </div>
-      ${showCaption ? `<div class="user-chat-caption">${escapeHtml(cleanContent)}</div>` : ''}
+      ${displayCaption ? `<div class="user-chat-caption">${escapeHtml(displayCaption)}</div>` : ''}
     `;
   } else if (isUser && msg.message_type === 'video' && fileUrl !== '#') {
     div.classList.add('has-user-media');
@@ -1004,9 +1037,9 @@ function initEvidenceMediaPlayer(msg) {
 
 function openEvidence(msg) {
   const dialog = document.getElementById('evidence-dialog');
-  const titleText = getPublicEvidenceTitle(msg);
+  const titleText = fixMojibakeText(getPublicEvidenceTitle(msg));
   const subtitleText = msg.sender_type === 'user'
-    ? 'تصویر ارسالی توسط گروه شما در گفتگوی پرونده.'
+    ? 'ارسال‌شده توسط دستیاران برای بررسی کارآگاه و مرکز فرماندهی.'
     : 'ارسال‌شده از مرکز فرماندهی برای بررسی گروه.';
   document.getElementById('evidence-dialog-content').innerHTML = `${evidenceMediaMarkup(msg, true)}<h2>${escapeHtml(titleText)}</h2><p>${subtitleText}</p>`;
   dialog.showModal();

@@ -26,14 +26,20 @@
     order = JSON.parse(localStorage.getItem('golha_last_order') || 'null'); 
   } catch (_) {}
 
-  // مبدا زمانی شمارش معکوس
+  // مبدا زمانی شمارش معکوس ۳۰ ثانیه‌ای
   let startedAt = Date.now();
   if (order && Number.isFinite(Number(order.countdownStartedAt))) {
     const elapsed = Date.now() - Number(order.countdownStartedAt);
-    if (elapsed < TOTAL_DURATION_MS) {
-      startedAt = Number(order.countdownStartedAt);
+    if (elapsed > 0 && elapsed < TOTAL_DURATION_MS) {
+      // اگر تازه از ثبت سفارش ریدایرکت شده، از ۳۰ ثانیه کامل شروع شود تا هیچ پرشی ایجاد نشود
+      if (elapsed < 4000) {
+        startedAt = Date.now();
+        order.countdownStartedAt = startedAt;
+        try { localStorage.setItem('golha_last_order', JSON.stringify(order)); } catch (_) {}
+      } else {
+        startedAt = Number(order.countdownStartedAt);
+      }
     } else {
-      // اگر قبلاً منقضی شده، ریست کن تا شمارش معکوس مجدداً از ۳۰ ثانیه برای تست کاربر شروع شود
       startedAt = Date.now();
       order.countdownStartedAt = startedAt;
       try { localStorage.setItem('golha_last_order', JSON.stringify(order)); } catch (_) {}
@@ -54,6 +60,82 @@
   const ring = document.getElementById('delivery-ring');
   const cyberOverlay = document.getElementById('cyberOverlay');
   const matrixCanvas = document.getElementById('matrixCanvas');
+
+  // ==========================================
+  // موتور افکت صوتی تیک‌تیک ساعت شمارش معکوس ۳۰ ثانیه‌ای
+  // ==========================================
+  let tickAudioCtx = null;
+  let tickAudioBuffer = null;
+
+  function initTickAudioEngine() {
+    try {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtxClass) return;
+      if (!tickAudioCtx) tickAudioCtx = new AudioCtxClass();
+
+      fetch('/assets/sounds/clock-tick.wav')
+        .then(res => res.arrayBuffer())
+        .then(data => tickAudioCtx.decodeAudioData(data))
+        .then(buffer => {
+          tickAudioBuffer = buffer;
+        })
+        .catch(() => {});
+    } catch (_) {}
+  }
+
+  function playSyntheticTick() {
+    try {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtxClass) return;
+      if (!tickAudioCtx) tickAudioCtx = new AudioCtxClass();
+      if (tickAudioCtx.state === 'suspended') {
+        tickAudioCtx.resume().catch(() => {});
+      }
+      const osc = tickAudioCtx.createOscillator();
+      const gain = tickAudioCtx.createGain();
+      const now = tickAudioCtx.currentTime;
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1050, now);
+      osc.frequency.exponentialRampToValueAtTime(320, now + 0.022);
+
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.022);
+
+      osc.connect(gain);
+      gain.connect(tickAudioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.022);
+    } catch (_) {}
+  }
+
+  function playTickSound() {
+    try {
+      if (tickAudioCtx && tickAudioCtx.state === 'suspended') {
+        tickAudioCtx.resume().catch(() => {});
+      }
+      if (tickAudioCtx && tickAudioBuffer) {
+        const source = tickAudioCtx.createBufferSource();
+        source.buffer = tickAudioBuffer;
+        const gain = tickAudioCtx.createGain();
+        gain.gain.value = 0.55;
+        source.connect(gain);
+        gain.connect(tickAudioCtx.destination);
+        source.start(0);
+        return;
+      }
+      const audio = new Audio('/assets/sounds/clock-tick.wav');
+      audio.volume = 0.55;
+      audio.play().catch(() => {
+        playSyntheticTick();
+      });
+    } catch (_) {
+      playSyntheticTick();
+    }
+  }
+
+  initTickAudioEngine();
 
   // ==========================================
   // موتور پخش ساندترک سینمایی و استودیویی
@@ -79,6 +161,9 @@
   // فعال‌سازی دسترسی صدا در مرورگر با اولین کلیک یا لمس
   ['click', 'touchstart', 'keydown', 'pointerdown'].forEach(evt => {
     window.addEventListener(evt, () => {
+      if (tickAudioCtx && tickAudioCtx.state === 'suspended') {
+        tickAudioCtx.resume().catch(() => {});
+      }
       if (currentIntroAudio && currentIntroAudio.paused) {
         currentIntroAudio.play().catch(() => {});
       }
@@ -256,7 +341,7 @@
     if (timerId) clearInterval(timerId);
 
     document.body.dataset.phase = 'arrived';
-    if (ring) ring.style.strokeDashoffset = '0';
+    if (ring) ring.style.strokeDashoffset = String(CIRCLE_CIRCUMFERENCE);
     if (timerDisplay) timerDisplay.textContent = numberFormat.format(0);
 
     // ۱.۵ ثانیه سفارش تحویل شده نمایش داده می‌شود، سپس بلک‌اوت کامل آغاز می‌گردد
@@ -273,6 +358,9 @@
     const seconds = Math.ceil(remaining / 1000);
 
     if (seconds !== lastSeconds) {
+      if (lastSeconds !== null && seconds > 0) {
+        playTickSound();
+      }
       lastSeconds = seconds;
       if (timerDisplay) {
         timerDisplay.textContent = numberFormat.format(seconds);
@@ -280,8 +368,10 @@
     }
 
     if (ring) {
-      const progress = Math.min(1, elapsed / TOTAL_DURATION_MS);
-      ring.style.strokeDashoffset = String(CIRCLE_CIRCUMFERENCE * (1 - progress));
+      // نوار پیشرفت دایره‌ای (SVG Progress) دقیقا هماهنگ با ثانیه‌شمار از پر (۰) تا خالی (۵۶۵.۴۸) به صورت نرم کاهش می‌یابد
+      const fractionRemaining = Math.max(0, Math.min(1, remaining / TOTAL_DURATION_MS));
+      const offset = CIRCLE_CIRCUMFERENCE * (1 - fractionRemaining);
+      ring.style.strokeDashoffset = String(offset.toFixed(2));
     }
 
     if (remaining <= 0) {
