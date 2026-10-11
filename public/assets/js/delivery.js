@@ -236,6 +236,113 @@
   }
 
   // ==========================================
+  // موتور انیمیشن و تلمتری تاکتیکال کاک‌پیت (Cockpit Telemetry Engine)
+  // ==========================================
+  const telemetryIntervals = [];
+
+  function initCockpitTelemetry() {
+    // 1. ساعت نظامی UTC
+    const clockEl = document.getElementById('hudClockDisplay');
+    function updateClock() {
+      if (!clockEl) return;
+      const d = new Date();
+      const h = String(d.getUTCHours()).padStart(2, '0');
+      const m = String(d.getUTCMinutes()).padStart(2, '0');
+      const s = String(d.getUTCSeconds()).padStart(2, '0');
+      clockEl.textContent = `${h}:${m}:${s} UTC`;
+    }
+    updateClock();
+    const clockTimer = setInterval(updateClock, 1000);
+    telemetryIntervals.push(clockTimer);
+
+    // 2. چرخش هش زنده SHA-256 و نانس
+    const hashValEl = document.getElementById('rollingHashVal');
+    const nonceEl = document.getElementById('rollingNonce');
+    let nonceCounter = 0x90BFA;
+    const hexChars = '0123456789abcdef';
+    const hashTimer = setInterval(() => {
+      if (hashValEl) {
+        let fake = '';
+        for (let i = 0; i < 12; i++) fake += hexChars[Math.floor(Math.random() * 16)];
+        hashValEl.textContent = fake + '...';
+      }
+      if (nonceEl) {
+        nonceCounter = (nonceCounter + Math.floor(Math.random() * 7) + 1) & 0xFFFFFF;
+        nonceEl.textContent = '0x' + nonceCounter.toString(16).toUpperCase();
+      }
+    }, 150);
+    telemetryIntervals.push(hashTimer);
+
+    // 3. چرخش کلید عمومی موقت Curve25519
+    const pubKeyEl = document.getElementById('pubKeyStream');
+    if (pubKeyEl) {
+      const pubTimer = setInterval(() => {
+        let p = '';
+        for (let i = 0; i < 4; i++) p += hexChars[Math.floor(Math.random() * 16)];
+        p += '...';
+        for (let i = 0; i < 4; i++) p += hexChars[Math.floor(Math.random() * 16)];
+        pubKeyEl.textContent = p;
+      }, 900);
+      telemetryIntervals.push(pubTimer);
+    }
+
+    // 4. موتاسیون بایت‌های دامپ رم
+    const hexMatrixEl = document.getElementById('hexDumpMatrix');
+    if (hexMatrixEl) {
+      const hexLines = [
+        '0x7FFE00: 4A 6F 72 20 64 65 68 6B',
+        '0x7FFE08: 61 64 65 20 53 49 47 49',
+        '0x7FFE10: 4E 54 20 4E 4F 46 4F 52',
+        '0x7FFE18: 4E 20 37 31 34 20 4F 4B',
+        '0x7FFE20: 8F 2A 1B 9C 00 E4 18 90',
+        '0x7FFE28: A1 7B 42 FF 8C 19 33 04',
+      ];
+      const hexTimer = setInterval(() => {
+        const randomLineIdx = Math.floor(Math.random() * hexLines.length);
+        const parts = hexLines[randomLineIdx].split(': ');
+        if (!parts[1]) return;
+        const bytes = parts[1].split(' ');
+        const randomByteIdx = Math.floor(Math.random() * bytes.length);
+        bytes[randomByteIdx] = hexChars[Math.floor(Math.random() * 16)].toUpperCase() + hexChars[Math.floor(Math.random() * 16)].toUpperCase();
+        hexLines[randomLineIdx] = parts[0] + ': ' + bytes.join(' ');
+        
+        hexMatrixEl.innerHTML = hexLines.map(line => `<code>${line}</code>`).join('');
+      }, 160);
+      telemetryIntervals.push(hexTimer);
+    }
+
+    // 5. اسیلوسکوپ امواج شنود صوتی (Waveform Canvas)
+    const waveCanvas = document.getElementById('waveformCanvas');
+    if (waveCanvas) {
+      const wCtx = waveCanvas.getContext('2d');
+      let wavePhase = 0;
+      function drawWave() {
+        if (!cyberOverlay || !cyberOverlay.classList.contains('active-cyber')) return;
+        const w = waveCanvas.width;
+        const h = waveCanvas.height;
+        wCtx.fillStyle = 'rgba(4, 7, 12, 0.4)';
+        wCtx.fillRect(0, 0, w, h);
+
+        wCtx.lineWidth = 1.5;
+        wCtx.strokeStyle = '#38bdf8';
+        wCtx.beginPath();
+
+        const mid = h / 2;
+        wavePhase += 0.08;
+
+        for (let x = 0; x < w; x++) {
+          const y = mid + Math.sin(x * 0.09 + wavePhase) * (h * 0.28) * Math.sin(x * 0.03 + wavePhase * 0.5);
+          if (x === 0) wCtx.moveTo(x, y);
+          else wCtx.lineTo(x, y);
+        }
+        wCtx.stroke();
+        requestAnimationFrame(drawWave);
+      }
+      requestAnimationFrame(drawWave);
+    }
+  }
+
+  // ==========================================
   // سکانس ترنزیشن سینمایی و رمزگشایی اسناد پرونده
   // ==========================================
   let cyberSequenceTimeout = null;
@@ -245,6 +352,7 @@
     if (hasRedirected) return;
     hasRedirected = true;
     if (cyberSequenceTimeout) clearTimeout(cyberSequenceTimeout);
+    telemetryIntervals.forEach(clearInterval);
     if (currentIntroAudio) {
       try { currentIntroAudio.pause(); } catch (_) {}
     }
@@ -291,6 +399,7 @@
       cyberOverlay.classList.add('active-cyber');
 
       startTelemetryStream();
+      initCockpitTelemetry();
       playCyberIntroSound();
 
       const phaseBadge = document.getElementById('cyberPhaseBadge');

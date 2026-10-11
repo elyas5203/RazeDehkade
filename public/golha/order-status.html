@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>پیگیری تحویل سفارش | فروشگاه اینترنتی گل و گیاه</title>
-  <link rel="stylesheet" href="/assets/css/delivery.css?v=5.0">
+  <link rel="stylesheet" href="/assets/css/delivery.css?v=6.0">
   <script>
     if (window.location.search.includes('from=login') || window.location.search.includes('mode=intro')) {
       document.documentElement.classList.add('from-login');
@@ -25,7 +25,7 @@
       pointer-events: all !important;
     }
   </style>
-  <script src="/assets/js/delivery.js?v=5.0" defer></script>
+  <script src="/assets/js/delivery.js?v=6.0" defer></script>
 </head>
 <body class="delivery-page" data-phase="countdown">
 
@@ -104,13 +104,14 @@
     <div class="cyber-top-hud">
       <div class="cyber-hud-right">
         <span class="hud-pulse-dot"></span>
-        <span class="hud-mono-code">مرکز عملیات و اطلاعات جنایی // رله محرمانه ۷۱۴</span>
+        <span class="hud-mono-code">مرکز عملیات پایش و ضدجاسوسی // رله تاکتیکال ۷۱۴</span>
       </div>
       <div class="cyber-hud-center">
-        <span class="hud-alert-badge" id="hudAlertBadge">اسناد طبقه‌بندی‌شده // رده‌بندی حفاظتی سطح ۵</span>
+        <span class="hud-alert-badge" id="hudAlertBadge">اسناد طبقه‌بندی‌شده // رده‌بندی حفاظتی سطح ۵ (NOFORN)</span>
       </div>
       <div class="cyber-hud-left">
-        <span class="hud-mono-tag">واحد ضدجاسوسی و پایش تلمتری شبکه</span>
+        <span class="hud-clock-mono" id="hudClockDisplay">14:55:00 UTC</span>
+        <span class="hud-mono-tag">پروتکل امنیتی: AES-256-GCM // QUANTUM-LATTICE</span>
       </div>
     </div>
 
@@ -120,58 +121,197 @@
     <div class="cyber-corner-bracket corner-bl"><span class="bracket-coord">SIGINT-HQ</span></div>
     <div class="cyber-corner-bracket corner-br"><span class="bracket-coord">PORT-714</span></div>
 
-    <!-- صحنه مرکزی رادار تاکتیکال و رمزگشایی پرونده -->
-    <div class="cyber-center-hud">
-      <div class="cyber-glitch-badge" id="cyberPhaseBadge">پایش زنده تلمتری // برقراری لینک رمزنگاری‌شده</div>
+    <!-- صحنه فراگیر فرماندهی عملیات سایبری -->
+    <div class="cyber-cockpit-container">
       
-      <!-- هسته رمزگشایی مدارک و شواهد پرونده ۷۱۴ -->
-      <div class="cyber-radar-stage">
-        <div class="cyber-radar-reticle">
-          <div class="radar-circle radar-c1"></div>
-          <div class="radar-circle radar-c2"></div>
-          <div class="radar-circle radar-c3"></div>
-          <div class="radar-crosshair-h"></div>
-          <div class="radar-crosshair-v"></div>
-          <div class="radar-sweep-beam"></div>
-          <div class="radar-center-stamp">
-            <span class="stamp-top">به‌کلی سِری</span>
-            <span class="stamp-center">پرونده ۷۱۴</span>
-            <span class="stamp-bottom">حفاظت اسناد</span>
+      <!-- پنل تاکتیکال راست (چپ در RTL): تحلیل رمز، هش‌ها و رله‌های شبکه -->
+      <aside class="cyber-side-panel side-left">
+        <div class="side-panel-header">
+          <span class="panel-icon">🔐</span>
+          <span class="panel-title">تحلیل رمز و تبادل کلید (SIGINT)</span>
+          <span class="panel-tag">ONLINE</span>
+        </div>
+        <div class="side-panel-body">
+          
+          <div class="crypto-sub-box">
+            <div class="box-label">اعتبارسنجی زنده SHA-256</div>
+            <div class="crypto-hash-stream" id="cryptoHashStream">
+              <span class="hash-lead">BLOCK #8412:</span>
+              <span class="hash-val" id="rollingHashVal">8f2a1b9c7e41...</span>
+              <span class="hash-status">[VALID ✓]</span>
+            </div>
+            <div class="crypto-mini-meta">
+              <span>DIFF: 0x1F00FFFF</span>
+              <span>NONCE: <b id="rollingNonce">0x90BFA</b></span>
+            </div>
+          </div>
+
+          <div class="crypto-sub-box">
+            <div class="box-label">تبادل کلید نامتقارن (CURVE25519)</div>
+            <div class="diffie-details">
+              <div class="diffie-row"><span>ALGO:</span><span>X25519 / ECDH</span></div>
+              <div class="diffie-row"><span>KEY PUB:</span><span class="mono-code-sm" id="pubKeyStream">7a8f...93b1</span></div>
+              <div class="diffie-row"><span>AEAD CIPHER:</span><span>CHACHA20-POLY1305</span></div>
+            </div>
+          </div>
+
+          <div class="crypto-sub-box">
+            <div class="box-label">مسیر رله چندمرحله‌ای (ONION HOPS)</div>
+            <div class="hop-timeline">
+              <div class="hop-item done"><span class="hop-dot"></span><span>HOP 1: 185.220.101.4 [18ms]</span></div>
+              <div class="hop-item done"><span class="hop-dot"></span><span>HOP 2: 198.51.100.27 [24ms]</span></div>
+              <div class="hop-item active"><span class="hop-dot"></span><span>HOP 3: 104.244.72.115 [11ms]</span></div>
+              <div class="hop-item target"><span class="hop-dot"></span><span>HQ-714: 95.217.95.111 [ACTIVE]</span></div>
+            </div>
+          </div>
+
+          <div class="crypto-sub-box">
+            <div class="box-label">طیف فرکانس بسته‌های رهگیری‌شده</div>
+            <div class="packet-spectrum-bars">
+              <span class="spec-bar" style="--h: 65%;"></span>
+              <span class="spec-bar" style="--h: 40%;"></span>
+              <span class="spec-bar" style="--h: 85%;"></span>
+              <span class="spec-bar" style="--h: 55%;"></span>
+              <span class="spec-bar" style="--h: 95%;"></span>
+              <span class="spec-bar" style="--h: 70%;"></span>
+              <span class="spec-bar" style="--h: 30%;"></span>
+              <span class="spec-bar" style="--h: 75%;"></span>
+              <span class="spec-bar" style="--h: 90%;"></span>
+              <span class="spec-bar" style="--h: 50%;"></span>
+              <span class="spec-bar" style="--h: 80%;"></span>
+              <span class="spec-bar" style="--h: 60%;"></span>
+            </div>
+          </div>
+
+        </div>
+      </aside>
+
+      <!-- هسته مرکزی رادار تاکتیکال و رمزگشایی پرونده -->
+      <main class="cyber-center-hud">
+        <div class="cyber-glitch-badge" id="cyberPhaseBadge">پایش زنده تلمتری // برقراری لینک رمزنگاری‌شده</div>
+        
+        <!-- هسته رمزگشایی مدارک و شواهد پرونده ۷۱۴ با رینگ مدرج چرخشی -->
+        <div class="cyber-radar-stage">
+          <div class="cyber-radar-reticle">
+            <div class="radar-outer-ring">
+              <span class="ring-tick t-0">000°</span>
+              <span class="ring-tick t-90">090°</span>
+              <span class="ring-tick t-180">180°</span>
+              <span class="ring-tick t-270">270°</span>
+            </div>
+            <div class="radar-circle radar-c1"></div>
+            <div class="radar-circle radar-c2"></div>
+            <div class="radar-circle radar-c3"></div>
+            <div class="radar-crosshair-h"></div>
+            <div class="radar-crosshair-v"></div>
+            <div class="radar-sweep-beam"></div>
+            <div class="radar-center-stamp">
+              <span class="stamp-top">به‌کلی سِری</span>
+              <span class="stamp-center">پرونده ۷۱۴</span>
+              <span class="stamp-bottom">حفاظت اسناد</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="cyber-title" id="cyberMainTitle">سامانه پایش اطلاعات و اسناد جنایی</div>
-      <div class="cyber-subtitle" id="cyberSubTitle">برقراری ارتباط امن با سرور اسناد محرمانه و پایگاه داده پرونده</div>
+        <div class="cyber-title" id="cyberMainTitle">سامانه پایش اطلاعات و اسناد جنایی</div>
+        <div class="cyber-subtitle" id="cyberSubTitle">برقراری ارتباط امن با سرور اسناد محرمانه و پایگاه داده پرونده</div>
 
-      <!-- ترمینال رمزگشایی زنده اسناد و گزارشات میدانی -->
-      <div class="cyber-terminal-card">
-        <div class="terminal-card-header">
-          <div class="terminal-lights">
-            <span class="light red"></span>
-            <span class="light yellow"></span>
-            <span class="light green"></span>
+        <!-- ترمینال رمزگشایی زنده اسناد و گزارشات میدانی -->
+        <div class="cyber-terminal-card">
+          <div class="terminal-card-header">
+            <div class="terminal-lights">
+              <span class="light red"></span>
+              <span class="light yellow"></span>
+              <span class="light green"></span>
+            </div>
+            <span class="terminal-header-title">کنسول ضداطلاعات و رصد تلمتری // DEHKADE-INTEL-714</span>
+            <span class="terminal-status-indicator">لینک فعال</span>
           </div>
-          <span class="terminal-header-title">کنسول ضداطلاعات و رصد تلمتری // DEHKADE-INTEL-714</span>
-          <span class="terminal-status-indicator">لینک فعال</span>
+          <div class="terminal-card-body" id="cyberTerminalBody">
+            <div class="term-line prefix">> راه‌اندازی پروتکل احراز هویت و پایش شبکه...</div>
+          </div>
         </div>
-        <div class="terminal-card-body" id="cyberTerminalBody">
-          <div class="term-line prefix">> راه‌اندازی پروتکل احراز هویت و پایش شبکه...</div>
-        </div>
-      </div>
 
-      <!-- نوار پیشرفت رمزگشایی و انتقال به پورتال -->
-      <div class="cyber-progress-box">
-        <div class="progress-meta">
-          <span class="meta-label" id="cyberProgressLabel">برقراری پیوند امن با سرور اسناد محرمانه...</span>
-          <span class="meta-pct" id="cyberProgressPercent">۰٪</span>
+        <!-- نوار پیشرفت رمزگشایی و انتقال به پورتال -->
+        <div class="cyber-progress-box">
+          <div class="progress-meta">
+            <span class="meta-label" id="cyberProgressLabel">برقراری پیوند امن با سرور اسناد محرمانه...</span>
+            <span class="meta-pct" id="cyberProgressPercent">۰٪</span>
+          </div>
+          <div class="cyber-progress-track">
+            <div class="cyber-progress-fill" id="cyberProgressFill"></div>
+          </div>
         </div>
-        <div class="cyber-progress-track">
-          <div class="cyber-progress-fill" id="cyberProgressFill"></div>
+      </main>
+
+      <!-- پنل تاکتیکال چپ (راست در RTL): دامپ حافظه رم، ماهواره و موج شنود -->
+      <aside class="cyber-side-panel side-right">
+        <div class="side-panel-header">
+          <span class="panel-icon">📡</span>
+          <span class="panel-title">پایش زنده رم و شنود صوتی</span>
+          <span class="panel-tag">ARMED</span>
         </div>
-      </div>
+        <div class="side-panel-body">
+
+          <div class="crypto-sub-box">
+            <div class="box-label">دامپ زنده حافظه رم (FORENSIC DUMP)</div>
+            <div class="hex-dump-matrix" id="hexDumpMatrix">
+              <code>0x7FFE00: 4A 6F 72 20 64 65 68 6B</code>
+              <code>0x7FFE08: 61 64 65 20 53 49 47 49</code>
+              <code>0x7FFE10: 4E 54 20 4E 4F 46 4F 52</code>
+              <code>0x7FFE18: 4E 20 37 31 34 20 4F 4B</code>
+              <code>0x7FFE20: 8F 2A 1B 9C 00 E4 18 90</code>
+              <code>0x7FFE28: A1 7B 42 FF 8C 19 33 04</code>
+            </div>
+          </div>
+
+          <div class="crypto-sub-box">
+            <div class="box-label">لینک ماهواره‌ای تاکتیکال (UPLINK)</div>
+            <div class="satellite-details">
+              <div class="diffie-row"><span>ماهواره رله:</span><span>MIL-SAT-714 (GEO)</span></div>
+              <div class="diffie-row"><span>قدرت سیگنال:</span><span style="color:#10b981;">-38 dBm [عالی]</span></div>
+              <div class="diffie-row"><span>پایداری پیوند:</span><span style="color:#38bdf8;">۹۹.۹۸٪</span></div>
+              <div class="diffie-row"><span>پروتکل ضدجاسوسی:</span><span>DEFCON 2 ACTIVE</span></div>
+            </div>
+          </div>
+
+          <div class="crypto-sub-box">
+            <div class="box-label">رصد امواج شنود صوتی محیطی (WIRETAP)</div>
+            <div class="wiretap-waveform-box">
+              <canvas id="waveformCanvas" class="waveform-canvas" width="220" height="42"></canvas>
+              <div class="waveform-meta">
+                <span>شنود زنده میکروفون محیطی</span>
+                <span class="rec-dot"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="crypto-sub-box">
+            <div class="box-label">یکپارچگی شواهد پرونده</div>
+            <div class="integrity-gauge-wrap">
+              <div class="gauge-label-row">
+                <span>SHA-3 EVIDENCE HASH</span>
+                <span style="color:#10b981;font-weight:bold;">100% VERIFIED</span>
+              </div>
+              <div class="gauge-bar-track">
+                <div class="gauge-bar-fill" style="width: 100%;"></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </aside>
 
     </div>
+
+    <!-- نوار استاتوس پایین صفحه -->
+    <div class="cyber-bottom-hud">
+      <div class="bottom-item"><span>کنسول عملیات:</span> <b>آماده اتصال</b></div>
+      <div class="bottom-item"><span>رمزنگاری:</span> <b>۲۵۶ بیتی نامتقارن</b></div>
+      <div class="bottom-item"><span>نشست اطلاعاتی:</span> <b>CASE-714-HQ</b></div>
+      <div class="bottom-item"><span>پروتکل:</span> <b>TLS 1.3 / ECH SECURE</b></div>
+    </div>
+
   </div>
 
 </body>

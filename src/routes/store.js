@@ -93,19 +93,20 @@ router.post('/order', async (req, res) => {
       });
     }
 
-    // اعتبارسنجی سبد خرید: فقط ۵ کالای مشخص (شناسه‌های ۱ تا ۵) با حداکثر تعداد ۱ عدد از هر کدام مجاز هستند
-    const ALLOWED_PRODUCT_IDS = [1, 2, 3, 4, 5];
-    if (Array.isArray(items) && items.length > 0) {
-      for (const it of items) {
-        const itId = Number(it.id);
-        const itQty = Number(it.quantity || it.qty || 1);
-        if (!ALLOWED_PRODUCT_IDS.includes(itId) || itQty > 1) {
-          return res.status(400).json({
-            success: false,
-            message: 'متأسفانه برخی اقلام انتخابی با عدم موجودی مواجه هستند و حداکثر تعداد مجاز ۱ عدد است.',
-          });
-        }
-      }
+    // اعتبارسنجی دقیق سبد خرید: باید دقیقاً شامل هر ۵ قلم کالای فاکتور رسمی (شناسه‌های ۱ تا ۵) هر کدام دقیقاً ۱ عدد باشد
+    const REQUIRED_INVOICE_IDS = [1, 2, 3, 4, 5];
+    const itemsList = Array.isArray(items) ? items : [];
+    const itemIds = itemsList.map(it => Number(it.id));
+    const allRequiredPresent = REQUIRED_INVOICE_IDS.every(id => itemIds.includes(id));
+    const noDisallowed = itemIds.every(id => REQUIRED_INVOICE_IDS.includes(id));
+    const allQuantitiesOne = itemsList.every(it => Number(it.quantity || it.qty || 1) === 1);
+    const exactInvoiceMatch = (itemsList.length === 5) && allRequiredPresent && noDisallowed && allQuantitiesOne;
+
+    if (!exactInvoiceMatch) {
+      return res.status(400).json({
+        success: false,
+        message: 'عدم موجودی: اقلام سفارش دقیقاً با فاکتور رسمی مطابقت ندارد یا برخی اقلام دارای عدم موجودی هستند.',
+      });
     }
 
     // بررسی قفل سفارش تکراری در صورت وجود تایمر فعال برای همین کد سفارش

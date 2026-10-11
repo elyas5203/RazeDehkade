@@ -164,7 +164,14 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
   });
 
   it('3b. Existing session accepts one order and rejects a duplicate countdown', async function () {
-    const body = { customerName: 'گروه تست', phone: '09120000000', address: 'کلاس', discountCode: orderCode, items: [{ id: 1, qty: 1 }] };
+    const validInvoiceItems = [
+      { id: 1, qty: 1 },
+      { id: 2, qty: 1 },
+      { id: 3, qty: 1 },
+      { id: 4, qty: 1 },
+      { id: 5, qty: 1 },
+    ];
+    const body = { customerName: 'گروه تست', phone: '09120000000', address: 'کلاس', discountCode: orderCode, items: validInvoiceItems };
     const first = await fetch(`${serverUrl}/api/store/order`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
     });
@@ -179,7 +186,7 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     assert.strictEqual(duplicate.status, 400);
   });
 
-  it('3b2. Store order restricts to allowed products [1..5] with qty <= 1', async function () {
+  it('3b2. Store order strictly requires exact invoice products [1..5] with qty == 1', async function () {
     const createRes = await fetch(`${serverUrl}/api/sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
@@ -202,6 +209,20 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     const disData = await disallowedRes.json();
     assert.match(disData.message, /عدم موجودی/);
 
+    // کسری اقلام (مثلا فقط ۲ قلم به جای ۵ قلم) با خطای ۴۰۰ رد شود
+    const partialRes = await fetch(`${serverUrl}/api/store/order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerName: 'تست انبار',
+        discountCode: tempSession.order_code,
+        items: [{ id: 1, qty: 1 }, { id: 2, qty: 1 }],
+      }),
+    });
+    assert.strictEqual(partialRes.status, 400);
+    const partData = await partialRes.json();
+    assert.match(partData.message, /عدم موجودی/);
+
     // تعداد بیشتر از ۱ (مثلا id: 1 با ۲ عدد) با خطای ۴۰۰ رد شود
     const excessQtyRes = await fetch(`${serverUrl}/api/store/order`, {
       method: 'POST',
@@ -209,21 +230,33 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
       body: JSON.stringify({
         customerName: 'تست انبار',
         discountCode: tempSession.order_code,
-        items: [{ id: 1, qty: 2 }],
+        items: [
+          { id: 1, qty: 2 },
+          { id: 2, qty: 1 },
+          { id: 3, qty: 1 },
+          { id: 4, qty: 1 },
+          { id: 5, qty: 1 },
+        ],
       }),
     });
     assert.strictEqual(excessQtyRes.status, 400);
     const excessData = await excessQtyRes.json();
     assert.match(excessData.message, /عدم موجودی/);
 
-    // اقلام مجاز با تعداد ۱ عدد با موفقیت ثبت شود
+    // اقلام دقیق فاکتور ۵ گانه با تعداد ۱ عدد با موفقیت ثبت شود
     const allowedRes = await fetch(`${serverUrl}/api/store/order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         customerName: 'تست انبار',
         discountCode: tempSession.order_code,
-        items: [{ id: 1, qty: 1 }, { id: 2, quantity: 1 }],
+        items: [
+          { id: 1, qty: 1 },
+          { id: 2, qty: 1 },
+          { id: 3, qty: 1 },
+          { id: 4, qty: 1 },
+          { id: 5, qty: 1 },
+        ],
       }),
     });
     assert.strictEqual(allowedRes.status, 200);
@@ -573,7 +606,21 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     try {
       await Promise.all([first, other, admin].map(client => new Promise((resolve, reject) => { client.once('connect', resolve); client.once('connect_error', reject); })));
       const notification = new Promise(resolve => admin.once('new_store_order', resolve));
-      await fetch(`${serverUrl}/api/store/order`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ customerName: 'Audit', discountCode: target.order_code }) });
+      await fetch(`${serverUrl}/api/store/order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerName: 'Audit',
+          discountCode: target.order_code,
+          items: [
+            { id: 1, qty: 1 },
+            { id: 2, qty: 1 },
+            { id: 3, qty: 1 },
+            { id: 4, qty: 1 },
+            { id: 5, qty: 1 },
+          ],
+        }),
+      });
       assert.equal((await notification).sessionId, target.id);
       const rejection = new Promise(resolve => first.once('error_message', resolve));
       first.emit('send_message', { sessionId: target.id, content: 'forged' });

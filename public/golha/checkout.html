@@ -113,19 +113,20 @@
   </main>
 
   <script>
-    const ALLOWED_PRODUCT_IDS = ['1', '2', '3', '4', '5'];
-    let rawCart = JSON.parse(localStorage.getItem('golha_cart') || '[]');
-    // فیلتر کردن اقلام مجاز و محدودسازی تعداد به حداکثر ۱ عدد
-    const cart = rawCart.filter(item => ALLOWED_PRODUCT_IDS.includes(String(item.id))).map(item => ({
-      ...item,
-      quantity: 1,
-    }));
-    if (cart.length !== rawCart.length || rawCart.some(it => it.quantity > 1)) {
-      localStorage.setItem('golha_cart', JSON.stringify(cart));
+    const REQUIRED_INVOICE_IDS = [1, 2, 3, 4, 5];
+    let cart = JSON.parse(localStorage.getItem('golha_cart') || '[]');
+
+    function isExactInvoice(cartItems) {
+      if (!Array.isArray(cartItems) || cartItems.length !== 5) return false;
+      const ids = cartItems.map(it => Number(it.id));
+      const allPresent = REQUIRED_INVOICE_IDS.every(id => ids.includes(id));
+      const noExtras = ids.every(id => REQUIRED_INVOICE_IDS.includes(id));
+      const allQtyOne = cartItems.every(it => Number(it.quantity || it.qty || 1) === 1);
+      return allPresent && noExtras && allQtyOne;
     }
 
     if (cart.length === 0) {
-      alert('سبد خرید شما خالی است یا اقلام انتخابی با عدم موجودی مواجه هستند.');
+      alert('سبد خرید شما خالی است!');
       window.location.href = '/golha/index.html';
     }
 
@@ -140,15 +141,22 @@
     function renderOrderSummary() {
       const discountAmount = appliedDiscount === 100 ? subtotal : 0;
       const payable = subtotal - discountAmount;
+      const validInvoice = isExactInvoice(cart);
 
       orderSummaryEl.innerHTML = `
-        <strong>اقلام فاکتور خرید:</strong>
+        <strong>اقلام سبد خرید:</strong>
         <ul style="margin-top: 0.5rem; padding-right: 1.2rem; color: var(--text-muted); line-height: 1.8;">
           ${cart.map(item => {
-            const itemTotal = item.price * item.quantity;
-            return `<li>${item.name} (${item.quantity} عدد) - ${itemTotal.toLocaleString('fa-IR')} ریال</li>`;
+            const itemTotal = item.price * (item.quantity || 1);
+            return `<li>${item.name} (${item.quantity || 1} عدد) - ${itemTotal.toLocaleString('fa-IR')} ریال</li>`;
           }).join('')}
         </ul>
+        ${!validInvoice ? `
+          <div style="margin-top: 10px; padding: 10px 14px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; color: #fca5a5; font-size: 0.88rem; line-height: 1.6;">
+            ⚠️ <strong>عدم تطابق با فاکتور رسمی (عدم موجودی):</strong><br>
+            اقلام موجود در سبد خرید با اقلام دقیق فاکتور فروشگاه (۵ قلم کالای مشخص‌شده، هر کدام ۱ عدد) مغایرت دارد. ثبت سفارش اقلام دیگر به دلیل عدم موجودی امکان‌پذیر نیست.
+          </div>
+        ` : ''}
         <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px dashed var(--border-color); display: flex; flex-direction: column; gap: 6px;">
           <div style="display:flex; justify-content:space-between; font-size: 0.95rem; color: var(--text-muted);">
             <span>مجموع قیمت اقلام:</span>
@@ -239,9 +247,8 @@
         return;
       }
 
-      const hasInvalid = cart.some(it => !ALLOWED_PRODUCT_IDS.includes(String(it.id)) || it.quantity > 1);
-      if (hasInvalid) {
-        alert('متأسفانه برخی از اقلام انتخابی با عدم موجودی مواجه هستند و حداکثر تعداد مجاز ۱ عدد است.');
+      if (!isExactInvoice(cart)) {
+        alert('خطا در ثبت سفارش: عدم موجودی!\nاقلام سبد خرید دقیقاً با اقلام ۵‌گانه فاکتور خرید (هر کدام به تعداد ۱ عدد) مطابقت ندارد. سفارش اقلام دیگر به دلیل عدم موجودی امکان‌پذیر نیست.');
         submitBtn.disabled = false;
         submitBtn.textContent = '🌹 ثبت نهایی سفارش و ارسال پیک';
         return;
