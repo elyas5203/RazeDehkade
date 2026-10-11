@@ -161,9 +161,9 @@ class SessionAssistant {
 
     const orderVal = existing ? existing.display_order : (display_order || existingList.length + 1);
     const res = await query(
-      `INSERT INTO session_assistants (session_id, student_name, file_url, display_order)
-       VALUES (?, ?, ?, ?)`,
-      [sid, cleanName, fileUrl, orderVal]
+      `INSERT INTO session_assistants (session_id, student_name, file_url, file_name, display_order)
+       VALUES (?, ?, ?, ?, ?)`,
+      [sid, cleanName, fileUrl, destFileName, orderVal]
     );
 
     const created = await SessionAssistant.findById(res.insertId);

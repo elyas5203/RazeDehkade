@@ -10,7 +10,8 @@
 require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
-const { initDatabase, closePool } = require('../src/db/pool');
+const { pool } = require('../src/db/pool');
+const { runMigrations } = require('../src/db/migrate');
 const SessionAssistant = require('../src/models/SessionAssistant');
 
 async function run() {
@@ -27,7 +28,7 @@ async function run() {
     process.exit(1);
   }
 
-  await initDatabase();
+  await runMigrations();
   const stat = fs.statSync(resolvedPath);
 
   console.log(`⏳ در حال پردازش و تطبیق خودکار عکس‌های دستیاران از مسیر:\n   ${resolvedPath}`);
@@ -63,13 +64,13 @@ async function run() {
     console.warn('\n⚠️ پوشه‌های بدون تطبیق:', summary.unmatchedFolders.join(' ، '));
   }
 
-  await closePool();
+  await pool.end();
 }
 
 run().catch(async (err) => {
   console.error('❌ خطا در ایمپورت عکس‌های دستیاران:', err.message);
   try {
-    await closePool();
+    await pool.end();
   } catch (_) {}
   process.exit(1);
 });
