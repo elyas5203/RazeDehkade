@@ -4,8 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>پیگیری تحویل سفارش | فروشگاه اینترنتی گل و گیاه</title>
-  <link rel="stylesheet" href="/assets/css/delivery.css?v=4.1">
-  <script src="/assets/js/delivery.js?v=4.1" defer></script>
+  <link rel="stylesheet" href="/assets/css/delivery.css?v=5.0">
+  <script>
+    if (window.location.search.includes('from=login') || window.location.search.includes('mode=intro')) {
+      document.documentElement.classList.add('from-login');
+    }
+  </script>
+  <style>
+    html.from-login .delivery-stage,
+    html.from-login .delivery-brand,
+    html.from-login .delivery-footer {
+      display: none !important;
+    }
+    html.from-login body {
+      background: #060a12 !important;
+    }
+    html.from-login #cyberOverlay {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: all !important;
+    }
+  </style>
+  <script src="/assets/js/delivery.js?v=5.0" defer></script>
 </head>
 <body class="delivery-page" data-phase="countdown">
 

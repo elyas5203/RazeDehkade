@@ -44,11 +44,6 @@
 
   const numberFormat = new Intl.NumberFormat('fa-IR');
 
-  let order;
-  try { 
-    order = JSON.parse(localStorage.getItem('golha_last_order') || 'null'); 
-  } catch (_) {}
-
   // مبدا زمانی شمارش معکوس ۳۰ ثانیه‌ای
   let startedAt = Date.now();
   if (order && Number.isFinite(Number(order.countdownStartedAt))) {
@@ -265,17 +260,20 @@
   function triggerCyberTransformation(customBlackoutMs) {
     if (!cyberOverlay) return;
 
-    let targetBlackout = typeof customBlackoutMs === 'number' ? customBlackoutMs : BLACKOUT_DURATION_MS;
-
-    // ثبت زمان شروع خاموشی کامل
-    const now = Date.now();
-    let blackoutStart = Number(sessionStorage.getItem('delivery_blackout_at') || 0);
-    if (!blackoutStart || (now - blackoutStart) > (5 * 60 * 1000)) {
-      blackoutStart = now;
-      sessionStorage.setItem('delivery_blackout_at', String(blackoutStart));
+    let actualBlackoutDuration;
+    if (typeof customBlackoutMs === 'number') {
+      actualBlackoutDuration = customBlackoutMs;
+    } else {
+      const targetBlackout = BLACKOUT_DURATION_MS;
+      const now = Date.now();
+      let blackoutStart = Number(sessionStorage.getItem('delivery_blackout_at') || 0);
+      if (!blackoutStart || (now - blackoutStart) > (5 * 60 * 1000)) {
+        blackoutStart = now;
+        sessionStorage.setItem('delivery_blackout_at', String(blackoutStart));
+      }
+      const elapsedSoFar = now - blackoutStart;
+      actualBlackoutDuration = Math.max(0, targetBlackout - elapsedSoFar);
     }
-    const elapsedSoFar = now - blackoutStart;
-    const actualBlackoutDuration = Math.max(0, targetBlackout - elapsedSoFar);
 
     // ۱. فاز اول: بلک‌اوت ۱۰۰٪ مطلق و خاموشی کامل نمایشگر (بدون متن، بدون کادر، بدون صدا، بدون نشانگر موس)
     document.body.classList.add('is-blackout');
@@ -432,8 +430,8 @@
       const footer = document.querySelector('.delivery-footer');
       if (footer) footer.style.display = 'none';
 
-      // شروع فوری خاموشی تعلیقی (۲ ثانیه) و سپس سکانس اینترو سایبری ترنسفورماتور
-      triggerCyberTransformation(LOGIN_BLACKOUT_MS);
+      // ورود با شماره همراه ثبت‌شده: مستقیماً بدون معطلی وارد سکانس سایبری می‌شود
+      triggerCyberTransformation(200);
       return;
     }
 
