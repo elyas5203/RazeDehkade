@@ -9,6 +9,7 @@ const path = require('path');
 const os = require('os');
 const http = require('http');
 const https = require('https');
+const { execFile } = require('child_process');
 const {
   BOT_TOKEN,
   AUTHORIZED_ADMIN_ID,
@@ -435,20 +436,76 @@ class MohtavaTelegramBot {
   }
 
   /**
-   * دانلود فایل از سرور تلگرام و ذخیره در پوشه public/uploads/weekly
+   * دانلود فایل‌های حجیم (بالای ۲۰ مگابایت تا سقف ۲ گیگابایت) مستقیماً از طریق پروتکل MTProto تلگرام
    */
-  async downloadTelegramFile(fileId, destFilePath) {
-    const fileInfoRes = await this.apiCall('getFile', { file_id: fileId }, 20000);
-    if (!fileInfoRes || !fileInfoRes.ok || !fileInfoRes.result || !fileInfoRes.result.file_path) {
-      throw new Error(fileInfoRes?.description || 'خطا در دریافت اطلاعات فایل از تلگرام (getFile)');
-    }
+  async downloadTelegramFileViaMtproto(chatId, messageId, destFilePath) {
+    const scriptPath = path.join(__dirname, 'mtproto_download.py');
+    const pythonCandidates = process.platform === 'win32' ? ['python', 'python3'] : ['python3', 'python'];
 
-    const remotePath = fileInfoRes.result.file_path;
-    const downloadUrl = `${this.fileBase}/${remotePath}`;
+    let lastErr = null;
+    for (const pyBin of pythonCandidates) {
+      try {
+        await new Promise((resolve, reject) => {
+          execFile(
+            pyBin,
+            [
+              scriptPath,
+              '--token',
+              String(this.token),
+              '--chat-id',
+              String(chatId),
+              '--message-id',
+              String(messageId),
+              '--dest',
+              String(destFilePath),
+            ],
+            { timeout: 900000, maxBuffer: 10 * 1024 * 1024 },
+            (err, stdout, stderr) => {
+              if (err) {
+                return reject(new Error(stderr?.trim() || err.message));
+              }
+              resolve(stdout);
+            }
+          );
+        });
+        if (fs.existsSync(destFilePath) && fs.statSync(destFilePath).size > 0) {
+          ensureMp4FastStart(destFilePath);
+          return destFilePath;
+        }
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr || new Error('خطا در دانلود فایل حجیم از طریق MTProto');
+  }
+
+  /**
+   * دانلود فایل از سرور تلگرام و ذخیره در پوشه public/uploads/weekly
+   * (در صورت بزرگ بودن فایل بالای ۲۰ مگابایت، خودکار از MTProto استفاده می‌کند)
+   */
+  async downloadTelegramFile(fileId, destFilePath, meta = {}) {
+    const { chatId, messageId, fileSize } = meta || {};
 
     if (!fs.existsSync(UPLOAD_DIR)) {
       fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     }
+
+    // اگر سایز فایل بیش از ۱۹.۵ مگابایت است و شناسه پیام را داریم، مستقیماً با MTProto دانلود کن
+    if (Number(fileSize) > 19500000 && chatId && messageId) {
+      return await this.downloadTelegramFileViaMtproto(chatId, messageId, destFilePath);
+    }
+
+    const fileInfoRes = await this.apiCall('getFile', { file_id: fileId }, 20000);
+    if (!fileInfoRes || !fileInfoRes.ok || !fileInfoRes.result || !fileInfoRes.result.file_path) {
+      const desc = fileInfoRes?.description || 'خطا در دریافت اطلاعات فایل از تلگرام (getFile)';
+      if (/file is too big/i.test(desc) && chatId && messageId) {
+        return await this.downloadTelegramFileViaMtproto(chatId, messageId, destFilePath);
+      }
+      throw new Error(desc);
+    }
+
+    const remotePath = fileInfoRes.result.file_path;
+    const downloadUrl = `${this.fileBase}/${remotePath}`;
 
     await new Promise((resolve, reject) => {
       const fileStream = fs.createWriteStream(destFilePath);
@@ -488,6 +545,7 @@ class MohtavaTelegramBot {
       return {
         contentType: 'image',
         fileId: largestPhoto.file_id,
+        fileSize: Number(largestPhoto.file_size || 0),
         ext: '.jpg',
         originalName: 'photo.jpg',
       };
@@ -498,6 +556,7 @@ class MohtavaTelegramBot {
       return {
         contentType: 'video',
         fileId: msg.video.file_id,
+        fileSize: Number(msg.video.file_size || 0),
         ext: VIDEO_EXTS.has(origExt) ? origExt : '.mp4',
         originalName: msg.video.file_name || `video${origExt}`,
       };
@@ -507,6 +566,7 @@ class MohtavaTelegramBot {
       return {
         contentType: 'video',
         fileId: msg.video_note.file_id,
+        fileSize: Number(msg.video_note.file_size || 0),
         ext: '.mp4',
         originalName: 'video_note.mp4',
       };
@@ -516,6 +576,7 @@ class MohtavaTelegramBot {
       return {
         contentType: 'video',
         fileId: msg.animation.file_id,
+        fileSize: Number(msg.animation.file_size || 0),
         ext: '.mp4',
         originalName: msg.animation.file_name || 'animation.mp4',
       };
@@ -525,6 +586,7 @@ class MohtavaTelegramBot {
       return {
         contentType: 'voice',
         fileId: msg.voice.file_id,
+        fileSize: Number(msg.voice.file_size || 0),
         ext: '.ogg',
         originalName: 'voice.ogg',
       };
@@ -535,6 +597,7 @@ class MohtavaTelegramBot {
       return {
         contentType: 'voice',
         fileId: msg.audio.file_id,
+        fileSize: Number(msg.audio.file_size || 0),
         ext: VOICE_EXTS.has(origExt) ? origExt : '.mp3',
         originalName: msg.audio.file_name || msg.audio.title || `audio${origExt}`,
       };
@@ -564,6 +627,7 @@ class MohtavaTelegramBot {
       return {
         contentType,
         fileId: msg.document.file_id,
+        fileSize: Number(msg.document.file_size || 0),
         ext,
         originalName: origName,
       };
@@ -967,7 +1031,11 @@ class MohtavaTelegramBot {
         const localFilePath = path.join(UPLOAD_DIR, safeUniqueName);
         const publicFileUrl = `${PUBLIC_URL_PREFIX}/${safeUniqueName}`;
 
-        await this.downloadTelegramFile(mediaInfo.fileId, localFilePath);
+        await this.downloadTelegramFile(mediaInfo.fileId, localFilePath, {
+          chatId,
+          messageId: msg.message_id,
+          fileSize: mediaInfo.fileSize,
+        });
 
         const created = await WeeklyContent.create({
           week_number: weekNum,
@@ -1173,7 +1241,11 @@ class MohtavaTelegramBot {
           replyKeyboard
         );
 
-        await this.downloadTelegramFile(mediaInfo.fileId, tempArchivePath);
+        await this.downloadTelegramFile(mediaInfo.fileId, tempArchivePath, {
+          chatId,
+          messageId: msg.message_id,
+          fileSize: mediaInfo.fileSize,
+        });
       } else {
         await this.sendMessage(
           chatId,
@@ -1255,7 +1327,11 @@ class MohtavaTelegramBot {
     try {
       const ext = mediaInfo.ext || '.png';
       tempFilePath = path.join(os.tmpdir(), `raze_photo_${Date.now()}_${Math.random().toString(36).slice(2, 6)}${ext}`);
-      await this.downloadTelegramFile(mediaInfo.fileId, tempFilePath);
+      await this.downloadTelegramFile(mediaInfo.fileId, tempFilePath, {
+        chatId,
+        messageId: msg.message_id,
+        fileSize: mediaInfo.fileSize,
+      });
 
       const captionText = typeof msg.caption === 'string' ? msg.caption.trim() : '';
       let rawStudentName = '';

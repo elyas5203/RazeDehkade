@@ -12,7 +12,7 @@ module.exports = {
   BOT_TOKEN:
     process.env.TELEGRAM_BOT_TOKEN ||
     process.env.BOT_TOKEN ||
-    '8018971290:AAG383z9DcC3d34s7UJCX-ezjaCvkYrmVgY',
+    '8018971290:AAFcCPC8VjIMZeLVr7q989rASim1NQ8di64',
 
   // آیدی عددی مجاز ادمین در تلگرام
   AUTHORIZED_ADMIN_ID: Number(process.env.TELEGRAM_ADMIN_ID || 5490508090),
