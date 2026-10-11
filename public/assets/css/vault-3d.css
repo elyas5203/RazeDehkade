@@ -14,40 +14,69 @@
   min-height: 148px;
   display: block !important;
   overflow: hidden;
-  border-radius: 12px !important;
-  background: #080a0e !important;
-  border: 2px solid #232832 !important;
+  border-radius: 16px !important;
+  background: #06090e !important;
+  /* کادر فولادی چندوجهی برآمده و زرهی (Extruded 3D Steel Bezel) */
+  border-top: 6px solid #5a687d !important;
+  border-left: 6px solid #3c4656 !important;
+  border-right: 6px solid #1a202c !important;
+  border-bottom: 6px solid #090c12 !important;
   box-shadow:
-    0 18px 42px rgba(0, 0, 0, 0.98),
-    inset 0 1px 1px rgba(255, 255, 255, 0.08),
-    inset 0 -4px 12px rgba(0, 0, 0, 0.98) !important;
+    /* سایه پرسپکتیو که کل گاوصندوق را برجسته به سمت بیرون پرتاب می‌کند */
+    0 26px 54px rgba(0, 0, 0, 0.98),
+    0 12px 24px rgba(0, 0, 0, 0.9),
+    /* خط بازتاب نور براق روی لبه بالای چهارچوب (Specular Chamfer Highlight) */
+    inset 0 2px 2px rgba(255, 255, 255, 0.5),
+    inset 2px 0 2px rgba(255, 255, 255, 0.25),
+    /* سایه پخ ۴۵ درجه لبه پایینی و راستی (Chamfer Shadow) */
+    inset -2px -2px 3px rgba(0, 0, 0, 0.92),
+    inset 0 -5px 10px rgba(0, 0, 0, 0.98),
+    /* طوقه فولادی چندپله‌ای داخلی (Stepped Bezel Collar) */
+    inset 0 0 0 5px #151b24,
+    inset 0 0 0 8px #2b3545,
+    inset 0 0 0 10px #090c12,
+    /* جا شیاری و فرورفتگی عمیق درب زرهی داخل کادر برآمده (Deep Jamb Recess) */
+    inset 0 16px 36px rgba(0, 0, 0, 0.98) !important;
   transition:
-    border-color 0.3s ease,
-    box-shadow 0.3s ease;
+    transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
   z-index: 2;
+  perspective: 900px;
 }
 
 .quad-vault-card:hover {
-  border-color: #3b4454 !important;
+  border-top-color: #7b8ba3 !important;
+  border-left-color: #4b586c !important;
   box-shadow:
-    0 22px 48px rgba(0, 0, 0, 0.98),
-    inset 0 1px 2px rgba(255, 255, 255, 0.15) !important;
+    0 32px 64px rgba(0, 0, 0, 0.98),
+    0 16px 30px rgba(0, 0, 0, 0.92),
+    inset 0 3px 2px rgba(255, 255, 255, 0.65),
+    inset 3px 0 2px rgba(255, 255, 255, 0.35),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.95),
+    inset 0 -6px 12px rgba(0, 0, 0, 0.98),
+    inset 0 0 0 5px #1a222e,
+    inset 0 0 0 8px #3b485d,
+    inset 0 0 0 10px #090c12,
+    inset 0 18px 40px rgba(0, 0, 0, 0.98) !important;
 }
 
 /* حالت در حال باز شدن فیزیکی با چرخش دستگیره سه‌شاخه */
 .quad-vault-card.is-unlocking-wheel {
-  border-color: #4b5563 !important;
+  border-top-color: #64748b !important;
+  border-left-color: #475569 !important;
   box-shadow:
     0 0 0 2px rgba(100, 116, 139, 0.4),
-    0 24px 52px rgba(0, 0, 0, 0.98) !important;
+    0 28px 56px rgba(0, 0, 0, 0.98) !important;
   z-index: 15;
 }
 
 .quad-vault-card.is-unlocked {
-  border-color: #059669 !important;
+  border-top-color: #10b981 !important;
+  border-left-color: #059669 !important;
   box-shadow:
-    0 0 24px rgba(16, 185, 129, 0.25),
-    0 22px 48px rgba(0, 0, 0, 0.98) !important;
+    0 0 24px rgba(16, 185, 129, 0.3),
+    0 26px 54px rgba(0, 0, 0, 0.98) !important;
 }
 
 /* --------------------------------------------------------------------------
@@ -86,11 +115,11 @@
     inset 0 0 0 5px #0e1218,
     inset 0 0 0 7px #1c222c,
     inset 0 16px 36px rgba(0, 0, 0, 0.98);
-  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .quad-vault-card:hover .vault-3d-chassis {
-  transform: rotateX(2deg) rotateY(-3deg) translateZ(4px);
+  transform: perspective(800px) rotateX(2.5deg) rotateY(-3.8deg) scale3d(1.008, 1.008, 1.008);
 }
 
 .quad-vault-card.is-unlocked .vault-3d-chassis {
@@ -98,98 +127,23 @@
 }
 
 /* --------------------------------------------------------------------------
-   لولاهای استوانه‌ای فولادی قطور و واقعی روی چهارچوب بیرونی (3D Barrel Hinges)
+   مخفی‌سازی المان‌های همپوشان جهت حفظ جلوه فوتورئال و بی‌نقص تصویر گاوصندوق
    -------------------------------------------------------------------------- */
 .vault-real-barrel-hinges {
-  position: absolute;
-  left: 6px;
-  top: 0;
-  bottom: 0;
-  width: 22px;
-  display: flex !important;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 16px 0;
-  z-index: 12;
-  pointer-events: none;
+  display: none !important;
 }
 
 .vault-barrel-hinge {
-  position: relative;
-  width: 18px;
-  height: 48px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  filter: drop-shadow(4px 4px 6px rgba(0, 0, 0, 0.9));
+  display: none !important;
 }
 
-.vault-barrel-hinge .hinge-cap {
-  width: 16px;
-  height: 6px;
-  border-radius: 3px 3px 1px 1px;
-  background: linear-gradient(90deg, #181d26 0%, #475569 30%, #cbd5e1 55%, #334155 80%, #0f141c 100%);
-  border: 1px solid #11151c;
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), 0 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.vault-barrel-hinge .hinge-cap.bottom {
-  border-radius: 1px 1px 3px 3px;
-  box-shadow: inset 0 -1px 1px rgba(255, 255, 255, 0.3), 0 1px 2px rgba(0, 0, 0, 0.8);
-}
-
-.vault-barrel-hinge .hinge-body {
-  width: 18px;
-  flex: 1;
-  background: linear-gradient(90deg, #11151c 0%, #2a3442 18%, #64748b 42%, #f1f5f9 54%, #475569 76%, #18202a 90%, #0a0d12 100%);
-  border-left: 1px solid #0b0e13;
-  border-right: 1px solid #0b0e13;
-  box-shadow:
-    inset 0 2px 3px rgba(255, 255, 255, 0.3),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.7);
-}
-
-.vault-barrel-hinge .hinge-pin {
-  width: 20px;
-  height: 3px;
-  margin: -1px 0;
-  background: #0b0e14;
-  border-top: 1px solid #94a3b8;
-  border-bottom: 1px solid #030406;
-  z-index: 2;
-}
-
-/* --------------------------------------------------------------------------
-   چهارچوب فولادی بیرونی با پرچ‌های صنعتی سه‌بعدی (3D Outer Bezel & Rivets)
-   -------------------------------------------------------------------------- */
 .vault-outer-bezel {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 10;
-  display: block !important;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.15),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.85);
+  display: none !important;
 }
 
 .vault-frame-rivet {
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #f1f5f9 0%, #64748b 45%, #1e293b 85%, #0b0f17 100%);
-  box-shadow:
-    1px 2px 4px rgba(0, 0, 0, 0.85),
-    inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  display: none !important;
 }
-
-.vault-frame-rivet.r-tl { top: 8px; left: 8px; }
-.vault-frame-rivet.r-tr { top: 8px; right: 8px; }
-.vault-frame-rivet.r-bl { bottom: 8px; left: 8px; }
-.vault-frame-rivet.r-br { bottom: 8px; right: 8px; }
 
 /* --------------------------------------------------------------------------
    محفظه داخلی واقعی گاوصندوق (عکس باکیفیت محفظه اسناد با قفسه‌ها و نورپردازی)
@@ -371,58 +325,22 @@
   filter: contrast(1.06) brightness(0.98);
 }
 
-/* زندانه‌های استوانه‌ای کروم جهت تست و مکانیک سه‌بعدی */
+/* زندانه‌های استوانه‌ای کروم جهت سازگاری تست */
 .vault-locking-bolts {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 6;
+  display: none !important;
 }
 
 .vault-piston {
+  opacity: 0 !important;
+  pointer-events: none !important;
   position: absolute;
-  background: linear-gradient(180deg, #0f172a 0%, #64748b 22%, #f8fafc 48%, #cbd5e1 55%, #475569 78%, #0f172a 100%);
-  border: 1px solid #090c10;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.95);
   transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1) 1.6s;
 }
 
-.vault-piston.right {
-  right: -8px;
-  top: calc(50% - 9px);
-  width: 18px;
-  height: 18px;
-  border-radius: 3px 0 0 3px;
-  opacity: 0.95;
-  box-shadow: -2px 3px 8px rgba(0, 0, 0, 0.9);
-}
-
-.vault-piston.left {
-  left: -4px;
-  top: calc(50% - 9px);
-  width: 14px;
-  height: 18px;
-  border-radius: 0 3px 3px 0;
-  opacity: 0.8;
-}
-
-.vault-piston.top {
-  top: -4px;
-  left: 60%;
-  width: 18px;
-  height: 12px;
-  border-radius: 0 0 3px 3px;
-  opacity: 0.75;
-}
-
-.vault-piston.bottom {
-  bottom: -4px;
-  left: 60%;
-  width: 18px;
-  height: 12px;
-  border-radius: 3px 3px 0 0;
-  opacity: 0.75;
-}
+.vault-piston.right { right: 0; top: 50%; }
+.vault-piston.left { left: 0; top: 50%; }
+.vault-piston.top { top: 0; left: 60%; }
+.vault-piston.bottom { bottom: 0; left: 60%; }
 
 .quad-vault-card.is-unlocking-wheel .vault-piston.right,
 .quad-vault-card.is-unlocked .vault-piston.right {
@@ -444,34 +362,17 @@
   transform: translateY(-8px);
 }
 
-/* گردونه مرکزی کالیبره قفل مکانیکی (#vault-inner-gear) */
+/* گردونه مرکزی کالیبره قفل مکانیکی (#vault-inner-gear) - پنهان در پشت تصویر جهت حفظ خلوص بصری دایل */
 .vault-dial-knurled-knob {
   position: absolute;
   left: 28%;
   top: 50%;
   transform: translateY(-50%) rotate(0deg);
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 45% 45%, #f1f5f9 0%, #94a3b8 35%, #334155 70%, #0f172a 100%);
-  border: 2px solid #1e293b;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.9),
-    inset 0 1px 1px rgba(255, 255, 255, 0.4);
-  opacity: 0.92;
-  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  opacity: 0 !important;
+  pointer-events: none !important;
   transition: transform 0.6s ease;
-  z-index: 4;
-}
-
-.vault-dial-knurled-knob::after {
-  content: '';
-  position: absolute;
-  inset: 8px;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, #1e293b, #475569, #1e293b, #475569, #1e293b);
-  border: 1px solid #0f172a;
-  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.3), 0 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 .quad-vault-card.is-unlocking-wheel .vault-dial-knurled-knob {

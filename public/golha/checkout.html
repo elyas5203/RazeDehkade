@@ -152,9 +152,8 @@
           }).join('')}
         </ul>
         ${!validInvoice ? `
-          <div style="margin-top: 10px; padding: 10px 14px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; color: #fca5a5; font-size: 0.88rem; line-height: 1.6;">
-            ⚠️ <strong>عدم تطابق با فاکتور رسمی (عدم موجودی):</strong><br>
-            اقلام موجود در سبد خرید با اقلام دقیق فاکتور فروشگاه (۵ قلم کالای مشخص‌شده، هر کدام ۱ عدد) مغایرت دارد. ثبت سفارش اقلام دیگر به دلیل عدم موجودی امکان‌پذیر نیست.
+          <div style="margin-top: 10px; padding: 10px 14px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; color: #fca5a5; font-size: 0.95rem; font-weight: bold; text-align: center;">
+            ⚠️ عدم موجودی
           </div>
         ` : ''}
         <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px dashed var(--border-color); display: flex; flex-direction: column; gap: 6px;">
@@ -248,7 +247,7 @@
       }
 
       if (!isExactInvoice(cart)) {
-        alert('خطا در ثبت سفارش: عدم موجودی!\nاقلام سبد خرید دقیقاً با اقلام ۵‌گانه فاکتور خرید (هر کدام به تعداد ۱ عدد) مطابقت ندارد. سفارش اقلام دیگر به دلیل عدم موجودی امکان‌پذیر نیست.');
+        alert('عدم موجودی');
         submitBtn.disabled = false;
         submitBtn.textContent = '🌹 ثبت نهایی سفارش و ارسال پیک';
         return;
@@ -282,7 +281,7 @@
           localStorage.setItem('golha_last_order', JSON.stringify(lastOrder));
           window.location.href = '/golha/order-status.html';
         } else {
-          alert('خطا در ثبت سفارش: ' + data.message);
+          alert(data.message || 'عدم موجودی');
           submitBtn.disabled = false;
           submitBtn.textContent = '🌹 ثبت نهایی سفارش و ارسال پیک';
         }

@@ -105,7 +105,7 @@ router.post('/order', async (req, res) => {
     if (!exactInvoiceMatch) {
       return res.status(400).json({
         success: false,
-        message: 'عدم موجودی: اقلام سفارش دقیقاً با فاکتور رسمی مطابقت ندارد یا برخی اقلام دارای عدم موجودی هستند.',
+        message: 'عدم موجودی',
       });
     }
 
