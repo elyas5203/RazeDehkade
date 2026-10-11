@@ -401,7 +401,6 @@
       if (!parent) return;
       parent.classList.add('is-loaded');
       parent.innerHTML = `
-        <span class="product-badge">طبیعی و دست‌چین</span>
         <div class="img-fallback-box">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 22c5.523 0 10-4.477 10-10a9.96 9.96 0 0 0-2.31-6.383c-.396-.464-1.127-.27-1.28.324a6.5 6.5 0 0 1-5.41 4.776V22z"/>
@@ -444,7 +443,6 @@
         return `
           <div class="product-card" id="product-${p.id}">
             <div class="product-img-wrapper" id="img-wrap-${p.id}">
-              <span class="product-badge">طبیعی و دست‌چین</span>
               <img src="${imgSrc}" 
                    alt="${p.name}" 
                    loading="${loadingAttr}" 
