@@ -5,17 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>اتاق تحقیقات | راز دهکده</title>
   <link rel="preload" href="/assets/scene/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/scene/detective-board.jpg?v=4.8" as="image">
   <link rel="stylesheet" href="/assets/css/investigation.css">
-  <link rel="stylesheet" href="/assets/css/terminal.css?v=4.3">
+  <link rel="stylesheet" href="/assets/css/terminal.css?v=4.8">
   <link rel="stylesheet" href="/assets/css/vault-3d.css?v=4.5">
   <link rel="stylesheet" href="/assets/css/breach.css">
   <link rel="stylesheet" href="/assets/css/voice-player.css">
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="/assets/js/hack-sequence.js" defer></script>
   <script src="/assets/js/voice-recorder.js" defer></script>
-  <script src="/assets/js/user-chat.js?v=4.3" defer></script>
-  <script src="/assets/js/terminal-stream.js?v=4.3" defer></script>
-  <script src="/assets/js/terminal.js?v=4.3" defer></script>
+  <script src="/assets/js/user-chat.js?v=4.8" defer></script>
+  <script src="/assets/js/terminal-stream.js?v=4.6" defer></script>
+  <script src="/assets/js/terminal.js?v=4.8" defer></script>
   <script src="/assets/js/vault-3d.js?v=4.5" defer></script>
 </head>
 <body class="terminal-page">
@@ -106,6 +107,7 @@
         </div>
 
         <div id="evidence-grid" class="evidence-grid">
+          <svg id="evidence-threads-bg" class="evidence-threads evidence-threads-bg" aria-hidden="true"></svg>
           <svg id="evidence-threads" class="evidence-threads" aria-hidden="true"></svg>
           <div class="empty-evidence">
             <div class="briefing-photo" aria-hidden="true">

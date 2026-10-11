@@ -718,6 +718,8 @@ function renderEvidence(msg, options = {}) {
   const cleanTitle = getPublicEvidenceTitle(msg);
   card.innerHTML = `${evidenceMediaMarkup(msg)}<h3>${escapeHtml(cleanTitle)}</h3><small><span>مدرک ${Number(msg.id).toLocaleString('fa-IR')}</span><span>${new Date(msg.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span></small>`;
   card.addEventListener('click', () => openEvidence(msg));
+  card.addEventListener('mouseenter', () => requestAnimationFrame(updateEvidenceThreads));
+  card.addEventListener('mouseleave', () => requestAnimationFrame(updateEvidenceThreads));
   const later = [...grid.children].find(child => Number(child.dataset.evidenceId) > Number(msg.id));
   grid.insertBefore(card, later || null);
   document.getElementById('evidence-count').textContent = `${grid.querySelectorAll('.evidence-card').length.toLocaleString('fa-IR')} مدرک`;
@@ -725,28 +727,153 @@ function renderEvidence(msg, options = {}) {
   if (typeof applyEvidenceFilter === 'function') applyEvidenceFilter();
   if (!options.skipThreads) {
     requestAnimationFrame(updateEvidenceThreads);
+    setTimeout(() => requestAnimationFrame(updateEvidenceThreads), 380);
   }
+}
+
+function buildYarnPath(p1, p2, sagFactor = 0.06, maxSag = 11) {
+  const dx = p2.x - p1.x;
+  const dy = p2.y - p1.y;
+  const dist = Math.hypot(dx, dy);
+  const sag = Math.min(maxSag, Math.max(5, dist * sagFactor));
+  const midX = (p1.x + p2.x) / 2;
+  const midY = (p1.y + p2.y) / 2 + sag;
+  return {
+    yarn: `M ${p1.x.toFixed(1)} ${p1.y.toFixed(1)} Q ${midX.toFixed(1)} ${midY.toFixed(1)} ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`,
+    shadow: `M ${p1.x.toFixed(1)} ${(p1.y + 1.8).toFixed(1)} Q ${(midX + 1.0).toFixed(1)} ${(midY + 3.2).toFixed(1)} ${p2.x.toFixed(1)} ${(p2.y + 1.8).toFixed(1)}`
+  };
 }
 
 function updateEvidenceThreads() {
   const grid = document.getElementById('evidence-grid');
   const svg = document.getElementById('evidence-threads');
   if (!grid || !svg || !grid.clientWidth) return;
-  const bounds = grid.getBoundingClientRect();
+
+  let svgBg = document.getElementById('evidence-threads-bg');
+  if (!svgBg) {
+    svgBg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svgBg.setAttribute('id', 'evidence-threads-bg');
+    svgBg.setAttribute('class', 'evidence-threads evidence-threads-bg');
+    svgBg.setAttribute('aria-hidden', 'true');
+    grid.insertBefore(svgBg, svg);
+  }
+
   const cards = [...grid.querySelectorAll('.evidence-card:not([hidden])')];
-  const points = cards.map(card => {
-    const box = card.getBoundingClientRect();
-    return { x: box.left - bounds.left + grid.scrollLeft + box.width / 2, y: box.top - bounds.top + grid.scrollTop + 3 };
-  });
-  const width = grid.clientWidth;
-  const height = Math.max(grid.clientHeight, ...cards.map(card => card.getBoundingClientRect().bottom - bounds.top + grid.scrollTop + 55));
+  if (!cards.length) {
+    svg.innerHTML = '';
+    svgBg.innerHTML = '';
+    return;
+  }
+
+  const bounds = grid.getBoundingClientRect();
+  const width = Math.max(grid.clientWidth, grid.scrollWidth);
+  const height = Math.max(
+    grid.clientHeight,
+    grid.scrollHeight,
+    ...cards.map(card => card.getBoundingClientRect().bottom - bounds.top + grid.scrollTop + 36)
+  );
+
   svg.setAttribute('width', width);
   svg.setAttribute('height', height);
   svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-  svg.innerHTML = points.slice(1).map((point, i) => {
-    const previous = points[i];
-    return `<path d="M ${previous.x} ${previous.y} Q ${(previous.x + point.x) / 2} ${Math.max(previous.y, point.y) + 45} ${point.x} ${point.y}"/>`;
-  }).join('');
+
+  svgBg.setAttribute('width', width);
+  svgBg.setAttribute('height', height);
+  svgBg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+  // محاسبه مختصات دقیق نسبت به خود لایه SVG (حذف کامل خطای اسکرول‌بار سمت چپ در RTL)
+  const svgRect = svg.getBoundingClientRect();
+  const points = cards.map(card => {
+    const box = card.getBoundingClientRect();
+    return {
+      x: (box.left - svgRect.left) + box.width / 2,
+      y: (box.top - svgRect.top) + 5.5
+    };
+  });
+
+  // گروه‌بندی کارت‌ها در سطرهای افقی تا هرگز خط کج روی عکس و متن کارت‌ها نیفتد
+  const rows = [];
+  for (const pt of points) {
+    const existingRow = rows.find(r => Math.abs(r.avgY - pt.y) < 38);
+    if (existingRow) {
+      existingRow.items.push(pt);
+      existingRow.avgY = existingRow.items.reduce((sum, item) => sum + item.y, 0) / existingRow.items.length;
+    } else {
+      rows.push({ avgY: pt.y, items: [pt] });
+    }
+  }
+
+  rows.sort((a, b) => a.avgY - b.avgY);
+  rows.forEach(row => {
+    // مرتب‌سازی از راست به چپ (مطابق چیدمان فارسی RTL)
+    row.items.sort((a, b) => b.x - a.x);
+  });
+
+  const fgShadows = [];
+  const fgYarns = [];
+
+  // ۱. اتصال تمیز و طبیعی فقط بین کارت‌های مجاور در هر سطر (روی لبه بالایی کارت و فضای بین دو کارت)
+  for (const row of rows) {
+    const items = row.items;
+    for (let j = 1; j < items.length; j++) {
+      const prev = items[j - 1];
+      const curr = items[j];
+      const { yarn, shadow } = buildYarnPath(prev, curr, 0.06, 10.5);
+      fgShadows.push(`<path class="thread-shadow" d="${shadow}"/>`);
+      fgYarns.push(
+        `<path class="thread-main" d="${yarn}"/>`,
+        `<path class="thread-highlight" d="${yarn}"/>`
+      );
+    }
+  }
+
+  // ۲. اتصال عمودی بین سطرها در لایه پشتی (پشت کارت‌ها، تا هیچ خطی از روی تصویر یا متن کارت رد نشود)
+  const bgShadows = [];
+  const bgYarns = [];
+  for (let r = 1; r < rows.length; r++) {
+    const upperRow = rows[r - 1].items;
+    const lowerRow = rows[r].items;
+    if (upperRow.length && lowerRow.length) {
+      const pTop = upperRow[0];
+      const pBottom = lowerRow[0];
+      const midX = (pTop.x + pBottom.x) / 2 - 4;
+      const midY = (pTop.y + pBottom.y) / 2;
+      const yarn = `M ${pTop.x.toFixed(1)} ${pTop.y.toFixed(1)} Q ${midX.toFixed(1)} ${midY.toFixed(1)} ${pBottom.x.toFixed(1)} ${pBottom.y.toFixed(1)}`;
+      const shadow = `M ${(pTop.x + 1.2).toFixed(1)} ${(pTop.y + 1.8).toFixed(1)} Q ${(midX + 1.5).toFixed(1)} ${(midY + 2.2).toFixed(1)} ${(pBottom.x + 1.2).toFixed(1)} ${(pBottom.y + 1.8).toFixed(1)}`;
+      bgShadows.push(`<path class="thread-shadow" d="${shadow}"/>`);
+      bgYarns.push(
+        `<path class="thread-main" d="${yarn}"/>`,
+        `<path class="thread-highlight" d="${yarn}"/>`
+      );
+    }
+  }
+
+  // ۳. رندر یک پونز سه‌بعدی واحد و دقیق در بالای هر کارت (بدون هیچ پونز دوتایی)
+  const defs = `
+    <defs>
+      <radialGradient id="evidencePinGrad" cx="32%" cy="28%" r="68%">
+        <stop offset="0%" stop-color="#fecaca"/>
+        <stop offset="34%" stop-color="#ef4444"/>
+        <stop offset="76%" stop-color="#991b1b"/>
+        <stop offset="100%" stop-color="#450a0a"/>
+      </radialGradient>
+    </defs>
+  `;
+
+  const pinNodes = points.map(p => {
+    const cx = p.x.toFixed(1);
+    const cy = p.y.toFixed(1);
+    return `
+      <g class="board-pin-node">
+        <circle class="pin-head-shadow" cx="${(p.x + 0.9).toFixed(1)}" cy="${(p.y + 1.8).toFixed(1)}" r="4.6"/>
+        <circle class="pin-knot-ring" cx="${cx}" cy="${cy}" r="4.7"/>
+        <circle class="pin-head-sphere" cx="${cx}" cy="${cy}" r="4.3"/>
+      </g>
+    `;
+  });
+
+  svgBg.innerHTML = [...bgShadows, ...bgYarns].join('');
+  svg.innerHTML = defs + [...fgShadows, ...fgYarns, ...pinNodes].join('');
 }
 
 window.addEventListener('resize', () => requestAnimationFrame(updateEvidenceThreads));

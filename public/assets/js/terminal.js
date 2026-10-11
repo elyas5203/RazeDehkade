@@ -40,8 +40,13 @@ document.querySelectorAll('[data-filter]').forEach(button => button.addEventList
   applyEvidenceFilter();
 }));
 const boardResizeObserver = new ResizeObserver(() => requestAnimationFrame(updateEvidenceThreads));
-boardResizeObserver.observe(document.getElementById('evidence-grid'));
-document.getElementById('evidence-grid').addEventListener('load', () => requestAnimationFrame(updateEvidenceThreads), true);
+const evidenceGridEl = document.getElementById('evidence-grid');
+if (evidenceGridEl) {
+  boardResizeObserver.observe(evidenceGridEl);
+  evidenceGridEl.addEventListener('load', () => requestAnimationFrame(updateEvidenceThreads), true);
+  evidenceGridEl.addEventListener('scroll', () => requestAnimationFrame(updateEvidenceThreads), { passive: true });
+  evidenceGridEl.addEventListener('transitionend', () => requestAnimationFrame(updateEvidenceThreads));
+}
 document.fonts.ready.then(() => requestAnimationFrame(updateEvidenceThreads));
 document.getElementById('evidence-dialog').addEventListener('close', () => {
   document.querySelectorAll('#evidence-dialog audio, #evidence-dialog video').forEach(media => media.pause());
