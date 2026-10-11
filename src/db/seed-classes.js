@@ -7,39 +7,18 @@ const { query, pool, isMemoryDb } = require('./pool');
 const { generateUniqueSessionCode } = require('../utils/codeGenerator');
 const { runMigrations } = require('./migrate');
 
-const GROUPS_CONFIG = [
-  // پایه پنجم (۱۰ گروه) — پک ۱ (سندروم فراموشی) فعال، ۲ پرونده قفل
-  { name: 'یاوری و ناصری', activeCase: 'syndrome', cases: { syndrome: 'active', village: 'locked', court: 'locked' } },
-  { name: 'عطاران و رحمتی و سید زاده', activeCase: 'syndrome', cases: { syndrome: 'active', village: 'locked', court: 'locked' } },
-  { name: 'نعمتی و مقامی', activeCase: 'syndrome', cases: { syndrome: 'active', village: 'locked', court: 'locked' } },
-  { name: 'خرازی', activeCase: 'syndrome', cases: { syndrome: 'active', village: 'locked', court: 'locked' } },
-  { name: 'خدادحسینی و خراسانی', activeCase: 'syndrome', cases: { syndrome: 'active', village: 'locked', court: 'locked' } },
-  { name: 'محمدی پویا و باقرزاده و یوسف', activeCase: 'syndrome', cases: { syndrome: 'active', village: 'locked', court: 'locked' } },
-  { name: 'محمدی پویا و باقرزاده و نوایی', activeCase: 'syndrome', cases: { syndrome: 'active', village: 'locked', court: 'locked' } },
-  { name: 'شمسی و ملک', activeCase: 'syndrome', cases: { syndrome: 'active', village: 'locked', court: 'locked' } },
-  { name: 'باقری و مسرت', activeCase: 'syndrome', cases: { syndrome: 'active', village: 'locked', court: 'locked' } },
-  { name: 'بهمن ابادی و قانع منش و زمانیان', activeCase: 'syndrome', cases: { syndrome: 'active', village: 'locked', court: 'locked' } },
+const { OFFICIAL_SESSIONS_SPEC } = require('../utils/classFolderMatcher');
 
-  // پایه چهارم (۳ گروه) — پک ۱ (سندروم فراموشی) فعال، ۲ پرونده قفل
-  { name: 'حدادیان و رجب زاده', activeCase: 'syndrome', cases: { syndrome: 'active', village: 'locked', court: 'locked' } },
-  { name: 'حسین هاشمی', activeCase: 'syndrome', cases: { syndrome: 'active', village: 'locked', court: 'locked' } },
-  { name: 'سید جواد حسینی', activeCase: 'syndrome', cases: { syndrome: 'active', village: 'locked', court: 'locked' } },
-
-  // پایه ششم (۹ گروه) — پک سندروم فراموشی حل‌شده (مهر شده)، راز دهکده فعال، دادگاه قفل
-  { name: 'اکبری و واحدی و انتظامی', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } },
-  { name: 'شمسی و خوشباف', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } },
-  { name: 'خداد حسینی و منبتی', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } },
-  { name: 'زارع و احمدی', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } },
-  { name: 'وکیلیان و داوودپور', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } },
-  { name: 'عطاران و نجفیان و شیخ السلامی', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } },
-  { name: 'قانع منش و عطاران', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } },
-  { name: 'زادسر و مجتبوی', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } },
-  { name: 'سعادتمند و شعبانی', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } },
-  { name: 'حکیم زاده', activeCase: 'village', cases: { syndrome: 'solved', village: 'active', court: 'locked' } }
-];
+const GROUPS_CONFIG = OFFICIAL_SESSIONS_SPEC.map(item => ({
+  name: item.name,
+  orderCode: item.orderCode,
+  chatCode: item.chatCode,
+  activeCase: item.activeCase,
+  cases: item.cases,
+}));
 
 async function seedClasses() {
-  console.log('🌱 شروع ایجاد دسته‌ای ۲۳ گروه کلاس‌های چهارم، پنجم و ششم...');
+  console.log('🌱 شروع ایجاد دسته‌ای ۲۴ گروه کلاس‌های چهارم، پنجم و ششم...');
   try {
     await runMigrations();
 
@@ -54,16 +33,16 @@ async function seedClasses() {
 
       if (existing.rows && existing.rows.length > 0) {
         sessionId = existing.rows[0].id;
-        orderCode = existing.rows[0].order_code;
-        chatCode = existing.rows[0].chat_code || existing.rows[0].code;
+        orderCode = existing.rows[0].order_code || item.orderCode;
+        chatCode = existing.rows[0].chat_code || existing.rows[0].code || item.chatCode;
         await query(
           'UPDATE sessions SET active_case = ?, status = "active", updated_at = CURRENT_TIMESTAMP WHERE id = ?',
           [item.activeCase, sessionId]
         );
         console.log(`ℹ️ گروه «${item.name}» از قبل موجود بود (شناسه: ${sessionId}) — به روزرسانی شد.`);
       } else {
-        orderCode = await generateUniqueSessionCode(6);
-        chatCode = await generateUniqueSessionCode(6);
+        orderCode = item.orderCode || (await generateUniqueSessionCode(6));
+        chatCode = item.chatCode || (await generateUniqueSessionCode(6));
 
         const insertRes = await query(
           `INSERT INTO sessions (code, order_code, chat_code, name, status, active_case)

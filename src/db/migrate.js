@@ -73,6 +73,20 @@ async function runMigrations() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // ساخت جدول نگهداری عکس‌های کارآگاهی دستیاران هر کلاس/جلسه
+    await query(`
+      CREATE TABLE IF NOT EXISTS session_assistants (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        session_id INT NOT NULL,
+        student_name VARCHAR(190) NOT NULL,
+        file_url VARCHAR(500) NOT NULL,
+        file_name VARCHAR(255) NOT NULL,
+        display_order INT NOT NULL DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_session_assistants_session (session_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     await query(`
       CREATE TABLE IF NOT EXISTS app_migrations (
         migration_key VARCHAR(100) PRIMARY KEY,

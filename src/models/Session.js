@@ -153,6 +153,7 @@ class Session {
     await query(`DELETE FROM messages WHERE session_id = ?`, [id]);
     await query(`DELETE FROM session_logs WHERE session_id = ?`, [id]);
     await query(`DELETE FROM session_cases WHERE session_id = ?`, [id]);
+    await query(`DELETE FROM session_assistants WHERE session_id = ?`, [id]);
     await query(`DELETE FROM sessions WHERE id = ?`, [id]);
     return session;
   }

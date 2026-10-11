@@ -1164,4 +1164,104 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     assert.strictEqual(fullStats.isComplete, true);
     assert.strictEqual(fullStats.percent, 100);
   });
+
+  it('18. Detective Assistants Gallery: 24-class folder matching, PNG/WEBP deduplication, bot ingestion, and /api/sessions/:id/assistants', async function () {
+    const os = require('os');
+    const jwt = require('jsonwebtoken');
+    const SessionAssistant = require('../src/models/SessionAssistant');
+    const {
+      OFFICIAL_SESSIONS_SPEC,
+      matchFolderToSession,
+      extractStudentNameFromFilename,
+    } = require('../src/utils/classFolderMatcher');
+
+    // 1. Verify all 24 official sessions exist and match all RAR folder names from user screenshots
+    assert.strictEqual(OFFICIAL_SESSIONS_SPEC.length, 24);
+    const sessions = await SessionAssistant.ensureOfficialSessionsExist();
+    assert.ok(sessions.length >= 24);
+
+    const rarFoldersToExpectedSession = [
+      ['داوود پور و وکیلیان', 'وکیلیان و داوودپور'],
+      ['باقرزاده و عطاران و محمدی', 'محمدی پویا و باقرزاده و یوسف'],
+      ['نوایی و باقرزاده', 'محمدی پویا و باقرزاده و نوایی'],
+      ['مسرت و باقری', 'باقری و مسرت'],
+      ['شعبانی', 'سعادتمند و شعبانی'],
+      ['نعمتی و مقامی - 3 نفر', 'نعمتی و مقامی'],
+      ['عطاران و سید زاده', 'عطاران و رحمتی و سید زاده'],
+      ['عطاران و نجفیان', 'عطاران و نجفیان و شیخ السلامی'],
+      ['قانع منش و بهمن آبادی', 'بهمن ابادی و قانع منش و زمانیان'],
+      ['یاوری و ناصری', 'یاوری و ناصری'],
+      ['حکیم زاده', 'حکیم زاده'],
+    ];
+
+    for (const [folderName, expectedSessionName] of rarFoldersToExpectedSession) {
+      const m = matchFolderToSession(folderName, sessions);
+      const matchedSession = m?.session || m;
+      assert.ok(matchedSession && matchedSession.id, `Folder "${folderName}" should match a session`);
+      assert.strictEqual(matchedSession.name, expectedSessionName);
+    }
+
+    assert.strictEqual(extractStudentNameFromFilename('امیرحسین حسن آبادی.png'), 'امیرحسین حسن آبادی');
+    assert.strictEqual(extractStudentNameFromFilename('امیرحسین قلیچ زاده.webp'), 'امیرحسین قلیچ زاده');
+
+    // 2. Simulate an extracted multi-class archive directory with duplicate .png and .webp files
+    const tempExtractDir = fs.mkdtempSync(path.join(os.tmpdir(), 'test_assistants_dir_'));
+    try {
+      const folder1 = path.join(tempExtractDir, 'داوود پور و وکیلیان');
+      const folder2 = path.join(tempExtractDir, 'یاوری و ناصری');
+      fs.mkdirSync(folder1, { recursive: true });
+      fs.mkdirSync(folder2, { recursive: true });
+
+      // Student 1 in folder 1 has both .png and .webp (should deduplicate to 1 record preferring .png)
+      fs.writeFileSync(path.join(folder1, 'امیرحسین قلیچ زاده.png'), Buffer.from('fake-png-1'));
+      fs.writeFileSync(path.join(folder1, 'امیرحسین قلیچ زاده.webp'), Buffer.from('fake-webp-1'));
+      fs.writeFileSync(path.join(folder1, 'امیرعلی کوهستانی.png'), Buffer.from('fake-png-2'));
+
+      // Student in folder 2
+      fs.writeFileSync(path.join(folder2, 'امیرحسین حسن آبادی.png'), Buffer.from('fake-png-3'));
+
+      const summary = await SessionAssistant.importExtractedDirectory({
+        extractedDir: tempExtractDir,
+      });
+
+      assert.strictEqual(summary.totalFilesFound, 4);
+      assert.strictEqual(summary.importedCount, 3);
+      assert.strictEqual(summary.skippedDuplicatesCount, 1);
+
+      const vakilianSession = sessions.find(s => s.name === 'وکیلیان و داوودپور');
+      assert.ok(vakilianSession);
+
+      // Generate a student token for vakilianSession and fetch /api/sessions/:id/assistants
+      const vakilianUserToken = jwt.sign(
+        { sessionId: vakilianSession.id, code: vakilianSession.chat_code, role: 'user' },
+        process.env.JWT_SECRET || 'raze-dehkade-secret-key'
+      );
+
+      const apiRes = await fetch(`${serverUrl}/api/sessions/${vakilianSession.id}/assistants`, {
+        headers: { Authorization: `Bearer ${vakilianUserToken}` },
+      });
+      const apiData = await apiRes.json();
+      assert.strictEqual(apiRes.status, 200);
+      assert.strictEqual(apiData.success, true);
+      assert.strictEqual(apiData.count, 2);
+      const studentNames = apiData.data.map(a => a.student_name);
+      assert.ok(studentNames.includes('امیرحسین قلیچ زاده'));
+      assert.ok(studentNames.includes('امیرعلی کوهستانی'));
+
+      // Clean up test assistants
+      await SessionAssistant.deleteBySessionId(vakilianSession.id);
+      const yavariSession = sessions.find(s => s.name === 'یاوری و ناصری');
+      if (yavariSession) await SessionAssistant.deleteBySessionId(yavariSession.id);
+    } finally {
+      fs.rmSync(tempExtractDir, { recursive: true, force: true });
+    }
+
+    // 3. Verify Chroma-Key Green Screen toggle and processor exist in chat.html and user-chat.js
+    const chatHtml = fs.readFileSync(path.join(__dirname, '../public/chat.html'), 'utf8');
+    const userChatJs = fs.readFileSync(path.join(__dirname, '../public/assets/js/user-chat.js'), 'utf8');
+    assert.ok(chatHtml.includes('id="assistants-chroma-toggle-btn"'));
+    assert.ok(chatHtml.includes('toggleAssistantsChromaKey()'));
+    assert.ok(userChatJs.includes('function getChromaKeyedImageUrl(rawUrl)'));
+    assert.ok(userChatJs.includes('function toggleAssistantsChromaKey()'));
+  });
 });

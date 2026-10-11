@@ -166,7 +166,7 @@
             <span class="assistants-btn-glow" aria-hidden="true"></span>
             <span class="assistants-btn-icon" aria-hidden="true">🕵️‍♂️</span>
             <strong class="assistants-btn-label">عکس دستیاران</strong>
-            <small class="assistants-btn-sub">مشاهده در پنجره جدید ↗</small>
+            <small class="assistants-btn-sub" id="assistants-btn-sub">مشاهده در پنجره جدید ↗</small>
           </button>
         </div>
 
@@ -284,23 +284,60 @@
     <div id="evidence-dialog-content"></div>
   </dialog>
 
-  <!-- پاپ‌آپ صفحه جدید «عکس دستیاران» -->
+  <!-- پاپ‌آپ صفحه جدید «عکس دستیاران» (گالری کارت‌های کارآگاهی متربیان + حذف بک‌گراند سبز PNG) -->
   <dialog id="assistants-photo-dialog" class="themed-modal-dialog assistants-modal-dialog">
-    <div class="themed-modal-header">
+    <div class="themed-modal-header assistants-modal-header">
       <div class="themed-modal-title-group">
-        <span class="eyebrow">پرونده ویژه کارآگاهی</span>
-        <h3>🕵️‍♂️ عکس دستیاران کارآگاه</h3>
+        <span class="eyebrow" id="assistants-modal-eyebrow">پرونده ویژه کارآگاهی</span>
+        <h3 id="assistants-modal-title">🕵️‍♂️ عکس دستیاران کارآگاه</h3>
       </div>
-      <button class="dialog-close" type="button" onclick="closeAssistantsPhotoPopup()" aria-label="بستن پنجره">×</button>
+      <div class="assistants-header-Controls">
+        <span class="assistants-count-badge" id="assistants-count-badge">۰ نفر</span>
+        <button
+          type="button"
+          class="assistants-chroma-toggle is-active"
+          id="assistants-chroma-toggle-btn"
+          onclick="toggleAssistantsChromaKey()"
+          title="حذف خودکار پرده سبز و تبدیل به PNG بدون پس‌زمینه (قابل روشن/خاموش کردن)"
+        >
+          <span class="chroma-dot" aria-hidden="true"></span>
+          <span id="assistants-chroma-toggle-label">✨ حذف بک‌گراند سبز (PNG): فعال</span>
+        </button>
+        <button class="dialog-close" type="button" onclick="closeAssistantsPhotoPopup()" aria-label="بستن پنجره">×</button>
+      </div>
     </div>
+
     <div class="themed-modal-body assistants-modal-body" id="assistants-photo-modal-content">
       <div class="assistants-placeholder-stage">
         <div class="assistants-placeholder-icon">📸</div>
-        <h4>بخش عکس دستیاران کارآگاه</h4>
-        <p>این پنجره آماده قرارگیری محتوا و تصاویر دستیاران کارآگاه است.</p>
+        <h4>در حال بارگذاری تصاویر دستیاران کارآگاه...</h4>
+        <p>لطفاً چند لحظه صبر کنید.</p>
       </div>
     </div>
-    <div class="themed-modal-footer">
+
+    <!-- نمای بزرگ‌نمایی (لایت‌باکس) عکس دستیار انتخاب‌شده در داخل مودال -->
+    <div class="assistants-lightbox-view" id="assistants-lightbox-view" hidden>
+      <div class="assistants-lightbox-stage">
+        <button type="button" class="assistants-lb-nav prev" onclick="stepAssistantLightbox(-1)" aria-label="نفر قبلی">❯</button>
+        <div class="assistants-lb-portrait-box" id="assistants-lb-portrait-box">
+          <img id="assistants-lb-img" src="" alt="تصویر دستیار کارآگاه">
+        </div>
+        <button type="button" class="assistants-lb-nav next" onclick="stepAssistantLightbox(1)" aria-label="نفر بعدی">❮</button>
+      </div>
+      <div class="assistants-lightbox-meta">
+        <div class="assistants-lb-info">
+          <strong id="assistants-lb-name">—</strong>
+          <span id="assistants-lb-counter">۱ از ۱</span>
+        </div>
+        <div class="assistants-lb-actions">
+          <a id="assistants-lb-download-btn" class="themed-btn primary" href="#" download="detective.png" style="text-decoration:none;">⬇ دانلود تصویر (PNG)</a>
+          <button type="button" class="themed-btn secondary" onclick="closeAssistantLightbox()">🔙 بازگشت به لیست کلاس</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="themed-modal-footer assistants-modal-footer">
+      <span class="assistants-footer-hint" id="assistants-footer-hint">💡 با کلیک روی هر کارت، تصویر بزرگ‌تر و دکمه دانلود PNG نمایش داده می‌شود.</span>
       <button type="button" class="themed-btn secondary" onclick="closeAssistantsPhotoPopup()">بستن پنجره</button>
     </div>
   </dialog>

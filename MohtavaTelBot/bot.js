@@ -6,6 +6,8 @@
 
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const http = require('http');
 const https = require('https');
 const {
   BOT_TOKEN,
@@ -16,6 +18,10 @@ const {
 } = require('./config');
 
 const WeeklyContent = require('../src/models/WeeklyContent');
+const Session = require('../src/models/Session');
+const SessionAssistant = require('../src/models/SessionAssistant');
+const { matchFolderToSession, extractStudentNameFromFilename } = require('../src/utils/classFolderMatcher');
+const { isArchiveFilename } = require('../src/utils/archiveExtractor');
 const { query } = require('../src/db/pool');
 const { ensureMp4FastStart } = require('../src/utils/mp4FastStart');
 
@@ -29,6 +35,7 @@ const PID_LOCK_FILE = path.join(__dirname, '.bot.pid');
 const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.svg', '.heic']);
 const VIDEO_EXTS = new Set(['.mp4', '.mov', '.mkv', '.webm', '.3gp', '.avi']);
 const VOICE_EXTS = new Set(['.ogg', '.oga', '.mp3', '.wav', '.m4a', '.aac', '.flac', '.opus']);
+const ARCHIVE_EXTS = new Set(['.zip', '.rar', '.7z']);
 
 // کلیدهای کیبورد تلگرام
 const BTN_WEEK_1 = '📅 هفته اول';
@@ -47,6 +54,15 @@ const BTN_VIEW_ALL = '📋 مشاهده محتوای هفته‌ها';
 const BTN_CLEAR_ONE_WEEK = '🧹 پاکسازی یک هفته';
 const BTN_CLEAR_ALL = '🗑 پاکسازی کل پیام‌های آماده';
 const BTN_CONFIRM_CLEAR_ALL = '⚠️ بله، همه پاک شوند';
+
+// کلیدهای بخش عکس دستیاران کارآگاه (کلاس‌ها)
+const BTN_ASSISTANTS_MENU = '🕵️‍♂️ عکس دستیاران (کلاس‌ها)';
+const BTN_ASSISTANTS_ARCHIVE = '📦 ارسال فایل فشرده (ZIP/RAR) یا لینک';
+const BTN_ASSISTANTS_SELECT_CLASS = '🏫 انتخاب کلاس و ارسال عکس‌ها';
+const BTN_ASSISTANTS_STATS = '📊 آمار عکس‌های کلاس‌ها';
+const BTN_ASSISTANTS_CLEAR_CLASS = '🧹 پاکسازی عکس‌های یک کلاس';
+const BTN_ASSISTANTS_LIST_CLASS = '📋 لیست دستیاران این کلاس';
+const BTN_ASSISTANTS_CHANGE_CLASS = '🔄 انتخاب کلاس دیگر';
 
 const WEEK_BUTTON_TO_NUM = {
   [BTN_WEEK_1]: 1,
@@ -74,10 +90,49 @@ const WEEK_BUTTON_TO_NUM = {
 function getMainMenuKeyboard() {
   return {
     keyboard: [
+      [{ text: BTN_ASSISTANTS_MENU }],
       [{ text: BTN_WEEK_1 }, { text: BTN_WEEK_2 }],
       [{ text: BTN_WEEK_3 }, { text: BTN_WEEK_4 }],
       [{ text: BTN_WEEK_5 }, { text: BTN_VIEW_ALL }],
       [{ text: BTN_CLEAR_ONE_WEEK }, { text: BTN_CLEAR_ALL }],
+    ],
+    resize_keyboard: true,
+  };
+}
+
+function getAssistantsMenuKeyboard() {
+  return {
+    keyboard: [
+      [{ text: BTN_ASSISTANTS_ARCHIVE }],
+      [{ text: BTN_ASSISTANTS_SELECT_CLASS }, { text: BTN_ASSISTANTS_STATS }],
+      [{ text: BTN_ASSISTANTS_CLEAR_CLASS }, { text: BTN_BACK_MAIN }],
+    ],
+    resize_keyboard: true,
+  };
+}
+
+function getAssistantsClassSelectKeyboard(sessions = [], prefix = '🏫 ') {
+  const rows = [];
+  const filtered = sessions.filter((s) => String(s.name).trim() !== 'تست سرور');
+  for (let i = 0; i < filtered.length; i += 2) {
+    const row = [{ text: `${prefix}${filtered[i].name}` }];
+    if (filtered[i + 1]) {
+      row.push({ text: `${prefix}${filtered[i + 1].name}` });
+    }
+    rows.push(row);
+  }
+  rows.push([{ text: BTN_ASSISTANTS_MENU }, { text: BTN_BACK_MAIN }]);
+  return {
+    keyboard: rows,
+    resize_keyboard: true,
+  };
+}
+
+function getAssistantsReceivingClassKeyboard() {
+  return {
+    keyboard: [
+      [{ text: BTN_ASSISTANTS_LIST_CLASS }, { text: BTN_ASSISTANTS_CHANGE_CLASS }],
+      [{ text: BTN_ASSISTANTS_MENU }, { text: BTN_BACK_MAIN }],
     ],
     resize_keyboard: true,
   };
@@ -291,6 +346,58 @@ class MohtavaTelegramBot {
     }
   }
 
+  notifyAssistantsUpdated(sessionIds = []) {
+    if (!this.io) return;
+    const ids = Array.isArray(sessionIds) ? sessionIds : [sessionIds];
+    for (const sid of ids) {
+      if (sid) {
+        this.io.to(`session_${sid}`).emit('assistants_updated', { sessionId: Number(sid) });
+      }
+    }
+    this.io.to('admins').emit('assistants_updated', { sessionIds: ids });
+  }
+
+  /**
+   * دانلود فایل از لینک مستقیم خارجی (HTTP/HTTPS) روی سرور (مخصوص فایل‌های حجیم بالای ۲۰ مگابایت)
+   */
+  async downloadExternalUrl(urlStr, destFilePath, redirectDepth = 0) {
+    if (redirectDepth > 5) {
+      throw new Error('تعداد ریدایرکت‌های لینک بیش از حد مجاز است.');
+    }
+    const client = urlStr.startsWith('https://') ? https : http;
+    await new Promise((resolve, reject) => {
+      const req = client.get(urlStr, { timeout: 600000 }, (res) => {
+        if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location) {
+          res.resume();
+          const nextUrl = new URL(res.headers.location, urlStr).toString();
+          this.downloadExternalUrl(nextUrl, destFilePath, redirectDepth + 1)
+            .then(resolve)
+            .catch(reject);
+          return;
+        }
+        if (res.statusCode !== 200) {
+          res.resume();
+          return reject(new Error(`خطا در دانلود از لینک مستقیم: HTTP ${res.statusCode}`));
+        }
+        const fileStream = fs.createWriteStream(destFilePath);
+        res.pipe(fileStream);
+        fileStream.on('finish', () => fileStream.close(resolve));
+        fileStream.on('error', (err) => {
+          fileStream.close();
+          fs.unlink(destFilePath, () => {});
+          reject(err);
+        });
+      });
+      req.on('error', (err) => {
+        fs.unlink(destFilePath, () => {});
+        reject(err);
+      });
+      req.on('timeout', () => {
+        req.destroy(new Error('تایم‌اوت دانلود از لینک مستقیم'));
+      });
+    });
+  }
+
   /**
    * فراخوانی متدهای HTTP API تلگرام
    */
@@ -441,7 +548,9 @@ class MohtavaTelegramBot {
       let contentType = 'file';
       let ext = origExt || '.bin';
 
-      if (IMAGE_EXTS.has(origExt) || mime.startsWith('image/')) {
+      if (ARCHIVE_EXTS.has(origExt) || isArchiveFilename(origName)) {
+        contentType = 'archive';
+      } else if (IMAGE_EXTS.has(origExt) || mime.startsWith('image/')) {
         contentType = 'image';
         if (!origExt) ext = '.jpg';
       } else if (VIDEO_EXTS.has(origExt) || mime.startsWith('video/')) {
@@ -491,10 +600,152 @@ class MohtavaTelegramBot {
       await this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 });
       await this.sendMessage(
         chatId,
-        `👋 سلام ادمین عزیز!\nبه ربات مدیریت «پیام‌های آماده و سناریوی ۵ هفته‌ای» خوش آمدید.\n\n۱️⃣ ابتدا هفته مورد نظر (هفته اول تا پنجم) را انتخاب کنید.\n۲️⃣ سپس عنوان دسته را بنویسید (مثلاً: «پیام ها» یا «ویدیو»).\n۳️⃣ حالا پیام‌ها را یکی‌یکی بفرستید؛ بات خودش به عنوان عدد اضافه می‌کند (پیام 1، پیام 2، پیام 3...) و تا وقتی «${BTN_CHANGE_TITLE}» را نزنید، عنوان تغییر نمی‌کند!`,
+        `👋 سلام ادمین عزیز!\nبه ربات مدیریت «راز دهکده» خوش آمدید.\n\n🕵️‍♂️ برای آپلود عکس‌های کارآگاهی متربیان هر کلاس (فایل ZIP/RAR، لینک مستقیم یا عکس تکی)، روی «${BTN_ASSISTANTS_MENU}» بزنید.\n📅 برای مدیریت سناریوی ۵ هفته‌ای، هفته مورد نظر را انتخاب کنید:`,
         getMainMenuKeyboard()
       );
       return;
+    }
+
+    // ۱-ب. منوی مدیریت عکس دستیاران کارآگاه (کلاس‌ها)
+    if (text === BTN_ASSISTANTS_MENU || text === '/assistants') {
+      await this.setState({ mode: 'ASSISTANTS_MENU', week: null, currentTitle: '', titleCounter: 0 });
+      await this.sendMessage(
+        chatId,
+        `🕵️‍♂️ «مدیریت عکس دستیاران کارآگاه (۲۴ کلاس)»\n\nیکی از روش‌های زیر را انتخاب کنید:\n\n۱️⃣ «${BTN_ASSISTANTS_ARCHIVE}»:\nارسال فایل فشرده (.zip / .rar) حاوی پوشه کلاس‌ها یا ارسال لینک مستقیم دانلود (برای فایل‌های بالای ۲۰ مگابایت). بات به صورت خودکار نام پوشه‌ها را با کلاس‌ها تطبیق داده و عکس هر متربی را با نام خودش در کلاس مربوطه قرار می‌دهد!\n\n۲️⃣ «${BTN_ASSISTANTS_SELECT_CLASS}»:\nانتخاب یک کلاس مشخص و ارسال یا فوروارد کردن عکس‌های متربیان آن کلاس.`,
+        getAssistantsMenuKeyboard()
+      );
+      return;
+    }
+
+    if (text === BTN_ASSISTANTS_ARCHIVE) {
+      await this.setState({ mode: 'WAIT_ASSISTANTS_ARCHIVE', week: null, currentTitle: '', titleCounter: 0 });
+      await this.sendMessage(
+        chatId,
+        `📦 لطفاً فایل فشرده (.zip یا .rar) عکس‌های دستیاران را بفرستید.\n\n💡 نکات مهم برای اینترنت ضعیف یا فایل‌های حجیم:\n• اگر فایل شما زیر ۲۰ مگابایت است، مستقیم همینجا آپلود یا فوروارد کنید.\n• اگر کل آرشیو بالای ۲۰ مگابایت است (مثلاً ۲۸۰ مگابایت)، به دلیل محدودیت ۲۰ مگابایتی API رسمی بات تلگرام، می‌توانید:\n  الف) لینک مستقیم دانلود (http/https) آن را بفرستید تا سرور با اینترنت پرسرعت خودش مستقیم دانلود و استخراج کند!\n  ب) یا هر کلاس را به صورت یک فایل زیپ جداگانه بفرستید.\n  ج) یا از دکمه «${BTN_ASSISTANTS_SELECT_CLASS}» کلاس را انتخاب کرده و عکس‌ها را بفرستید.`,
+        getAssistantsMenuKeyboard()
+      );
+      return;
+    }
+
+    if (text === BTN_ASSISTANTS_STATS) {
+      await this.sendAssistantsStats(chatId);
+      return;
+    }
+
+    if (text === BTN_ASSISTANTS_SELECT_CLASS || text === BTN_ASSISTANTS_CHANGE_CLASS) {
+      const sessions = await SessionAssistant.ensureOfficialSessionsExist();
+      await this.setState({ mode: 'WAIT_ASSISTANTS_SELECT_CLASS', week: null, currentTitle: '', titleCounter: 0 });
+      await this.sendMessage(
+        chatId,
+        `🏫 لطفاً کلاس مورد نظر را از کیبورد زیر انتخاب کنید تا عکس‌های دستیاران آن کلاس را بفرستید:`,
+        getAssistantsClassSelectKeyboard(sessions, '🏫 ')
+      );
+      return;
+    }
+
+    if (text === BTN_ASSISTANTS_CLEAR_CLASS) {
+      const sessions = await SessionAssistant.ensureOfficialSessionsExist();
+      await this.setState({ mode: 'WAIT_ASSISTANTS_CLEAR_CLASS', week: null, currentTitle: '', titleCounter: 0 });
+      await this.sendMessage(
+        chatId,
+        `🧹 عکس‌های دستیاران کدام کلاس را می‌خواهید پاکسازی کنید؟`,
+        getAssistantsClassSelectKeyboard(sessions, '🧹 حذف عکس‌های ')
+      );
+      return;
+    }
+
+    // اگر در حالت پاکسازی عکس‌های یک کلاس هستیم
+    if (this.adminState.mode === 'WAIT_ASSISTANTS_CLEAR_CLASS' && text) {
+      const cleanClassText = text.replace(/^🧹\s*حذف عکس‌های\s*/u, '').trim();
+      const sessions = await SessionAssistant.ensureOfficialSessionsExist();
+      const matched = matchFolderToSession(cleanClassText, sessions);
+      const matchedSession = matched?.session || matched;
+      if (matchedSession && matchedSession.id) {
+        const deletedCount = await SessionAssistant.deleteBySessionId(matchedSession.id);
+        this.notifyAssistantsUpdated([matchedSession.id]);
+        await this.setState({ mode: 'ASSISTANTS_MENU', week: null, currentTitle: '', titleCounter: 0 });
+        await this.sendMessage(
+          chatId,
+          `✅ تمام عکس‌های دستیاران کلاس «${matchedSession.name}» (${deletedCount} تصویر) پاکسازی شد.`,
+          getAssistantsMenuKeyboard()
+        );
+        return;
+      }
+    }
+
+    // اگر در حالت انتخاب کلاس برای ارسال عکس هستیم (یا کاربر روی دکمه 🏫 نام کلاس زد)
+    if (text.startsWith('🏫 ') || (this.adminState.mode === 'WAIT_ASSISTANTS_SELECT_CLASS' && text)) {
+      const cleanClassText = text.replace(/^🏫\s*/u, '').trim();
+      const sessions = await SessionAssistant.ensureOfficialSessionsExist();
+      const matched = matchFolderToSession(cleanClassText, sessions);
+      const matchedSession = matched?.session || matched;
+      if (matchedSession && matchedSession.id) {
+        const currentList = await SessionAssistant.findBySessionId(matchedSession.id);
+        await this.setState({
+          mode: 'WAIT_ASSISTANTS_CLASS_PHOTOS',
+          week: null,
+          currentTitle: matchedSession.name,
+          titleCounter: matchedSession.id,
+        });
+        await this.sendMessage(
+          chatId,
+          `✅ کلاس «${matchedSession.name}» انتخاب شد (کد چت: ${matchedSession.chat_code}).\n📸 تعداد عکس‌های فعلی این کلاس: ${currentList.length}\n\n📤 حالا می‌توانید:\n۱. فایل عکس‌های متربیان این کلاس (PNG / WEBP / JPG) را به صورت File یا Photo یکجا بفرستید یا فوروارد کنید (نام فایل به عنوان نام متربی ثبت می‌شود).\n۲. یا فایل فشرده (.zip / .rar) مخصوص همین کلاس را بفرستید.`,
+          getAssistantsReceivingClassKeyboard()
+        );
+        return;
+      }
+    }
+
+    // اگر در حالت دریافت عکس برای یک کلاس مشخص (WAIT_ASSISTANTS_CLASS_PHOTOS) هستیم
+    if (this.adminState.mode === 'WAIT_ASSISTANTS_CLASS_PHOTOS' && this.adminState.titleCounter) {
+      const targetSessionId = Number(this.adminState.titleCounter);
+      const targetSessionName = this.adminState.currentTitle || `کلاس #${targetSessionId}`;
+
+      if (text === BTN_ASSISTANTS_LIST_CLASS) {
+        const list = await SessionAssistant.findBySessionId(targetSessionId);
+        if (!list.length) {
+          await this.sendMessage(
+            chatId,
+            `📭 هنوز هیچ عکسی برای کلاس «${targetSessionName}» ثبت نشده است.`,
+            getAssistantsReceivingClassKeyboard()
+          );
+          return;
+        }
+        const lines = [`🕵️‍♂️ لیست دستیاران کارآگاه در کلاس «${targetSessionName}» (${list.length} نفر):\n`];
+        list.forEach((item, idx) => {
+          lines.push(`${idx + 1}. ${item.student_name}`);
+        });
+        await this.sendMessage(chatId, lines.join('\n'), getAssistantsReceivingClassKeyboard());
+        return;
+      }
+
+      const mediaInfo = this.extractMediaInfo(msg);
+      if (mediaInfo && mediaInfo.contentType === 'archive') {
+        await this.handleAssistantsArchiveMessage(chatId, msg, targetSessionId);
+        return;
+      }
+      if (mediaInfo && mediaInfo.contentType === 'image') {
+        await this.handleAssistantsSinglePhotoMessage(chatId, msg, targetSessionId, targetSessionName);
+        return;
+      }
+      if (text && /^https?:\/\/\S+/i.test(text)) {
+        await this.handleAssistantsArchiveMessage(chatId, msg, targetSessionId);
+        return;
+      }
+    }
+
+    // اگر در حالت WAIT_ASSISTANTS_ARCHIVE یا ASSISTANTS_MENU یا حتی IDLE یک فایل فشرده (.zip / .rar) فرستاده شد
+    {
+      const mediaInfo = this.extractMediaInfo(msg);
+      const isArchiveDoc = mediaInfo && mediaInfo.contentType === 'archive';
+      const isDirectArchiveInput =
+        this.adminState.mode === 'WAIT_ASSISTANTS_ARCHIVE' &&
+        (isArchiveDoc || (text && (/^https?:\/\/\S+/i.test(text) || fs.existsSync(text))));
+
+      if (isArchiveDoc || isDirectArchiveInput) {
+        await this.handleAssistantsArchiveMessage(chatId, msg, null);
+        return;
+      }
     }
 
     // ۲. اگر در هر حالتی روی یکی از دکمه‌های «هفته اول» تا «هفته پنجم» کلیک شد
@@ -828,6 +1079,228 @@ class MohtavaTelegramBot {
     await this.sendMessage(chatId, lines.join('\n'), getMainMenuKeyboard());
   }
 
+  async sendAssistantsStats(chatId) {
+    const counts = await SessionAssistant.getCountsBySession();
+    const lines = ['📊 آمار عکس‌های «دستیاران کارآگاه» به تفکیک کلاس‌ها:\n'];
+    let totalPhotos = 0;
+    let classesWithPhotos = 0;
+
+    counts.forEach((c, idx) => {
+      totalPhotos += c.count;
+      if (c.count > 0) classesWithPhotos += 1;
+      const badge = c.count > 0 ? `✅ ${c.count} عکس` : '⚪️ بدون عکس';
+      lines.push(`${idx + 1}. ${c.session_name} (${c.chat_code || '—'}) ⬅️ ${badge}`);
+    });
+
+    lines.push(`\n─────────────────────`);
+    lines.push(`🏫 کلاس‌های دارای عکس: ${classesWithPhotos} از ${counts.length}`);
+    lines.push(`🕵️‍♂️ مجموع کل عکس‌های دستیاران: ${totalPhotos} نفر`);
+
+    await this.sendMessage(chatId, lines.join('\n'), getAssistantsMenuKeyboard());
+  }
+
+  /**
+   * پردازش فایل فشرده (ZIP/RAR) یا لینک مستقیم دانلود یا مسیر سرور و تخصیص خودکار عکس‌ها به کلاس‌ها
+   */
+  async handleAssistantsArchiveMessage(chatId, msg, fallbackSessionId = null) {
+    const text = typeof msg.text === 'string' ? msg.text.trim() : '';
+    const mediaInfo = this.extractMediaInfo(msg);
+    const replyKeyboard = fallbackSessionId
+      ? getAssistantsReceivingClassKeyboard()
+      : getAssistantsMenuKeyboard();
+
+    let tempArchivePath = null;
+    let originalArchiveName = '';
+
+    try {
+      // حالت ۱: مسیر مستقیم فایل یا پوشه روی سرور
+      if (text && !/^https?:\/\//i.test(text) && fs.existsSync(text)) {
+        const stat = fs.statSync(text);
+        await this.sendMessage(
+          chatId,
+          `⏳ در حال پردازش مسیر محلی سرور و جایگذاری خودکار عکس‌های کلاس‌ها...`,
+          replyKeyboard
+        );
+
+        let summary;
+        if (stat.isDirectory()) {
+          summary = await SessionAssistant.importExtractedDirectory({
+            extractedDir: text,
+            fallbackSessionId,
+            originalArchiveName: path.basename(text),
+          });
+        } else {
+          summary = await SessionAssistant.importArchiveToSessions({
+            archivePath: text,
+            fallbackSessionId,
+            originalArchiveName: path.basename(text),
+          });
+        }
+
+        this.notifyAssistantsUpdated(summary.affectedSessionIds);
+        await this.sendArchiveImportReport(chatId, summary, replyKeyboard);
+        return;
+      }
+
+      // حالت ۲: لینک مستقیم دانلود (HTTP/HTTPS)
+      if (text && /^https?:\/\/\S+/i.test(text)) {
+        let parsedExt = '.zip';
+        try {
+          const u = new URL(text);
+          const extFromUrl = path.extname(decodeURIComponent(u.pathname)).toLowerCase();
+          if (ARCHIVE_EXTS.has(extFromUrl)) parsedExt = extFromUrl;
+          originalArchiveName = path.basename(decodeURIComponent(u.pathname)) || `archive${parsedExt}`;
+        } catch (_) {
+          originalArchiveName = `archive${parsedExt}`;
+        }
+
+        tempArchivePath = path.join(os.tmpdir(), `raze_dl_${Date.now()}${parsedExt}`);
+        await this.sendMessage(
+          chatId,
+          `🌐 در حال دانلود مستقیم فایل آرشیو روی سرور (بدون مصرف اینترنت شما)... لطفاً صبر کنید ⏳`,
+          replyKeyboard
+        );
+
+        await this.downloadExternalUrl(text, tempArchivePath);
+      } else if (mediaInfo && mediaInfo.contentType === 'archive') {
+        // حالت ۳: فایل فشرده ارسال‌شده در تلگرام
+        originalArchiveName = mediaInfo.originalName || `archive${mediaInfo.ext || '.zip'}`;
+        tempArchivePath = path.join(os.tmpdir(), `raze_tg_${Date.now()}${mediaInfo.ext || '.zip'}`);
+
+        await this.sendMessage(
+          chatId,
+          `⏳ در حال دریافت فایل «${originalArchiveName}» و استخراج خودکار کلاس‌ها...`,
+          replyKeyboard
+        );
+
+        await this.downloadTelegramFile(mediaInfo.fileId, tempArchivePath);
+      } else {
+        await this.sendMessage(
+          chatId,
+          `⚠️ لطفاً یک فایل فشرده (.zip / .rar) یا یک لینک مستقیم دانلود (https://...) ارسال فرمایید.`,
+          replyKeyboard
+        );
+        return;
+      }
+
+      const summary = await SessionAssistant.importArchiveToSessions({
+        archivePath: tempArchivePath,
+        fallbackSessionId,
+        originalArchiveName,
+      });
+
+      this.notifyAssistantsUpdated(summary.affectedSessionIds);
+      await this.sendArchiveImportReport(chatId, summary, replyKeyboard);
+    } catch (err) {
+      console.error('❌ [MohtavaTelBot] خطا در پردازش آرشیو دستیاران:', err);
+      const isTooBig = /file is too big/i.test(String(err.message || ''));
+      if (isTooBig) {
+        await this.sendMessage(
+          chatId,
+          `⚠️ حجم این فایل بیش از ۲۰ مگابایت است و سرور ابری تلگرام اجازه دانلود مستقیم فایل‌های بالای ۲۰ مگابایت را به ربات‌های استاندارد نمی‌دهد.\n\n✅ ۳ راه‌حل فوری و بدون دردسر:\n۱️⃣ لینک مستقیم دانلود فایل (مثلاً از ربات فایل‌به‌لینک تلگرام یا آپلودسنتر) را همینجا بفرستید تا سرور مستقیماً با اینترنت خودش دانلود و کل ۲۴ کلاس را جایگذاری کند!\n۲️⃣ یا پوشه هر کلاس را جداگانه زیپ کنید (زیر ۲۰ مگابایت) و بفرستید.\n۳️⃣ یا روی «${BTN_ASSISTANTS_SELECT_CLASS}» بزنید، کلاس را انتخاب کنید و عکس‌های آن کلاس را بفرستید.`,
+          replyKeyboard
+        );
+      } else {
+        await this.sendMessage(
+          chatId,
+          `❌ خطا در پردازش فایل آرشیو:\n${err.message}`,
+          replyKeyboard
+        );
+      }
+    } finally {
+      if (tempArchivePath && fs.existsSync(tempArchivePath)) {
+        try {
+          fs.unlinkSync(tempArchivePath);
+        } catch (_) {}
+      }
+    }
+  }
+
+  async sendArchiveImportReport(chatId, summary, replyKeyboard) {
+    const perSessionList = Object.values(summary.perSession || {});
+    const lines = [
+      `🎉 پردازش و جایگذاری خودکار عکس‌های دستیاران کارآگاه انجام شد!\n`,
+      `📸 کل فایل‌های تصویری یافت‌شده: ${summary.totalFilesFound}`,
+      `✅ عکس‌های جدید ثبت‌شده: ${summary.importedCount}`,
+      `🔄 عکس‌های بروزرسانی‌شده: ${summary.updatedCount}`,
+    ];
+
+    if (summary.skippedDuplicatesCount > 0) {
+      lines.push(`⏭ فرمت‌های تکراری ردشده (PNG/WEBP هم‌نام): ${summary.skippedDuplicatesCount}`);
+    }
+
+    if (perSessionList.length > 0) {
+      lines.push(`\n🏫 تفکیک کلاس‌های بروزرسانی‌شده (${perSessionList.length} کلاس):`);
+      perSessionList.forEach((s) => {
+        lines.push(`• ${s.session_name}: +${s.added} جدید | ${s.updated} ویرایش`);
+      });
+    }
+
+    if (summary.unmatchedFolders && summary.unmatchedFolders.length > 0) {
+      lines.push(`\n⚠️ پوشه‌های بدون تطبیق (${summary.unmatchedCount} فایل):`);
+      lines.push(summary.unmatchedFolders.slice(0, 10).join(' ، '));
+    }
+
+    await this.sendMessage(chatId, lines.join('\n'), replyKeyboard);
+  }
+
+  /**
+   * ذخیره یک عکس تکی (File یا Photo) برای کلاس انتخاب‌شده
+   */
+  async handleAssistantsSinglePhotoMessage(chatId, msg, sessionId, sessionName) {
+    const mediaInfo = this.extractMediaInfo(msg);
+    if (!mediaInfo || mediaInfo.contentType !== 'image') return;
+
+    let tempFilePath = null;
+    try {
+      const ext = mediaInfo.ext || '.png';
+      tempFilePath = path.join(os.tmpdir(), `raze_photo_${Date.now()}_${Math.random().toString(36).slice(2, 6)}${ext}`);
+      await this.downloadTelegramFile(mediaInfo.fileId, tempFilePath);
+
+      const captionText = typeof msg.caption === 'string' ? msg.caption.trim() : '';
+      let rawStudentName = '';
+
+      if (captionText) {
+        rawStudentName = captionText.split('\n')[0].trim();
+      } else if (msg.document && msg.document.file_name) {
+        rawStudentName = extractStudentNameFromFilename(msg.document.file_name);
+      }
+
+      if (!rawStudentName || /^photo/i.test(rawStudentName) || /^image/i.test(rawStudentName)) {
+        const currentList = await SessionAssistant.findBySessionId(sessionId);
+        rawStudentName = `دستیار کارآگاه ${currentList.length + 1}`;
+      }
+
+      const result = await SessionAssistant.upsertStudentPhoto({
+        session_id: sessionId,
+        student_name: rawStudentName,
+        sourceFilePath: tempFilePath,
+        ext,
+      });
+
+      this.notifyAssistantsUpdated([sessionId]);
+
+      await this.sendMessage(
+        chatId,
+        `✅ تصویر دستیار کارآگاه «${result.record.student_name}» در کلاس «${sessionName}» ${result.action === 'updated' ? 'بروزرسانی' : 'ثبت'} شد!`,
+        getAssistantsReceivingClassKeyboard()
+      );
+    } catch (err) {
+      console.error('❌ [MohtavaTelBot] خطا در ذخیره عکس دستیار:', err);
+      await this.sendMessage(
+        chatId,
+        `❌ خطا در ذخیره عکس برای کلاس «${sessionName}»:\n${err.message}`,
+        getAssistantsReceivingClassKeyboard()
+      );
+    } finally {
+      if (tempFilePath && fs.existsSync(tempFilePath)) {
+        try {
+          fs.unlinkSync(tempFilePath);
+        } catch (_) {}
+      }
+    }
+  }
+
   deleteUploadedFilesForItems(items = []) {
     for (const item of items) {
       if (item && item.payload && String(item.payload).startsWith('/uploads/weekly/')) {
@@ -930,4 +1403,11 @@ module.exports = {
   BTN_CLEAR_ONE_WEEK,
   BTN_CLEAR_ALL,
   BTN_CONFIRM_CLEAR_ALL,
+  BTN_ASSISTANTS_MENU,
+  BTN_ASSISTANTS_ARCHIVE,
+  BTN_ASSISTANTS_SELECT_CLASS,
+  BTN_ASSISTANTS_STATS,
+  BTN_ASSISTANTS_CLEAR_CLASS,
+  BTN_ASSISTANTS_LIST_CLASS,
+  BTN_ASSISTANTS_CHANGE_CLASS,
 };

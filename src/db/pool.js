@@ -26,6 +26,7 @@ class InMemoryDatabase {
       weekly_content: [],
       app_migrations: [],
       bot_state: [],
+      session_assistants: [],
     };
     this.autoIds = {
       admins: 1,
@@ -37,6 +38,7 @@ class InMemoryDatabase {
       media_registry: 1,
       teachers: 1,
       weekly_content: 1,
+      session_assistants: 1,
     };
   }
 
@@ -84,8 +86,11 @@ class InMemoryDatabase {
     // 4. INSERT INTO sessions
     if (/^INSERT INTO sessions/i.test(cleanSql)) {
       let code, order_code, chat_code, name, assigned_admin_id;
-      if (params.length === 5) {
+      if (params.length >= 5) {
         [code, order_code, chat_code, name, assigned_admin_id] = params;
+      } else if (params.length === 4) {
+        [code, order_code, chat_code, name] = params;
+        assigned_admin_id = null;
       } else {
         [code, name, assigned_admin_id] = params;
         order_code = code;
@@ -571,6 +576,69 @@ class InMemoryDatabase {
         this.tables.bot_state.push(rec);
       }
       return [{ affectedRows: 1 }, []];
+    }
+
+    // 17. Session Assistants (عکس‌های کارآگاهی دستیاران هر کلاس)
+    if (/^INSERT INTO session_assistants/i.test(cleanSql)) {
+      const [session_id, student_name, file_url, file_name, display_order] = params;
+      const id = this.autoIds.session_assistants++;
+      const record = {
+        id,
+        session_id: Number(session_id),
+        student_name,
+        file_url,
+        file_name,
+        display_order: Number(display_order) || 1,
+        created_at: new Date(),
+      };
+      this.tables.session_assistants.push(record);
+      return [{ affectedRows: 1, insertId: id }, []];
+    }
+
+    if (/^SELECT .* FROM session_assistants/i.test(cleanSql)) {
+      if (/WHERE id = \?/i.test(cleanSql)) {
+        const item = this.tables.session_assistants.find(x => x.id == params[0]);
+        return [item ? [item] : [], []];
+      }
+      if (/WHERE session_id = \?/i.test(cleanSql)) {
+        const items = this.tables.session_assistants
+          .filter(x => x.session_id == params[0])
+          .sort((a, b) => (a.display_order - b.display_order) || (a.id - b.id));
+        return [items, []];
+      }
+      return [this.tables.session_assistants.sort((a, b) => (a.session_id - b.session_id) || (a.display_order - b.display_order)), []];
+    }
+
+    if (/^UPDATE session_assistants/i.test(cleanSql)) {
+      const [student_name, file_url, file_name, id] = params;
+      const item = this.tables.session_assistants.find(x => x.id == id);
+      if (item) {
+        if (student_name) item.student_name = student_name;
+        if (file_url) item.file_url = file_url;
+        if (file_name) item.file_name = file_name;
+      }
+      return [{ affectedRows: item ? 1 : 0 }, []];
+    }
+
+    if (/^DELETE FROM session_assistants/i.test(cleanSql)) {
+      if (!/WHERE/i.test(cleanSql)) {
+        const count = this.tables.session_assistants.length;
+        this.tables.session_assistants = [];
+        return [{ affectedRows: count }, []];
+      }
+      if (/WHERE session_id = \?/i.test(cleanSql)) {
+        const sid = params[0];
+        const before = this.tables.session_assistants.length;
+        this.tables.session_assistants = this.tables.session_assistants.filter(x => x.session_id != sid);
+        return [{ affectedRows: before - this.tables.session_assistants.length }, []];
+      }
+      const [id] = params;
+      const idx = this.tables.session_assistants.findIndex(x => x.id == id);
+      if (idx !== -1) {
+        this.tables.session_assistants.splice(idx, 1);
+        return [{ affectedRows: 1 }, []];
+      }
+      return [{ affectedRows: 0 }, []];
     }
 
     return [[], []];

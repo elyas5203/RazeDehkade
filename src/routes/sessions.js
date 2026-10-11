@@ -8,6 +8,7 @@ const router = express.Router();
 const Session = require('../models/Session');
 const Message = require('../models/Message');
 const SessionLog = require('../models/SessionLog');
+const SessionAssistant = require('../models/SessionAssistant');
 const { requireAdmin, authenticateToken } = require('../middleware/auth');
 
 /**
@@ -250,6 +251,80 @@ router.post('/:id/lock', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error toggling chat lock:', error);
     return res.status(500).json({ success: false, message: 'خطای سرور هنگام تغییر وضعیت قفل چت' });
+  }
+});
+
+/**
+ * GET /api/sessions/:id/assistants
+ * دریافت لیست عکس‌های دستیاران کارآگاه یک جلسه (مخصوص کاربر همان جلسه یا ادمین)
+ */
+router.get('/:id/assistants', authenticateToken, async (req, res) => {
+  try {
+    const sessionId = parseInt(req.params.id, 10);
+    if (!sessionId) {
+      return res.status(400).json({ success: false, message: 'شناسه جلسه معتبر نیست.' });
+    }
+
+    if (req.user.role !== 'admin' && Number(req.user.sessionId) !== sessionId) {
+      return res.status(403).json({
+        success: false,
+        message: 'دسترسی غیرمجاز به لیست دستیاران این جلسه.',
+      });
+    }
+
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'جلسه پیدا نشد.' });
+    }
+
+    const assistants = await SessionAssistant.findBySessionId(sessionId);
+
+    return res.json({
+      success: true,
+      sessionName: session.name,
+      sessionId: session.id,
+      count: assistants.length,
+      data: assistants,
+    });
+  } catch (error) {
+    console.error('Error fetching session assistants:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'خطای سرور هنگام دریافت عکس‌های دستیاران کارآگاه',
+    });
+  }
+});
+
+/**
+ * DELETE /api/sessions/:id/assistants/:assistantId
+ * حذف تصویر یک دستیار کارآگاه (فقط ادمین)
+ */
+router.delete('/:id/assistants/:assistantId', requireAdmin, async (req, res) => {
+  try {
+    const sessionId = parseInt(req.params.id, 10);
+    const assistantId = parseInt(req.params.assistantId, 10);
+
+    const existing = await SessionAssistant.findById(assistantId);
+    if (!existing || Number(existing.session_id) !== sessionId) {
+      return res.status(404).json({ success: false, message: 'تصویر دستیار پیدا نشد.' });
+    }
+
+    await SessionAssistant.deleteById(assistantId);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`session_${sessionId}`).emit('assistants_updated', { sessionId });
+      io.to('admins').emit('assistants_updated', { sessionId });
+    }
+
+    return res.json({
+      success: true,
+      message: 'تصویر دستیار کارآگاه حذف شد.',
+      data: existing,
+    });
+  } catch (error) {
+    console.error('Error deleting assistant photo:', error);
+    return res.status(500).json({ success: false, message: 'خطای سرور هنگام حذف تصویر دستیار' });
   }
 });
 

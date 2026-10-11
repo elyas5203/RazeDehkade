@@ -11,6 +11,7 @@
     "clean-chat": "node src/db/reset-chats.js",
     "codes": "node scripts/export-codes.js",
     "export-codes": "node scripts/export-codes.js",
+    "import-assistants": "node scripts/import-assistants.js",
     "bot": "node MohtavaTelBot/index.js",
     "test": "node --test --test-concurrency=1 tests/**/*.test.js"
   },

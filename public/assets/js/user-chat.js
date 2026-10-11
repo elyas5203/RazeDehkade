@@ -135,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // راه‌اندازی پنل ایموجی، تقویم شمسی و مودال‌ها
   initUserEmojiPicker();
   initCalendarAndModals();
+  loadSessionAssistants(false);
 
   // مدیریت فرم ارسال پیام و کلید Enter و Shift+Enter
   const msgForm = document.getElementById('message-form');
@@ -399,6 +400,12 @@ function initSocket() {
       } catch (e) {
         console.error('Error adding ICE candidate:', e);
       }
+    }
+  });
+
+  socket.on('assistants_updated', (data) => {
+    if (!data || !data.sessionId || Number(data.sessionId) === Number(sessionData.id)) {
+      loadSessionAssistants(true);
     }
   });
 }
@@ -2096,12 +2103,316 @@ function renderShamsiCalendar() {
   gridEl.innerHTML = cells.join('');
 }
 
-function openAssistantsPhotoPopup() {
+/* ==========================================================================
+   گالری «عکس دستیاران کارآگاه» (کارت‌های پرسنلی هر کلاس + حذف خودکار پرده سبز PNG)
+   ========================================================================== */
+let sessionAssistantsList = [];
+let assistantsChromaEnabled = true; // به صورت پیش‌فرض حذف بک‌گراند سبز فعال است (اپشن مجزا و قابل تغییر)
+let activeAssistantLightboxIndex = -1;
+const assistantsChromaCache = new Map(); // fileUrl -> Promise<string (blobUrl/dataUrl)>
+
+async function loadSessionAssistants(forceRender = false) {
+  if (!sessionData || !sessionData.id || !userToken) return;
+  try {
+    const res = await fetch(`/api/sessions/${sessionData.id}/assistants`, {
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+      },
+    });
+    if (!res.ok) return;
+    const payload = await res.json();
+    if (!payload || !payload.success || !Array.isArray(payload.data)) return;
+
+    sessionAssistantsList = payload.data;
+
+    // بروزرسانی زیرنویس دکمه «عکس دستیاران» در گرید ۴تایی زیر برد
+    const subEl = document.getElementById('assistants-btn-sub');
+    if (subEl) {
+      if (sessionAssistantsList.length > 0) {
+        subEl.textContent = `${toPersianDigits(sessionAssistantsList.length)} دستیار کارآگاه ↗`;
+      } else {
+        subEl.textContent = 'مشاهده در پنجره جدید ↗';
+      }
+    }
+
+    const eyebrowEl = document.getElementById('assistants-modal-eyebrow');
+    if (eyebrowEl && payload.sessionName) {
+      eyebrowEl.textContent = `پرونده ویژه کارآگاهی // کلاس ${payload.sessionName}`;
+    }
+
+    const badgeEl = document.getElementById('assistants-count-badge');
+    if (badgeEl) {
+      badgeEl.textContent = `${toPersianDigits(sessionAssistantsList.length)} نفر`;
+    }
+
+    const dlg = document.getElementById('assistants-photo-dialog');
+    if (forceRender || (dlg && dlg.open)) {
+      renderAssistantsGallery();
+    }
+  } catch (err) {
+    console.warn('Error loading session assistants:', err);
+  }
+}
+
+/**
+ * حذف پرده سبز (Chroma-Key) از عکس کارآگاهی متربیان و تولید تصویر PNG شفاف (Transparent)
+ * همراه با حذف هاله سبز لبه‌های کلاه و پالتو (Despill)
+ */
+function getChromaKeyedImageUrl(rawUrl) {
+  const safeUrl = safeFileUrl(rawUrl);
+  if (!safeUrl || safeUrl === '#') return Promise.resolve('#');
+  if (assistantsChromaCache.has(safeUrl)) {
+    return assistantsChromaCache.get(safeUrl);
+  }
+
+  const job = new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const w = img.naturalWidth || img.width;
+        const h = img.naturalHeight || img.height;
+        if (!w || !h) {
+          resolve(safeUrl);
+          return;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const imgData = ctx.getImageData(0, 0, w, h);
+        const data = imgData.data;
+
+        // نمونه‌برداری هوشمند از گوشه‌های بالای تصویر برای تشخیص رنگ دقیق پرده سبز استودیو
+        // (در عکس‌های کارآگاهی متربیان، رنگ بک‌گراند سبز حدود R=1..15, G=165..215, B=50..85 است)
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+          if (a === 0) continue;
+
+          const maxRB = r > b ? r : b;
+          const greenExcess = g - maxRB;
+          const greenVsRed = g - r;
+          const greenVsBlue = g - b;
+
+          // ناحیه اصلی پرده سبز: شفافیت کامل (Alpha = 0)
+          if (g > 70 && greenVsRed > 48 && greenVsBlue > 28 && greenExcess > 38) {
+            data[i + 3] = 0;
+            continue;
+          }
+
+          // ناحیه لبه نرم (Feathering) دور موها، کلاه و پالتو
+          if (g > 55 && greenVsRed > 20 && greenVsBlue > 12 && greenExcess > 12) {
+            const ratio = (greenExcess - 12) / (38 - 12); // 0..1
+            const newAlpha = Math.round(a * Math.max(0, Math.min(1, 1 - ratio)));
+            data[i + 3] = newAlpha;
+            // حذف بازتاب سبز روی لبه‌ها (Despill)
+            data[i + 1] = Math.round(maxRB * 0.92 + g * 0.08);
+            continue;
+          }
+
+          // حذف بازتاب خفیف سبز روی لبه‌های لباس یا پوست
+          if (greenExcess > 4 && g > r * 1.08) {
+            data[i + 1] = Math.round(maxRB * 0.96 + g * 0.04);
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+        if (typeof canvas.toBlob === 'function') {
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(URL.createObjectURL(blob));
+            } else {
+              resolve(canvas.toDataURL('image/png'));
+            }
+          }, 'image/png');
+        } else {
+          resolve(canvas.toDataURL('image/png'));
+        }
+      } catch (err) {
+        // در صورت هرگونه خطا، تصویر اصلی بدون تغییر برگردانده می‌شود
+        resolve(safeUrl);
+      }
+    };
+    img.onerror = () => resolve(safeUrl);
+    img.src = safeUrl;
+  });
+
+  assistantsChromaCache.set(safeUrl, job);
+  return job;
+}
+
+function updateChromaToggleButtonUI() {
+  const btn = document.getElementById('assistants-chroma-toggle-btn');
+  const label = document.getElementById('assistants-chroma-toggle-label');
+  if (!btn || !label) return;
+
+  if (assistantsChromaEnabled) {
+    btn.classList.add('is-active');
+    label.textContent = '✨ حذف بک‌گراند سبز (PNG): فعال';
+  } else {
+    btn.classList.remove('is-active');
+    label.textContent = '🖼 نمایش تصویر اصلی (با بک‌گراند سبز)';
+  }
+}
+
+function toggleAssistantsChromaKey() {
+  assistantsChromaEnabled = !assistantsChromaEnabled;
+  updateChromaToggleButtonUI();
+  applyAssistantsImagesDisplayMode();
+  if (activeAssistantLightboxIndex >= 0) {
+    updateAssistantLightboxContent();
+  }
+}
+
+function applyAssistantsImagesDisplayMode() {
+  const container = document.getElementById('assistants-photo-modal-content');
+  if (!container) return;
+
+  const imgs = container.querySelectorAll('img.assistant-portrait-img[data-raw-url]');
+  imgs.forEach((imgEl) => {
+    const rawUrl = imgEl.getAttribute('data-raw-url');
+    if (!assistantsChromaEnabled) {
+      imgEl.src = rawUrl;
+    } else {
+      getChromaKeyedImageUrl(rawUrl).then((processedUrl) => {
+        if (assistantsChromaEnabled && imgEl.isConnected) {
+          imgEl.src = processedUrl;
+        }
+      });
+    }
+  });
+}
+
+function renderAssistantsGallery() {
+  const container = document.getElementById('assistants-photo-modal-content');
+  const badgeEl = document.getElementById('assistants-count-badge');
+  if (!container) return;
+
+  updateChromaToggleButtonUI();
+  if (badgeEl) {
+    badgeEl.textContent = `${toPersianDigits(sessionAssistantsList.length)} نفر`;
+  }
+
+  if (!sessionAssistantsList || sessionAssistantsList.length === 0) {
+    container.innerHTML = `
+      <div class="assistants-placeholder-stage">
+        <div class="assistants-placeholder-icon">🕵️‍♂️</div>
+        <h4>هنوز تصویری برای دستیاران این کلاس ثبت نشده است</h4>
+        <p>به محض بارگذاری تصاویر کلاس «${escapeHtml(sessionData.name || 'شما')}» توسط مرکز فرماندهی، کارت‌های کارآگاهی اینجا نمایش داده می‌شوند.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const cardsHtml = sessionAssistantsList.map((item, idx) => {
+    const safeUrl = safeFileUrl(item.file_url);
+    const name = escapeHtml(fixMojibakeText(item.student_name || `دستیار کارآگاه ${idx + 1}`));
+    const numFa = toPersianDigits(idx + 1);
+    return `
+      <article class="assistant-id-card" onclick="openAssistantLightbox(${idx})" title="مشاهده تصویر بزرگ‌تر و دانلود PNG — ${name}">
+        <div class="assistant-card-portrait-wrap">
+          <span class="assistant-card-num">#${numFa}</span>
+          <img
+            class="assistant-portrait-img"
+            src="${safeUrl}"
+            data-raw-url="${safeUrl}"
+            alt="${name}"
+            loading="lazy"
+          >
+        </div>
+        <div class="assistant-card-info">
+          <strong class="assistant-card-name">${name}</strong>
+          <span class="assistant-card-role">🕵️‍♂️ دستیار ویژه کارآگاه</span>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  container.innerHTML = `<div class="assistants-gallery-grid">${cardsHtml}</div>`;
+  applyAssistantsImagesDisplayMode();
+}
+
+function openAssistantLightbox(index) {
+  if (!sessionAssistantsList.length) return;
+  activeAssistantLightboxIndex = (index + sessionAssistantsList.length) % sessionAssistantsList.length;
+
+  const gridBody = document.getElementById('assistants-photo-modal-content');
+  const lbView = document.getElementById('assistants-lightbox-view');
+  if (gridBody) gridBody.hidden = true;
+  if (lbView) lbView.hidden = false;
+
+  updateAssistantLightboxContent();
+}
+
+function closeAssistantLightbox() {
+  activeAssistantLightboxIndex = -1;
+  const gridBody = document.getElementById('assistants-photo-modal-content');
+  const lbView = document.getElementById('assistants-lightbox-view');
+  if (lbView) lbView.hidden = true;
+  if (gridBody) gridBody.hidden = false;
+}
+
+function stepAssistantLightbox(delta) {
+  if (!sessionAssistantsList.length) return;
+  activeAssistantLightboxIndex =
+    (activeAssistantLightboxIndex + delta + sessionAssistantsList.length) % sessionAssistantsList.length;
+  updateAssistantLightboxContent();
+}
+
+function updateAssistantLightboxContent() {
+  const item = sessionAssistantsList[activeAssistantLightboxIndex];
+  if (!item) return;
+
+  const imgEl = document.getElementById('assistants-lb-img');
+  const nameEl = document.getElementById('assistants-lb-name');
+  const counterEl = document.getElementById('assistants-lb-counter');
+  const dlBtn = document.getElementById('assistants-lb-download-btn');
+
+  const cleanName = fixMojibakeText(item.student_name || 'دستیار کارآگاه');
+  const rawUrl = safeFileUrl(item.file_url);
+
+  if (nameEl) nameEl.textContent = `🕵️‍♂️ ${cleanName}`;
+  if (counterEl) {
+    counterEl.textContent = `نفر ${toPersianDigits(activeAssistantLightboxIndex + 1)} از ${toPersianDigits(sessionAssistantsList.length)}`;
+  }
+
+  if (!assistantsChromaEnabled) {
+    if (imgEl) imgEl.src = rawUrl;
+    if (dlBtn) {
+      dlBtn.href = rawUrl;
+      dlBtn.download = `${cleanName}.png`;
+      dlBtn.textContent = '⬇ دانلود تصویر اصلی';
+    }
+  } else {
+    if (imgEl) imgEl.src = rawUrl;
+    getChromaKeyedImageUrl(rawUrl).then((processedUrl) => {
+      if (activeAssistantLightboxIndex >= 0 && sessionAssistantsList[activeAssistantLightboxIndex] === item) {
+        if (imgEl) imgEl.src = processedUrl;
+        if (dlBtn) {
+          dlBtn.href = processedUrl;
+          dlBtn.download = `${cleanName}-بدون-بکگراند.png`;
+          dlBtn.textContent = '⬇ دانلود PNG بدون بک‌گراند';
+        }
+      }
+    });
+  }
+}
+
+async function openAssistantsPhotoPopup() {
   const dlg = document.getElementById('assistants-photo-dialog');
+  closeAssistantLightbox();
   if (dlg) dlg.showModal();
+  await loadSessionAssistants(true);
 }
 
 function closeAssistantsPhotoPopup() {
+  closeAssistantLightbox();
   const dlg = document.getElementById('assistants-photo-dialog');
   if (dlg) dlg.close();
 }
