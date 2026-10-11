@@ -179,6 +179,62 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     assert.strictEqual(duplicate.status, 400);
   });
 
+  it('3b2. Store order restricts to allowed products [1..5] with qty <= 1', async function () {
+    const createRes = await fetch(`${serverUrl}/api/sessions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+      body: JSON.stringify({ name: 'جلسه بررسی موجودی انبار' }),
+    });
+    const sData = await createRes.json();
+    const tempSession = sData.data;
+
+    // محصول غیرمجاز (مثلا id: 6) با خطای ۴۰۰ عدم موجودی رد شود
+    const disallowedRes = await fetch(`${serverUrl}/api/store/order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerName: 'تست انبار',
+        discountCode: tempSession.order_code,
+        items: [{ id: 6, qty: 1 }],
+      }),
+    });
+    assert.strictEqual(disallowedRes.status, 400);
+    const disData = await disallowedRes.json();
+    assert.match(disData.message, /عدم موجودی/);
+
+    // تعداد بیشتر از ۱ (مثلا id: 1 با ۲ عدد) با خطای ۴۰۰ رد شود
+    const excessQtyRes = await fetch(`${serverUrl}/api/store/order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerName: 'تست انبار',
+        discountCode: tempSession.order_code,
+        items: [{ id: 1, qty: 2 }],
+      }),
+    });
+    assert.strictEqual(excessQtyRes.status, 400);
+    const excessData = await excessQtyRes.json();
+    assert.match(excessData.message, /عدم موجودی/);
+
+    // اقلام مجاز با تعداد ۱ عدد با موفقیت ثبت شود
+    const allowedRes = await fetch(`${serverUrl}/api/store/order`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerName: 'تست انبار',
+        discountCode: tempSession.order_code,
+        items: [{ id: 1, qty: 1 }, { id: 2, quantity: 1 }],
+      }),
+    });
+    assert.strictEqual(allowedRes.status, 200);
+
+    // پاکسازی جلسه تستی
+    await fetch(`${serverUrl}/api/sessions/${tempSession.id}`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `Bearer ${adminToken}` },
+    });
+  });
+
   it('3c. Authenticated media upload works and rejects executable files', async function () {
     const okForm = new FormData();
     okForm.append('file', new Blob(['evidence'], { type: 'text/plain' }), 'evidence.txt');

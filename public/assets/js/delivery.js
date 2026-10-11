@@ -5,19 +5,42 @@
   const CIRCLE_CIRCUMFERENCE = 565.48; // 2 * PI * 90
   
   // =========================================================================
-  // مدت‌زمان خاموشی صفحه (بلک‌اوت) پس از تحویل:
-  // در حالت نهایی و پروداکشن: ۵ دقیقه کامل = 5 * 60 * 1000 (300000 میلی‌ثانیه)
-  // در حالت توسعه (Development): ۱۵ ثانیه = 15 * 1000
+  // مدت‌زمان خاموشی صفحه (بلک‌اوت) پس از تحویل بسته:
+  // طبق مشخصات پروژه:
+  // - برای تمام کاربران عادی: ۳ دقیقه کامل = 3 * 60 * 1000 (180000 میلی‌ثانیه)
+  // - برای اکانت تست اختصاصی: ۱۵ ثانیه = 15 * 1000
+  //   کد تخفیف: 542810 | کد ورود: 371717 | شماره ثبت‌شده: 09151234567
   // =========================================================================
-  const IS_DEV_MODE = true; 
-  const BLACKOUT_DURATION_MS = IS_DEV_MODE ? (15 * 1000) : (5 * 60 * 1000);
-
-  // بررسی ورود کاربر از طریق فرم لاگین (بدون سفارش جدید گل)
   const urlParams = new URLSearchParams(window.location.search);
   const isFromLogin = urlParams.has('from') || urlParams.get('mode') === 'intro';
-  // در حالت لاگین، معطلی ۳۰ ثانیه‌ای پیک و معطلی ۵ دقیقه‌ای تحویل فیزیکی بسته حذف می‌شود.
-  // یک خاموشی ناگهانی تعلیقی (۲ ثانیه) داده شده و سپس اینتروی سایبری آغاز می‌گردد
-  const LOGIN_BLACKOUT_MS = 2000;
+
+  let order;
+  try { 
+    order = JSON.parse(localStorage.getItem('golha_last_order') || 'null'); 
+  } catch (_) {}
+
+  function checkIsTestUser() {
+    const cleanDigits = (v) => String(v || '').replace(/\D/g, '');
+    const orderPhone = cleanDigits(order?.phone);
+    const sessionPhone = cleanDigits(sessionStorage.getItem('teacherPhone'));
+    const discount = String(order?.discountCode || order?.order_code || urlParams.get('discount') || '').trim();
+    const chatCode = String(order?.chat_code || sessionStorage.getItem('prefillCode') || '').trim();
+
+    return (
+      discount === '542810' ||
+      chatCode === '371717' ||
+      orderPhone === '09151234567' ||
+      sessionPhone === '09151234567'
+    );
+  }
+
+  const isTest = checkIsTestUser();
+  const DEFAULT_BLACKOUT_MS = 3 * 60 * 1000; // ۳ دقیقه (180 ثانیه)
+  const TEST_USER_BLACKOUT_MS = 15 * 1000;    // ۱۵ ثانیه
+  const BLACKOUT_DURATION_MS = isTest ? TEST_USER_BLACKOUT_MS : DEFAULT_BLACKOUT_MS;
+
+  // در حالت لاگین با شماره ثبت‌شده، مستقیماً وارد اینتروی سایبری با ترنزیشن کوتاه ۱.۲ ثانیه‌ای می‌شود
+  const LOGIN_BLACKOUT_MS = 1200;
 
   const numberFormat = new Intl.NumberFormat('fa-IR');
 
@@ -171,38 +194,45 @@
   });
 
   // ==========================================
-  // انیمیشن باران کدهای ماتریکس (Matrix Rain)
+  // جریان تلمتری و رصد داده‌های رمزنگاری‌شده (Forensic Telemetry Stream)
   // ==========================================
-  function startMatrixRain() {
+  function startTelemetryStream() {
     if (!matrixCanvas) return null;
     const ctx = matrixCanvas.getContext('2d');
     matrixCanvas.width = window.innerWidth;
     matrixCanvas.height = window.innerHeight;
 
-    const chars = '0101#$@%*&=+XYZ89';
-    const fontSize = 14;
-    const columns = Math.floor(matrixCanvas.width / fontSize);
-    const drops = Array(columns).fill(1);
+    const tokens = [
+      '0x7FFE4B90', 'SHA256:8f2a1b9', 'TCP/IP_SYN', 'SIGINT:714', 'TLS_AES_256', 
+      'CURVE25519', 'PACKET_IN_OK', 'BGP_ROUTING', 'MEM_DUMP:0xA0', 'HASH_VALID', 
+      'RSA_SIG:4096', 'SEC_CLEAR:L5', 'DIFFIE_HELLMAN', 'ACK_NODE_714', 'ENCR_CIPHER',
+      '45 00 00 3c 1c', 'PORT_RELAY:714', 'FORENSIC_STREAM', 'GEO_LOCK:VALID'
+    ];
+    const fontSize = 12;
+    const columns = Math.floor(matrixCanvas.width / 95);
+    const drops = Array(columns).fill(1).map(() => Math.floor(Math.random() * -30));
 
     function draw() {
-      ctx.fillStyle = 'rgba(2, 7, 5, 0.12)';
+      ctx.fillStyle = 'rgba(5, 8, 14, 0.18)';
       ctx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
 
-      ctx.fillStyle = 'rgba(0, 255, 136, 0.55)';
       ctx.font = `${fontSize}px 'JetBrains Mono', monospace`;
 
       for (let i = 0; i < drops.length; i++) {
-        const text = chars.charAt(Math.floor(Math.random() * chars.length));
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        if (drops[i] > 0) {
+          const text = tokens[Math.floor(Math.random() * tokens.length)];
+          ctx.fillStyle = Math.random() > 0.85 ? 'rgba(56, 189, 248, 0.55)' : 'rgba(100, 116, 139, 0.28)';
+          ctx.fillText(text, i * 95, drops[i] * fontSize);
+        }
 
-        if (drops[i] * fontSize > matrixCanvas.height && Math.random() > 0.975) {
+        if (drops[i] * fontSize > matrixCanvas.height && Math.random() > 0.96) {
           drops[i] = 0;
         }
         drops[i]++;
       }
     }
 
-    const interval = setInterval(draw, 33);
+    const interval = setInterval(draw, 45);
     window.addEventListener('resize', () => {
       matrixCanvas.width = window.innerWidth;
       matrixCanvas.height = window.innerHeight;
@@ -211,7 +241,7 @@
   }
 
   // ==========================================
-  // سکانس ترنزیشن سینمایی پرونده راز دهکده
+  // سکانس ترنزیشن سینمایی و رمزگشایی اسناد پرونده
   // ==========================================
   let cyberSequenceTimeout = null;
   let hasRedirected = false;
@@ -235,7 +265,17 @@
   function triggerCyberTransformation(customBlackoutMs) {
     if (!cyberOverlay) return;
 
-    const actualBlackoutDuration = typeof customBlackoutMs === 'number' ? customBlackoutMs : BLACKOUT_DURATION_MS;
+    let targetBlackout = typeof customBlackoutMs === 'number' ? customBlackoutMs : BLACKOUT_DURATION_MS;
+
+    // ثبت زمان شروع خاموشی کامل
+    const now = Date.now();
+    let blackoutStart = Number(sessionStorage.getItem('delivery_blackout_at') || 0);
+    if (!blackoutStart || (now - blackoutStart) > (5 * 60 * 1000)) {
+      blackoutStart = now;
+      sessionStorage.setItem('delivery_blackout_at', String(blackoutStart));
+    }
+    const elapsedSoFar = now - blackoutStart;
+    const actualBlackoutDuration = Math.max(0, targetBlackout - elapsedSoFar);
 
     // ۱. فاز اول: بلک‌اوت ۱۰۰٪ مطلق و خاموشی کامل نمایشگر (بدون متن، بدون کادر، بدون صدا، بدون نشانگر موس)
     document.body.classList.add('is-blackout');
@@ -244,13 +284,15 @@
     cyberOverlay.classList.add('active-blackout');
 
     cyberSequenceTimeout = setTimeout(() => {
-      // ۲. فاز دوم: پایان بلک‌اوت و آغاز سکانس سینمایی و رمزگشایی پرونده محرمانه
+      sessionStorage.removeItem('delivery_blackout_at');
+
+      // ۲. فاز دوم: پایان بلک‌اوت و آغاز سکانس پیشرفته و حرفه‌ای اطلاعاتی و رمزگشایی پرونده
       document.body.classList.remove('is-blackout');
       document.body.style.cursor = '';
       cyberOverlay.classList.remove('active-blackout');
       cyberOverlay.classList.add('active-cyber');
 
-      startMatrixRain();
+      startTelemetryStream();
       playCyberIntroSound();
 
       const phaseBadge = document.getElementById('cyberPhaseBadge');
@@ -278,52 +320,52 @@
         if (progLabel && labelText) progLabel.textContent = labelText;
       }
 
-      // سناریوی ترنزیشن ۱۵ ثانیه‌ای سایبری خالص و نفوذ به شبکه امنیتی
+      // سناریوی ترنزیشن ۱۴.۵ ثانیه‌ای عملیات اطلاعاتی، رمزگشایی اسناد و اتصال به درگاه
       // T = 0.5s
       setTimeout(() => {
-        addTerminalLine('> [هشدار امنیتی] نفوذ به لایه شبکه شناسایی شد — دور زدن فایروال سرور...', false, true);
-        updateProgress(15, 'شکستن دیواره آتشین (FIREWALL BYPASS)...');
+        addTerminalLine('> [تلمتری شبکه] برقراری پیوند امن با سرور اسناد محرمانه [پروتکل TLS 1.3]...', false, false);
+        updateProgress(15, 'برقراری پیوند امن با پایگاه اسناد محرمانه...');
       }, 500);
 
       // T = 2.2s
       setTimeout(() => {
-        addTerminalLine('> استخراج بسته‌های داده و شنود فرکانس رمزنگاری‌شده TLS-4096...', true);
-        if (phaseBadge) phaseBadge.textContent = 'مرحله ۰۱ // رهگیری سیگنال و تزریق اکسپلویت';
-        updateProgress(35, 'شکستن کلیدهای رمزنگاری RSA/TLS...');
+        addTerminalLine('> [رمزنگاری] تبادل کلید امنیتی Diffie-Hellman (Curve25519) و تأیید یکپارچگی گواهی‌نامه...', true);
+        if (phaseBadge) phaseBadge.textContent = 'مرحله ۰۱ // اعتبارسنجی هویت و تبادل کلید امنیتی';
+        updateProgress(35, 'تأیید هویت کارآگاه و اعتبارسنجی امضای دیجیتال...');
       }, 2200);
 
       // T = 4.8s
       setTimeout(() => {
-        addTerminalLine('> تزریق کد نفوذ در هسته شبکه // پورت ارتباطی ۷۱۴ تسخیر گردید.', false);
-        addTerminalLine('> ارتباط ماهواره‌ای تثبیت شد — دریافت تلمتری و بسته‌های محرمانه...', true);
-        if (subTitle) subTitle.textContent = 'نفوذ به هسته پایگاه داده مرکزی // پورت ۷۱۴ فعال شد';
-        updateProgress(58, 'استخراج تلمتری شبکه و کنترل پورت‌ها...');
+        addTerminalLine('> [ضداطلاعات] احراز هویت کارآگاه پرونده با موفقیت تأیید شد // کانال امنیتی پایدار گردید.', false);
+        addTerminalLine('> [شنود و گزارشات] استخراج بسته‌های داده و سوابق طبقه‌بندی‌شده از بایگانی مرکزی...', true);
+        if (subTitle) subTitle.textContent = 'پایگاه اسناد محرمانه پرونده ۷۱۴ متصل شد // وضعیت: فعال و ایمن';
+        updateProgress(58, 'استخراج اسناد طبقه‌بندی‌شده و فایل‌های پرونده...');
       }, 4800);
 
       // T = 7.5s
       setTimeout(() => {
-        if (phaseBadge) phaseBadge.textContent = 'مرحله ۰۲ // آزادسازی دسترسی ریشه (ROOT PRIVILEGES)';
-        if (mainTitle) mainTitle.textContent = 'دسترسی سایبری تأیید شد';
-        addTerminalLine('> سطح دسترسی ادمین/ریشه (ROOT) برای ترمینال صادر گردید.', true);
-        addTerminalLine('> پروتکل رمزنگاری نظامی فعال — بایگانی داده‌ها در دسترس است.', false, true);
-        updateProgress(78, 'آزادسازی دسترسی ریشه و پایگاه داده...');
+        if (phaseBadge) phaseBadge.textContent = 'مرحله ۰۲ // صدور مجوز دسترسی ارشد (CLEARANCE LEVEL 5)';
+        if (mainTitle) mainTitle.textContent = 'دسترسی به پرونده تأیید شد';
+        addTerminalLine('> [حفاظت اسناد] مجوز دسترسی سطح ارشد به کنسول اطلاعات و مدارک جنایی صادر شد.', true);
+        addTerminalLine('> [امنیت نشست] یکپارچگی شواهد دیجیتال، گزارشات بازجویی و نوارها تأیید گردید.', false, false);
+        updateProgress(78, 'بازگشایی گزارشات بازجویی و اسناد توقیف‌شده...');
       }, 7500);
 
       // T = 10.2s
       setTimeout(() => {
-        if (phaseBadge) phaseBadge.textContent = 'مرحله ۰۳ // برقراری لینک مستقیم و درگاه ورودی';
-        addTerminalLine('> کانال امن شنود و تبادل داده با موفقیت پیوند خورد.', true);
-        addTerminalLine('> راه‌اندازی درگاه احراز هویت روی پورت اختصاصی کارآگاهان...', false);
-        updateProgress(92, 'پایدارسازی لینک مستقیم با سرور مرکزی...');
+        if (phaseBadge) phaseBadge.textContent = 'مرحله ۰۳ // برقراری پایانه احراز هویت کارآگاهان';
+        addTerminalLine('> [ارتباط مستقیم] پایانه رمزگشایی مدارک با موفقیت به مرکز فرماندهی متصل گردید.', true);
+        addTerminalLine('> [آماده‌سازی] درگاه ورود امن کارآگاهان در حال بارگذاری نهایی روی کنسول عملیات...', false);
+        updateProgress(92, 'پایدارسازی کانال امن ارتباطی با مرکز فرماندهی...');
       }, 10200);
 
       // T = 12.8s
       setTimeout(() => {
-        addTerminalLine('>>> عملیات سایبری تکمیل شد. ورود به درگاه امن در ۳... ۲... ۱...', true);
-        if (phaseBadge) phaseBadge.textContent = 'لینک امن برقرار شد // آماده انتقال';
-        if (mainTitle) mainTitle.textContent = 'انتقال به درگاه امن';
-        if (subTitle) subTitle.textContent = 'در حال بازگشایی کنسول احراز هویت...';
-        updateProgress(100, 'درگاه امن آماده دسترسی شد!');
+        addTerminalLine('>>> عملیات بارگذاری تکمیل شد. انتقال به درگاه احراز هویت در ۳... ۲... ۱...', true);
+        if (phaseBadge) phaseBadge.textContent = 'پیوند امن برقرار شد // آماده انتقال';
+        if (mainTitle) mainTitle.textContent = 'انتقال به درگاه ورود محرمانه';
+        if (subTitle) subTitle.textContent = 'در حال بازگشایی کنسول دسترسی کارآگاهان...';
+        updateProgress(100, 'درگاه امن آماده دسترسی شد.');
       }, 12800);
 
       // T = 14.5s

@@ -113,10 +113,19 @@
   </main>
 
   <script>
-    const cart = JSON.parse(localStorage.getItem('golha_cart') || '[]');
+    const ALLOWED_PRODUCT_IDS = ['1', '2', '3', '4', '5'];
+    let rawCart = JSON.parse(localStorage.getItem('golha_cart') || '[]');
+    // فیلتر کردن اقلام مجاز و محدودسازی تعداد به حداکثر ۱ عدد
+    const cart = rawCart.filter(item => ALLOWED_PRODUCT_IDS.includes(String(item.id))).map(item => ({
+      ...item,
+      quantity: 1,
+    }));
+    if (cart.length !== rawCart.length || rawCart.some(it => it.quantity > 1)) {
+      localStorage.setItem('golha_cart', JSON.stringify(cart));
+    }
 
     if (cart.length === 0) {
-      alert('سبد خرید شما خالی است!');
+      alert('سبد خرید شما خالی است یا اقلام انتخابی با عدم موجودی مواجه هستند.');
       window.location.href = '/golha/index.html';
     }
 
@@ -224,6 +233,20 @@
       submitBtn.disabled = true;
       submitBtn.textContent = 'در حال ثبت سفارش...';
 
+      if (cart.length === 0) {
+        alert('سبد خرید شما خالی است!');
+        window.location.href = '/golha/index.html';
+        return;
+      }
+
+      const hasInvalid = cart.some(it => !ALLOWED_PRODUCT_IDS.includes(String(it.id)) || it.quantity > 1);
+      if (hasInvalid) {
+        alert('متأسفانه برخی از اقلام انتخابی با عدم موجودی مواجه هستند و حداکثر تعداد مجاز ۱ عدد است.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = '🌹 ثبت نهایی سفارش و ارسال پیک';
+        return;
+      }
+
       const payload = {
         discountCode: cleanDigits(discountInput.value),
         customerName: document.getElementById('customerName').value.trim(),
@@ -242,9 +265,14 @@
 
         const data = await res.json();
         if (data.success) {
-          // پاک کردن سبد خرید و ذخیره اطلاعات سفارش در localStorage
+          // پاک کردن سبد خرید و ذخیره اطلاعات سفارش در localStorage به همراه شماره و کد تخفیف جهت تشخیص یوزر تست
           localStorage.removeItem('golha_cart');
-          localStorage.setItem('golha_last_order', JSON.stringify(data.data));
+          const lastOrder = {
+            ...data.data,
+            discountCode: payload.discountCode,
+            phone: payload.phone,
+          };
+          localStorage.setItem('golha_last_order', JSON.stringify(lastOrder));
           window.location.href = '/golha/order-status.html';
         } else {
           alert('خطا در ثبت سفارش: ' + data.message);

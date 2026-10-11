@@ -91,9 +91,50 @@
       border-color: #d5c7a3;
       color: #fff;
     }
+    .golha-toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-35px);
+      background: #201114;
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 8px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.75);
+      z-index: 99999;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      direction: rtl;
+    }
+    .golha-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .stock-badge-oos {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #f87171;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
   </style>
 </head>
 <body>
+  <!-- اعلان‌های پیام خطا و عدم موجودی انبار -->
+  <div id="golhaToast" class="golha-toast" role="alert"></div>
 
   <!-- هدر و ناوبری فروشگاه -->
   <header class="golha-navbar">
@@ -190,8 +231,35 @@
   </div>
 
   <script>
-    let cart = JSON.parse(localStorage.getItem('golha_cart') || '[]');
+    const ALLOWED_PRODUCT_IDS = ['1', '2', '3', '4', '5'];
+    let rawCart = JSON.parse(localStorage.getItem('golha_cart') || '[]');
+    let cart = rawCart.filter(item => ALLOWED_PRODUCT_IDS.includes(String(item.id))).map(item => ({
+      ...item,
+      quantity: 1,
+    }));
+    if (cart.length !== rawCart.length || rawCart.some(it => it.quantity > 1)) {
+      localStorage.setItem('golha_cart', JSON.stringify(cart));
+    }
     let rawProducts = [];
+
+    let toastTimer = null;
+    function showToast(message, isError = true) {
+      const toast = document.getElementById('golhaToast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.style.borderColor = isError ? '#ef4444' : '#22c55e';
+      toast.style.color = isError ? '#fca5a5' : '#86efac';
+      toast.style.background = isError ? '#201114' : '#0e2317';
+      toast.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
+
+    function handleOutOfStockClick(name) {
+      showToast(`متأسفانه «${name || 'این محصول'}» در انبار موجود نمی‌باشد (عدم موجودی).`, true);
+    }
 
     function cleanDigits(val) {
       return String(val || '')
@@ -322,11 +390,17 @@
 
     function increaseItemById(productId) {
       const p = rawProducts.find(x => String(x.id) === String(productId));
+      if (!ALLOWED_PRODUCT_IDS.includes(String(productId))) {
+        showToast(`متأسفانه «${p ? p.name : 'این محصول'}» در انبار موجود نمی‌باشد (عدم موجودی).`, true);
+        return;
+      }
       const existing = cart.find(item => String(item.id) === String(productId));
       if (existing) {
-        existing.quantity += 1;
+        showToast('حداکثر سقف مجاز سفارش این کالا ۱ عدد است و موجودی بیشتری در انبار وجود ندارد (عدم موجودی).', true);
+        return;
       } else if (p) {
         cart.push({ ...p, quantity: 1 });
+        showToast(`«${p.name}» به سبد خرید افزوده شد.`, false);
       }
       saveCart();
     }
@@ -424,15 +498,20 @@
         const loadingAttr = isHighPriority ? 'eager' : 'lazy';
         const fetchPriorityAttr = isHighPriority ? 'fetchpriority="high"' : 'fetchpriority="low"';
 
+        const isAllowed = ALLOWED_PRODUCT_IDS.includes(String(p.id));
+        const safeTitle = (p.name || '').replace(/'/g, "\\'");
+
         let actionHtml = '';
-        if (qty === 0) {
+        if (!isAllowed) {
+          actionHtml = `<button class="add-to-cart-btn" style="background:#26181b;border:1px solid #582b31;color:#fca5a5;" type="button" onclick="handleOutOfStockClick('${safeTitle}')"><span class="stock-badge-oos">عدم موجودی</span> افزودن به سبد</button>`;
+        } else if (qty === 0) {
           actionHtml = `<button class="add-to-cart-btn" type="button" onclick="increaseItemById('${p.id}')">+ افزودن به سبد</button>`;
         } else {
           actionHtml = `
             <div class="qty-stepper">
               <button type="button" class="qty-btn" onclick="decreaseItemById('${p.id}')">-</button>
               <span class="qty-count">${qty}</span>
-              <button type="button" class="qty-btn" onclick="increaseItemById('${p.id}')">+</button>
+              <button type="button" class="qty-btn" onclick="increaseItemById('${p.id}')" title="حداکثر سقف سفارش ۱ عدد">+</button>
             </div>
           `;
         }
