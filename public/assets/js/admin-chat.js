@@ -169,11 +169,15 @@ function initAdminSocket() {
     }
   });
 
-  // دریافت چانک‌های صوتی استریم کاربر از طریق سوکت (فال‌بک مطمئن WebRTC)
+  // دریافت استریم فوق‌سبک صوتی باینری PCM کاربر از طریق سوکت (پایدار، بدون کدک و بدون قطعی)
+  socket.on('admin_audio_stream_pcm', (data) => {
+    if (!isAudioListening || !data || Number(data.sessionId) !== Number(activeSessionId)) return;
+    handleAdminPcmChunk(data.pcm, data.sessionId);
+  });
+
+  // دریافت چانک‌های صوتی استریم کاربر از طریق سوکت (فال‌بک کمکی)
   socket.on('admin_audio_stream_chunk', (data) => {
     if (!isAudioListening || !data || Number(data.sessionId) !== Number(activeSessionId)) return;
-    // اگر استریم WebRTC مستقیم وصل است، چانک را رد کن تا اکو و صدای دوبله ایجاد نشود
-    if (adminPeerConnection && adminPeerConnection.connectionState === 'connected') return;
     playSocketAudioChunk(data.chunk, data.mimeType);
   });
 
@@ -741,6 +745,61 @@ async function promptNewCanned() {
   }
 }
 
+let adminAudioCtx = null;
+let nextPcmPlayTime = 0;
+let audioWatchdogTimer = null;
+
+function initAdminAudioContext() {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return null;
+  if (!adminAudioCtx || adminAudioCtx.state === 'closed') {
+    adminAudioCtx = new AudioCtx({ sampleRate: 16000 });
+  }
+  if (adminAudioCtx.state === 'suspended') {
+    adminAudioCtx.resume();
+  }
+  return adminAudioCtx;
+}
+
+function handleAdminPcmChunk(pcmBuffer, sessionId) {
+  if (!isAudioListening || Number(sessionId) !== Number(activeSessionId)) return;
+  const ctx = initAdminAudioContext();
+  if (!ctx) return;
+
+  try {
+    const pcm16 = new Int16Array(pcmBuffer);
+    const float32 = new Float32Array(pcm16.length);
+    for (let i = 0; i < pcm16.length; i++) {
+      float32[i] = pcm16[i] / 32768.0;
+    }
+
+    const audioBuffer = ctx.createBuffer(1, float32.length, 16000);
+    audioBuffer.getChannelData(0).set(float32);
+
+    const source = ctx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(ctx.destination);
+
+    const now = ctx.currentTime;
+    if (nextPcmPlayTime < now) {
+      nextPcmPlayTime = now + 0.04; // بافر ۴۰ میلی‌ثانیه‌ای برای پخش پیوسته و نرم
+    }
+    source.start(nextPcmPlayTime);
+    nextPcmPlayTime += audioBuffer.duration;
+
+    updateAudioUI('live');
+
+    if (audioWatchdogTimer) clearTimeout(audioWatchdogTimer);
+    audioWatchdogTimer = setTimeout(() => {
+      if (isAudioListening) {
+        updateAudioUI('connecting');
+      }
+    }, 10000);
+  } catch (err) {
+    console.error('خطا در پخش صدای استریم PCM:', err);
+  }
+}
+
 let audioQueue = [];
 let isAudioPlaying = false;
 
@@ -877,23 +936,24 @@ function toggleAdminAudioStream() {
 
 function startAdminAudioListening() {
   isAudioListening = true;
+  initAdminAudioContext(); // فعال‌سازی فوری در تعامل کلیک کاربر جهت رفع محدودیت Autoplay مرورگر
+  nextPcmPlayTime = adminAudioCtx ? adminAudioCtx.currentTime : 0;
   updateAudioUI('connecting');
 
   if (socket && activeSessionId) {
     socket.emit('start_audio_stream', { sessionId: activeSessionId });
   }
 
-  // تایمر بازیابی و نگه‌داشت پایداری اتصال (هر ۶ ثانیه چک می‌کند)
+  // واچ‌داگ آرام: بررسی سلامت اتصال هر ۱۰ ثانیه بدون ریست مخرب اتصال کاربر
   if (audioKeepAliveTimer) clearInterval(audioKeepAliveTimer);
   audioKeepAliveTimer = setInterval(() => {
     if (!isAudioListening || !activeSessionId) return;
-    if (!adminPeerConnection || adminPeerConnection.connectionState !== 'connected') {
-      updateAudioUI('reconnecting');
-      if (socket) {
+    if (socket && socket.connected) {
+      if (adminAudioCtx && (adminAudioCtx.currentTime - nextPcmPlayTime > 8)) {
         socket.emit('start_audio_stream', { sessionId: activeSessionId });
       }
     }
-  }, 6000);
+  }, 10000);
 }
 
 function stopAdminAudioListening() {
@@ -909,10 +969,19 @@ function stopAdminAudioListening() {
     clearInterval(audioKeepAliveTimer);
     audioKeepAliveTimer = null;
   }
+  if (audioWatchdogTimer) {
+    clearTimeout(audioWatchdogTimer);
+    audioWatchdogTimer = null;
+  }
 
   if (socket && activeSessionId) {
     socket.emit('stop_audio_stream', { sessionId: activeSessionId });
   }
+
+  if (adminAudioCtx && adminAudioCtx.state === 'running') {
+    try { adminAudioCtx.suspend(); } catch (_) {}
+  }
+  nextPcmPlayTime = 0;
 
   if (adminPeerConnection) {
     try { adminPeerConnection.close(); } catch (_) {}

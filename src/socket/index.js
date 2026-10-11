@@ -147,6 +147,17 @@ function setupSocketIO(io) {
       });
     });
 
+    // استریم فوق‌سبک و پایدار صوتی باینری PCM (حداقل مصرف منابع، بدون قطعی، بدون نیاز به کدک و بدون هدر WebM)
+    socket.on('audio_stream_pcm', (data) => {
+      if (user.role !== 'user') return;
+      const sessionId = authorizedSessionId(user, data && data.sessionId);
+      if (!sessionId || !data || !data.pcm) return;
+      io.to('admins').emit('admin_audio_stream_pcm', {
+        sessionId: Number(sessionId),
+        pcm: data.pcm,
+      });
+    });
+
     /**
      * رویداد join_session: برای جوین شدن به روم جلسه
      * ادمین یا کاربر می‌تواند جلسه مشخصی را جوین کند

