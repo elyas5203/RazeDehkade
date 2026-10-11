@@ -10,7 +10,7 @@
   --text-light: #f8f9fa;
   --text-muted: #a0aec0;
   --border-color: #2d3748;
-  --font-main: 'Vazirmatn', sans-serif;
+  --font-main: 'Vazirmatn', 'Vazir', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 * {
@@ -19,10 +19,13 @@
   padding: 0;
 }
 
+body, button, input, textarea, select, .product-title, .product-price, .brand-logo, h1, h2, h3, h4, h5, h6, p, span, a, label {
+  font-family: var(--font-main) !important;
+}
+
 body {
   background-color: var(--bg-primary);
   color: var(--text-light);
-  font-family: var(--font-main);
   direction: rtl;
   min-height: 100vh;
   line-height: 1.6;
