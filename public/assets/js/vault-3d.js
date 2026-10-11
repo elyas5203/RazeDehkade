@@ -267,7 +267,7 @@
       playVaultSlowHandleTurnSound();
     }, 100);
 
-    // ۳. باز شدن سه‌بعدی کل درب گاوصندوق پس از تکمیل چرخش آرام دستگیره
+    // ۳. باز شدن سه‌بعدی و سنگین درب زرهی گاوصندوق به صورت آرام، باوقار و پیوسته (۳.۸ ثانیه) پس از تکمیل چرخش دستگیره
     setTimeout(() => {
       if (card) {
         card.classList.add('is-unlocked');
@@ -276,16 +276,16 @@
         qMark.textContent = '✓';
       }
       playVaultDoorOpenAndRevealSound();
-    }, 3650);
+    }, 3750);
 
-    // ۴. نمایش پوستر / گالری چندعکسی دعوت‌نامه «موزه اسرارآمیز»
+    // ۴. مکث باوقار برای تماشای گاوصندوق بازشده و سپس نمایش پوستر / گالری اسناد محرمانه دعوت‌نامه
     setTimeout(() => {
       isUnlockAnimationRunning = false;
       if (card) {
         card.classList.remove('is-unlocking-wheel');
       }
       openVaultRewardModal(matchedFlag, 0);
-    }, 5050);
+    }, 9550);
   }
 
   function submitVaultPassword(event) {

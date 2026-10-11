@@ -128,7 +128,7 @@
   z-index: 2;
   opacity: 0.2;
   transform: scale(0.9);
-  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+  transition: transform 3.8s cubic-bezier(0.25, 0.1, 0.25, 1), opacity 2.5s ease;
 }
 
 .vault-dossier-folder {
@@ -181,8 +181,8 @@
   transform-style: preserve-3d;
   transform: rotateY(0deg);
   transition:
-    transform 1.45s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 1.45s ease;
+    transform 3.8s cubic-bezier(0.25, 0.1, 0.25, 1),
+    box-shadow 3.8s ease;
   z-index: 3;
   display: flex;
   align-items: center;
@@ -193,7 +193,7 @@
 .quad-vault-card.is-unlocked .vault-3d-door {
   transform: rotateY(-106deg);
   box-shadow:
-    22px 14px 42px rgba(0, 0, 0, 0.98),
+    28px 16px 48px rgba(0, 0, 0, 0.98),
     inset 0 1px 2px rgba(255, 255, 255, 0.15);
 }
 
