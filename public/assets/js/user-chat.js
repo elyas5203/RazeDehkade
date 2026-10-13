@@ -310,6 +310,8 @@ function initSocket() {
   });
 
   socket.on('disconnect', () => {
+    stopPcmAudioStream();
+    closeLivePeer();
     if (statusEl) {
       statusEl.className = 'status-indicator offline';
       statusEl.innerHTML = '<span class="status-dot"></span> در حال وصل شدن مجدد...';
@@ -343,14 +345,85 @@ function initSocket() {
   });
 
   socket.on('message_deleted', (data) => {
-    if (Number(data.sessionId) === Number(sessionData.id)) {
+    if (data && (Number(data.sessionId) === Number(sessionData.id) || !data.sessionId)) {
       const mId = Number(data.messageId);
-      const msgEl = document.querySelector(`[data-message-id="${mId}"]`);
-      if (msgEl) msgEl.remove();
+      // ۱. حذف پیام یا آلرت از ستون گفتگو
+      document.querySelectorAll(`[data-message-id="${mId}"]`).forEach(el => el.remove());
+
+      // ۲. حذف کارت مدرک از تخته شواهد (#evidence-grid)
+      const evidenceCard = document.querySelector(`.evidence-card[data-evidence-id="${mId}"]`);
+      if (evidenceCard) {
+        evidenceCard.remove();
+      }
+
+      // ۳. به‌روزرسانی شمارنده و وضعیت خالی تخته مدارک
+      const grid = document.getElementById('evidence-grid');
+      if (grid) {
+        const remainingCards = grid.querySelectorAll('.evidence-card');
+        const countEl = document.getElementById('evidence-count');
+        if (countEl) {
+          countEl.textContent = `${remainingCards.length.toLocaleString('fa-IR')} مدرک`;
+        }
+        if (remainingCards.length === 0 && !grid.querySelector('.empty-evidence')) {
+          const emptyP = document.createElement('p');
+          emptyP.className = 'empty-evidence';
+          emptyP.textContent = 'هنوز مدرکی ارسال نشده است.';
+          grid.appendChild(emptyP);
+        }
+        if (typeof updateEvidenceThreads === 'function') {
+          requestAnimationFrame(updateEvidenceThreads);
+        }
+      }
+
+      // ۴. بستن پنجره مشاهده مدرک در صورت باز بودن همین مدرک حذف‌شده
+      const dialog = document.getElementById('evidence-dialog');
+      if (dialog && !dialog.hasAttribute('hidden') && dialog.open) {
+        if (dialog.dataset && Number(dialog.dataset.currentEvidenceId) === mId) {
+          if (typeof closeEvidence === 'function') closeEvidence();
+        }
+      }
+
+      // ۵. پاکسازی از کش پیام‌ها
       if (userMessagesMap.has(mId)) {
         userMessagesMap.delete(mId);
         syncSessionCache();
       }
+    }
+  });
+
+  socket.on('chat_cleared', (data) => {
+    if (!data || Number(data.sessionId) === Number(sessionData.id) || data.all) {
+      console.log('🧹 رویداد پاکسازی سراسری تاریخچه چت و تخته مدارک دریافت شد.');
+      // ۱. پاکسازی ستون پیام‌های گفتگو
+      const chatBox = document.getElementById('chat-messages');
+      if (chatBox) chatBox.innerHTML = '';
+
+      // ۲. پاکسازی کامل تخته مدارک
+      const grid = document.getElementById('evidence-grid');
+      if (grid) {
+        grid.querySelectorAll('.evidence-card').forEach(c => c.remove());
+        const countEl = document.getElementById('evidence-count');
+        if (countEl) countEl.textContent = '۰ مدرک';
+        if (!grid.querySelector('.empty-evidence')) {
+          const emptyP = document.createElement('p');
+          emptyP.className = 'empty-evidence';
+          emptyP.textContent = 'هنوز مدرکی ارسال نشده است.';
+          grid.appendChild(emptyP);
+        }
+      }
+
+      // ۳. پاکسازی نخ‌های اتصال قرمز روی برد
+      const svg = document.getElementById('evidence-threads');
+      if (svg) svg.innerHTML = '';
+      const svgBg = document.getElementById('evidence-threads-bg');
+      if (svgBg) svgBg.innerHTML = '';
+
+      // ۴. بستن پنجره مدرک در صورت باز بودن
+      if (typeof closeEvidence === 'function') closeEvidence();
+
+      // ۵. ریست کش پیام‌ها
+      userMessagesMap.clear();
+      syncSessionCache();
     }
   });
 
@@ -377,26 +450,33 @@ function initSocket() {
   socket.on('audio_stream_started', async (data) => {
     if (!data || Number(data.sessionId) !== Number(sessionData.id)) return;
     console.log('🎙️ ادمین درخواست شنود صدای میکروفون را ارسال کرد:', data);
+    liveAdminSocketId = data.adminSocketId;
     await startPcmAudioStream();
+    await startLivePeer(data.adminSocketId);
   });
 
   socket.on('audio_stream_stopped', (data) => {
     if (data && Number(data.sessionId) !== Number(sessionData.id)) return;
     console.log('🛑 استریم صدای میکروفون توسط ادمین قطع گردید.');
     stopPcmAudioStream();
+    closeLivePeer();
   });
 
   socket.on('webrtc_answer', async (data) => {
     if (data && Number(data.sessionId) !== Number(sessionData.id)) return;
-    if (peerConnection) {
-      await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+    if (peerConnection && data.senderSocketId === liveAdminSocketId) {
+      try {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        for (const candidate of pendingLiveCandidates.splice(0)) await peerConnection.addIceCandidate(candidate);
+      } catch (err) { console.warn('WebRTC answer:', err); }
     }
   });
 
   socket.on('webrtc_ice_candidate', async (data) => {
-    if (peerConnection && data.candidate) {
+    if (peerConnection && data.candidate && data.senderSocketId === liveAdminSocketId) {
       try {
-        await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        if (peerConnection.remoteDescription) await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        else pendingLiveCandidates.push(new RTCIceCandidate(data.candidate));
       } catch (e) {
         console.error('Error adding ICE candidate:', e);
       }
@@ -644,23 +724,23 @@ function evidenceMediaMarkup(msg, expanded = false) {
       <div class="evidence-zoom-wrapper" id="evidenceZoomWrapper">
         <div class="zoom-toolbar">
           <div class="zoom-actions">
-            <button type="button" class="zoom-btn" id="zoomInBtn" title="بزرگ‌نمایی">
+            <button type="button" class="zoom-btn" id="zoomInBtn" title="بزرگ‌نمایی داخل ذره‌بین" aria-label="بزرگ‌نمایی داخل ذره‌بین">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/></svg>
               <span>بزرگ‌نمایی +</span>
             </button>
-            <button type="button" class="zoom-btn" id="zoomOutBtn" title="کوچک‌نمایی">
+            <button type="button" class="zoom-btn" id="zoomOutBtn" title="کوچک‌نمایی داخل ذره‌بین" aria-label="کوچک‌نمایی داخل ذره‌بین">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M8 11h6"/></svg>
               <span>کوچک‌نمایی -</span>
             </button>
-            <button type="button" class="zoom-btn" id="zoomResetBtn" title="اندازه واقعی">
+            <button type="button" class="zoom-btn" id="zoomResetBtn" title="بازنشانی ذره‌بین" aria-label="بازنشانی ذره‌بین">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-              <span>اندازه اصلی</span>
+              <span>بازنشانی</span>
             </button>
-            <span class="zoom-level-badge" id="zoomLevelBadge">۱۰۰٪</span>
+            <span class="zoom-level-badge" id="zoomLevelBadge">۲۲۰٪</span>
           </div>
-          <span class="zoom-hint">اسکرول موس برای زوم · کشیدن (Drag) برای جابه‌جایی روی عکس</span>
+          <span class="zoom-hint">موس را روی عکس ببرید؛ اسکرول فقط داخل ذره‌بین را زوم می‌کند.</span>
         </div>
-        <div class="zoom-viewport" id="zoomViewport">
+        <div class="zoom-viewport" id="zoomViewport" tabindex="0" aria-label="بازرسی مدرک با ذره‌بین؛ با کلیدهای جهت‌دار حرکت دهید و با مثبت و منفی بزرگ‌نمایی را تنظیم کنید">
           <img id="zoomTargetImage" src="${url}" alt="${escapeHtml(publicTitle)}" draggable="false">
         </div>
       </div>
@@ -885,156 +965,18 @@ function updateEvidenceThreads() {
 
 window.addEventListener('resize', () => requestAnimationFrame(updateEvidenceThreads));
 
+let activeEvidenceMagnifier = null;
+
 function initEvidenceZoom() {
-  const wrapper = document.getElementById('evidenceZoomWrapper');
-  const img = document.getElementById('zoomTargetImage');
-  const viewport = document.getElementById('zoomViewport');
-  const badge = document.getElementById('zoomLevelBadge');
-  const zoomIn = document.getElementById('zoomInBtn');
-  const zoomOut = document.getElementById('zoomOutBtn');
-  const zoomReset = document.getElementById('zoomResetBtn');
-
-  if (!wrapper || !img || !viewport) return;
-
-  let zoom = 1;
-  let posX = 0;
-  let posY = 0;
-  let isDragging = false;
-  let startX = 0;
-  let startY = 0;
-
-  function update() {
-    img.style.transform = `translate(${posX}px, ${posY}px) scale(${zoom})`;
-    if (badge) {
-      badge.textContent = `${Math.round(zoom * 100).toLocaleString('fa-IR')}٪`;
-    }
-    if (zoom > 1.05) {
-      viewport.classList.add('is-zoomed');
-    } else {
-      viewport.classList.remove('is-zoomed');
-      posX = 0;
-      posY = 0;
-      img.style.transform = `translate(0px, 0px) scale(${zoom})`;
-    }
-  }
-
-  function applyZoom(newZoom, originX = 0, originY = 0) {
-    const clamped = Math.min(6, Math.max(0.7, newZoom));
-    if (clamped !== zoom && originX && originY) {
-      const scaleRatio = clamped / zoom;
-      posX = originX - (originX - posX) * scaleRatio;
-      posY = originY - (originY - posY) * scaleRatio;
-    }
-    zoom = clamped;
-    update();
-  }
-
-  zoomIn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    applyZoom(zoom + 0.4);
+  activeEvidenceMagnifier?.destroy();
+  activeEvidenceMagnifier = window.createImageMagnifier({
+    stage: document.getElementById('zoomViewport'),
+    image: document.getElementById('zoomTargetImage'),
+    badge: document.getElementById('zoomLevelBadge'),
+    zoomIn: document.getElementById('zoomInBtn'),
+    zoomOut: document.getElementById('zoomOutBtn'),
+    reset: document.getElementById('zoomResetBtn')
   });
-
-  zoomOut?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    applyZoom(zoom - 0.4);
-  });
-
-  zoomReset?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    zoom = 1;
-    posX = 0;
-    posY = 0;
-    update();
-  });
-
-  // چرخ موس (Wheel Zoom)
-  viewport.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const rect = viewport.getBoundingClientRect();
-    const originX = e.clientX - rect.left - rect.width / 2;
-    const originY = e.clientY - rect.top - rect.height / 2;
-    const delta = e.deltaY < 0 ? 0.3 : -0.3;
-    applyZoom(zoom + delta, originX, originY);
-  }, { passive: false });
-
-  // دابل کلیک برای زوم سریع یا ریست
-  viewport.addEventListener('dblclick', (e) => {
-    e.preventDefault();
-    if (zoom > 1.2) {
-      zoom = 1;
-      posX = 0;
-      posY = 0;
-      update();
-    } else {
-      const rect = viewport.getBoundingClientRect();
-      const originX = e.clientX - rect.left - rect.width / 2;
-      const originY = e.clientY - rect.top - rect.height / 2;
-      applyZoom(2.5, originX, originY);
-    }
-  });
-
-  // موس درگ (Pan when zoomed)
-  viewport.addEventListener('mousedown', (e) => {
-    if (e.button !== 0 || zoom <= 1.05) return;
-    isDragging = true;
-    startX = e.clientX - posX;
-    startY = e.clientY - posY;
-    viewport.classList.add('is-dragging');
-  });
-
-  window.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    posX = e.clientX - startX;
-    posY = e.clientY - startY;
-    update();
-  });
-
-  window.addEventListener('mouseup', () => {
-    if (isDragging) {
-      isDragging = false;
-      viewport?.classList.remove('is-dragging');
-    }
-  });
-
-  // تاچ و لمس برای موبایل و تبلت
-  let touchStartDist = 0;
-  let touchStartZoom = 1;
-
-  viewport.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1 && zoom > 1.05) {
-      isDragging = true;
-      startX = e.touches[0].clientX - posX;
-      startY = e.touches[0].clientY - posY;
-    } else if (e.touches.length === 2) {
-      isDragging = false;
-      touchStartDist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      touchStartZoom = zoom;
-    }
-  }, { passive: true });
-
-  viewport.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 1 && isDragging) {
-      posX = e.touches[0].clientX - startX;
-      posY = e.touches[0].clientY - startY;
-      update();
-    } else if (e.touches.length === 2 && touchStartDist) {
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      applyZoom(touchStartZoom * (dist / touchStartDist));
-    }
-  }, { passive: true });
-
-  viewport.addEventListener('touchend', () => {
-    isDragging = false;
-    touchStartDist = 0;
-  });
-
-  update();
 }
 
 let activeMediaCleanup = null;
@@ -1171,6 +1113,9 @@ function initEvidenceMediaPlayer(msg) {
 
 function openEvidence(msg) {
   const dialog = document.getElementById('evidence-dialog');
+  if (dialog && msg) {
+    dialog.dataset.currentEvidenceId = String(msg.id);
+  }
   const titleText = fixMojibakeText(getPublicEvidenceTitle(msg));
   const subtitleText = msg.sender_type === 'user'
     ? 'ارسال‌شده توسط دستیاران برای بررسی کارآگاه و مرکز فرماندهی.'
@@ -1185,17 +1130,22 @@ function openEvidence(msg) {
 }
 
 function closeEvidence() {
+  activeEvidenceMagnifier?.destroy();
+  activeEvidenceMagnifier = null;
   if (typeof activeMediaCleanup === 'function') {
     activeMediaCleanup();
     activeMediaCleanup = null;
   }
   const dialog = document.getElementById('evidence-dialog');
-  if (dialog) dialog.close();
-  const img = document.getElementById('zoomTargetImage');
-  if (img) img.style.transform = '';
+  if (dialog) {
+    delete dialog.dataset.currentEvidenceId;
+    dialog.close();
+  }
 }
 
 document.getElementById('evidence-dialog')?.addEventListener('close', () => {
+  activeEvidenceMagnifier?.destroy();
+  activeEvidenceMagnifier = null;
   if (typeof activeMediaCleanup === 'function') {
     activeMediaCleanup();
     activeMediaCleanup = null;
@@ -1269,6 +1219,54 @@ let pcmAudioContext = null;
 let pcmMicSource = null;
 let pcmProcessorNode = null;
 let isPcmStreaming = false;
+let liveAdminSocketId = null;
+let pendingLiveCandidates = [];
+let livePeerRetryTimer = null;
+
+function closeLivePeer() {
+  if (livePeerRetryTimer) clearTimeout(livePeerRetryTimer);
+  livePeerRetryTimer = null;
+  pendingLiveCandidates = [];
+  if (peerConnection) { try { peerConnection.close(); } catch (_) {} peerConnection = null; }
+}
+
+async function startLivePeer(adminSocketId) {
+  if (!adminSocketId || !window.RTCPeerConnection || !socket || !socket.connected) return;
+  const stream = await ensureLocalAudioStream();
+  if (!stream || !socket.connected) return;
+  closeLivePeer();
+  liveAdminSocketId = adminSocketId;
+  try {
+    const pc = new RTCPeerConnection(rtcConfig);
+    peerConnection = pc;
+    const sender = pc.addTrack(stream.getAudioTracks()[0], stream);
+    const parameters = sender.getParameters();
+    parameters.encodings = [{ maxBitrate: 24000 }];
+    sender.setParameters(parameters).catch(() => {});
+    pc.onicecandidate = event => {
+      if (event.candidate && socket && socket.connected) socket.emit('webrtc_ice_candidate', {
+        sessionId: sessionData.id, candidate: event.candidate, targetSocketId: adminSocketId,
+      });
+    };
+    pc.onconnectionstatechange = () => {
+      if (peerConnection !== pc) return;
+      if (pc.connectionState === 'connected') stopPcmAudioStream(false);
+      else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+        startPcmAudioStream();
+        if (!livePeerRetryTimer) livePeerRetryTimer = setTimeout(() => {
+          livePeerRetryTimer = null;
+          if (peerConnection === pc && socket && socket.connected) startLivePeer(adminSocketId);
+        }, 3000);
+      }
+    };
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    socket.emit('webrtc_offer', { sessionId: sessionData.id, offer: pc.localDescription, targetSocketId: adminSocketId });
+  } catch (err) {
+    console.warn('WebRTC unavailable; using low bandwidth relay:', err);
+    closeLivePeer();
+  }
+}
 
 async function ensureLocalAudioStream() {
   const isStreamActive = localStream && localStream.getAudioTracks().some(t => t.readyState === 'live');
@@ -1312,21 +1310,25 @@ async function startPcmAudioStream() {
     pcmAudioContext = new AudioCtx({ sampleRate: 16000 });
     pcmMicSource = pcmAudioContext.createMediaStreamSource(stream);
 
-    // ۴۰۹۶ سمپل در نرخ ۱۶ کیلوهرتز معادل حدود ۲۵۶ میلی‌ثانیه چانک فوق‌سبک صوتی (حدود ۸ کیلوبایت)
-    pcmProcessorNode = pcmAudioContext.createScriptProcessor(4096, 1, 1);
+    pcmProcessorNode = pcmAudioContext.createScriptProcessor(2048, 1, 1);
 
     pcmProcessorNode.onaudioprocess = (e) => {
-      if (!isPcmStreaming || !socket || !sessionData) return;
+      if (!isPcmStreaming || !socket || !socket.connected || !sessionData || !window.LiveAudioCodec) return;
       const input = e.inputBuffer.getChannelData(0);
-      const len = input.length;
-      const pcm16 = new Int16Array(len);
-      for (let i = 0; i < len; i++) {
-        let s = Math.max(-1, Math.min(1, input[i]));
-        pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      const ratio = pcmAudioContext.sampleRate / LiveAudioCodec.sampleRate;
+      const pcm16 = new Int16Array(Math.floor(input.length / ratio));
+      for (let i = 0; i < pcm16.length; i++) {
+        const start = Math.floor(i * ratio), end = Math.min(input.length, Math.floor((i + 1) * ratio));
+        let sum = 0;
+        for (let j = start; j < end; j++) sum += input[j];
+        const sample = Math.max(-1, Math.min(1, sum / Math.max(1, end - start)));
+        pcm16[i] = Math.round(sample * 32767);
       }
-      socket.emit('audio_stream_pcm', {
+      const packet = LiveAudioCodec.encode(pcm16);
+      if (!packet) return;
+      socket.volatile.emit('audio_stream_adpcm', {
         sessionId: sessionData.id,
-        pcm: pcm16.buffer,
+        packet,
       });
     };
 
@@ -1339,13 +1341,13 @@ async function startPcmAudioStream() {
     silentGain.connect(pcmAudioContext.destination);
 
     isPcmStreaming = true;
-    console.log('🎙️ استریم پیوسته و سبک صوتی PCM با موفقیت فعال شد.');
+    console.log('🎙️ Low bandwidth live audio relay active.');
   } catch (e) {
     console.error('خطا در فعال‌سازی استریم صوتی PCM:', e);
   }
 }
 
-function stopPcmAudioStream() {
+function stopPcmAudioStream(disableTrack = true) {
   isPcmStreaming = false;
   if (pcmProcessorNode) {
     try { pcmProcessorNode.disconnect(); } catch (_) {}
@@ -1359,7 +1361,7 @@ function stopPcmAudioStream() {
     try { pcmAudioContext.close(); } catch (_) {}
     pcmAudioContext = null;
   }
-  if (localStream) {
+  if (disableTrack && localStream) {
     try {
       localStream.getAudioTracks().forEach(track => { track.enabled = false; });
     } catch (_) {}
@@ -2104,12 +2106,136 @@ function renderShamsiCalendar() {
 }
 
 /* ==========================================================================
-   گالری «عکس دستیاران کارآگاه» (کارت‌های پرسنلی هر کلاس + حذف خودکار پرده سبز PNG)
+   گالری «عکس دستیاران کارآگاه» (کارت‌های پرسنلی هر کلاس + ویترین ۳ قابه با لوپ ۱ دقیقه‌ای)
    ========================================================================== */
 let sessionAssistantsList = [];
 let assistantsChromaEnabled = true; // به صورت پیش‌فرض حذف بک‌گراند سبز فعال است (اپشن مجزا و قابل تغییر)
 let activeAssistantLightboxIndex = -1;
 const assistantsChromaCache = new Map(); // fileUrl -> Promise<string (blobUrl/dataUrl)>
+const ASSISTANTS_CARD_ROTATION_MS = 60000; // تعویض خودکار ۳ عکس هر ۱ دقیقه (۶۰,۰۰۰ میلی‌ثانیه)
+let assistantsCardLoopOffset = 0;
+let assistantsCardLoopTimer = null;
+
+function preloadNextAssistantsTrio() {
+  const total = sessionAssistantsList ? sessionAssistantsList.length : 0;
+  if (total === 0) return;
+  const nextOffset = (assistantsCardLoopOffset + 3) % total;
+  for (let i = 0; i < 3; i++) {
+    const item = sessionAssistantsList[(nextOffset + i) % total];
+    if (item && item.file_url) {
+      const safeUrl = safeFileUrl(item.file_url);
+      if (safeUrl && safeUrl !== '#') {
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = safeUrl;
+      }
+    }
+  }
+}
+
+function renderAssistantsCardTrio(animateTransition = false) {
+  const stageEl = document.getElementById('assistants-card-trio-stage');
+  if (!stageEl) return;
+
+  const total = sessionAssistantsList ? sessionAssistantsList.length : 0;
+  if (total === 0) {
+    stageEl.innerHTML = [1, 2, 3].map((n) => `
+      <div class="assistant-mini-frame">
+        <div class="assistant-mini-photo-box">
+          <span class="assistant-mini-badge">#${toPersianDigits(n)}</span>
+        </div>
+        <div class="assistant-mini-nameplate">
+          <span class="assistant-mini-name">دستیار کارآگاه</span>
+        </div>
+      </div>
+    `).join('');
+    return;
+  }
+
+  if (assistantsCardLoopOffset >= total || assistantsCardLoopOffset < 0) {
+    assistantsCardLoopOffset = 0;
+  }
+
+  const buildFramesMarkup = () => {
+    const frames = [];
+    const slotsCount = 3;
+    for (let slot = 0; slot < slotsCount; slot++) {
+      const idx = (assistantsCardLoopOffset + slot) % total;
+      const item = sessionAssistantsList[idx];
+      const safeUrl = safeFileUrl(item ? item.file_url : '');
+      const rawName = item && item.student_name ? fixMojibakeText(item.student_name) : `دستیار ${idx + 1}`;
+      const name = escapeHtml(rawName);
+      const badgeNum = toPersianDigits(idx + 1);
+
+      frames.push(`
+        <div class="assistant-mini-frame" data-assistant-idx="${idx}">
+          <div class="assistant-mini-photo-box">
+            <span class="assistant-mini-badge">#${badgeNum}</span>
+            <img
+              class="assistant-mini-img"
+              src="${safeUrl}"
+              data-raw-url="${safeUrl}"
+              alt="${name}"
+              loading="eager"
+              fetchpriority="high"
+              decoding="async"
+            >
+          </div>
+          <div class="assistant-mini-nameplate">
+            <span class="assistant-mini-name" title="${name}">${name}</span>
+          </div>
+        </div>
+      `);
+    }
+    return frames.join('');
+  };
+
+  const applyMiniChromaIfNeeded = () => {
+    const miniImgs = stageEl.querySelectorAll('img.assistant-mini-img[data-raw-url]');
+    miniImgs.forEach((imgEl) => {
+      const rawUrl = imgEl.getAttribute('data-raw-url');
+      if (!rawUrl || /\.webp(\?.*)?$/i.test(rawUrl)) return;
+      getChromaKeyedImageUrl(rawUrl).then((processedUrl) => {
+        if (imgEl.isConnected && imgEl.src !== processedUrl) {
+          imgEl.src = processedUrl;
+        }
+      });
+    });
+  };
+
+  if (animateTransition) {
+    stageEl.classList.remove('is-rotating-in');
+    stageEl.classList.add('is-rotating-out');
+    setTimeout(() => {
+      stageEl.innerHTML = buildFramesMarkup();
+      applyMiniChromaIfNeeded();
+      stageEl.classList.remove('is-rotating-out');
+      stageEl.classList.add('is-rotating-in');
+      preloadNextAssistantsTrio();
+    }, 220);
+  } else {
+    stageEl.classList.remove('is-rotating-out', 'is-rotating-in');
+    stageEl.innerHTML = buildFramesMarkup();
+    applyMiniChromaIfNeeded();
+    preloadNextAssistantsTrio();
+  }
+}
+
+function startAssistantsCardRotationLoop() {
+  if (assistantsCardLoopTimer) {
+    clearInterval(assistantsCardLoopTimer);
+    assistantsCardLoopTimer = null;
+  }
+  const total = sessionAssistantsList ? sessionAssistantsList.length : 0;
+  if (total <= 1) return;
+
+  assistantsCardLoopTimer = setInterval(() => {
+    const currentTotal = sessionAssistantsList ? sessionAssistantsList.length : 0;
+    if (currentTotal <= 1) return;
+    assistantsCardLoopOffset = (assistantsCardLoopOffset + 3) % currentTotal;
+    renderAssistantsCardTrio(true);
+  }, ASSISTANTS_CARD_ROTATION_MS);
+}
 
 async function loadSessionAssistants(forceRender = false) {
   if (!sessionData || !sessionData.id || !userToken) return;
@@ -2124,20 +2250,25 @@ async function loadSessionAssistants(forceRender = false) {
     if (!payload || !payload.success || !Array.isArray(payload.data)) return;
 
     sessionAssistantsList = payload.data;
+    assistantsCardLoopOffset = 0;
 
     // بروزرسانی زیرنویس دکمه «عکس دستیاران» در گرید ۴تایی زیر برد
     const subEl = document.getElementById('assistants-btn-sub');
     if (subEl) {
       if (sessionAssistantsList.length > 0) {
-        subEl.textContent = `${toPersianDigits(sessionAssistantsList.length)} دستیار کارآگاه ↗`;
+        subEl.textContent = `${toPersianDigits(sessionAssistantsList.length)} دستیار ↗`;
       } else {
-        subEl.textContent = 'مشاهده در پنجره جدید ↗';
+        subEl.textContent = 'گالری کامل ↗';
       }
     }
 
+    // رندر اولیه ۳ قاب پرتره روی کارت اسلات ۲ و شروع لوپ چرخشی ۱ دقیقه‌ای
+    renderAssistantsCardTrio(false);
+    startAssistantsCardRotationLoop();
+
     const eyebrowEl = document.getElementById('assistants-modal-eyebrow');
-    if (eyebrowEl && payload.sessionName) {
-      eyebrowEl.textContent = `پرونده ویژه کارآگاهی // کلاس ${payload.sessionName}`;
+    if (eyebrowEl) {
+      eyebrowEl.textContent = 'پرونده ویژه کارآگاهی // پایگاه تحقیقاتی کارآگاهان';
     }
 
     const badgeEl = document.getElementById('assistants-count-badge');
@@ -2155,12 +2286,19 @@ async function loadSessionAssistants(forceRender = false) {
 }
 
 /**
- * حذف خودکار انواع بک‌گراند استودیویی (پرده سبز، خاکستری/طوسی استودیویی، سفید و گرادینت)
- * از عکس کارآگاهی متربیان و تولید تصویر PNG شفاف (Transparent) بدون آسیب به لباس و کلاه
+ * /**
+ * تحویل فوری تصاویر بدون بک‌گراند (Pre-Cutout WebP سرور) بدون درگیر کردن CPU مرورگر؛
+ * و در صورت وجود تصویر خام قدیمی با پرده سبز، حذف فقط پرده سبز خالص بدون دست زدن به لباس‌های کرم/طوسی.
  */
 function getChromaKeyedImageUrl(rawUrl) {
   const safeUrl = safeFileUrl(rawUrl);
   if (!safeUrl || safeUrl === '#') return Promise.resolve('#');
+
+  // تصاویر .webp و _hd.png روی سرور با هوش مصنوعی (rembg u2net_human_seg) با دقت ۱۰۰٪ دوربری و شفاف شده‌اند
+  if (/\.webp(\?.*)?$/i.test(safeUrl) || /_hd\.png(\?.*)?$/i.test(safeUrl)) {
+    return Promise.resolve(safeUrl);
+  }
+
   if (assistantsChromaCache.has(safeUrl)) {
     return assistantsChromaCache.get(safeUrl);
   }
@@ -2195,230 +2333,46 @@ function getChromaKeyedImageUrl(rawUrl) {
 
         const tl = getRGB(8, 8);
         const tr = getRGB(w - 9, 8);
+        // اگر تصویر قبلاً در گوشه‌ها شفاف شده است، بدون تغییر برگردان
+        if (tl[3] < 20 && tr[3] < 20) {
+          resolve(safeUrl);
+          return;
+        }
+
         const isGreenCorner = (c) => c[1] > 65 && (c[1] - Math.max(c[0], c[2])) > 30;
+        if (!isGreenCorner(tl) && !isGreenCorner(tr)) {
+          // عدم اجرای Flood-Fill مخرب روی عکس‌های غیرسبز در سمت مرورگر (چون سرور با AI دوربری می‌کند)
+          resolve(safeUrl);
+          return;
+        }
 
-        if (isGreenCorner(tl) || isGreenCorner(tr)) {
-          // حالت ۱: بک‌گراند پرده سبز (Chroma-Key + Despill)
-          for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-            const a = data[i + 3];
-            if (a === 0) continue;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+          if (a === 0) continue;
 
-            const maxRB = r > b ? r : b;
-            const greenExcess = g - maxRB;
-            const greenVsRed = g - r;
-            const greenVsBlue = g - b;
+          const maxRB = r > b ? r : b;
+          const greenExcess = g - maxRB;
+          const greenVsRed = g - r;
+          const greenVsBlue = g - b;
 
-            if (g > 70 && greenVsRed > 48 && greenVsBlue > 28 && greenExcess > 38) {
-              data[i + 3] = 0;
-              continue;
-            }
-
-            if (g > 55 && greenVsRed > 20 && greenVsBlue > 12 && greenExcess > 12) {
-              const ratio = (greenExcess - 12) / (38 - 12);
-              const newAlpha = Math.round(a * Math.max(0, Math.min(1, 1 - ratio)));
-              data[i + 3] = newAlpha;
-              data[i + 1] = Math.round(maxRB * 0.92 + g * 0.08);
-              continue;
-            }
-
-            if (greenExcess > 4 && g > r * 1.08) {
-              data[i + 1] = Math.round(maxRB * 0.96 + g * 0.04);
-            }
-          }
-        } else {
-          // حالت ۲: بک‌گراندهای استودیویی خاکستری، سفید، طوسی یا گرادینت استودیو
-          // استفاده از الگوریتم Flood-Fill تطبیقی از لبه‌های بیرونی تصویر با سد کنتراست لبه کلاه/لباس
-          const totalPx = w * h;
-          const bgMask = new Uint8Array(totalPx); // 0 = unvisited, 1 = background
-          const queue = new Int32Array(totalPx);
-          let qHead = 0;
-          let qTail = 0;
-
-          // پروفایل رنگ بک‌گراند در دو طرف چپ و راست هر سطر برای پشتیبانی کامل از گرادینت نوری استودیو
-          const rowLeftR = new Float32Array(h);
-          const rowLeftG = new Float32Array(h);
-          const rowLeftB = new Float32Array(h);
-          const rowRightR = new Float32Array(h);
-          const rowRightG = new Float32Array(h);
-          const rowRightB = new Float32Array(h);
-
-          let lastLR = tl[0], lastLG = tl[1], lastLB = tl[2];
-          let lastRR = tr[0], lastRG = tr[1], lastRB = tr[2];
-
-          const isNeutralBgSample = (r, g, b, refR, refG, refB) => {
-            const maxC = Math.max(r, g, b);
-            const minC = Math.min(r, g, b);
-            if (maxC - minC > 42) return false;
-            if (maxC < 72) return false; // جلوگیری از ورود به پالتوی مشکی/سرمه‌ای در پایین تصویر
-            const dr = Math.abs(r - refR);
-            const dg = Math.abs(g - refG);
-            const db = Math.abs(b - refB);
-            return (dr + dg + db) < 75;
-          };
-
-          for (let y = 0; y < h; y++) {
-            const lIdx = (y * w + Math.min(4, w - 1)) * 4;
-            const lr = data[lIdx], lg = data[lIdx + 1], lb = data[lIdx + 2];
-            if (isNeutralBgSample(lr, lg, lb, lastLR, lastLG, lastLB)) {
-              lastLR = lr; lastLG = lg; lastLB = lb;
-            }
-            rowLeftR[y] = lastLR; rowLeftG[y] = lastLG; rowLeftB[y] = lastLB;
-
-            const rIdx = (y * w + Math.max(0, w - 5)) * 4;
-            const rr = data[rIdx], rg = data[rIdx + 1], rb = data[rIdx + 2];
-            if (isNeutralBgSample(rr, rg, rb, lastRR, lastRG, lastRB)) {
-              lastRR = rr; lastRG = rg; lastRB = rb;
-            }
-            rowRightR[y] = lastRR; rowRightG[y] = lastRG; rowRightB[y] = lastRB;
+          if (g > 70 && greenVsRed > 48 && greenVsBlue > 28 && greenExcess > 38) {
+            data[i + 3] = 0;
+            continue;
           }
 
-          const trySeed = (x, y) => {
-            if (x < 0 || x >= w || y < 0 || y >= h) return;
-            const pIdx = y * w + x;
-            if (bgMask[pIdx]) return;
-            const i = pIdx * 4;
-            const r = data[i], g = data[i + 1], b = data[i + 2];
-            const t = w > 1 ? x / (w - 1) : 0;
-            const expR = rowLeftR[y] * (1 - t) + rowRightR[y] * t;
-            const expG = rowLeftG[y] * (1 - t) + rowRightG[y] * t;
-            const expB = rowLeftB[y] * (1 - t) + rowRightB[y] * t;
-            const diff = Math.abs(r - expR) + Math.abs(g - expG) + Math.abs(b - expB);
-            const sat = Math.max(r, g, b) - Math.min(r, g, b);
-            if (diff <= 54 && sat <= 42 && Math.max(r, g, b) >= 75) {
-              bgMask[pIdx] = 1;
-              queue[qTail++] = pIdx;
-            }
-          };
-
-          // بذرگذاری از لبه بالایی و لبه‌های چپ و راست
-          for (let x = 0; x < w; x++) {
-            trySeed(x, 0);
-            trySeed(x, 1);
-          }
-          const sideLimitY = Math.floor(h * 0.92);
-          for (let y = 0; y < sideLimitY; y++) {
-            trySeed(0, y);
-            trySeed(1, y);
-            trySeed(w - 1, y);
-            trySeed(w - 2, y);
+          if (g > 55 && greenVsRed > 20 && greenVsBlue > 12 && greenExcess > 12) {
+            const ratio = (greenExcess - 12) / (38 - 12);
+            const newAlpha = Math.round(a * Math.max(0, Math.min(1, 1 - ratio)));
+            data[i + 3] = newAlpha;
+            data[i + 1] = Math.round(maxRB * 0.92 + g * 0.08);
+            continue;
           }
 
-          // انتشار Flood-Fill با سد گرادیان (جلوگیری از ورود به کلاه طوسی، صورت یا پیراهن سفید)
-          while (qHead < qTail) {
-            const curr = queue[qHead++];
-            const cy = (curr / w) | 0;
-            const cx = curr - cy * w;
-            const cOff = curr * 4;
-            const cr = data[cOff], cg = data[cOff + 1], cb = data[cOff + 2];
-
-            const neighbors = [
-              cx > 0 ? curr - 1 : -1,
-              cx + 1 < w ? curr + 1 : -1,
-              cy > 0 ? curr - w : -1,
-              cy + 1 < h ? curr + w : -1,
-            ];
-
-            for (let k = 0; k < 4; k++) {
-              const np = neighbors[k];
-              if (np < 0 || bgMask[np]) continue;
-
-              const ny = (np / w) | 0;
-              const nx = np - ny * w;
-              const nOff = np * 4;
-              const nr = data[nOff], ng = data[nOff + 1], nb = data[nOff + 2];
-
-              // گام همسایگی باید نرم باشد تا از لبه کلاه طوسی، عینک، مو و شانه عبور نکند
-              const stepR = Math.abs(nr - cr);
-              const stepG = Math.abs(ng - cg);
-              const stepB = Math.abs(nb - cb);
-              const maxStep = Math.max(stepR, stepG, stepB);
-              if (maxStep > 9 || (stepR + stepG + stepB) > 19) continue;
-
-              const sat = Math.max(nr, ng, nb) - Math.min(nr, ng, nb);
-              if (sat > 40 || Math.max(nr, ng, nb) < 75) continue;
-
-              const t = w > 1 ? nx / (w - 1) : 0;
-              const expR = rowLeftR[ny] * (1 - t) + rowRightR[ny] * t;
-              const expG = rowLeftG[ny] * (1 - t) + rowRightG[ny] * t;
-              const expB = rowLeftB[ny] * (1 - t) + rowRightB[ny] * t;
-              const modelDiff = Math.abs(nr - expR) + Math.abs(ng - expG) + Math.abs(nb - expB);
-
-              if (modelDiff <= 68) {
-                bgMask[np] = 1;
-                queue[qTail++] = np;
-              }
-            }
-          }
-
-          // پاکسازی واترمارک ستاره کوچک گوشه پایین سمت راست در عکس‌های استودیویی
-          const sparkStartX = Math.floor(w * 0.87);
-          const sparkStartY = Math.floor(h * 0.87);
-          let cornerBgCount = 0;
-          for (let y = sparkStartY; y < h; y += 2) {
-            for (let x = sparkStartX; x < w; x += 2) {
-              if (bgMask[y * w + x]) cornerBgCount++;
-            }
-          }
-          if (cornerBgCount > 25) {
-            for (let y = sparkStartY; y < h; y++) {
-              for (let x = sparkStartX; x < w; x++) {
-                const pIdx = y * w + x;
-                const off = pIdx * 4;
-                if (Math.max(data[off], data[off + 1], data[off + 2]) > 120) {
-                  bgMask[pIdx] = 1;
-                }
-              }
-            }
-          }
-
-          // پاکسازی فضاهای بسته بین بازو و پالتو در نیمه پایینی تصویر (بدون دست زدن به یقه و پیراهن وسط)
-          const centerMinX = Math.floor(w * 0.36);
-          const centerMaxX = Math.ceil(w * 0.64);
-          for (let y = Math.floor(h * 0.52); y < h; y++) {
-            for (let x = 0; x < w; x++) {
-              if (x >= centerMinX && x <= centerMaxX && y < Math.floor(h * 0.72)) continue;
-              const pIdx = y * w + x;
-              if (bgMask[pIdx]) continue;
-              const off = pIdx * 4;
-              const r = data[off], g = data[off + 1], b = data[off + 2];
-              const sat = Math.max(r, g, b) - Math.min(r, g, b);
-              if (sat > 22 || Math.max(r, g, b) < 95) continue;
-              const t = w > 1 ? x / (w - 1) : 0;
-              const expR = rowLeftR[y] * (1 - t) + rowRightR[y] * t;
-              const expG = rowLeftG[y] * (1 - t) + rowRightG[y] * t;
-              const expB = rowLeftB[y] * (1 - t) + rowRightB[y] * t;
-              if (Math.abs(r - expR) + Math.abs(g - expG) + Math.abs(b - expB) <= 22) {
-                bgMask[pIdx] = 1;
-              }
-            }
-          }
-
-          // اعمال شفافیت و نرم‌سازی لبه‌ها (Feathering) برای طبیعی شدن دور کلاه و لباس
-          for (let y = 0; y < h; y++) {
-            for (let x = 0; x < w; x++) {
-              const pIdx = y * w + x;
-              const off = pIdx * 4;
-              if (bgMask[pIdx]) {
-                data[off + 3] = 0;
-              } else if (x > 0 && x + 1 < w && y > 0 && y + 1 < h) {
-                const bgNeighbors =
-                  bgMask[pIdx - 1] +
-                  bgMask[pIdx + 1] +
-                  bgMask[pIdx - w] +
-                  bgMask[pIdx + w] +
-                  bgMask[pIdx - w - 1] +
-                  bgMask[pIdx - w + 1] +
-                  bgMask[pIdx + w - 1] +
-                  bgMask[pIdx + w + 1];
-                if (bgNeighbors > 0) {
-                  const factor = Math.max(0.25, 1 - bgNeighbors * 0.11);
-                  data[off + 3] = Math.round(data[off + 3] * factor);
-                }
-              }
-            }
+          if (greenExcess > 4 && g > r * 1.08) {
+            data[i + 1] = Math.round(maxRB * 0.96 + g * 0.04);
           }
         }
 
@@ -2461,8 +2415,9 @@ function applyAssistantsImagesDisplayMode() {
   const imgs = container.querySelectorAll('img.assistant-portrait-img[data-raw-url]');
   imgs.forEach((imgEl) => {
     const rawUrl = imgEl.getAttribute('data-raw-url');
+    if (/\.webp(\?.*)?$/i.test(rawUrl)) return; // از قبل دوربری و بهینه شده است
     getChromaKeyedImageUrl(rawUrl).then((processedUrl) => {
-      if (imgEl.isConnected) {
+      if (imgEl.isConnected && imgEl.src !== processedUrl) {
         imgEl.src = processedUrl;
       }
     });
@@ -2493,8 +2448,10 @@ function renderAssistantsGallery() {
     const safeUrl = safeFileUrl(item.file_url);
     const name = escapeHtml(fixMojibakeText(item.student_name || `دستیار کارآگاه ${idx + 1}`));
     const numFa = toPersianDigits(idx + 1);
+    const loadingAttr = idx < 8 ? 'eager' : 'lazy';
+    const priorityAttr = idx < 8 ? ' fetchpriority="high"' : '';
     return `
-      <article class="assistant-id-card" onclick="openAssistantLightbox(${idx})" title="مشاهده تصویر بزرگ‌تر و دانلود PNG — ${name}">
+      <article class="assistant-id-card" onclick="openAssistantLightbox(${idx})" title="مشاهده تصویر بزرگ‌تر و دریافت تصویر کارآگاهی — ${name}">
         <div class="assistant-card-portrait-wrap">
           <span class="assistant-card-num">#${numFa}</span>
           <img
@@ -2502,7 +2459,8 @@ function renderAssistantsGallery() {
             src="${safeUrl}"
             data-raw-url="${safeUrl}"
             alt="${name}"
-            loading="lazy"
+            loading="${loadingAttr}"${priorityAttr}
+            decoding="async"
           >
         </div>
         <div class="assistant-card-info">
@@ -2516,6 +2474,8 @@ function renderAssistantsGallery() {
   container.innerHTML = `<div class="assistants-gallery-grid">${cardsHtml}</div>`;
   applyAssistantsImagesDisplayMode();
 }
+
+let assistantMagnifier = null;
 
 function openAssistantLightbox(index) {
   if (!sessionAssistantsList.length) return;
@@ -2533,9 +2493,21 @@ function openAssistantLightbox(index) {
   }
 
   updateAssistantLightboxContent();
+  if (!assistantMagnifier) {
+    assistantMagnifier = window.createImageMagnifier({
+      stage: document.getElementById('assistants-lb-portrait-box'),
+      image: document.getElementById('assistants-lb-img'),
+      badge: document.getElementById('assistantsLensLevel'),
+      zoomIn: document.getElementById('assistantsLensZoomIn'),
+      zoomOut: document.getElementById('assistantsLensZoomOut'),
+      reset: document.getElementById('assistantsLensReset')
+    });
+  }
+  assistantMagnifier?.reset();
 }
 
 function closeAssistantLightbox() {
+  assistantMagnifier?.hide();
   activeAssistantLightboxIndex = -1;
   const gridBody = document.getElementById('assistants-photo-modal-content');
   const lbView = document.getElementById('assistants-lightbox-view');
@@ -2554,6 +2526,8 @@ function stepAssistantLightbox(delta) {
   activeAssistantLightboxIndex =
     (activeAssistantLightboxIndex + delta + sessionAssistantsList.length) % sessionAssistantsList.length;
   updateAssistantLightboxContent();
+  assistantMagnifier?.hide();
+  assistantMagnifier?.reset();
 }
 
 function updateAssistantLightboxContent() {
@@ -2567,23 +2541,46 @@ function updateAssistantLightboxContent() {
 
   const cleanName = fixMojibakeText(item.student_name || 'دستیار کارآگاه');
   const rawUrl = safeFileUrl(item.file_url);
+  const isWebp = /\.webp(\?.*)?$/i.test(rawUrl);
+  const hdPngUrl = isWebp ? rawUrl.replace(/\.webp(\?.*)?$/i, '_hd.png') : rawUrl;
 
   if (nameEl) nameEl.textContent = `🕵️‍♂️ ${cleanName}`;
   if (counterEl) {
     counterEl.textContent = `نفر ${toPersianDigits(activeAssistantLightboxIndex + 1)} از ${toPersianDigits(sessionAssistantsList.length)}`;
   }
 
-  if (imgEl) imgEl.src = rawUrl;
-  getChromaKeyedImageUrl(rawUrl).then((processedUrl) => {
-    if (activeAssistantLightboxIndex >= 0 && sessionAssistantsList[activeAssistantLightboxIndex] === item) {
-      if (imgEl) imgEl.src = processedUrl;
-      if (dlBtn) {
-        dlBtn.href = processedUrl;
-        dlBtn.download = `${cleanName}-بدون-بکگراند.png`;
-        dlBtn.textContent = '⬇ دانلود PNG بدون بک‌گراند';
-      }
+  if (imgEl) {
+    imgEl.src = rawUrl;
+    if (isWebp) {
+      // بارگذاری نسخه باکیفیت HD در پس‌زمینه برای نمایش شفاف‌تر در لایت‌باکس
+      const hdLoader = new Image();
+      hdLoader.onload = () => {
+        if (activeAssistantLightboxIndex >= 0 && sessionAssistantsList[activeAssistantLightboxIndex] === item && imgEl) {
+          imgEl.src = hdPngUrl;
+        }
+      };
+      hdLoader.src = hdPngUrl;
     }
-  });
+  }
+
+  if (dlBtn) {
+    dlBtn.href = hdPngUrl;
+    dlBtn.download = `کارآگاه-${cleanName}.png`;
+    dlBtn.textContent = '📥 دریافت تصویر کارآگاهی';
+  }
+
+  if (!isWebp) {
+    getChromaKeyedImageUrl(rawUrl).then((processedUrl) => {
+      if (activeAssistantLightboxIndex >= 0 && sessionAssistantsList[activeAssistantLightboxIndex] === item) {
+        if (imgEl) imgEl.src = processedUrl;
+        if (dlBtn) {
+          dlBtn.href = processedUrl;
+          dlBtn.download = `کارآگاه-${cleanName}.png`;
+          dlBtn.textContent = '📥 دریافت تصویر کارآگاهی';
+        }
+      }
+    });
+  }
 }
 
 async function openAssistantsPhotoPopup() {

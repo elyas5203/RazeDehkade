@@ -334,14 +334,25 @@ class InMemoryDatabase {
       return [{ affectedRows: 0 }, []];
     }
 
-    if (/^DELETE FROM messages WHERE id = \?/i.test(cleanSql)) {
-      const [id] = params;
-      const idx = this.tables.messages.findIndex(m => m.id == id);
-      if (idx > -1) {
-        this.tables.messages.splice(idx, 1);
-        return [{ affectedRows: 1 }, []];
+    if (/^DELETE FROM messages/i.test(cleanSql)) {
+      if (/WHERE session_id = \?/i.test(cleanSql)) {
+        const sid = params[0];
+        const before = this.tables.messages.length;
+        this.tables.messages = this.tables.messages.filter(m => m.session_id != sid);
+        return [{ affectedRows: before - this.tables.messages.length }, []];
       }
-      return [{ affectedRows: 0 }, []];
+      if (/WHERE id = \?/i.test(cleanSql)) {
+        const [id] = params;
+        const idx = this.tables.messages.findIndex(m => m.id == id);
+        if (idx > -1) {
+          this.tables.messages.splice(idx, 1);
+          return [{ affectedRows: 1 }, []];
+        }
+        return [{ affectedRows: 0 }, []];
+      }
+      const before = this.tables.messages.length;
+      this.tables.messages = [];
+      return [{ affectedRows: before }, []];
     }
 
     // 10. Canned Responses
@@ -399,6 +410,18 @@ class InMemoryDatabase {
     if (/^SELECT .* FROM session_logs/i.test(cleanSql)) {
       const logs = this.tables.session_logs.filter(l => l.session_id == params[0]);
       return [logs, []];
+    }
+
+    if (/^DELETE FROM session_logs/i.test(cleanSql)) {
+      if (/WHERE session_id = \?/i.test(cleanSql)) {
+        const sid = params[0];
+        const before = this.tables.session_logs.length;
+        this.tables.session_logs = this.tables.session_logs.filter(l => l.session_id != sid);
+        return [{ affectedRows: before - this.tables.session_logs.length }, []];
+      }
+      const before = this.tables.session_logs.length;
+      this.tables.session_logs = [];
+      return [{ affectedRows: before }, []];
     }
 
     // 12. Media Registry
@@ -660,8 +683,9 @@ if (process.env.NODE_ENV === 'test' || process.env.USE_IN_MEMORY_DB === 'true') 
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT || '50', 10),
     queueLimit: 0,
+    connectTimeout: 10000,
   });
 }
 

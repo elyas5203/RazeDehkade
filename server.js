@@ -15,6 +15,15 @@ const setupSocketIO = require('./src/socket');
 
 const compression = require('compression');
 const { ensureMp4FastStart, optimizeVideosInDirectories } = require('./src/utils/mp4FastStart');
+const logger = require('./src/utils/logger');
+
+// ثبت لحظه‌ای کرش‌ها و خطاهای غیرمنتظره جهت عیب‌یابی سرور
+process.on('uncaughtException', (err) => {
+  logger.fatal('UNCAUGHT_EXCEPTION', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  logger.fatal('UNHANDLED_REJECTION', { reason, promise });
+});
 
 // ساخت اپلیکیشن Express و سرور HTTP
 const app = express();
@@ -27,6 +36,9 @@ const checkedFastStartFiles = new Set();
 // پیکربندی Middlewareها
 app.disable('x-powered-by');
 app.set('trust proxy', true);
+
+// ثبت خودکار درخواست‌های ورودی در لاگ سرور
+app.use(logger.httpMiddleware);
 
 // محافظت در برابر کاراکترهای نامعتبر در URL و جلوگیری از خطای ۴۰۰ بد ریکوئست
 app.use((req, res, next) => {
@@ -103,6 +115,19 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
+// مسیرهای مستقیم و میانبر برای صفحات مدیریت و پنل ادمین
+app.get(['/admin', '/admin/', '/admin/dashboard', '/admin/dashboard/'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'dashboard.html'));
+});
+
+app.get(['/admin/chat', '/admin/chat/'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'chat.html'));
+});
+
+app.get(['/admin/login', '/admin/login/'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin', 'login.html'));
+});
+
 // مسیرهای مستقیم و میانبر برای صفحات فروشگاه و پیگیری سفارش
 app.get(['/golha', '/golha/'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'golha', 'index.html'));
@@ -141,6 +166,8 @@ app.get('/api/health', (req, res) => {
 // کانفیگ و راه‌اندازی Socket.io
 const io = new Server(server, {
   maxHttpBufferSize: 5 * 1024 * 1024,
+  pingTimeout: 30000,
+  pingInterval: 15000,
   cors: {
     origin: '*',
     methods: ['GET', 'POST'],

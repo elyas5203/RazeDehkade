@@ -1,16 +1,6 @@
 'use strict';
 
 (() => {
-  const TOTAL_DURATION_MS = 30000; // 30 ثانیه برای تحویل
-  const CIRCLE_CIRCUMFERENCE = 565.48; // 2 * PI * 90
-  
-  // =========================================================================
-  // مدت‌زمان خاموشی صفحه (بلک‌اوت) پس از تحویل بسته:
-  // طبق مشخصات پروژه:
-  // - برای تمام کاربران عادی: ۳ دقیقه کامل = 3 * 60 * 1000 (180000 میلی‌ثانیه)
-  // - برای اکانت تست اختصاصی: ۱۵ ثانیه = 15 * 1000
-  //   کد تخفیف: 542810 | کد ورود: 371717 | شماره ثبت‌شده: 09151234567
-  // =========================================================================
   const urlParams = new URLSearchParams(window.location.search);
   const isFromLogin = urlParams.has('from') || urlParams.get('mode') === 'intro';
 
@@ -30,19 +20,53 @@
       discount === '542810' ||
       chatCode === '371717' ||
       orderPhone === '09151234567' ||
-      sessionPhone === '09151234567'
+      sessionPhone === '09151234567' ||
+      urlParams.get('fast') === '1'
     );
   }
 
   const isTest = checkIsTestUser();
-  const DEFAULT_BLACKOUT_MS = 3 * 60 * 1000; // ۳ دقیقه (180 ثانیه)
-  const TEST_USER_BLACKOUT_MS = 15 * 1000;    // ۱۵ ثانیه
+  // مدت‌زمان شمارش معکوس تحویل سفارش پیک: ۳۰ ثانیه طبق نیازمندی دقیق
+  const TOTAL_DURATION_MS = isTest ? 10000 : 30000;
+  const CIRCLE_CIRCUMFERENCE = 565.48; // 2 * PI * 90
+
+  // =========================================================================
+  // مدت‌زمان خاموشی صفحه (بلک‌اوت) پس از تحویل بسته:
+  // ۵ دقیقه کامل (۳۰۰ ثانیه)
+  // - ۱ دقیقه اول (۰ تا ۶۰ ثانیه): تاریکی ۱۰۰٪ مطلق
+  // - ۴ دقیقه بعدی (۶۰ تا ۳۰۰ ثانیه): دایره سبز نئونی تپنده تاکتیکال در مرکز صفحه
+  // - پایان ۵ دقیقه: شوک صوتی و بصری ناگهانی و انتقال به اسکن مدارک
+  // =========================================================================
+  const DEFAULT_BLACKOUT_MS = 5 * 60 * 1000; // ۵ دقیقه (۳۰۰ ثانیه)
+  const TEST_USER_BLACKOUT_MS = 15 * 1000;    // ۱۵ ثانیه برای اکانت تست
   const BLACKOUT_DURATION_MS = isTest ? TEST_USER_BLACKOUT_MS : DEFAULT_BLACKOUT_MS;
+  const BLACKOUT_PHASE1_MS = isTest ? 5000 : 60 * 1000; // ۱ دقیقه اول: تاریکی مطلق (۶۰ ثانیه)
 
   // در حالت لاگین با شماره ثبت‌شده، مستقیماً وارد اینتروی سایبری با ترنزیشن کوتاه ۱.۲ ثانیه‌ای می‌شود
   const LOGIN_BLACKOUT_MS = 1200;
 
   const numberFormat = new Intl.NumberFormat('fa-IR');
+
+  let deliverySocket = null;
+  try {
+    if (typeof io !== 'undefined') {
+      deliverySocket = io();
+    }
+  } catch (_) {}
+
+  function notifyLifecyclePhase(phase, phaseLabel, secondsLeft) {
+    try {
+      const sId = order?.orderId || order?.sessionId || order?.session_id;
+      if (deliverySocket && sId) {
+        deliverySocket.emit('update_order_phase', {
+          sessionId: Number(sId),
+          phase,
+          phaseLabel,
+          secondsLeft: Number(secondsLeft) || 0,
+        });
+      }
+    } catch (_) {}
+  }
 
   // مبدا زمانی شمارش معکوس ۳۰ ثانیه‌ای
   let startedAt = Date.now();
@@ -156,22 +180,52 @@
   initTickAudioEngine();
 
   // ==========================================
-  // موتور پخش ساندترک سینمایی و استودیویی
+  // موتور پخش ساندترک سینمایی و استودیویی و ترنزیشن شوک ناگهانی
   // ==========================================
   let currentIntroAudio = null;
 
-  // پخش ساندترک سینمایی ساب‌بیس دارک تریلر بدون بیپ یا صداهای آزاردهنده
+  function triggerShockTransition() {
+    try {
+      let flash = document.getElementById('cyberShockFlash');
+      if (!flash) {
+        flash = document.createElement('div');
+        flash.id = 'cyberShockFlash';
+        flash.className = 'cyber-shock-flash';
+        document.body.appendChild(flash);
+      }
+      flash.classList.remove('is-flashing');
+      void flash.offsetWidth;
+      flash.classList.add('is-flashing');
+
+      document.body.classList.remove('shock-screen-shake');
+      void document.body.offsetWidth;
+      document.body.classList.add('shock-screen-shake');
+      setTimeout(() => {
+        document.body.classList.remove('shock-screen-shake');
+      }, 700);
+    } catch (_) {}
+  }
+
+  // پخش ضربه ساب‌بیس و براام سینمایی هالیوودی (Hollywood Braam & Sub-Impact) همراه با شوک نوری و لرزش تصویر
   function playCyberIntroSound() {
     try {
-      const mp3 = new Audio('/assets/sounds/cyber-intro.mp3');
-      mp3.volume = 0.95;
-      mp3.play().then(() => {
-        currentIntroAudio = mp3;
-      }).catch(() => {
-        const wav = new Audio('/assets/sounds/cyber-intro.wav');
-        wav.volume = 0.95;
-        wav.play().catch(() => {});
+      triggerShockTransition();
+
+      // 1. ضربه ساب‌بیس عمیق و براام سینمایی (بدون هیچ بیپ اسباب‌بازی یا آژیر خنک)
+      const braamImpact = new Audio('/assets/sounds/tactical-alarm.wav');
+      braamImpact.volume = 1.0;
+      braamImpact.play().catch(() => {});
+
+      // 2. ساندترک دارک دلهره‌آور جاسوسی/سایبری
+      const wav = new Audio('/assets/sounds/cyber-intro.wav');
+      wav.volume = 0.85;
+      wav.play().then(() => {
         currentIntroAudio = wav;
+      }).catch(() => {
+        const mp3 = new Audio('/assets/sounds/cyber-intro.mp3');
+        mp3.volume = 0.85;
+        mp3.play().catch(() => {});
+        currentIntroAudio = mp3;
       });
     } catch (_) {}
   }
@@ -351,6 +405,7 @@
   function doFinalWarpRedirect() {
     if (hasRedirected) return;
     hasRedirected = true;
+    removeGreenBeacon();
     if (cyberSequenceTimeout) clearTimeout(cyberSequenceTimeout);
     telemetryIntervals.forEach(clearInterval);
     if (currentIntroAudio) {
@@ -360,22 +415,59 @@
     const flare = document.getElementById('cyberFlashFlare');
     if (flare) flare.classList.add('flaring');
 
+    notifyLifecyclePhase('portal_login', '🔐 درگاه ورود محرمانه // در انتظار کد بسته');
+
     setTimeout(() => {
       window.location.href = '/enter-code.html';
     }, 600);
+  }
+
+  let greenBeaconEl = null;
+  let phase2Timeout = null;
+
+  function removeGreenBeacon() {
+    if (phase2Timeout) {
+      clearTimeout(phase2Timeout);
+      phase2Timeout = null;
+    }
+    const beacon = document.getElementById('blackoutPulsingRadarDot');
+    if (beacon) {
+      beacon.classList.remove('active');
+      beacon.remove();
+    }
+    greenBeaconEl = null;
+  }
+
+  function ensureGreenBeacon() {
+    let beacon = document.getElementById('blackoutPulsingRadarDot');
+    if (!beacon) {
+      beacon = document.createElement('div');
+      beacon.id = 'blackoutPulsingRadarDot';
+      beacon.className = 'blackout-radar-beacon';
+      beacon.innerHTML = `
+        <div class="radar-beacon-center">
+          <div class="radar-ping-ring"></div>
+          <div class="radar-core-dot"></div>
+        </div>
+      `;
+      document.body.appendChild(beacon);
+    }
+    greenBeaconEl = beacon;
+    return beacon;
   }
 
   function triggerCyberTransformation(customBlackoutMs) {
     if (!cyberOverlay) return;
 
     let actualBlackoutDuration;
+    let targetBlackout = BLACKOUT_DURATION_MS;
     if (typeof customBlackoutMs === 'number') {
       actualBlackoutDuration = customBlackoutMs;
+      targetBlackout = customBlackoutMs;
     } else {
-      const targetBlackout = BLACKOUT_DURATION_MS;
       const now = Date.now();
       let blackoutStart = Number(sessionStorage.getItem('delivery_blackout_at') || 0);
-      if (!blackoutStart || (now - blackoutStart) > (5 * 60 * 1000)) {
+      if (!blackoutStart || (now - blackoutStart) > (6 * 60 * 1000)) {
         blackoutStart = now;
         sessionStorage.setItem('delivery_blackout_at', String(blackoutStart));
       }
@@ -383,20 +475,76 @@
       actualBlackoutDuration = Math.max(0, targetBlackout - elapsedSoFar);
     }
 
-    // ۱. فاز اول: بلک‌اوت ۱۰۰٪ مطلق و خاموشی کامل نمایشگر (بدون متن، بدون کادر، بدون صدا، بدون نشانگر موس)
+    // ۱. پاکسازی هرگونه بیکن یا دایره قبلی قبل از شروع فاز جدید
+    removeGreenBeacon();
+
+    // فاز اول: بلک‌اوت ۱۰۰٪ مطلق و خاموشی کامل نمایشگر (بدون متن، بدون کادر، بدون صدا، بدون نشانگر موس)
     document.body.classList.add('is-blackout');
     document.body.style.cursor = 'none';
     cyberOverlay.classList.remove('active-cyber');
     cyberOverlay.classList.add('active-blackout');
+    notifyLifecyclePhase('blackout_phase1', '🌑 صفحه سیاه (بلک‌اوت فاز ۱ - تاریکی کامل)');
+
+    // زمان‌بندی فعال‌سازی دایره سبز نئونی تپنده: ۱ دقیقه اول تاریکی کامل، سپس ۴ دقیقه بعد دایره سبز تپنده
+    const currentElapsed = targetBlackout - actualBlackoutDuration;
+    const timeUntilPhase2 = Math.max(0, BLACKOUT_PHASE1_MS - currentElapsed);
+
+    let blackoutTicker = setInterval(() => {
+      if (!document.body.classList.contains('is-blackout')) {
+        clearInterval(blackoutTicker);
+        return;
+      }
+      const curNow = Date.now();
+      const bStart = Number(sessionStorage.getItem('delivery_blackout_at') || curNow);
+      const passed = curNow - bStart;
+      const leftSec = Math.max(0, Math.round((targetBlackout - passed) / 1000));
+      const isPhase2 = passed >= BLACKOUT_PHASE1_MS;
+      notifyLifecyclePhase(
+        isPhase2 ? 'blackout_phase2' : 'blackout_phase1',
+        isPhase2 ? '🟢 بلک‌اوت (رادار سبز)' : '🌑 بلک‌اوت (تاریکی کامل)',
+        leftSec
+      );
+      if (leftSec <= 0) {
+        clearInterval(blackoutTicker);
+      }
+    }, 1000);
+
+    if (phase2Timeout) clearTimeout(phase2Timeout);
+
+    // بررسی دقیق فعال‌سازی فاز ۲ (دایره سبز تپنده):
+    if (actualBlackoutDuration > 0) {
+      if (currentElapsed < BLACKOUT_PHASE1_MS) {
+        // هنوز در ۱ دقیقه اول هستیم؛ پس از سپری شدن زمان باقی‌مانده فاز ۱، دایره سبز فعال شود
+        if (actualBlackoutDuration > timeUntilPhase2) {
+          phase2Timeout = setTimeout(() => {
+            if (document.body.classList.contains('is-blackout')) {
+              const beacon = ensureGreenBeacon();
+              beacon.classList.add('active');
+              notifyLifecyclePhase('blackout_phase2', '🟢 صفحه سیاه (بلک‌اوت فاز ۲ - دایره سبز تپنده)');
+            }
+          }, timeUntilPhase2);
+        }
+      } else if (currentElapsed < targetBlackout) {
+        // بیش از ۱ دقیقه سپری شده؛ دایره سبز فوراً در فاز ۲ نمایش داده شود
+        const beacon = ensureGreenBeacon();
+        beacon.classList.add('active');
+        notifyLifecyclePhase('blackout_phase2', '🟢 صفحه سیاه (بلک‌اوت فاز ۲ - دایره سبز تپنده)');
+      }
+    }
 
     cyberSequenceTimeout = setTimeout(() => {
+      clearInterval(blackoutTicker);
       sessionStorage.removeItem('delivery_blackout_at');
+      
+      // حذف کامل، قطعی و آنی دایره سبز از صفحه به محض آغاز اسکن سایبری
+      removeGreenBeacon();
 
-      // ۲. فاز دوم: پایان بلک‌اوت و آغاز سکانس پیشرفته و حرفه‌ای اطلاعاتی و رمزگشایی پرونده
+      // ۲. فاز دوم: پایان ۵ دقیقه بلک‌اوت و آغاز سکانس اطلاعاتی با صدای رسا و اسکن سایبری
       document.body.classList.remove('is-blackout');
       document.body.style.cursor = '';
       cyberOverlay.classList.remove('active-blackout');
       cyberOverlay.classList.add('active-cyber');
+      notifyLifecyclePhase('cyber_scanning', '⚡ اسکن سایبری و رمزگشایی مدارک');
 
       startTelemetryStream();
       initCockpitTelemetry();

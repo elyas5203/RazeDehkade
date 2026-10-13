@@ -105,6 +105,26 @@ class Message {
     );
     return res.affectedRows;
   }
+
+  /**
+   * پاکسازی تمامی پیام‌های یک جلسه (بدون دستکاری سایر جداول یا فایل‌ها)
+   * @param {number} session_id
+   */
+  static async clearBySessionId(session_id) {
+    const res = await query(
+      `DELETE FROM messages WHERE session_id = ?`,
+      [session_id]
+    );
+    return res.affectedRows || 0;
+  }
+
+  /**
+   * پاکسازی تمامی پیام‌های چت همه جلسات به صورت سراسری
+   */
+  static async clearAll() {
+    const res = await query(`DELETE FROM messages`);
+    return res.affectedRows || 0;
+  }
 }
 
 module.exports = Message;

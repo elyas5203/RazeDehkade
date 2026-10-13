@@ -1,0 +1,47 @@
+/* Phone chat composer: preserve a full-width input and a reachable send button. */
+@media (max-width: 720px) {
+  body.command-page {
+    bottom: auto !important;
+    height: var(--admin-visible-height, 100dvh) !important;
+    max-height: none !important;
+    min-height: 0 !important;
+  }
+  body.mobile-tab-chat #panel-chat { min-height: 0 !important; }
+  body.mobile-tab-chat #admin-messages-box { min-height: 0 !important; flex: 1 1 auto !important; }
+  .admin-composer {
+    width: 100% !important;
+    flex-shrink: 0 !important;
+    padding: 8px 10px max(10px, env(safe-area-inset-bottom)) !important;
+  }
+  .admin-composer-main { width: 100% !important; min-width: 0 !important; }
+  .composer-actions-bar { height: 44px !important; min-height: 44px !important; }
+  .admin-composer #admin-sender-type,
+  .admin-composer .command-button.icon { min-height: 44px !important; height: 44px !important; }
+  .composer-textarea-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+  .composer-textarea-row #admin-msg-input {
+    display: block !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 56px !important;
+    min-height: 56px !important;
+    max-height: 112px !important;
+    box-sizing: border-box !important;
+    font-size: 16px !important;
+    line-height: 1.45 !important;
+  }
+  .composer-textarea-row .send-message-btn {
+    display: flex !important;
+    width: 100% !important;
+    flex: 0 0 44px !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    font-size: 14px !important;
+  }
+}

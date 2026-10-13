@@ -255,6 +255,68 @@ router.post('/:id/lock', requireAdmin, async (req, res) => {
 });
 
 /**
+ * POST /api/sessions/clear-all-history
+ * پاکسازی تاریخچه گفتگو و تخته مدارک تمامی جلسات در سراسر دیتابیس (ادمین)
+ */
+router.post('/clear-all-history', requireAdmin, async (req, res) => {
+  try {
+    const deletedCount = await Message.clearAll();
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('chat_cleared', { all: true });
+      io.to('admins').emit('chat_cleared', { all: true });
+    }
+
+    return res.json({
+      success: true,
+      message: `تمامی پیام‌های چت و تخته مدارک در تمام جلسات با موفقیت پاکسازی شدند (${deletedCount} پیام).`,
+      deletedCount,
+    });
+  } catch (error) {
+    console.error('Error clearing all chat history:', error);
+    return res.status(500).json({ success: false, message: 'خطای سرور هنگام پاکسازی سراسری تاریخچه چت.' });
+  }
+});
+
+/**
+ * POST /api/sessions/:id/clear-history
+ * پاکسازی کامل تاریخچه گفتگو و تخته مدارک یک جلسه مشخص (ادمین)
+ */
+router.post('/:id/clear-history', requireAdmin, async (req, res) => {
+  try {
+    const sessionId = parseInt(req.params.id, 10);
+    if (!sessionId) {
+      return res.status(400).json({ success: false, message: 'شناسه جلسه معتبر نیست.' });
+    }
+
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'جلسه مورد نظر یافت نشد.' });
+    }
+
+    const deletedCount = await Message.clearBySessionId(sessionId);
+    await SessionLog.log(sessionId, 'chat_cleared', `تاریخچه چت جلسه توسط ${req.user.display_name || req.user.username} پاکسازی شد (${deletedCount} پیام).`);
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`session_${sessionId}`).emit('chat_cleared', { sessionId });
+      io.to('admins').emit('chat_cleared', { sessionId });
+      io.to('admins').emit('session_updated', { sessionId, unread_count: 0 });
+    }
+
+    return res.json({
+      success: true,
+      message: `تاریخچه گفتگو و تخته مدارک جلسه ${session.name || sessionId} با موفقیت پاکسازی شد (${deletedCount} پیام).`,
+      deletedCount,
+      sessionId,
+    });
+  } catch (error) {
+    console.error('Error clearing session chat history:', error);
+    return res.status(500).json({ success: false, message: 'خطای سرور هنگام پاکسازی تاریخچه چت.' });
+  }
+});
+
+/**
  * GET /api/sessions/:id/assistants
  * دریافت لیست عکس‌های دستیاران کارآگاه یک جلسه (مخصوص کاربر همان جلسه یا ادمین)
  */

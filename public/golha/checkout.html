@@ -114,7 +114,10 @@
 
   <script>
     const REQUIRED_INVOICE_IDS = [1, 2, 3, 4, 5];
-    let cart = JSON.parse(localStorage.getItem('golha_cart') || '[]');
+    let cart = JSON.parse(localStorage.getItem('golha_cart') || '[]').map(item => ({
+      ...item,
+      quantity: Math.max(1, Number(item.quantity || item.qty || 1)),
+    }));
 
     function isExactInvoice(cartItems) {
       if (!Array.isArray(cartItems) || cartItems.length !== 5) return false;
@@ -123,6 +126,24 @@
       const noExtras = ids.every(id => REQUIRED_INVOICE_IDS.includes(id));
       const allQtyOne = cartItems.every(it => Number(it.quantity || it.qty || 1) === 1);
       return allPresent && noExtras && allQtyOne;
+    }
+
+    function getDetailedOosError(cartItems) {
+      const unavailable = cartItems.filter(it => !REQUIRED_INVOICE_IDS.includes(Number(it.id)));
+      const excess = cartItems.filter(it => REQUIRED_INVOICE_IDS.includes(Number(it.id)) && Number(it.quantity || it.qty || 1) > 1);
+      const msgs = [];
+      if (unavailable.length > 0) {
+        const names = unavailable.map(it => `«${it.name}»`).join('، ');
+        msgs.push(`عدم موجودی: محصول ${names} در انبار موجود نیست. لطفاً آن را از سبد خرید کم کنید.`);
+      }
+      if (excess.length > 0) {
+        const names = excess.map(it => `«${it.name}»`).join('، ');
+        msgs.push(`عدم موجودی: از محصول ${names} تنها ۱ عدد در انبار موجود است. لطفاً تعداد اضافی را کم کنید.`);
+      }
+      if (msgs.length === 0 && !isExactInvoice(cartItems)) {
+        msgs.push('اقلام سبد خرید کامل نیست (لطفاً هر ۵ محصول فاکتور را به سبد اضافه کنید).');
+      }
+      return msgs.join('\n');
     }
 
     if (cart.length === 0) {
@@ -134,26 +155,83 @@
     let subtotal = 0;
     let appliedDiscount = 0;
 
-    cart.forEach(item => {
-      subtotal += item.price * item.quantity;
-    });
+    function recalcSubtotal() {
+      subtotal = 0;
+      cart.forEach(item => {
+        subtotal += item.price * (item.quantity || 1);
+      });
+    }
+
+    function changeCheckoutItemQty(productId, delta) {
+      const idx = cart.findIndex(it => String(it.id) === String(productId));
+      if (idx === -1) return;
+      const newQty = (cart[idx].quantity || 1) + delta;
+      if (newQty <= 0) {
+        cart.splice(idx, 1);
+      } else {
+        cart[idx].quantity = newQty;
+      }
+      localStorage.setItem('golha_cart', JSON.stringify(cart));
+      if (cart.length === 0) {
+        window.location.href = '/golha/index.html';
+        return;
+      }
+      renderOrderSummary();
+    }
+
+    function removeCheckoutItem(productId) {
+      const idx = cart.findIndex(it => String(it.id) === String(productId));
+      if (idx === -1) return;
+      cart.splice(idx, 1);
+      localStorage.setItem('golha_cart', JSON.stringify(cart));
+      if (cart.length === 0) {
+        window.location.href = '/golha/index.html';
+        return;
+      }
+      renderOrderSummary();
+    }
 
     function renderOrderSummary() {
+      recalcSubtotal();
       const discountAmount = appliedDiscount === 100 ? subtotal : 0;
       const payable = subtotal - discountAmount;
-      const validInvoice = isExactInvoice(cart);
+      const unavailable = cart.filter(it => !REQUIRED_INVOICE_IDS.includes(Number(it.id)));
+      const excess = cart.filter(it => REQUIRED_INVOICE_IDS.includes(Number(it.id)) && Number(it.quantity || it.qty || 1) > 1);
+      const hasOosError = unavailable.length > 0 || excess.length > 0;
 
       orderSummaryEl.innerHTML = `
-        <strong>اقلام سبد خرید:</strong>
-        <ul style="margin-top: 0.5rem; padding-right: 1.2rem; color: var(--text-muted); line-height: 1.8;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.6rem;">
+          <strong>اقلام سبد خرید:</strong>
+          <a href="/golha/index.html" style="font-size:0.85rem;color:var(--accent-gold);text-decoration:none;">+ افزودن محصول دیگر از فروشگاه</a>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:0.5rem;">
           ${cart.map(item => {
-            const itemTotal = item.price * (item.quantity || 1);
-            return `<li>${item.name} (${item.quantity || 1} عدد) - ${itemTotal.toLocaleString('fa-IR')} ریال</li>`;
+            const qty = Number(item.quantity || 1);
+            const itemTotal = item.price * qty;
+            const isAllowed = REQUIRED_INVOICE_IDS.includes(Number(item.id));
+            const isExcess = isAllowed && qty > 1;
+            const isItemOos = !isAllowed || isExcess;
+            return `
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:8px;background:${isItemOos ? 'rgba(127,29,29,0.22)' : 'rgba(255,255,255,0.03)'};border:1px solid ${isItemOos ? 'rgba(239,68,68,0.55)' : 'var(--border-color)'};flex-wrap:wrap;">
+                <div style="flex:1;min-width:180px;">
+                  <div style="font-weight:700;color:var(--text-light);">${item.name}</div>
+                  <div style="font-size:0.85rem;color:var(--text-muted);">${itemTotal.toLocaleString('fa-IR')} ریال</div>
+                  ${!isAllowed ? `<div style="margin-top:4px;font-size:0.82rem;font-weight:700;color:#fca5a5;">❌ عدم موجودی: محصول «${item.name}» موجود نیست — لطفاً کم/حذف کنید</div>` : ''}
+                  ${isExcess ? `<div style="margin-top:4px;font-size:0.82rem;font-weight:700;color:#fca5a5;">⚠️ عدم موجودی: از «${item.name}» فقط ۱ عدد موجود است — لطفاً کم کنید</div>` : ''}
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <button type="button" onclick="changeCheckoutItemQty('${item.id}', -1)" style="width:30px;height:30px;border-radius:4px;border:1px solid #c9be9f;background:#e6dec9;color:#2b2821;font-weight:bold;cursor:pointer;">-</button>
+                  <span style="min-width:22px;text-align:center;font-weight:bold;">${qty}</span>
+                  <button type="button" onclick="changeCheckoutItemQty('${item.id}', 1)" style="width:30px;height:30px;border-radius:4px;border:1px solid #c9be9f;background:#e6dec9;color:#2b2821;font-weight:bold;cursor:pointer;">+</button>
+                  <button type="button" onclick="removeCheckoutItem('${item.id}')" title="حذف از سبد" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:4px;">🗑️</button>
+                </div>
+              </div>
+            `;
           }).join('')}
-        </ul>
-        ${!validInvoice ? `
-          <div style="margin-top: 10px; padding: 10px 14px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 8px; color: #fca5a5; font-size: 0.95rem; font-weight: bold; text-align: center;">
-            ⚠️ عدم موجودی
+        </div>
+        ${hasOosError ? `
+          <div style="margin-top: 12px; padding: 11px 14px; background: rgba(239, 68, 68, 0.14); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 8px; color: #fecaca; font-size: 0.92rem; font-weight: bold; line-height: 1.7;">
+            ⚠️ ${getDetailedOosError(cart).replace(/\n/g, '<br>⚠️ ')}
           </div>
         ` : ''}
         <div style="margin-top: 1rem; padding-top: 0.8rem; border-top: 1px dashed var(--border-color); display: flex; flex-direction: column; gap: 6px;">
@@ -247,7 +325,7 @@
       }
 
       if (!isExactInvoice(cart)) {
-        alert('عدم موجودی');
+        alert(getDetailedOosError(cart));
         submitBtn.disabled = false;
         submitBtn.textContent = '🌹 ثبت نهایی سفارش و ارسال پیک';
         return;
@@ -293,5 +371,6 @@
       }
     });
   </script>
+  <script src="/assets/js/audio-unlock.js"></script>
 </body>
 </html>

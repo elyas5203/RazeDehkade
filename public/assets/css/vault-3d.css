@@ -1,7 +1,7 @@
 /* ==========================================================================
-   🔐 SLOT 04: PHOTOREALISTIC HEAVY STEEL VAULT (گاوصندوق واقعی اسناد محرمانه)
+   🔐 SLOT 04: PHOTOREALISTIC HEAVY STEEL VAULT & STUDIO KRAFT ENVELOPE (V10.0)
    Authentic Heavy Commercial/Bank Physical Security Architecture
-   Reference Doctrine: VAULT_SLOT4_MASTER.md
+   Reference Doctrine: VAULT_SLOT4_MASTER.md (V10.0)
    Skill: .agents/skills/ui-ux-3d-vault-design/SKILL.md
    ========================================================================== */
 
@@ -16,26 +16,20 @@
   overflow: hidden;
   border-radius: 16px !important;
   background: #06090e !important;
-  /* کادر فولادی چندوجهی برآمده و زرهی (Extruded 3D Steel Bezel) */
   border-top: 6px solid #5a687d !important;
   border-left: 6px solid #3c4656 !important;
   border-right: 6px solid #1a202c !important;
   border-bottom: 6px solid #090c12 !important;
   box-shadow:
-    /* سایه پرسپکتیو که کل گاوصندوق را برجسته به سمت بیرون پرتاب می‌کند */
     0 26px 54px rgba(0, 0, 0, 0.98),
     0 12px 24px rgba(0, 0, 0, 0.9),
-    /* خط بازتاب نور براق روی لبه بالای چهارچوب (Specular Chamfer Highlight) */
     inset 0 2px 2px rgba(255, 255, 255, 0.5),
     inset 2px 0 2px rgba(255, 255, 255, 0.25),
-    /* سایه پخ ۴۵ درجه لبه پایینی و راستی (Chamfer Shadow) */
     inset -2px -2px 3px rgba(0, 0, 0, 0.92),
     inset 0 -5px 10px rgba(0, 0, 0, 0.98),
-    /* طوقه فولادی چندپله‌ای داخلی (Stepped Bezel Collar) */
     inset 0 0 0 5px #151b24,
     inset 0 0 0 8px #2b3545,
     inset 0 0 0 10px #090c12,
-    /* جا شیاری و فرورفتگی عمیق درب زرهی داخل کادر برآمده (Deep Jamb Recess) */
     inset 0 16px 36px rgba(0, 0, 0, 0.98) !important;
   transition:
     transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -61,26 +55,27 @@
     inset 0 18px 40px rgba(0, 0, 0, 0.98) !important;
 }
 
-/* حالت در حال باز شدن فیزیکی با چرخش دستگیره سه‌شاخه */
 .quad-vault-card.is-unlocking-wheel {
   border-top-color: #64748b !important;
   border-left-color: #475569 !important;
   box-shadow:
     0 0 0 2px rgba(100, 116, 139, 0.4),
     0 28px 56px rgba(0, 0, 0, 0.98) !important;
-  z-index: 15;
+  z-index: 25;
 }
 
 .quad-vault-card.is-unlocked {
+  overflow: visible !important;
   border-top-color: #10b981 !important;
   border-left-color: #059669 !important;
   box-shadow:
     0 0 24px rgba(16, 185, 129, 0.3),
     0 26px 54px rgba(0, 0, 0, 0.98) !important;
+  z-index: 30;
 }
 
 /* --------------------------------------------------------------------------
-   محرک تعاملی و استیج پرسپکتیو سه‌بعدی
+   محرک تعاملی و استیج پرسپکتیو سه‌بعدی اسلات ۴
    -------------------------------------------------------------------------- */
 .vault-3d-trigger-btn {
   position: absolute;
@@ -124,29 +119,18 @@
 
 .quad-vault-card.is-unlocked .vault-3d-chassis {
   transform: none;
+  overflow: visible !important;
 }
 
-/* --------------------------------------------------------------------------
-   مخفی‌سازی المان‌های همپوشان جهت حفظ جلوه فوتورئال و بی‌نقص تصویر گاوصندوق
-   -------------------------------------------------------------------------- */
-.vault-real-barrel-hinges {
-  display: none !important;
-}
-
-.vault-barrel-hinge {
-  display: none !important;
-}
-
-.vault-outer-bezel {
-  display: none !important;
-}
-
+.vault-real-barrel-hinges,
+.vault-barrel-hinge,
+.vault-outer-bezel,
 .vault-frame-rivet {
   display: none !important;
 }
 
 /* --------------------------------------------------------------------------
-   محفظه داخلی واقعی گاوصندوق (عکس باکیفیت محفظه اسناد با قفسه‌ها و نورپردازی)
+   محفظه داخلی واقعی گاوصندوق
    -------------------------------------------------------------------------- */
 .vault-interior-chamber {
   position: absolute;
@@ -165,7 +149,7 @@
 .vault-interior-photo {
   position: absolute;
   inset: 0;
-  background: url('/assets/vault/real-vault-interior.jpg') center center / cover no-repeat;
+  background: url('/assets/vault/real-vault-interior.jpg?v=10.0') center center / cover no-repeat;
   filter: brightness(0.85) contrast(1.1);
   box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.95);
 }
@@ -247,8 +231,8 @@
   transform-style: preserve-3d;
   transform: rotateY(0deg);
   transition:
-    transform 3.8s cubic-bezier(0.25, 0.1, 0.25, 1),
-    box-shadow 3.8s ease;
+    transform 2.6s cubic-bezier(0.25, 0.1, 0.25, 1),
+    box-shadow 2.6s ease;
   z-index: 4;
   display: flex;
   align-items: center;
@@ -262,13 +246,12 @@
 }
 
 .quad-vault-card.is-unlocked .vault-3d-door {
-  transform: rotateY(-106deg);
+  transform: rotateY(-118deg) scale(1.06);
   box-shadow:
     42px 20px 65px rgba(0, 0, 0, 0.98),
     -10px 0 25px rgba(0, 0, 0, 0.85);
 }
 
-/* ضخامت سه‌بعدی لبه متالیک درب هنگام چرخش در فضا */
 .vault-door-edge-thickness {
   position: absolute;
   top: 0;
@@ -285,9 +268,14 @@
     inset 1px 0 1px rgba(255, 255, 255, 0.25);
   pointer-events: none;
   z-index: 2;
+  opacity: 0;
+  transition: opacity 0.35s ease;
 }
 
-/* صفحه پشتی درب مکانیکی در هنگام باز شدن سه‌بعدی */
+.quad-vault-card.is-unlocked .vault-door-edge-thickness {
+  opacity: 1;
+}
+
 .vault-3d-door::after {
   content: '';
   position: absolute;
@@ -304,6 +292,12 @@
     inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   pointer-events: none;
   z-index: 1;
+  opacity: 0;
+  transition: opacity 0.3s ease 0.4s;
+}
+
+.quad-vault-card.is-unlocked .vault-3d-door::after {
+  opacity: 1;
 }
 
 .vault-real-door-plate {
@@ -311,21 +305,45 @@
   inset: 0;
   border-radius: 5px;
   overflow: hidden;
-  transform-style: preserve-3d;
   box-shadow:
     0 10px 24px rgba(0, 0, 0, 0.95),
     inset 0 1px 1px rgba(255, 255, 255, 0.12);
 }
 
-/* تصویر فوتورئالیستیک بدنه درب فولادی */
+/* تصویر فوتورئالیستیک بدنه درب فولادی بدون زبانه‌های سمت راست */
 .vault-door-photo-bg {
   position: absolute;
   inset: 0;
-  background: url('/assets/vault/real-vault-door.jpg') center center / cover no-repeat;
+  background: url('/assets/vault/real-vault-door-body.jpg?v=10.0') center center / 100% 100% no-repeat;
   filter: contrast(1.06) brightness(0.98);
 }
 
-/* زندانه‌های استوانه‌ای کروم جهت سازگاری تست */
+/* ۵ زبانه استوانه‌ای فولادی سمت راست روی کارت اسلات ۴ که به داخل درب فرو می‌روند */
+.vault-card-bolts-channel {
+  position: absolute;
+  left: 90.35%;
+  top: 25.36%;
+  width: 5.71%;
+  height: 49.40%;
+  overflow: hidden;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.vault-card-bolts-strip {
+  width: 100%;
+  height: 100%;
+  background: url('/assets/vault/real-vault-bolts-strip.png?v=10.0') center center / 100% 100% no-repeat;
+  transform: translateX(0%);
+  transition: transform 1.8s cubic-bezier(0.35, 0, 0.25, 1);
+  will-change: transform;
+}
+
+.quad-vault-card.is-unlocking-wheel .vault-card-bolts-strip,
+.quad-vault-card.is-unlocked .vault-card-bolts-strip {
+  transform: translateX(-108%);
+}
+
 .vault-locking-bolts {
   display: none !important;
 }
@@ -334,7 +352,7 @@
   opacity: 0 !important;
   pointer-events: none !important;
   position: absolute;
-  transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1) 1.6s;
+  transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .vault-piston.right { right: 0; top: 50%; }
@@ -347,22 +365,6 @@
   transform: translateX(-14px);
 }
 
-.quad-vault-card.is-unlocking-wheel .vault-piston.left,
-.quad-vault-card.is-unlocked .vault-piston.left {
-  transform: translateX(10px);
-}
-
-.quad-vault-card.is-unlocking-wheel .vault-piston.top,
-.quad-vault-card.is-unlocked .vault-piston.top {
-  transform: translateY(8px);
-}
-
-.quad-vault-card.is-unlocking-wheel .vault-piston.bottom,
-.quad-vault-card.is-unlocked .vault-piston.bottom {
-  transform: translateY(-8px);
-}
-
-/* گردونه مرکزی کالیبره قفل مکانیکی (#vault-inner-gear) - پنهان در پشت تصویر جهت حفظ خلوص بصری دایل */
 .vault-dial-knurled-knob {
   position: absolute;
   left: 28%;
@@ -375,23 +377,19 @@
   transition: transform 0.6s ease;
 }
 
-.quad-vault-card.is-unlocking-wheel .vault-dial-knurled-knob {
-  transform: translateY(-50%) rotate(-360deg);
-  transition: transform 3.5s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
+.quad-vault-card.is-unlocking-wheel .vault-dial-knurled-knob,
 .quad-vault-card.is-unlocked .vault-dial-knurled-knob {
-  transform: translateY(-50%) rotate(-360deg);
+  transform: translateY(-50%) rotate(-720deg);
 }
 
 /* --------------------------------------------------------------------------
-   دستگیره سه‌شاخه سنگین فوتورئالیستیک کروم (#vault-3d-handle)
-   مرکز دقیق فلنج فولادی: left: 65.5%; top: 50.2%
+   دستگیره سه‌شاخه سنگین فوتورئالیستیک کروم روی کارت اسلات ۴ (#vault-3d-handle)
+   مرکز دقیق شافت توپی فولادی: left: 66.49%; top: 49.10%
    -------------------------------------------------------------------------- */
 .vault-real-spoke-handle {
   position: absolute;
-  left: 65.5%;
-  top: 50.2%;
+  left: 66.49%;
+  top: 49.10%;
   transform: translate(-50%, -50%) rotate(0deg);
   width: 44%;
   height: 44%;
@@ -410,7 +408,7 @@
 .vault-handle-photo {
   position: absolute;
   inset: 0;
-  background: url('/assets/vault/real-chrome-handle.png') center center / contain no-repeat;
+  background: url('/assets/vault/real-chrome-handle.png?v=10.0') center center / contain no-repeat;
   filter: drop-shadow(0 14px 24px rgba(0, 0, 0, 0.98)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.85));
 }
 
@@ -418,246 +416,432 @@
   transform: translate(-50%, -50%) rotate(-14deg) scale(1.02);
 }
 
-/* چرخش آرام و سنگین ۳.۵ ثانیه‌ای دستگیره سه‌شاخه هنگام باز شدن */
-.quad-vault-card.is-unlocking-wheel .vault-real-spoke-handle {
-  transform: translate(-50%, -50%) rotate(540deg);
-  transition: transform 3.5s cubic-bezier(0.25, 1, 0.5, 1);
-}
-
+.quad-vault-card.is-unlocking-wheel .vault-real-spoke-handle,
 .quad-vault-card.is-unlocked .vault-real-spoke-handle {
-  transform: translate(-50%, -50%) rotate(540deg);
+  transform: translate(-50%, -50%) rotate(1080deg);
+  transition: transform 2.4s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 /* ==========================================================================
-   🔐 پاپ‌آپ ورود رمز گاوصندوق اسناد محرمانه (#vault-password-dialog)
-   طراحی فوق‌العاده مدرن، تمیز، های‌تک و جدی (High-Security Security Console)
+   🔐 ۱. صفحه تمام‌صفحه درب فولادی گاوصندوق برای ورود رمز (#vault-password-dialog)
+   - دستگیره سه‌پر دقیقاً سر جای اصلی خود در مرکز شافت توپی سمت راست (left: 66.49%; top: 49.10%)
+   - ۵ زبانه استوانه‌ای فولادی سمت راست که به داخل شکاف درب فرو می‌روند
+   - چرخش ۳ دور کامل (1080deg) دستگیره پس از رمز صحیح و سپس کوچک شدن (Zoom-Out Shrink)
    ========================================================================== */
 .vault-password-dialog {
-  width: min(370px, 94vw) !important;
-  background: radial-gradient(130% 120% at 50% 0%, #151a24 0%, #0d1017 65%, #07090e 100%) !important;
-  border: 1.5px solid #283344 !important;
-  border-radius: 18px !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
   padding: 0 !important;
-  overflow: hidden;
-  box-shadow:
-    0 32px 85px rgba(0, 0, 0, 0.98),
-    inset 0 1px 1px rgba(255, 255, 255, 0.14),
-    0 0 0 1px #040508 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
 }
 
-.vault-terminal-header {
-  padding: 16px 20px 14px !important;
-  background: linear-gradient(180deg, #181e2b 0%, #11151f 100%) !important;
-  border-bottom: 1px solid #1f2735 !important;
+.vault-password-dialog::backdrop {
+  background: rgba(4, 6, 9, 0.94);
+  transition: opacity 0.65s ease;
+}
+
+.vault-password-dialog.is-shrinking-to-slot::backdrop {
+  opacity: 0;
+}
+
+.vault-password-dialog[open] .vault-door-fullscreen-slab {
+  animation: vault-fullscreen-door-zoom 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.vault-password-dialog.is-shrinking-to-slot .vault-door-fullscreen-slab {
+  animation: vault-fullscreen-door-shrink 0.65s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+}
+
+@keyframes vault-fullscreen-door-zoom {
+  0% {
+    opacity: 0;
+    transform: scale(0.76);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes vault-fullscreen-door-shrink {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.18);
+  }
+}
+
+.vault-door-fullscreen-slab {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background-color: #0d1015;
+  background-image:
+    radial-gradient(95% 95% at 50% 50%, rgba(20, 25, 32, 0.14) 0%, rgba(8, 10, 14, 0.52) 85%, rgba(4, 5, 8, 0.82) 100%),
+    url('/assets/vault/real-vault-door-body.jpg?v=10.0');
+  background-size: 100% 100%, 100% 100%;
+  background-position: center center, center center;
+  background-repeat: no-repeat;
+  box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.88);
+  overflow: hidden;
+  transform-origin: center center;
+}
+
+/* ۵ زبانه استوانه‌ای فولادی سمت راست درب در نمای تمام‌صفحه */
+.fullscreen-vault-bolts-channel {
+  position: absolute;
+  left: 90.35%;
+  top: 25.36%;
+  width: 5.71%;
+  height: 49.40%;
+  overflow: hidden;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.fullscreen-vault-bolts-strip {
+  width: 100%;
+  height: 100%;
+  background: url('/assets/vault/real-vault-bolts-strip.png?v=10.0') center center / 100% 100% no-repeat;
+  transform: translateX(0%);
+  transition: transform 2.7s cubic-bezier(0.35, 0, 0.2, 1) 0.35s;
+  will-change: transform;
+}
+
+.vault-password-dialog.is-unlocking-fullscreen .fullscreen-vault-bolts-strip,
+.vault-password-dialog.is-shrinking-to-slot .fullscreen-vault-bolts-strip {
+  transform: translateX(-108%);
+}
+
+/* دستگیره سه‌پر کروم دقیقاً در مرکز شافت توپی فولادی سمت راست درب (left: 66.49%; top: 49.10%) */
+.fullscreen-vault-handle-assembly {
+  position: absolute;
+  left: 66.49%;
+  top: 49.10%;
+  transform: translate(-50%, -50%);
+  width: min(38vw, 52vh);
+  height: min(38vw, 52vh);
+  aspect-ratio: 1 / 1;
+  pointer-events: none;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fs-handle-spokes {
+  width: 100%;
+  height: 100%;
+  background: url('/assets/vault/real-chrome-handle.png?v=10.0') center center / contain no-repeat;
+  filter: drop-shadow(0 28px 38px rgba(0, 0, 0, 0.96)) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.85));
+  transform: rotate(0deg);
+  transition: transform 3.3s cubic-bezier(0.32, 0.08, 0.24, 1);
+  will-change: transform;
+}
+
+/* چرخش دقیقاً ۳ دور کامل (3 × 360 = 1080 درجه) دستگیره سه‌پر در نمای تمام‌صفحه */
+.vault-password-dialog.is-unlocking-fullscreen .fs-handle-spokes,
+.vault-password-dialog.is-shrinking-to-slot .fs-handle-spokes {
+  transform: rotate(1080deg);
+}
+
+/* ==========================================================================
+   باکس قفل فولادی برس‌خورده نصب‌شده در سمت چپ درب
+   ========================================================================== */
+.vault-mounted-escutcheon {
+  position: absolute;
+  left: 33.5%;
+  top: 50.2%;
+  transform: translate(-50%, -50%);
+  z-index: 6;
+  width: min(360px, 42vw);
+  border-radius: 14px;
+  padding: 18px 20px 20px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.024) 0px,
+      rgba(255, 255, 255, 0.024) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    linear-gradient(165deg, #2b323c 0%, #1c2128 45%, #12161c 88%, #0b0e12 100%);
+  border-top: 2px solid #5a677a;
+  border-left: 2px solid #455061;
+  border-right: 2px solid #15191f;
+  border-bottom: 4px solid #07090c;
+  box-shadow:
+    0 32px 75px rgba(0, 0, 0, 0.98),
+    0 8px 22px rgba(0, 0, 0, 0.92),
+    inset 0 1px 1px rgba(255, 255, 255, 0.28),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.9);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+@media (max-width: 860px) {
+  .vault-mounted-escutcheon {
+    left: 30%;
+    width: min(320px, 54vw);
+    padding: 14px;
+  }
+  .fullscreen-vault-handle-assembly {
+    left: 72%;
+    width: min(40vw, 42vh);
+    height: min(40vw, 42vh);
+  }
+}
+
+.escutcheon-allen-screw {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 32%, #64748b 0%, #334155 55%, #0f172a 100%);
+  border: 1px solid #090b0f;
+  box-shadow:
+    inset 0 2px 3px rgba(0, 0, 0, 0.9),
+    0 1px 0 rgba(255, 255, 255, 0.22);
+  pointer-events: none;
+}
+.escutcheon-allen-screw::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  background: #0b0e13;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+.escutcheon-allen-screw.s-tl { top: 10px; left: 10px; }
+.escutcheon-allen-screw.s-tr { top: 10px; right: 10px; }
+.escutcheon-allen-screw.s-bl { bottom: 10px; left: 10px; }
+.escutcheon-allen-screw.s-br { bottom: 10px; right: 10px; }
+
+.vault-escutcheon-top-strip {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 8px 10px;
 }
 
-.vault-security-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.65rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #94a3b8;
-  margin-bottom: 2px;
-}
-
-.vault-status-led {
-  width: 7px;
-  height: 7px;
+.slab-led {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background: #f59e0b;
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.85);
+  box-shadow: 0 0 9px rgba(245, 158, 11, 0.95);
   animation: vault-led-pulse 2s infinite ease-in-out;
 }
 
-.vault-terminal-header h3 {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 900;
-  color: #f1f5f9;
+.vault-password-dialog.is-unlocking-fullscreen .slab-led,
+.vault-password-dialog.is-shrinking-to-slot .slab-led {
+  background: #10b981;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 1);
+  animation: none;
 }
 
-.vault-console-close-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
-  font-size: 1.2rem;
+.vault-slab-close-bolt {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #2b323d 0%, #171b22 100%);
+  border: 1px solid #475569;
+  color: #cbd5e1;
+  font-size: 1.15rem;
+  font-weight: 900;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  box-shadow:
+    0 3px 7px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
   transition: all 0.15s ease;
 }
 
-.vault-console-close-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: rgba(239, 68, 68, 0.5);
-  color: #fca5a5;
+.vault-slab-close-bolt:hover {
+  background: linear-gradient(180deg, #7f1d1d 0%, #450a0a 100%);
+  border-color: #f87171;
+  color: #ffffff;
 }
 
-.vault-password-body {
-  padding: 20px 22px 24px !important;
+.vault-escutcheon-body {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 14px;
+  margin: 0;
 }
 
-/* --------------------------------------------------------------------------
-   نمایشگر دیجیتال قفل (Digital Safe Display Card)
-   -------------------------------------------------------------------------- */
-.vault-digital-display-card {
-  border-radius: 13px;
-  background: #030509;
-  border: 1.5px solid #1a2230;
-  padding: 12px 16px;
+.vault-recessed-readout-bezel {
+  border-radius: 9px;
+  background: linear-gradient(180deg, #040609 0%, #090d13 100%);
+  border-top: 3px solid #030406;
+  border-left: 3px solid #06080c;
+  border-right: 2px solid #2b3340;
+  border-bottom: 2px solid #333d4b;
+  padding: 12px 14px;
   box-shadow:
-    inset 0 3px 12px rgba(0, 0, 0, 0.98),
-    0 1px 0 rgba(255, 255, 255, 0.05);
+    inset 0 5px 14px rgba(0, 0, 0, 0.98),
+    inset 0 0 0 1px rgba(56, 189, 248, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.12);
+  position: relative;
 }
 
-.vault-display-meta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-  font-family: var(--font-mono, monospace);
-  font-size: 0.68rem;
-  font-weight: 700;
-}
-
-.vault-display-label {
-  color: #64748b;
-  letter-spacing: 0.04em;
-}
-
-.vault-display-lock-state {
-  color: #ef4444;
-  letter-spacing: 0.08em;
-  font-weight: 800;
+.vault-recessed-readout-bezel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 42%);
+  pointer-events: none;
 }
 
 .vault-display-screen input#vault-code-input {
   width: 100%;
   border: none;
   background: transparent;
-  padding: 6px 0;
+  padding: 2px 0;
   margin: 0;
   outline: none;
   color: #38bdf8;
-  text-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
   font-family: var(--font-mono, monospace), var(--font-sans, sans-serif);
-  font-size: 1.6rem;
+  font-size: 1.75rem;
   font-weight: 900;
   text-align: center;
-  letter-spacing: 0.28em;
+  letter-spacing: 0.32em;
   caret-color: #38bdf8;
+  direction: ltr;
+}
+
+.vault-password-dialog.is-unlocking-fullscreen .vault-display-screen input#vault-code-input {
+  color: #34d399;
+  text-shadow: 0 0 14px rgba(52, 211, 153, 0.7);
+}
+
+.vault-display-screen input#vault-code-input:placeholder-shown {
+  letter-spacing: 0 !important;
+  font-family: var(--font-mono, monospace) !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
 }
 
 .vault-display-screen input#vault-code-input::placeholder {
-  font-size: 0.85rem;
-  font-weight: 600;
-  letter-spacing: 0;
   color: #475569;
   text-shadow: none;
 }
 
 .vault-display-screen input#vault-code-input.is-error {
   color: #fca5a5 !important;
-  text-shadow: 0 0 12px rgba(239, 68, 68, 0.6) !important;
+  text-shadow: 0 0 12px rgba(239, 68, 68, 0.65) !important;
   animation: vault-error-shake 0.44s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
-/* --------------------------------------------------------------------------
-   کی‌پد استاندارد امنیتی ۳×۴ (Telephone / Safe 3x4 Keypad)
-   -------------------------------------------------------------------------- */
 .vault-keypad-3x4 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  margin-top: 2px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #0b0e13;
+  border-top: 2px solid #05070a;
+  border-left: 2px solid #07090d;
+  border-right: 1px solid #28303d;
+  border-bottom: 1px solid #2e3746;
+  box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.95);
   direction: ltr;
 }
 
 .vault-keypad-3x4 .vault-key-btn {
-  padding: 13px 0;
-  border-radius: 11px;
-  border: 1px solid #2f394c;
-  background: linear-gradient(180deg, #222938 0%, #161c26 60%, #10141c 100%);
-  color: #f1f5f9;
-  font-family: var(--font-mono, monospace);
-  font-size: 1.35rem;
-  font-weight: 800;
+  position: relative;
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid #06080b;
+  background: #05070a;
   cursor: pointer;
   box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.5);
+    0 3px 6px rgba(0, 0, 0, 0.85),
+    inset 0 1px 2px rgba(0, 0, 0, 0.95);
+  user-select: none;
+  transition: transform 0.08s ease;
+}
+
+.vault-keypad-3x4 .vault-key-btn .key-cap {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  padding: 12px 0;
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03) 0px, rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 2px),
+    linear-gradient(180deg, #3b4454 0%, #262d38 48%, #1a1f27 100%);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.32);
+  border-left: 1px solid rgba(255, 255, 255, 0.16);
+  border-right: 1px solid rgba(0, 0, 0, 0.7);
+  border-bottom: 3px solid #0d1015;
+  color: #f1f5f9;
+  font-family: var(--font-mono, monospace);
+  font-size: 1.32rem;
+  font-weight: 900;
   line-height: 1;
-  transition: all 0.12s ease;
-  user-select: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.95);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);
+  transition: all 0.1s ease;
 }
 
-.vault-keypad-3x4 .vault-key-btn:hover {
-  background: linear-gradient(180deg, #2b3447 0%, #1c2432 60%, #131924 100%);
-  border-color: #4f607d;
-  color: #38bdf8;
-  transform: translateY(-1px);
-  box-shadow:
-    0 6px 14px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+.vault-keypad-3x4 .vault-key-btn:hover .key-cap {
+  background: linear-gradient(180deg, #475264 0%, #2f3846 48%, #202630 100%);
+  color: #ffffff;
+  border-top-color: rgba(255, 255, 255, 0.48);
 }
 
-.vault-keypad-3x4 .vault-key-btn:active {
+.vault-keypad-3x4 .vault-key-btn:active .key-cap {
   transform: translateY(2px);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), inset 0 2px 5px rgba(0, 0, 0, 0.9);
-  background: #0c0f16;
+  border-bottom-width: 1px;
+  background: linear-gradient(180deg, #1b2028 0%, #252b36 100%);
+  color: #38bdf8;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9);
 }
 
-/* دکمه‌های کنترلی کلیر و بک‌اسپیس */
-.vault-keypad-3x4 .vault-key-btn.func-clear {
-  border-color: rgba(244, 63, 94, 0.4);
-  background: linear-gradient(180deg, #26161b 0%, #160d10 100%);
-  color: #fda4af;
-  font-size: 1.05rem;
+.vault-keypad-3x4 .vault-key-btn.func-clear .key-cap {
+  background: linear-gradient(180deg, #4c2328 0%, #321519 55%, #220d10 100%);
+  border-top-color: rgba(252, 165, 165, 0.35);
+  color: #fecdd3;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
 }
-.vault-keypad-3x4 .vault-key-btn.func-clear:hover {
-  border-color: rgba(244, 63, 94, 0.7);
-  color: #ffffff;
-  background: #351a23;
-}
-
-.vault-keypad-3x4 .vault-key-btn.func-backspace {
-  border-color: rgba(148, 163, 184, 0.35);
-  background: linear-gradient(180deg, #202633 0%, #121620 100%);
-  color: #cbd5e1;
-  font-size: 1.3rem;
-}
-.vault-keypad-3x4 .vault-key-btn.func-backspace:hover {
-  border-color: #64748b;
+.vault-keypad-3x4 .vault-key-btn.func-clear:hover .key-cap {
+  background: linear-gradient(180deg, #632b32 0%, #411a20 100%);
   color: #ffffff;
 }
 
-/* --------------------------------------------------------------------------
-   بنر فیدبک خطا
-   -------------------------------------------------------------------------- */
+.vault-keypad-3x4 .vault-key-btn.func-backspace .key-cap {
+  background: linear-gradient(180deg, #38332a 0%, #26221b 55%, #181510 100%);
+  border-top-color: rgba(253, 230, 138, 0.3);
+  color: #fde68a;
+  font-size: 1.2rem;
+}
+.vault-keypad-3x4 .vault-key-btn.func-backspace:hover .key-cap {
+  background: linear-gradient(180deg, #4a4336 0%, #302b22 100%);
+  color: #ffffff;
+}
+
 .vault-feedback-banner {
-  min-height: 38px;
-  padding: 9px 14px;
-  border-radius: 9px;
-  font-size: 0.82rem;
-  font-weight: 700;
+  min-height: 36px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 0.8rem;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -669,144 +853,346 @@
 }
 
 .vault-feedback-banner.error {
-  background: rgba(239, 68, 68, 0.16);
-  border: 1px solid rgba(239, 68, 68, 0.55);
-  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.55);
+  border: 1px solid rgba(248, 113, 113, 0.65);
+  color: #fecaca;
 }
 
-.vault-feedback-banner.success {
-  background: rgba(16, 185, 129, 0.16);
-  border: 1px solid rgba(16, 185, 129, 0.55);
-  color: #a7f3d0;
-}
-
-/* --------------------------------------------------------------------------
-   فوتر اکشن‌ها (Action Footer)
-   -------------------------------------------------------------------------- */
 .vault-password-modal-footer {
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .vault-primary-submit-btn {
   width: 100%;
   padding: 13px 18px;
-  border-radius: 11px;
-  border: 1.5px solid #059669;
-  background: linear-gradient(180deg, #065f46 0%, #047857 55%, #064e3b 100%);
-  color: #ffffff;
-  font-size: 0.98rem;
-  font-weight: 800;
+  border-radius: 8px;
+  border-top: 1.5px solid #d4af37;
+  border-left: 1px solid #9a7b2c;
+  border-right: 1px solid #524014;
+  border-bottom: 3px solid #291f07;
+  background: linear-gradient(180deg, #3c3220 0%, #272014 50%, #19140c 100%);
+  color: #fef3c7;
+  font-size: 0.96rem;
+  font-weight: 900;
   cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 10px;
   box-shadow:
-    0 4px 16px rgba(5, 150, 105, 0.35),
-    inset 0 1px 1px rgba(255, 255, 255, 0.25);
-  transition: all 0.18s ease;
+    0 5px 14px rgba(0, 0, 0, 0.88),
+    inset 0 1px 0 rgba(253, 224, 71, 0.3);
+  transition: all 0.15s ease;
 }
 
 .vault-primary-submit-btn:hover {
-  background: linear-gradient(180deg, #10b981 0%, #059669 55%, #047857 100%);
-  border-color: #10b981;
-  box-shadow:
-    0 6px 22px rgba(16, 185, 129, 0.5),
-    inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  background: linear-gradient(180deg, #4d4027 0%, #332919 52%, #211a0f 100%);
+  border-top-color: #fde047;
+  color: #ffffff;
   transform: translateY(-1px);
+  box-shadow:
+    0 7px 18px rgba(0, 0, 0, 0.92),
+    0 0 12px rgba(212, 175, 55, 0.25);
 }
 
 .vault-primary-submit-btn:active {
-  transform: translateY(1px);
+  transform: translateY(2px);
+  border-bottom-width: 1px;
 }
 
-.vault-cancel-link-btn {
-  background: transparent;
-  border: none;
-  color: #64748b;
-  font-size: 0.82rem;
-  font-weight: 700;
-  cursor: pointer;
-  padding: 4px 0;
-  transition: color 0.15s ease;
+.latch-bolt-icon {
+  width: 14px;
+  height: 8px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #e2e8f0 0%, #64748b 55%, #1e293b 100%);
+  border: 1px solid #0f172a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
 }
 
-.vault-cancel-link-btn:hover {
-  color: #cbd5e1;
-}
-
-/* --------------------------------------------------------------------------
-   مودال نمایش اسناد آزادشده (#vault-reward-dialog)
-   -------------------------------------------------------------------------- */
+/* ==========================================================================
+   📂 ۲. پاکت کاهی واقعی استودیویی اسناد محرمانه (#vault-reward-dialog — V10.0)
+   - خروج کاملاً نرم و پیوسته کاغذ دعوت‌نامه از داخل شکاف پاکت (z-index: 20)
+   - و سپس قرار گرفتن کامل و شکیل کاغذ بر روی (در جلوی) پوشه کاهی (z-index: 45)
+   ========================================================================== */
 .vault-reward-dialog {
-  width: min(760px, 95vw) !important;
-  max-height: 92vh !important;
-  background: #0f1217 !important;
-  border: 1.5px solid #374151 !important;
-  border-radius: 16px !important;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.98) !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
 }
 
-.vault-reward-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 14px 18px !important;
-  overflow-y: auto;
+.vault-reward-dialog::backdrop {
+  background: radial-gradient(circle at center, rgba(14, 12, 9, 0.90) 0%, rgba(4, 3, 2, 0.97) 100%);
+  backdrop-filter: blur(8px);
 }
 
-.vault-reward-banner {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: #181d26;
-  border: 1px solid #2d3748;
-  text-align: center;
-}
-
-.vault-reward-banner h4 {
-  margin: 0;
-  font-size: 0.98rem;
-  font-weight: 900;
-  color: #f1f5f9;
-}
-
-.vault-reward-banner p {
-  margin: 0;
-  font-size: 0.78rem;
-  color: #94a3b8;
-  line-height: 1.6;
-}
-
-.vault-gallery-stage {
+.kraft-stage-backdrop {
   position: relative;
-  width: 100%;
-  min-height: 290px;
-  max-height: 56vh;
-  border-radius: 12px;
-  background: #090c10;
-  border: 1px solid #1e2430;
-  box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.95);
+  width: 100vw;
+  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  padding: 10px;
+  user-select: none;
+}
+
+/* تنها دکمه بستن در گوشه بالا سمت چپ */
+.kraft-floating-close-btn {
+  position: fixed;
+  top: 22px;
+  left: 24px;
+  z-index: 80;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(24, 20, 15, 0.88);
+  border: 1.5px solid rgba(212, 180, 131, 0.45);
+  color: #f3e5c8;
+  font-size: 1.5rem;
+  font-weight: 900;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.88);
+  transition: all 0.18s ease;
+}
+
+.kraft-floating-close-btn:hover {
+  background: #7f1d1d;
+  border-color: #fca5a5;
+  color: #ffffff;
+  transform: scale(1.06);
+}
+
+.kraft-printer-scene {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1500px;
+}
+
+/* استیج پاکت کاهی فتو-رئالیستیک با نسبت ابعاد دقیق استودیویی (692 / 1012) */
+.kraft-envelope-stage {
+  position: relative;
+  width: min(390px, 84vw);
+  max-height: 76vh;
+  aspect-ratio: 692 / 1012;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.94));
+  transition:
+    transform 0.85s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.4s ease;
+}
+
+.kraft-printer-scene[data-envelope-state="closed"] .kraft-envelope-stage:hover {
+  transform: translateY(-6px) scale(1.016);
+  filter: drop-shadow(0 38px 68px rgba(0, 0, 0, 0.97));
+}
+
+.kraft-printer-scene[data-envelope-state="opening"] .kraft-envelope-stage,
+.kraft-printer-scene[data-envelope-state="printing"] .kraft-envelope-stage {
+  transform: translateY(55px) scale(0.93);
+}
+
+/* وقتی برگه کامل از داخل پاکت بیرون آمد و روی پوشه کاهی قرار گرفت، پوشه در مرکز صفحه می‌ایستد */
+.kraft-printer-scene[data-envelope-state="complete"] .kraft-envelope-stage {
+  transform: translateY(16px) scale(0.95);
+}
+
+/* --------------------------------------------------------------------------
+   لایه ۱ (z-index: 10): دیواره داخلی پشتی دهانه پاکت + درِ بازشده بالایی (بدون دکمه و نخ وارونه)
+   -------------------------------------------------------------------------- */
+.kraft-back-inside {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  background: url('/assets/vault/real-kraft-back-inside.png?v=10.0') center center / 100% 100% no-repeat;
+  pointer-events: none;
+}
+
+.kraft-top-flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 19.27%;
+  z-index: 38;
+  transform-origin: top center;
+  transform: rotateX(0deg);
+  background: url('/assets/vault/real-kraft-flap.png?v=10.0') top center / 100% 100% no-repeat;
+  pointer-events: none;
+  transition:
+    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.65s ease,
+    z-index 0s linear 0.2s;
+}
+
+.kraft-printer-scene[data-envelope-state="opening"] .kraft-top-flap,
+.kraft-printer-scene[data-envelope-state="printing"] .kraft-top-flap,
+.kraft-printer-scene[data-envelope-state="complete"] .kraft-top-flap {
+  transform: rotateX(176deg);
+  z-index: 10;
+  filter: brightness(0.82) contrast(1.04);
+}
+
+/* --------------------------------------------------------------------------
+   لایه ۲ -> ۴۵: خروج کاملاً نرم کاغذ دعوت‌نامه از داخل شکاف پاکت (z-index: 20)
+   و سپس قرار گرفتن کامل آن بر روی پوشه کاهی (z-index: 45)
+   -------------------------------------------------------------------------- */
+.kraft-paper-slot {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  top: 8%;
+  bottom: 5%;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(8%) scale(0.95);
+}
+
+/* در لحظه باز شدن درب پاکت، برگه در داخل شکاف پاکت (پشت جیب جلویی z-index: 30) آماده حرکت است */
+.kraft-printer-scene[data-envelope-state="opening"] .kraft-paper-slot {
+  opacity: 1;
+  z-index: 20;
+  transform: translateY(6%) scale(0.95);
+  transition: opacity 0.25s ease, transform 0.35s ease;
+}
+
+/* انیمیشن یکپارچه و بسیار نرم: ۱) سر خوردن نرم به بالا از داخل پاکت (z-index: 20) ۲) آمدن به روی پوشه کاهی (z-index: 45) */
+.kraft-printer-scene[data-envelope-state="printing"] .kraft-paper-slot {
+  opacity: 1;
+  animation: kraft-paper-smooth-out-and-over 2.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* حالت نهایی: برگه دعوت‌نامه کاملاً روی پوشه کاهی (z-index: 45) قرار می‌گیرد */
+.kraft-printer-scene[data-envelope-state="complete"] .kraft-paper-slot {
+  opacity: 1;
+  z-index: 45;
+  transform: translateY(-2%) scale(1.06);
+  pointer-events: auto;
+}
+
+.kraft-paper-slot:has(.kraft-emerging-sheet.is-zoomed) {
+  z-index: 60 !important;
+}
+
+@keyframes kraft-paper-smooth-out-and-over {
+  0% {
+    opacity: 1;
+    z-index: 20;
+    transform: translateY(6%) scale(0.95);
+  }
+  48% {
+    opacity: 1;
+    z-index: 20;
+    transform: translateY(-95%) scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    z-index: 45;
+    transform: translateY(-96%) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    z-index: 45;
+    transform: translateY(-2%) scale(1.06);
+  }
+}
+
+.kraft-emerging-sheet {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-in;
+  filter: drop-shadow(0 22px 44px rgba(0, 0, 0, 0.92));
+  transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.kraft-printer-scene[data-envelope-state="complete"] .kraft-emerging-sheet.is-zoomed {
+  transform: scale(1.16);
+  cursor: zoom-out;
 }
 
 #vault-reward-main-img {
-  width: auto;
-  height: auto;
-  max-width: 100%;
-  max-height: 52vh;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.9);
+  border-radius: 6px;
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   لایه ۳ (z-index: 30): جیب جلویی فتو-رئالیستیک پاکت کاهی + مهر استامپ جوهری «خیلی محرمانه»
+   -------------------------------------------------------------------------- */
+.kraft-front-pocket {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  background: url('/assets/vault/real-kraft-pocket-front.png?v=10.0') center center / 100% 100% no-repeat;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kraft-top-secret-stamp {
+  margin-top: 20%;
+  padding: 10px 28px;
+  border: 4px solid rgba(138, 20, 20, 0.86);
+  border-radius: 7px;
+  color: rgba(138, 20, 20, 0.90);
+  font-family: var(--font-sans, 'Vazirmatn', Tahoma, sans-serif);
+  font-size: clamp(1.55rem, 4.2vw, 2.05rem);
+  font-weight: 900;
+  letter-spacing: 0;
+  transform: rotate(-7deg);
+  box-shadow:
+    inset 0 0 0 2px rgba(138, 20, 20, 0.72),
+    0 1px 4px rgba(120, 18, 18, 0.14);
+  background: rgba(138, 20, 20, 0.04);
+  mix-blend-mode: multiply;
+  user-select: none;
+}
+
+/* --------------------------------------------------------------------------
+   لایه ۴ (z-index: 40 در حالت بسته): درب بسته بالای پاکت و نخ قرمز پیچیده شده دور هر دو دکمه
+   -------------------------------------------------------------------------- */
+.kraft-closed-top {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  background: url('/assets/vault/real-kraft-closed-top.png?v=10.0') center center / 100% 100% no-repeat;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.22s ease;
+}
+
+.kraft-printer-scene:not([data-envelope-state="closed"]) .kraft-closed-top {
+  opacity: 0;
 }
 
 .vault-gallery-nav-btn {
@@ -816,105 +1202,34 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  border: 1px solid #475569;
-  background: rgba(15, 23, 42, 0.9);
-  color: #f8fafc;
-  font-size: 1.1rem;
+  border: 1.5px solid rgba(212, 180, 131, 0.55);
+  background: rgba(20, 16, 12, 0.92);
+  color: #f3e5c8;
+  font-size: 1.05rem;
   font-weight: 900;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 4;
-  transition: all 0.2s ease;
+  z-index: 50;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.85);
+  transition: all 0.18s ease;
 }
 
 .vault-gallery-nav-btn:hover {
-  background: #334155;
+  background: #5c4020;
+  border-color: #fde68a;
   color: #ffffff;
-  transform: translateY(-50%) scale(1.06);
+  transform: translateY(-50%) scale(1.08);
 }
 
-.vault-gallery-nav-btn.prev { right: 12px; }
-.vault-gallery-nav-btn.next { left: 12px; }
+.vault-gallery-nav-btn.prev { right: -12px; }
+.vault-gallery-nav-btn.next { left: -12px; }
 
 .vault-gallery-nav-btn[hidden] {
   display: none !important;
 }
 
-.vault-gallery-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.vault-gallery-controls[hidden] {
-  display: none !important;
-}
-
-.vault-slide-counter {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.76rem;
-  font-weight: 800;
-  color: #94a3b8;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: #181d26;
-  border: 1px solid #334155;
-}
-
-.vault-thumbs-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow-x: auto;
-}
-
-.vault-thumb-btn {
-  width: 54px;
-  height: 38px;
-  border-radius: 6px;
-  border: 2px solid #334155;
-  padding: 0;
-  overflow: hidden;
-  cursor: pointer;
-  background: #090d16;
-  opacity: 0.6;
-  transition: all 0.2s ease;
-}
-
-.vault-thumb-btn.active,
-.vault-thumb-btn:hover {
-  border-color: #94a3b8;
-  opacity: 1;
-  transform: translateY(-1px);
-}
-
-.vault-thumb-btn img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.vault-reward-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.vault-reward-footer-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* --------------------------------------------------------------------------
-   انیمیشن‌ها
-   -------------------------------------------------------------------------- */
 @keyframes vault-led-pulse {
   0%, 100% { opacity: 0.6; }
   50% { opacity: 1; filter: drop-shadow(0 0 6px #f59e0b); }

@@ -13,6 +13,75 @@ if (!adminToken) {
 let dashboardSocket = null;
 let allSessions = [];
 let loadedSessionsMap = {};
+const sessionPhasesMap = {};
+
+function toPersianDigits(value) {
+  return String(value ?? '').replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+}
+
+function getCleanClassTitle(session, index) {
+  const rawName = String(session?.name || '').trim();
+  if (!rawName) {
+    const num = toPersianDigits(session?.id || (index + 1));
+    return `کلاس شماره ${num}`;
+  }
+  if (/^کلاس\s+/i.test(rawName)) {
+    return rawName;
+  }
+  if (rawName.includes('تست سرور') || rawName.includes('تست')) {
+    return 'کلاس تست سرور';
+  }
+  return `کلاس ${rawName}`;
+}
+
+function updateCardLivePhase(sessionId, data) {
+  const badge = document.getElementById(`live-phase-badge-${sessionId}`);
+  const textEl = document.getElementById(`live-phase-text-${sessionId}`);
+  if (!badge || !textEl || !data) return;
+
+  // طبق نیازمندی صریح: فاز پایانی اتاق چت حذف شده و اگر سناریوی ورودی در جریان نباشد، نوار مخفی است
+  if (!data.phase || data.phase === 'idle' || data.phase === 'chat_active' || data.phase === 'completed') {
+    badge.style.display = 'none';
+    return;
+  }
+
+  let text = '';
+  let cls = 'phase-waiting';
+  badge.style.display = 'flex';
+
+  if (data.phase === 'portal_login') {
+    text = '🔐 درگاه ورود محرمانه // دانش‌آموزان در صفحه ثبت کد هستند';
+    cls = 'phase-portal';
+  } else if (data.phase === 'cyber_scanning') {
+    text = '⚡ اسکن سایبری و رمزگشایی مدارک // در حال انتقال به درگاه ورود...';
+    cls = 'phase-scanning';
+  } else if (data.phase === 'blackout_phase2') {
+    const left = Number(data.secondsLeft || 240);
+    const m = Math.floor(left / 60);
+    const s = left % 60;
+    text = `🟢 بلک‌اوت (رادار سبز) // ${toPersianDigits(m)} دقیقه و ${toPersianDigits(s)} ثانیه تا ورود به درگاه`;
+    cls = 'phase-blackout-2';
+  } else if (data.phase === 'blackout_phase1') {
+    const left = Number(data.secondsLeft || 300);
+    const m = Math.floor(left / 60);
+    const s = left % 60;
+    text = `🌑 بلک‌اوت (تاریکی مطلق) // ${toPersianDigits(m)} دقیقه و ${toPersianDigits(s)} ثانیه تا ورود به درگاه`;
+    cls = 'phase-blackout-1';
+  } else if (data.phase === 'countdown') {
+    const courierSec = Number(data.secondsLeft || 0);
+    const totalGateSec = Number(data.totalSecondsToLogin || (courierSec + 300));
+    const totalM = Math.floor(totalGateSec / 60);
+    const totalS = totalGateSec % 60;
+    text = `🛵 پیک در راه است // ${toPersianDigits(courierSec)} ثانیه تا تحویل (${toPersianDigits(totalM)} دقیقه و ${toPersianDigits(totalS)} ثانیه تا ورود به گیت)`;
+    cls = 'phase-countdown';
+  } else {
+    badge.style.display = 'none';
+    return;
+  }
+
+  badge.className = `live-phase-strip ${cls}`;
+  textEl.textContent = text;
+}
 
 const CASE_DEFS = [
   { key: 'village', title: 'راز دهکده' },
@@ -41,6 +110,7 @@ function initDashboardSocket() {
         sockEl.textContent = 'متصل';
         sockEl.style.color = 'var(--emerald)';
       }
+      dashboardSocket.emit('get_online_sessions');
     });
 
     dashboardSocket.on('disconnect', () => {
@@ -51,20 +121,53 @@ function initDashboardSocket() {
       }
     });
 
+    dashboardSocket.on('sessions_lifecycle_snapshot', (snapshot) => {
+      if (snapshot && typeof snapshot === 'object') {
+        Object.assign(sessionPhasesMap, snapshot);
+        Object.keys(snapshot).forEach(sId => {
+          updateCardLivePhase(sId, snapshot[sId]);
+        });
+      }
+    });
+
+    dashboardSocket.on('session_phase_update', (data) => {
+      if (!data || !data.sessionId) return;
+      sessionPhasesMap[data.sessionId] = data;
+      updateCardLivePhase(data.sessionId, data);
+    });
+
     dashboardSocket.on('new_store_order', (data) => {
       const notifEl = document.getElementById('notifications');
       if (notifEl) {
-        notifEl.innerHTML = `🛒 <strong>سفارش تازه!</strong> برای جلسه #${data.sessionId} سفارش گل ثبت شد؛ بسته را برای تحویل آماده فرمایید.`;
+        const rawTeacher = data.sessionName || loadedSessionsMap[data.sessionId]?.name;
+        let displayName = '';
+        if (rawTeacher) {
+          displayName = rawTeacher.startsWith('کلاس') ? rawTeacher : `کلاس ${rawTeacher}`;
+        } else {
+          displayName = `جلسه #${toPersianDigits(data.sessionId)}`;
+        }
+        notifEl.innerHTML = `🛒 <strong>سفارش تازه!</strong> برای «${escapeHtml(displayName)}» سفارش گل ثبت شد؛ بسته را برای تحویل آماده فرمایید.`;
       }
       loadSessions();
     });
 
     dashboardSocket.on('order_countdown_tick', (data) => {
-      const el = document.getElementById('countdown-' + data.sessionId);
-      if (el) {
-        el.style.display = 'block';
-        el.innerText = '⏱️ زمان تا تحویل: ' + data.secondsLeft + ' ثانیه - بسته فیزیکی را تحویل دهید!';
-        if (data.secondsLeft <= 0) el.style.display = 'none';
+      if (!data || !data.sessionId) return;
+      const existing = sessionPhasesMap[data.sessionId] || {};
+      existing.phase = data.stage || (data.secondsLeft > 0 ? 'countdown' : 'blackout_phase1');
+      existing.secondsLeft = data.secondsLeft;
+      existing.totalSecondsToLogin = data.totalSecondsToLogin;
+      existing.sessionName = data.sessionName;
+      sessionPhasesMap[data.sessionId] = existing;
+      updateCardLivePhase(data.sessionId, existing);
+    });
+
+    dashboardSocket.on('session_presence_changed', (data) => {
+      // حضور کاربر آنلاین ثبت می‌شود بدون اینکه نوار مزاحم فاز ۶ در کارت‌ها فعال گردد
+      if (!data || !data.sessionId) return;
+      const card = document.getElementById(`session-card-${data.sessionId}`);
+      if (card) {
+        card.classList.toggle('user-is-online', Boolean(data.isOnline));
       }
     });
 
@@ -129,20 +232,23 @@ function renderSessions(sessions) {
     return;
   }
 
-  sessions.forEach(s => {
+  sessions.forEach((s, index) => {
     loadedSessionsMap[s.id] = s;
     const card = document.createElement('article');
     card.className = 'session-card';
     card.id = `session-card-${s.id}`;
 
+    // تعیین عنوان کلاس طبق درخواست صریح: «بجای شماره کلاس بنویسه کلاس فلان»
+    const classTitle = getCleanClassTitle(s, index);
+
     // وضعیت جلسه
     let statusPill = '';
     if (s.status === 'active') {
-      statusPill = `<span class="status-pill status-active"><span class="pulse-dot"></span> فعال و متصل</span>`;
+      statusPill = `<span class="status-pill status-active"><span class="pulse-dot"></span> فعال</span>`;
     } else if (s.status === 'completed') {
-      statusPill = `<span class="status-pill status-completed">🏁 پایان یافته</span>`;
+      statusPill = `<span class="status-pill status-completed">🏁 پایان‌یافته</span>`;
     } else {
-      statusPill = `<span class="status-pill status-waiting">⏳ در انتظار ورود</span>`;
+      statusPill = `<span class="status-pill status-waiting">⏳ در انتظار</span>`;
     }
 
     // استخراج وضعیت پرونده‌های این جلسه
@@ -169,7 +275,7 @@ function renderSessions(sessions) {
             <span class="case-dot-icon">${statusIcon}</span>
             <div class="case-title-wrap">
               <strong class="case-name">${escapeHtml(c.title)}</strong>
-              ${isActive ? '<span class="current-case-tag">پرونده جاری</span>' : ''}
+              ${isActive ? '<span class="current-case-tag">جاری</span>' : ''}
             </div>
           </div>
           <div class="case-item-actions">
@@ -183,14 +289,52 @@ function renderSessions(sessions) {
             ${!isActive ? `
               <button type="button" class="set-active-btn" 
                       onclick="setActiveCase(${s.id}, '${c.key}')" 
-                      title="تنظیم به عنوان پرونده فعال این جلسه">
-                ⚡ فعال‌سازی
+                      title="تنظیم به عنوان پرونده فعال">
+                ⚡
               </button>
             ` : ''}
           </div>
         </div>
       `;
     }).join('');
+
+    // محاسبه وضعیت لحظه‌ای و زنده کلاس در چرخه حیات سناریوی یک‌باره ورود
+    const lifecycle = sessionPhasesMap[s.id] || {};
+    let liveStatusText = '';
+    let liveStatusClass = 'phase-waiting';
+    let isLiveActive = false;
+
+    if (lifecycle.phase === 'portal_login') {
+      liveStatusText = '🔐 درگاه ورود محرمانه // دانش‌آموزان در صفحه ثبت کد هستند';
+      liveStatusClass = 'phase-portal';
+      isLiveActive = true;
+    } else if (lifecycle.phase === 'cyber_scanning') {
+      liveStatusText = '⚡ اسکن سایبری و رمزگشایی مدارک // در حال انتقال به درگاه...';
+      liveStatusClass = 'phase-scanning';
+      isLiveActive = true;
+    } else if (lifecycle.phase === 'blackout_phase2') {
+      const left = Number(lifecycle.secondsLeft || 240);
+      const m = Math.floor(left / 60);
+      const s = left % 60;
+      liveStatusText = `🟢 بلک‌اوت (رادار سبز) // ${toPersianDigits(m)} دقیقه و ${toPersianDigits(s)} ثانیه تا ورود به درگاه`;
+      liveStatusClass = 'phase-blackout-2';
+      isLiveActive = true;
+    } else if (lifecycle.phase === 'blackout_phase1') {
+      const left = Number(lifecycle.secondsLeft || 300);
+      const m = Math.floor(left / 60);
+      const s = left % 60;
+      liveStatusText = `🌑 بلک‌اوت (تاریکی مطلق) // ${toPersianDigits(m)} دقیقه و ${toPersianDigits(s)} ثانیه تا ورود به درگاه`;
+      liveStatusClass = 'phase-blackout-1';
+      isLiveActive = true;
+    } else if (lifecycle.phase === 'countdown' && lifecycle.secondsLeft > 0) {
+      const courierSec = Number(lifecycle.secondsLeft || 0);
+      const totalGateSec = Number(lifecycle.totalSecondsToLogin || (courierSec + 300));
+      const totalM = Math.floor(totalGateSec / 60);
+      const totalS = totalGateSec % 60;
+      liveStatusText = `🛵 پیک در راه است // ${toPersianDigits(courierSec)} ثانیه تا تحویل (${toPersianDigits(totalM)} دقیقه و ${toPersianDigits(totalS)} ثانیه تا ورود به گیت)`;
+      liveStatusClass = 'phase-countdown';
+      isLiveActive = true;
+    }
 
     card.innerHTML = `
       <div class="card-header-row">
@@ -201,7 +345,16 @@ function renderSessions(sessions) {
         </div>
       </div>
 
-      <h3 class="session-card-title">${escapeHtml(s.name)}</h3>
+      <div class="session-card-title">
+        <span class="class-title-text">${escapeHtml(classTitle)}</span>
+        <span class="class-sub-badge">جلسه #${toPersianDigits(s.id)}</span>
+      </div>
+
+      <!-- بنر رهگیری زنده وضعیت کلاس (تنها در صورت فعال بودن سناریوی ورود نمایش داده می‌شود) -->
+      <div class="live-phase-strip ${liveStatusClass}" id="live-phase-badge-${s.id}" style="${isLiveActive ? '' : 'display:none;'}">
+        <span class="phase-dot-indicator"></span>
+        <span class="phase-text" id="live-phase-text-${s.id}">${liveStatusText}</span>
+      </div>
 
       <div class="codes-chips-grid">
         <div class="code-chip">
@@ -229,7 +382,7 @@ function renderSessions(sessions) {
 
       <div class="session-cases-block">
         <div class="cases-block-header">
-          <span class="cases-block-title">📁 وضعیت پرونده‌ها:</span>
+          <span class="cases-block-title">📁 پرونده‌ها:</span>
           <span class="cases-block-active-badge">جاری: ${escapeHtml(activeCaseDef.title)}</span>
         </div>
         <div class="cases-table-list">

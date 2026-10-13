@@ -97,6 +97,35 @@ router.post('/order', async (req, res) => {
     const REQUIRED_INVOICE_IDS = [1, 2, 3, 4, 5];
     const itemsList = Array.isArray(items) ? items : [];
     const itemIds = itemsList.map(it => Number(it.id));
+
+    // ۱. بررسی کالاهای غیرموجود در انبار (خارج از ۵ قلم فاکتور)
+    const unavailableItems = itemsList.filter(it => !REQUIRED_INVOICE_IDS.includes(Number(it.id)));
+    if (unavailableItems.length > 0) {
+      const names = unavailableItems.map(it => {
+        const found = PRODUCTS.find(p => Number(p.id) === Number(it.id));
+        return found ? found.name : (it.name || `کالای #${it.id}`);
+      });
+      return res.status(400).json({
+        success: false,
+        message: `عدم موجودی: محصول «${names.join('، ')}» در انبار موجود نیست. لطفاً آن را از سبد خرید کم کنید.`,
+        unavailableIds: unavailableItems.map(it => Number(it.id)),
+      });
+    }
+
+    // ۲. بررسی تعداد بیش از ۱ عدد برای کالاهای موجود
+    const excessItems = itemsList.filter(it => Number(it.quantity || it.qty || 1) > 1);
+    if (excessItems.length > 0) {
+      const names = excessItems.map(it => {
+        const found = PRODUCTS.find(p => Number(p.id) === Number(it.id));
+        return found ? found.name : (it.name || `کالای #${it.id}`);
+      });
+      return res.status(400).json({
+        success: false,
+        message: `عدم موجودی: از محصول «${names.join('، ')}» تنها ۱ عدد در انبار موجود است. لطفاً تعداد اضافی را در سبد خرید کم کنید.`,
+        excessIds: excessItems.map(it => Number(it.id)),
+      });
+    }
+
     const allRequiredPresent = REQUIRED_INVOICE_IDS.every(id => itemIds.includes(id));
     const noDisallowed = itemIds.every(id => REQUIRED_INVOICE_IDS.includes(id));
     const allQuantitiesOne = itemsList.every(it => Number(it.quantity || it.qty || 1) === 1);
@@ -105,7 +134,7 @@ router.post('/order', async (req, res) => {
     if (!exactInvoiceMatch) {
       return res.status(400).json({
         success: false,
-        message: 'عدم موجودی',
+        message: 'عدم موجودی: اقلام سبد خرید با فاکتور سفارش مطابقت ندارد (هر ۵ قلم فاکتور باید در سبد باشد).',
       });
     }
 
@@ -139,32 +168,127 @@ router.post('/order', async (req, res) => {
       await Session.bindTeacherPhone(existingSession.id, cleanPhone);
     }
 
-    // اطلاع‌رسانی همزمان (Realtime) به ادمین‌ها با شمارش معکوس زنده
+    // اطلاع‌رسانی همزمان (Realtime) به ادمین‌ها با شمارش معکوس ۳۰ ثانیه‌ای پیک و ۵ دقیقه‌ای بلک‌اوت
     const io = req.app.get('io');
+    const isTestOrder = (
+      String(discountCode).trim() === '542810' ||
+      String(phone || '').replace(/\D/g, '') === '09151234567'
+    );
+    const courierSeconds = isTestOrder ? 10 : 30; // ۳۰ ثانیه برای کاربر عادی طبق نیازمندی
+    const blackoutTotalSeconds = isTestOrder ? 15 : 300; // ۵ دقیقه بلک‌اوت کامل (۱ دقیقه تاریک + ۴ دقیقه رادار سبز)
+    const blackoutPhase1Seconds = isTestOrder ? 5 : 60; // ۱ دقیقه اول: تاریکی مطلق
+    const totalSecondsToGate = courierSeconds + blackoutTotalSeconds;
+
     if (io) {
       io.to('admins').emit('new_store_order', {
         sessionId: existingSession.id,
+        sessionName: existingSession.name,
         session: existingSession,
         customerName,
         phone,
         address,
         createdAt: existingSession.created_at,
-        secondsLeft: 30,
+        secondsLeft: courierSeconds,
+        totalSecondsToLogin: totalSecondsToGate,
       });
 
-      // اجرای لایو تایمر معکوس ۳۰ ثانیه‌ای برای داشبورد ادمین
-      let countdown = 30;
-      const timerInterval = setInterval(() => {
-        countdown--;
-        io.to('admins').emit('order_countdown_tick', {
-          sessionId: existingSession.id,
-          secondsLeft: countdown,
+      if (typeof io.updateSessionPhase === 'function') {
+        io.updateSessionPhase(existingSession.id, {
+          phase: 'countdown',
+          secondsLeft: courierSeconds,
+          totalSecondsToLogin: totalSecondsToGate,
           sessionName: existingSession.name,
-          customerName,
+          phaseLabel: `🛵 پیک در راه است // ${courierSeconds} ثانیه تا تحویل`,
         });
+      }
 
-        if (countdown <= 0) {
-          clearInterval(timerInterval);
+      // اجرای لایو تایمر معکوس برای داشبورد ادمین تا لحظه ورود به درگاه کد چت
+      let currentStage = 'courier'; // 'courier' -> 'blackout_phase1' -> 'blackout_phase2' -> 'cyber_scanning' -> 'portal_login'
+      let courierRemaining = courierSeconds;
+      let blackoutRemaining = blackoutTotalSeconds;
+
+      const timerInterval = setInterval(() => {
+        if (currentStage === 'courier') {
+          courierRemaining--;
+          const totalLeft = courierRemaining + blackoutTotalSeconds;
+
+          io.to('admins').emit('order_countdown_tick', {
+            sessionId: existingSession.id,
+            sessionName: existingSession.name,
+            secondsLeft: courierRemaining,
+            totalSecondsToLogin: totalLeft,
+            stage: 'courier',
+          });
+
+          if (typeof io.updateSessionPhase === 'function') {
+            io.updateSessionPhase(existingSession.id, {
+              phase: 'countdown',
+              secondsLeft: courierRemaining,
+              totalSecondsToLogin: totalLeft,
+              sessionName: existingSession.name,
+              phaseLabel: `🛵 پیک در راه است // ${courierRemaining} ثانیه تا تحویل`,
+            });
+          }
+
+          if (courierRemaining <= 0) {
+            currentStage = 'blackout_phase1';
+          }
+        } else if (currentStage === 'blackout_phase1' || currentStage === 'blackout_phase2') {
+          blackoutRemaining--;
+          const isPhase2 = (blackoutTotalSeconds - blackoutRemaining) >= blackoutPhase1Seconds;
+          currentStage = isPhase2 ? 'blackout_phase2' : 'blackout_phase1';
+
+          io.to('admins').emit('order_countdown_tick', {
+            sessionId: existingSession.id,
+            sessionName: existingSession.name,
+            secondsLeft: blackoutRemaining,
+            totalSecondsToLogin: blackoutRemaining,
+            stage: currentStage,
+          });
+
+          if (typeof io.updateSessionPhase === 'function') {
+            io.updateSessionPhase(existingSession.id, {
+              phase: currentStage,
+              secondsLeft: blackoutRemaining,
+              totalSecondsToLogin: blackoutRemaining,
+              sessionName: existingSession.name,
+            });
+          }
+
+          if (blackoutRemaining <= 0) {
+            currentStage = 'cyber_scanning';
+            if (typeof io.updateSessionPhase === 'function') {
+              io.updateSessionPhase(existingSession.id, {
+                phase: 'cyber_scanning',
+                secondsLeft: 14,
+                totalSecondsToLogin: 14,
+                sessionName: existingSession.name,
+              });
+            }
+
+            // پس از ۱۴ ثانیه اسکن، ورود به درگاه
+            setTimeout(() => {
+              if (typeof io.updateSessionPhase === 'function') {
+                io.updateSessionPhase(existingSession.id, {
+                  phase: 'portal_login',
+                  secondsLeft: 0,
+                  totalSecondsToLogin: 0,
+                  sessionName: existingSession.name,
+                });
+              }
+
+              // پس از ورود کامل، حذف فاز فعال تا کارت کاملاً تمیز بماند
+              setTimeout(() => {
+                if (typeof io.clearSessionPhase === 'function') {
+                  io.clearSessionPhase(existingSession.id);
+                } else if (typeof io.updateSessionPhase === 'function') {
+                  io.updateSessionPhase(existingSession.id, { phase: 'idle' });
+                }
+              }, 45000);
+            }, 14000);
+
+            clearInterval(timerInterval);
+          }
         }
       }, 1000);
       if (typeof timerInterval.unref === 'function') timerInterval.unref();

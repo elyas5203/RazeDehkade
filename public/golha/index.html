@@ -130,6 +130,34 @@
       border-radius: 4px;
       margin-right: 6px;
     }
+    .cart-item.is-oos-item {
+      border: 1px solid rgba(239, 68, 68, 0.55) !important;
+      background: rgba(127, 29, 29, 0.18) !important;
+      border-radius: 8px;
+      padding: 10px !important;
+    }
+    .cart-item-oos-tag {
+      margin-top: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.16);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      padding: 4px 8px;
+      border-radius: 5px;
+      line-height: 1.5;
+    }
+    .cart-oos-banner {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(127, 29, 29, 0.28);
+      border: 1px solid rgba(239, 68, 68, 0.55);
+      color: #fecaca;
+      font-size: 12.5px;
+      font-weight: 700;
+      line-height: 1.65;
+    }
   </style>
 </head>
 <body>
@@ -192,6 +220,7 @@
       <!-- آیتم‌های سبد خرید -->
     </div>
     <div class="cart-drawer-footer">
+      <div id="cartDrawerOosNotice"></div>
       <div class="cart-total">
         <span>مجموع کل:</span>
         <span id="cartTotalPrice">۰ ریال</span>
@@ -232,14 +261,10 @@
 
   <script>
     const ALLOWED_PRODUCT_IDS = ['1', '2', '3', '4', '5'];
-    let rawCart = JSON.parse(localStorage.getItem('golha_cart') || '[]');
-    let cart = rawCart.filter(item => ALLOWED_PRODUCT_IDS.includes(String(item.id))).map(item => ({
+    let cart = JSON.parse(localStorage.getItem('golha_cart') || '[]').map(item => ({
       ...item,
-      quantity: 1,
+      quantity: Math.max(1, Number(item.quantity || item.qty || 1)),
     }));
-    if (cart.length !== rawCart.length || rawCart.some(it => it.quantity > 1)) {
-      localStorage.setItem('golha_cart', JSON.stringify(cart));
-    }
     let rawProducts = [];
 
     let toastTimer = null;
@@ -255,10 +280,6 @@
       toastTimer = setTimeout(() => {
         toast.classList.remove('show');
       }, 3500);
-    }
-
-    function handleOutOfStockClick(name) {
-      showToast(`متأسفانه «${name || 'این محصول'}» در انبار موجود نمی‌باشد (عدم موجودی).`, true);
     }
 
     function cleanDigits(val) {
@@ -342,11 +363,33 @@
       renderProductsGrid();
     }
 
+    function getCartOosMessages() {
+      const unavailableNames = [];
+      const excessNames = [];
+      cart.forEach(item => {
+        const isAllowed = ALLOWED_PRODUCT_IDS.includes(String(item.id));
+        if (!isAllowed) {
+          unavailableNames.push(item.name);
+        } else if (Number(item.quantity || 1) > 1) {
+          excessNames.push(item.name);
+        }
+      });
+      const messages = [];
+      if (unavailableNames.length > 0) {
+        messages.push(`محصول «${unavailableNames.join('، ')}» در انبار موجود نیست (عدم موجودی). لطفاً آن را از سبد خرید کم کنید.`);
+      }
+      if (excessNames.length > 0) {
+        messages.push(`از محصول «${excessNames.join('، ')}» فقط ۱ عدد در انبار موجود است. لطفاً تعداد اضافی را کم کنید.`);
+      }
+      return messages;
+    }
+
     function updateCartUI() {
       const cartCountEl = document.getElementById('cartCount');
       const floatingCartCountEl = document.getElementById('floatingCartCount');
       const cartItemsListEl = document.getElementById('cartItemsList');
       const cartTotalPriceEl = document.getElementById('cartTotalPrice');
+      const oosNoticeEl = document.getElementById('cartDrawerOosNotice');
 
       const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
       if (cartCountEl) cartCountEl.textContent = totalCount;
@@ -355,6 +398,7 @@
       if (cart.length === 0) {
         cartItemsListEl.innerHTML = '<p style="text-align: center; color: var(--text-muted); margin-top: 2rem;">سبد خرید شما خالی است.</p>';
         cartTotalPriceEl.textContent = '۰ ریال';
+        if (oosNoticeEl) oosNoticeEl.innerHTML = '';
         document.getElementById('checkoutLink').style.pointerEvents = 'none';
         document.getElementById('checkoutLink').style.opacity = '0.5';
         return;
@@ -367,11 +411,23 @@
       cartItemsListEl.innerHTML = cart.map((item, index) => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
+        const isAllowed = ALLOWED_PRODUCT_IDS.includes(String(item.id));
+        const isExcess = isAllowed && Number(item.quantity || 1) > 1;
+        const hasItemOos = !isAllowed || isExcess;
+
+        let itemOosHtml = '';
+        if (!isAllowed) {
+          itemOosHtml = `<div class="cart-item-oos-tag">❌ عدم موجودی: «${item.name}» در انبار موجود نیست — لطفاً با دکمه - یا 🗑️ کم کنید</div>`;
+        } else if (isExcess) {
+          itemOosHtml = `<div class="cart-item-oos-tag">⚠️ عدم موجودی: از «${item.name}» فقط ۱ عدد موجود است — لطفاً تعداد را کم کنید</div>`;
+        }
+
         return `
-          <div class="cart-item">
-            <div class="cart-item-info">
+          <div class="cart-item ${hasItemOos ? 'is-oos-item' : ''}">
+            <div class="cart-item-info" style="flex:1;">
               <h4>${item.name}</h4>
               <span>${item.price.toLocaleString('fa-IR')} ریال</span>
+              ${itemOosHtml}
             </div>
             <div style="display:flex;align-items:center;gap:10px;">
               <div class="qty-stepper">
@@ -385,19 +441,24 @@
         `;
       }).join('');
 
+      const oosMessages = getCartOosMessages();
+      if (oosNoticeEl) {
+        if (oosMessages.length > 0) {
+          oosNoticeEl.innerHTML = `<div class="cart-oos-banner">⚠️ ${oosMessages.join('<br>⚠️ ')}</div>`;
+        } else {
+          oosNoticeEl.innerHTML = '';
+        }
+      }
+
       cartTotalPriceEl.textContent = `${total.toLocaleString('fa-IR')} ریال`;
     }
 
     function increaseItemById(productId) {
       const p = rawProducts.find(x => String(x.id) === String(productId));
-      if (!ALLOWED_PRODUCT_IDS.includes(String(productId))) {
-        showToast(`متأسفانه «${p ? p.name : 'این محصول'}» در انبار موجود نمی‌باشد (عدم موجودی).`, true);
-        return;
-      }
       const existing = cart.find(item => String(item.id) === String(productId));
       if (existing) {
-        showToast('حداکثر سقف مجاز سفارش این کالا ۱ عدد است و موجودی بیشتری در انبار وجود ندارد (عدم موجودی).', true);
-        return;
+        existing.quantity += 1;
+        showToast(`تعداد «${existing.name}» در سبد خرید افزایش یافت.`, false);
       } else if (p) {
         cart.push({ ...p, quantity: 1 });
         showToast(`«${p.name}» به سبد خرید افزوده شد.`, false);
@@ -498,20 +559,17 @@
         const loadingAttr = isHighPriority ? 'eager' : 'lazy';
         const fetchPriorityAttr = isHighPriority ? 'fetchpriority="high"' : 'fetchpriority="low"';
 
-        const isAllowed = ALLOWED_PRODUCT_IDS.includes(String(p.id));
         const safeTitle = (p.name || '').replace(/'/g, "\\'");
 
         let actionHtml = '';
-        if (!isAllowed) {
-          actionHtml = `<button class="add-to-cart-btn" style="background:#26181b;border:1px solid #582b31;color:#fca5a5;" type="button" onclick="handleOutOfStockClick('${safeTitle}')"><span class="stock-badge-oos">عدم موجودی</span> افزودن به سبد</button>`;
-        } else if (qty === 0) {
+        if (qty === 0) {
           actionHtml = `<button class="add-to-cart-btn" type="button" onclick="increaseItemById('${p.id}')">+ افزودن به سبد</button>`;
         } else {
           actionHtml = `
             <div class="qty-stepper">
               <button type="button" class="qty-btn" onclick="decreaseItemById('${p.id}')">-</button>
               <span class="qty-count">${qty}</span>
-              <button type="button" class="qty-btn" onclick="increaseItemById('${p.id}')" title="حداکثر سقف سفارش ۱ عدد">+</button>
+              <button type="button" class="qty-btn" onclick="increaseItemById('${p.id}')">+</button>
             </div>
           `;
         }
@@ -567,5 +625,6 @@
     loadProducts();
     updateCartUI();
   </script>
+  <script src="/assets/js/audio-unlock.js"></script>
 </body>
 </html>

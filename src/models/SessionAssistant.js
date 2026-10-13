@@ -19,7 +19,10 @@ const {
   collectExtractedImages,
 } = require('../utils/archiveExtractor');
 
+const { execFileSync } = require('child_process');
+
 const ASSISTANTS_UPLOAD_ROOT = path.join(__dirname, '../../public/uploads/assistants');
+const BG_PROCESSOR_SCRIPT = path.join(__dirname, '../../scripts/process-assistants-bg.py');
 
 function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
@@ -35,9 +38,34 @@ function unlinkSafe(fileUrl) {
     if (fs.existsSync(fullPath)) {
       fs.unlinkSync(fullPath);
     }
+    const hdPath = fullPath.replace(/\.[^.]+$/, '_hd.png');
+    if (hdPath !== fullPath && fs.existsSync(hdPath)) {
+      fs.unlinkSync(hdPath);
+    }
   } catch (err) {
     // ignore unlink errors
   }
+}
+
+function tryOptimizeAndCutoutPortrait(fullPath) {
+  if (process.env.NODE_ENV === 'test' || !fs.existsSync(BG_PROCESSOR_SCRIPT)) {
+    return fullPath;
+  }
+  const pyBins = process.platform === 'win32' ? ['python', 'python3'] : ['python3', 'python'];
+  for (const pyBin of pyBins) {
+    try {
+      const out = execFileSync(pyBin, [BG_PROCESSOR_SCRIPT, '--single', fullPath], {
+        timeout: 60000,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+      const match = String(out || '').match(/OK:([^|\r\n]+)/);
+      if (match && match[1] && fs.existsSync(match[1].trim())) {
+        return match[1].trim();
+      }
+    } catch (_) {}
+  }
+  return fullPath;
 }
 
 /**
@@ -148,9 +176,12 @@ class SessionAssistant {
     ensureDir(sessionDir);
 
     const uniqueSuffix = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const destFileName = `assistant_${sid}_${uniqueSuffix}${cleanExt}`;
-    const destFullPath = path.join(sessionDir, destFileName);
+    let destFileName = `assistant_${sid}_${uniqueSuffix}${cleanExt}`;
+    let destFullPath = path.join(sessionDir, destFileName);
     fs.copyFileSync(sourceFilePath, destFullPath);
+
+    destFullPath = tryOptimizeAndCutoutPortrait(destFullPath);
+    destFileName = path.basename(destFullPath);
 
     const fileUrl = `/uploads/assistants/session_${sid}/${destFileName}`;
 

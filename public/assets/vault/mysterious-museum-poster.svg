@@ -1,87 +1,174 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1200" width="900" height="1200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 1120" width="860" height="1120">
   <defs>
-    <radialGradient id="bgGlow" cx="50%" cy="38%" r="65%">
-      <stop offset="0%" stop-color="#1e293b"/>
-      <stop offset="45%" stop-color="#0b1320"/>
-      <stop offset="100%" stop-color="#04070d"/>
+    <linearGradient id="paperBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbf6ea"/>
+      <stop offset="50%" stop-color="#f3e8ce"/>
+      <stop offset="100%" stop-color="#e5d3ad"/>
+    </linearGradient>
+
+    <radialGradient id="paperVignette" cx="50%" cy="50%" r="65%">
+      <stop offset="65%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#5c421c" stop-opacity="0.26"/>
     </radialGradient>
-    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#fef08a"/>
-      <stop offset="35%" stop-color="#f59e0b"/>
-      <stop offset="70%" stop-color="#b45309"/>
-      <stop offset="100%" stop-color="#fde68a"/>
+
+    <linearGradient id="goldFrame" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#785822"/>
+      <stop offset="50%" stop-color="#b89047"/>
+      <stop offset="100%" stop-color="#5e4316"/>
     </linearGradient>
-    <linearGradient id="cyanRay" x1="50%" y1="0%" x2="50%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.32"/>
-      <stop offset="60%" stop-color="#f59e0b" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="#04070d" stop-opacity="0"/>
-    </linearGradient>
-    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="8" result="blur"/>
-      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+
+    <radialGradient id="waxSeal" cx="35%" cy="32%" r="65%">
+      <stop offset="0%" stop-color="#dc2626"/>
+      <stop offset="45%" stop-color="#991b1b"/>
+      <stop offset="85%" stop-color="#5c0a0a"/>
+      <stop offset="100%" stop-color="#380404"/>
+    </radialGradient>
+
+    <filter id="waxShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#1c0d06" flood-opacity="0.5"/>
     </filter>
   </defs>
 
-  <!-- پس‌زمینه تیره موزه اسرارآمیز -->
-  <rect width="900" height="1200" fill="url(#bgGlow)"/>
+  <!-- پس‌زمینه کاغذ دعوت‌نامه کلاسیک موزه -->
+  <rect width="860" height="1120" rx="6" fill="url(#paperBg)"/>
+  <rect width="860" height="1120" rx="6" fill="url(#paperVignette)"/>
 
-  <!-- پرتوهای نوری سقف موزه -->
-  <polygon points="450,40 160,820 740,820" fill="url(#cyanRay)"/>
-  <polygon points="450,40 280,820 620,820" fill="url(#cyanRay)"/>
-
-  <!-- قاب‌های طلایی کلاسیک Art-Deco -->
-  <rect x="36" y="36" width="828" height="1128" rx="18" fill="none" stroke="url(#goldGrad)" stroke-width="4" opacity="0.9"/>
-  <rect x="52" y="52" width="796" height="1096" rx="12" fill="none" stroke="url(#goldGrad)" stroke-width="1.5" stroke-dasharray="10 6" opacity="0.65"/>
-
-  <!-- تزیینات چهار گوشه قاب -->
-  <g stroke="url(#goldGrad)" stroke-width="3" fill="none">
-    <path d="M36 110 L110 36 M36 90 L90 36"/>
-    <path d="M864 110 L790 36 M864 90 L810 36"/>
-    <path d="M36 1090 L110 1164 M36 1110 L90 1164"/>
-    <path d="M864 1090 L790 1164 M864 1110 L810 1164"/>
+  <!-- خطوط لطیف بافت کاغذ -->
+  <g stroke="#8c6d3b" stroke-opacity="0.07" stroke-width="1">
+    <line x1="0" y1="140" x2="860" y2="140"/>
+    <line x1="0" y1="280" x2="860" y2="280"/>
+    <line x1="0" y1="420" x2="860" y2="420"/>
+    <line x1="0" y1="560" x2="860" y2="560"/>
+    <line x1="0" y1="700" x2="860" y2="700"/>
+    <line x1="0" y1="840" x2="860" y2="840"/>
+    <line x1="0" y1="980" x2="860" y2="980"/>
   </g>
 
-  <!-- نشان بالای پوستر -->
-  <rect x="290" y="88" width="320" height="42" rx="21" fill="#0f172a" stroke="url(#goldGrad)" stroke-width="2"/>
-  <text x="450" y="116" text-anchor="middle" fill="#fde68a" font-family="Tahoma, sans-serif" font-size="18" font-weight="bold">🔐 راز گاوصندوق گشوده شد</text>
+  <!-- کادر حکاکی کلاسیک دور دعوت‌نامه -->
+  <rect x="28" y="28" width="804" height="1064" fill="none" stroke="url(#goldFrame)" stroke-width="3.5"/>
+  <rect x="38" y="38" width="784" height="1044" fill="none" stroke="#6b4e1e" stroke-width="1.2" stroke-dasharray="8 4"/>
+  <rect x="46" y="46" width="768" height="1028" fill="none" stroke="url(#goldFrame)" stroke-width="1.5"/>
 
-  <!-- گنبد و ستون‌های نمادین موزه اسرارآمیز -->
-  <g transform="translate(450, 385)">
-    <circle cx="0" cy="0" r="145" fill="#09101d" stroke="url(#goldGrad)" stroke-width="3" filter="url(#softGlow)"/>
-    <circle cx="0" cy="0" r="130" fill="none" stroke="#38bdf8" stroke-width="1" stroke-dasharray="6 6" opacity="0.6"/>
-    <!-- سقف مثلثی موزه -->
-    <polygon points="-95,-30 0,-95 95,-30" fill="none" stroke="url(#goldGrad)" stroke-width="4"/>
-    <line x1="-105" y1="-22" x2="105" y2="-22" stroke="url(#goldGrad)" stroke-width="3"/>
-    <!-- ستون‌های موزه -->
-    <rect x="-75" y="-18" width="16" height="90" fill="url(#goldGrad)" opacity="0.85"/>
-    <rect x="-32" y="-18" width="16" height="90" fill="url(#goldGrad)" opacity="0.85"/>
-    <rect x="16" y="-18" width="16" height="90" fill="url(#goldGrad)" opacity="0.85"/>
-    <rect x="59" y="-18" width="16" height="90" fill="url(#goldGrad)" opacity="0.85"/>
-    <!-- پله‌های موزه -->
-    <rect x="-95" y="74" width="190" height="10" rx="3" fill="url(#goldGrad)"/>
-    <rect x="-110" y="88" width="220" height="12" rx="3" fill="url(#goldGrad)"/>
-    <!-- علامت ذره‌بین و کلید اسرار در مرکز -->
-    <circle cx="0" cy="24" r="26" fill="#0f172a" stroke="#38bdf8" stroke-width="3"/>
-    <text x="0" y="34" text-anchor="middle" fill="#38bdf8" font-family="Georgia, serif" font-size="32" font-weight="bold">?</text>
+  <!-- گل‌گوشه‌های کلاسیک چهار کنج -->
+  <g stroke="#6b4e1e" stroke-width="2" fill="none">
+    <path d="M 46 88 L 88 88 L 88 46"/>
+    <circle cx="67" cy="67" r="6" fill="#6b4e1e"/>
+    <path d="M 814 88 L 772 88 L 772 46"/>
+    <circle cx="793" cy="67" r="6" fill="#6b4e1e"/>
+    <path d="M 46 1032 L 88 1032 L 88 1074"/>
+    <circle cx="67" cy="1053" r="6" fill="#6b4e1e"/>
+    <path d="M 814 1032 L 772 1032 L 772 1074"/>
+    <circle cx="793" cy="1053" r="6" fill="#6b4e1e"/>
   </g>
 
-  <!-- تیترهای اصلی پوستر -->
-  <text x="450" y="610" text-anchor="middle" fill="#38bdf8" font-family="Tahoma, sans-serif" font-size="22" font-weight="bold" letter-spacing="1">دعوت‌نامه رسمی ویژه دستیاران نخبه کارآگاه</text>
-  <text x="450" y="690" text-anchor="middle" fill="url(#goldGrad)" font-family="Tahoma, sans-serif" font-size="56" font-weight="bold" filter="url(#softGlow)">نمایش «موزه اسرارآمیز»</text>
-  <line x1="220" y1="730" x2="680" y2="730" stroke="url(#goldGrad)" stroke-width="2" opacity="0.75"/>
+  <!-- نشان و سردر کلاسیک موزه در بالا -->
+  <g transform="translate(430, 128)">
+    <circle cx="0" cy="0" r="46" fill="#f7eed8" stroke="#6b4e1e" stroke-width="2.5"/>
+    <circle cx="0" cy="0" r="39" fill="none" stroke="#8c6830" stroke-width="1" stroke-dasharray="3 3"/>
+    <!-- نمای خطی عمارت کلاسیک موزه -->
+    <polygon points="-26,-6 0,-24 26,-6" fill="#523a15"/>
+    <rect x="-24" y="-6" width="48" height="4" fill="#6b4e1e"/>
+    <rect x="-20" y="-2" width="5" height="22" fill="#523a15"/>
+    <rect x="-8" y="-2" width="5" height="22" fill="#523a15"/>
+    <rect x="3" y="-2" width="5" height="22" fill="#523a15"/>
+    <rect x="15" y="-2" width="5" height="22" fill="#523a15"/>
+    <rect x="-26" y="20" width="52" height="5" fill="#3d2b0f"/>
+  </g>
 
-  <!-- متن دعوت‌نامه -->
-  <rect x="110" y="765" width="680" height="210" rx="16" fill="#09121e" fill-opacity="0.85" stroke="url(#goldGrad)" stroke-width="1.5"/>
-  <text x="450" y="818" text-anchor="middle" fill="#f8fafc" font-family="Tahoma, sans-serif" font-size="24" font-weight="bold">تبریک! شما تمام معماهای پرونده را با موفقیت حل کردید.</text>
-  <text x="450" y="868" text-anchor="middle" fill="#cbd5e1" font-family="Tahoma, sans-serif" font-size="20">اکنون به عنوان کارآگاهان افتخاری، به رویداد و نمایش حضوری</text>
-  <text x="450" y="912" text-anchor="middle" fill="#fde68a" font-family="Tahoma, sans-serif" font-size="23" font-weight="bold">«موزه اسرارآمیز» دعوت شده‌اید تا آخرین راز را از نزدیک کشف کنید!</text>
-  <text x="450" y="952" text-anchor="middle" fill="#38bdf8" font-family="Tahoma, sans-serif" font-size="16">پوستر نهایی و زمان‌بندی دقیق حضور از طریق مرکز فرماندهی اعلام می‌گردد</text>
+  <!-- مهر قرمز محرمانه در گوشه بالا سمت چپ سند -->
+  <g transform="translate(155, 118) rotate(-10)">
+    <rect x="-78" y="-24" width="156" height="48" rx="4" fill="none" stroke="#991b1b" stroke-width="3.2" stroke-opacity="0.88"/>
+    <rect x="-72" y="-18" width="144" height="36" rx="2" fill="none" stroke="#991b1b" stroke-width="1.2" stroke-opacity="0.8"/>
+    <text x="0" y="7" text-anchor="middle" font-family="Tahoma, 'Vazirmatn', sans-serif" font-size="20" font-weight="900" fill="#991b1b" fill-opacity="0.9">خیلی محرمانه</text>
+  </g>
 
-  <!-- مهر مومی طلایی پایین پوستر -->
-  <g transform="translate(450, 1065)">
-    <circle cx="0" cy="0" r="48" fill="#7c2d12" stroke="url(#goldGrad)" stroke-width="3"/>
-    <circle cx="0" cy="0" r="38" fill="none" stroke="#fde68a" stroke-width="1.2" stroke-dasharray="4 3"/>
-    <text x="0" y="-4" text-anchor="middle" fill="#fde68a" font-family="Tahoma, sans-serif" font-size="13" font-weight="bold">مهر تایید</text>
-    <text x="0" y="18" text-anchor="middle" fill="#ffffff" font-family="Tahoma, sans-serif" font-size="14" font-weight="bold">مرکز فرماندهی</text>
+  <!-- شماره ثبت در گوشه بالا سمت راست -->
+  <g font-family="Tahoma, 'Vazirmatn', sans-serif" font-size="14" font-weight="bold" fill="#4a371c" text-anchor="end">
+    <text x="775" y="108">شماره پرونده: ۴۰۵ / الف / ۹۱۲</text>
+    <text x="775" y="132">طبقه و رده: اسناد ویژه مرکز</text>
+  </g>
+
+  <!-- تیتر اصلی دعوت‌نامه -->
+  <g text-anchor="middle" font-family="Tahoma, 'Vazirmatn', sans-serif">
+    <text x="430" y="218" font-size="17" font-weight="bold" fill="#6b4e1e">دایره عالی تحقیقات ویژه — پرونده «راز دهکده»</text>
+    <text x="430" y="272" font-size="34" font-weight="900" fill="#1e160c">دعوت‌نامه رسمی حضور در</text>
+
+    <!-- کادر برجسته نام موزه اسرارآمیز -->
+    <rect x="165" y="296" width="530" height="72" rx="6" fill="#23190d" stroke="#8c6830" stroke-width="2.5"/>
+    <rect x="172" y="303" width="516" height="58" rx="4" fill="none" stroke="#d4af37" stroke-width="1" stroke-opacity="0.6"/>
+    <text x="430" y="344" font-size="36" font-weight="900" fill="#f5deb3">«موزه اسرارآمیز»</text>
+  </g>
+
+  <!-- خط جداکننده کلاسیک -->
+  <line x1="120" y1="402" x2="740" y2="402" stroke="#8c6830" stroke-width="1.5"/>
+  <polygon points="430,395 438,402 430,409 422,402" fill="#6b4e1e"/>
+
+  <!-- متن دعوت‌نامه رسمی (بزرگ، خوانا و باوقار) -->
+  <g font-family="Tahoma, 'Vazirmatn', sans-serif" text-anchor="middle" fill="#261b10">
+    <text x="430" y="454" font-size="22" font-weight="900" fill="#5c1916">خطاب به تیم کارآگاهان و دستیاران پرونده</text>
+
+    <text x="430" y="512" font-size="19" font-weight="bold">
+      با کشف رمز گاوصندوق زرهی و تکمیل زنجیره شواهد پرونده،
+    </text>
+    <text x="430" y="552" font-size="19" font-weight="bold">
+      صلاحیت تیم تحقیقاتی شما توسط مرکز فرماندهی به ثبت نهایی رسید.
+    </text>
+    <text x="430" y="602" font-size="20" font-weight="900" fill="#1c1309">
+      بدین‌وسیله از اعضای آن گروه دعوت می‌شود در برنامه حضوری و نهایی
+    </text>
+    <text x="430" y="644" font-size="23" font-weight="900" fill="#7f1d1d">
+      گشایش تالار اصلی «موزه اسرارآمیز» حضور به هم رسانند.
+    </text>
+  </g>
+
+  <!-- جدول مشخصات مراسم حضوری -->
+  <g transform="translate(105, 686)">
+    <rect width="650" height="156" rx="6" fill="#efe2c2" stroke="#785822" stroke-width="2"/>
+    <line x1="0" y1="52" x2="650" y2="52" stroke="#9c7a44" stroke-width="1.2"/>
+    <line x1="0" y1="104" x2="650" y2="104" stroke="#9c7a44" stroke-width="1.2"/>
+    <line x1="450" y1="0" x2="450" y2="156" stroke="#785822" stroke-width="1.5"/>
+
+    <g font-family="Tahoma, 'Vazirmatn', sans-serif" font-size="16" font-weight="900" fill="#3b2a14" text-anchor="end">
+      <text x="630" y="33">مقصد مأموریت حضوری :</text>
+      <text x="630" y="85">مجوز ورود به تالار :</text>
+      <text x="630" y="137">وضعیت پرونده :</text>
+    </g>
+
+    <g font-family="Tahoma, 'Vazirmatn', sans-serif" font-size="16" font-weight="bold" fill="#1c1309" text-anchor="end">
+      <text x="432" y="33">تالار مرکزی نمایش حضوری «موزه اسرارآمیز»</text>
+      <text x="432" y="85">همراه داشتن این برگ دعوت‌نامه الزامی است</text>
+      <text x="432" y="137" fill="#14532d" font-weight="900">تأیید نهایی شده — قفل گاوصندوق گشوده شد</text>
+    </g>
+  </g>
+
+  <!-- بخش پایین: مهر موم لاکی برجسته، مهر دایره‌ای آبی و امضا -->
+  <!-- ۱. امضا و مهر آبی در سمت چپ -->
+  <g transform="translate(220, 945)">
+    <circle cx="0" cy="0" r="56" fill="none" stroke="#1e3a8a" stroke-width="2.5" stroke-opacity="0.78"/>
+    <circle cx="0" cy="0" r="48" fill="none" stroke="#1e3a8a" stroke-width="1.2" stroke-dasharray="4 3" stroke-opacity="0.75"/>
+    <text x="0" y="-12" text-anchor="middle" font-family="Tahoma, 'Vazirmatn', sans-serif" font-size="12" font-weight="900" fill="#1e3a8a" fill-opacity="0.82">مرکز فرماندهی عملیات</text>
+    <text x="0" y="8" text-anchor="middle" font-family="Tahoma, 'Vazirmatn', sans-serif" font-size="14" font-weight="900" fill="#1e3a8a" fill-opacity="0.88">تأیید اصالت سند</text>
+    <text x="0" y="28" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="#1e3a8a" fill-opacity="0.75">ARCHIVE-1405</text>
+    <path d="M -75 18 C -45 -22, 5 -8, 35 -28 C 52 -38, 12 12, -25 26 C -4 34, 48 6, 82 -10" fill="none" stroke="#0f172a" stroke-width="2.6" stroke-linecap="round" opacity="0.88"/>
+  </g>
+
+  <!-- ۲. مهر موم لاکی قرمز برجسته در وسط -->
+  <g transform="translate(430, 950)" filter="url(#waxShadow)">
+    <path d="M -20 35 L -38 98 L -18 86 L -4 102 L 10 42 Z" fill="#7f1d1d"/>
+    <path d="M 16 35 L 36 96 L 18 84 L 4 100 L -8 42 Z" fill="#991b1b"/>
+    <circle cx="0" cy="0" r="52" fill="url(#waxSeal)"/>
+    <circle cx="0" cy="0" r="41" fill="none" stroke="#fca5a5" stroke-width="1.3" stroke-opacity="0.45" stroke-dasharray="5 3"/>
+    <circle cx="0" cy="0" r="35" fill="none" stroke="#450a0a" stroke-width="2"/>
+    <text x="0" y="-4" text-anchor="middle" font-family="Tahoma, 'Vazirmatn', sans-serif" font-size="12" font-weight="900" fill="#fecaca">مهر موم رسمی</text>
+    <text x="0" y="15" text-anchor="middle" font-family="Tahoma, 'Vazirmatn', sans-serif" font-size="13" font-weight="900" fill="#fde68a">موزه اسرارآمیز</text>
+  </g>
+
+  <!-- ۳. بارکد ثبت در سمت راست -->
+  <g transform="translate(565, 905)">
+    <rect x="0" y="0" width="175" height="82" rx="4" fill="#fbf6ea" stroke="#785822" stroke-width="1.2"/>
+    <g fill="#1c1309" transform="translate(18, 14)">
+      <rect x="0" y="0" width="4" height="40"/><rect x="7" y="0" width="2" height="40"/><rect x="13" y="0" width="5" height="40"/><rect x="22" y="0" width="2" height="40"/><rect x="27" y="0" width="6" height="40"/><rect x="37" y="0" width="2" height="40"/><rect x="43" y="0" width="4" height="40"/><rect x="51" y="0" width="2" height="40"/><rect x="56" y="0" width="7" height="40"/><rect x="67" y="0" width="3" height="40"/><rect x="73" y="0" width="2" height="40"/><rect x="79" y="0" width="5" height="40"/><rect x="88" y="0" width="3" height="40"/><rect x="94" y="0" width="6" height="40"/><rect x="104" y="0" width="2" height="40"/><rect x="110" y="0" width="4" height="40"/><rect x="118" y="0" width="2" height="40"/><rect x="124" y="0" width="6" height="40"/><rect x="134" y="0" width="3" height="40"/>
+    </g>
+    <text x="87" y="70" text-anchor="middle" font-family="monospace" font-size="12" font-weight="bold" fill="#261b10" letter-spacing="2">MUSEUM-1405-VIP</text>
   </g>
 </svg>

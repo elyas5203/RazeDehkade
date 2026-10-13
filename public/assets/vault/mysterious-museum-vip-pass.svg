@@ -1,39 +1,144 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" width="1000" height="600">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1050 640" width="1050" height="640">
   <defs>
-    <linearGradient id="passBg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0f172a"/>
-      <stop offset="50%" stop-color="#090f1a"/>
-      <stop offset="100%" stop-color="#172554"/>
+    <linearGradient id="cardParchment" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8f2e2"/>
+      <stop offset="55%" stop-color="#ede1c6"/>
+      <stop offset="100%" stop-color="#dccaa2"/>
     </linearGradient>
-    <linearGradient id="goldBorder" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#f59e0b"/>
-      <stop offset="50%" stop-color="#fef08a"/>
-      <stop offset="100%" stop-color="#d97706"/>
+
+    <linearGradient id="navyPanel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#17202e"/>
+      <stop offset="60%" stop-color="#0e141f"/>
+      <stop offset="100%" stop-color="#070a10"/>
     </linearGradient>
+
+    <linearGradient id="brassFoil" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#855f23"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#73501a"/>
+    </linearGradient>
+
+    <pattern id="fineGrid" width="18" height="18" patternUnits="userSpaceOnUse">
+      <path d="M 18 0 L 0 0 0 18" fill="none" stroke="#6b5228" stroke-width="0.3" stroke-opacity="0.16"/>
+    </pattern>
   </defs>
 
-  <rect width="1000" height="600" rx="24" fill="url(#passBg)"/>
-  <rect x="24" y="24" width="952" height="552" rx="18" fill="none" stroke="url(#goldBorder)" stroke-width="4"/>
-  <line x1="280" y1="24" x2="280" y2="576" stroke="#fde68a" stroke-width="2" stroke-dasharray="12 8" opacity="0.6"/>
+  <!-- پس‌زمینه تیره اطراف کارت -->
+  <rect width="1050" height="640" fill="#0d1117"/>
 
-  <!-- سمت راست کارت: اطلاعات بلیت ورود -->
-  <text x="630" y="110" text-anchor="middle" fill="#38bdf8" font-family="Tahoma, sans-serif" font-size="20" font-weight="bold">VIP DETECTIVE PASS // مجوز ورود ویژه</text>
-  <text x="630" y="185" text-anchor="middle" fill="#fde68a" font-family="Tahoma, sans-serif" font-size="44" font-weight="bold">کارت دعوت حضوری «موزه اسرارآمیز»</text>
-  <text x="630" y="255" text-anchor="middle" fill="#e2e8f0" font-family="Tahoma, sans-serif" font-size="22">ویژه گروه کارآگاهی پیروز در کشف رمز گاوصندوق اسرار</text>
+  <!-- بدنه اصلی پروانه تردد امنیتی -->
+  <rect x="24" y="24" width="1002" height="592" rx="8" fill="url(#cardParchment)" stroke="#8c6d38" stroke-width="2.5"/>
+  <rect x="24" y="24" width="1002" height="592" rx="8" fill="url(#fineGrid)"/>
 
-  <rect x="360" y="300" width="540" height="150" rx="14" fill="#050b14" stroke="#38bdf8" stroke-width="1.5" opacity="0.9"/>
-  <text x="630" y="355" text-anchor="middle" fill="#fde68a" font-family="Tahoma, sans-serif" font-size="22" font-weight="bold">🎟️ دارنده این کارت مجاز به حضور در نمایش ویژه است</text>
-  <text x="630" y="405" text-anchor="middle" fill="#94a3b8" font-family="Tahoma, sans-serif" font-size="18">این تصویر را نزد گروه خود نگه دارید و در روز برنامه همراه داشته باشید.</text>
+  <!-- ستون امنیتی سمت چپ (سرمه‌ای تیره مخصوص بارکد و مهر کنترل) -->
+  <path d="M 32 32 L 315 32 L 315 608 L 32 608 Z" fill="url(#navyPanel)" stroke="#8c6d38" stroke-width="1.5"/>
 
-  <text x="630" y="520" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="18" font-weight="bold">CLEARANCE LEVEL: OMEGA // MYSTERIOUS MUSEUM</text>
+  <!-- کادر دوتایی حکاکی دور کل کارت -->
+  <rect x="38" y="38" width="974" height="564" fill="none" stroke="url(#brassFoil)" stroke-width="2"/>
+  <rect x="44" y="44" width="962" height="552" fill="none" stroke="#5c4522" stroke-width="0.8"/>
 
-  <!-- سمت چپ کارت: بارکد و مهر -->
-  <g transform="translate(152, 300)">
-    <circle cx="0" cy="-90" r="64" fill="#091322" stroke="url(#goldBorder)" stroke-width="3"/>
-    <text x="0" y="-82" text-anchor="middle" fill="#fde68a" font-family="Tahoma, sans-serif" font-size="26" font-weight="bold">VIP</text>
-    <text x="0" y="20" text-anchor="middle" fill="#cbd5e1" font-family="Tahoma, sans-serif" font-size="18" font-weight="bold">موزه اسرارآمیز</text>
-    <text x="0" y="60" text-anchor="middle" fill="#38bdf8" font-family="monospace" font-size="16">CODE: MUSEUM-1405</text>
-    <rect x="-75" y="100" width="150" height="50" fill="#f8fafc" rx="6"/>
-    <path d="M-60 108 v34 M-48 108 v34 M-40 108 v34 M-26 108 v34 M-14 108 v34 M0 108 v34 M10 108 v34 M24 108 v34 M38 108 v34 M50 108 v34 M62 108 v34" stroke="#0f172a" stroke-width="4"/>
+  <!-- خط پرفراژ عمودی جداسازی کنترل دژبانی -->
+  <line x1="315" y1="38" x2="315" y2="602" stroke="#d4af37" stroke-width="1.8" stroke-dasharray="10 6"/>
+
+  <!-- =====================================================================
+       بخش سمت راست: اطلاعات رسمی مجوز تردد افسران پرونده
+       ===================================================================== -->
+  <!-- نوار سربرگ رسمی -->
+  <rect x="340" y="58" width="644" height="54" fill="#21180b" stroke="#8c6d38" stroke-width="1.5"/>
+  <text x="662" y="83" text-anchor="middle" fill="#d4af37" font-family="Courier New, monospace" font-size="13" font-weight="bold">OFFICIAL FIELD INVESTIGATOR CLEARANCE // LEVEL 01</text>
+  <text x="662" y="103" text-anchor="middle" fill="#f5ebd1" font-family="Tahoma, sans-serif" font-size="13.5" font-weight="bold">دایره عالی جنایی و تحقیقات ویژه — مرکز فرماندهی راز دهکده</text>
+
+  <!-- عنوان اصلی پروانه تردد -->
+  <text x="662" y="164" text-anchor="middle" fill="#1a1207" font-family="Tahoma, Vazirmatn, serif" font-size="33" font-weight="bold">پروانه رسمی تردد و مجوز ورود امنیتی</text>
+  <text x="662" y="202" text-anchor="middle" fill="#7c1d1d" font-family="Tahoma, Vazirmatn, serif" font-size="23" font-weight="bold">مأموریت نهایی: تالار مرکزی «موزه اسرارآمیز»</text>
+
+  <line x1="350" y1="224" x2="974" y2="224" stroke="#5c4522" stroke-width="1.5"/>
+
+  <!-- جدول مشخصات دارنده مجوز -->
+  <g transform="translate(350, 244)" font-family="Tahoma, Vazirmatn, sans-serif">
+    <rect x="0" y="0" width="624" height="190" fill="#efe4c9" stroke="#6b5228" stroke-width="1.5"/>
+    <line x1="0" y1="47" x2="624" y2="47" stroke="#8c7041" stroke-width="1"/>
+    <line x1="0" y1="95" x2="624" y2="95" stroke="#8c7041" stroke-width="1"/>
+    <line x1="0" y1="142" x2="624" y2="142" stroke="#8c7041" stroke-width="1"/>
+    <line x1="435" y1="0" x2="435" y2="190" stroke="#8c7041" stroke-width="1"/>
+
+    <text x="608" y="30" text-anchor="end" font-size="14.5" font-weight="bold" fill="#3d2e16">عنوان رده سازمانی:</text>
+    <text x="418" y="30" text-anchor="end" font-size="15" font-weight="bold" fill="#1a1207">گروه بازرسان ویژه (رمزگشایان گاوصندوق اسناد محرمانه)</text>
+
+    <text x="608" y="77" text-anchor="end" font-size="14.5" font-weight="bold" fill="#3d2e16">محدوده مجاز تردد:</text>
+    <text x="418" y="77" text-anchor="end" font-size="15" font-weight="bold" fill="#1a1207">کلیه بخش‌های طبقه‌بندی‌شده و تالار شواهد «موزه اسرارآمیز»</text>
+
+    <text x="608" y="125" text-anchor="end" font-size="14.5" font-weight="bold" fill="#3d2e16">شماره پرونده مرجع:</text>
+    <text x="418" y="125" text-anchor="end" font-size="15" font-weight="bold" fill="#7c1d1d">پرونده جنایی ۴۰۵ / الف / ۹۱۲ — راز دهکده</text>
+
+    <text x="608" y="172" text-anchor="end" font-size="14.5" font-weight="bold" fill="#3d2e16">تذکر امنیتی مهم:</text>
+    <text x="418" y="172" text-anchor="end" font-size="14" fill="#2c2212">ارائه این برگه در هنگام ورود به محل مأموریت جهت تطبیق با لیست مرکز الزامی است.</text>
   </g>
+
+  <!-- مهر قرمز تاییدیه و امضای پایین سمت راست -->
+  <g transform="translate(455, 515) rotate(-7)">
+    <rect x="-95" y="-26" width="190" height="52" rx="3" fill="none" stroke="#991b1b" stroke-width="2.8" opacity="0.88"/>
+    <rect x="-90" y="-21" width="180" height="42" rx="2" fill="none" stroke="#991b1b" stroke-width="1" opacity="0.82"/>
+    <text x="0" y="-3" text-anchor="middle" fill="#991b1b" font-family="Tahoma, sans-serif" font-size="14" font-weight="bold">مجوز تردد صادر شد</text>
+    <text x="0" y="15" text-anchor="middle" fill="#991b1b" font-family="Courier New, monospace" font-size="11" font-weight="bold">CLEARANCE GRANTED</text>
+  </g>
+
+  <g transform="translate(830, 520)">
+    <path d="M-85,5 C-50,-28 -15,24 20,-18 C38,-35 60,12 90,-10" fill="none" stroke="#1e293b" stroke-width="2.4" stroke-linecap="round"/>
+    <line x1="-100" y1="22" x2="105" y2="22" stroke="#5c4522" stroke-width="1"/>
+    <text x="0" y="42" text-anchor="middle" fill="#2c2212" font-family="Tahoma, sans-serif" font-size="13" font-weight="bold">امضای افسر ارشد صدور مجوز</text>
+  </g>
+
+  <!-- =====================================================================
+       بخش سمت چپ: ستون کنترل امنیتی، نشان طلایی و بارکد ثبت
+       ===================================================================== -->
+  <g transform="translate(174, 155)">
+    <circle cx="0" cy="0" r="68" fill="#0b1019" stroke="url(#brassFoil)" stroke-width="2.5"/>
+    <circle cx="0" cy="0" r="59" fill="none" stroke="#d4af37" stroke-width="1" stroke-dasharray="4 3" opacity="0.75"/>
+    <polygon points="-32,-8 0,-32 32,-8" fill="none" stroke="#d4af37" stroke-width="2"/>
+    <line x1="-36" y1="-4" x2="36" y2="-4" stroke="#d4af37" stroke-width="1.8"/>
+    <line x1="-22" y1="-4" x2="-22" y2="22" stroke="#d4af37" stroke-width="2.5"/>
+    <line x1="-7" y1="-4" x2="-7" y2="22" stroke="#d4af37" stroke-width="2.5"/>
+    <line x1="7" y1="-4" x2="7" y2="22" stroke="#d4af37" stroke-width="2.5"/>
+    <line x1="22" y1="-4" x2="22" y2="22" stroke="#d4af37" stroke-width="2.5"/>
+    <line x1="-36" y1="24" x2="36" y2="24" stroke="#d4af37" stroke-width="2.5"/>
+  </g>
+
+  <text x="174" y="264" text-anchor="middle" fill="#f3e5c0" font-family="Tahoma, sans-serif" font-size="18" font-weight="bold">بایگانی محرمانه</text>
+  <text x="174" y="292" text-anchor="middle" fill="#d4af37" font-family="Courier New, monospace" font-size="14" font-weight="bold">SERIAL: RD-405-88</text>
+  <text x="174" y="318" text-anchor="middle" fill="#94a3b8" font-family="Courier New, monospace" font-size="12">ACCESS CODE: 1405</text>
+
+  <!-- کادر بارکد اصالت‌سنجی در ستون چپ -->
+  <g transform="translate(74, 360)">
+    <rect x="0" y="0" width="200" height="94" rx="4" fill="#f5ebd1" stroke="#8c6d38" stroke-width="1.5"/>
+    <g transform="translate(16, 14)" stroke="#111827">
+      <line x1="0" y1="0" x2="0" y2="50" stroke-width="3"/>
+      <line x1="6" y1="0" x2="6" y2="50" stroke-width="1.5"/>
+      <line x1="12" y1="0" x2="12" y2="50" stroke-width="2"/>
+      <line x1="20" y1="0" x2="20" y2="50" stroke-width="4"/>
+      <line x1="28" y1="0" x2="28" y2="50" stroke-width="1.5"/>
+      <line x1="34" y1="0" x2="34" y2="50" stroke-width="3"/>
+      <line x1="42" y1="0" x2="42" y2="50" stroke-width="1.5"/>
+      <line x1="48" y1="0" x2="48" y2="50" stroke-width="2.5"/>
+      <line x1="56" y1="0" x2="56" y2="50" stroke-width="3"/>
+      <line x1="64" y1="0" x2="64" y2="50" stroke-width="1.5"/>
+      <line x1="72" y1="0" x2="72" y2="50" stroke-width="4"/>
+      <line x1="80" y1="0" x2="80" y2="50" stroke-width="2"/>
+      <line x1="88" y1="0" x2="88" y2="50" stroke-width="1.5"/>
+      <line x1="94" y1="0" x2="94" y2="50" stroke-width="3"/>
+      <line x1="102" y1="0" x2="102" y2="50" stroke-width="2"/>
+      <line x1="110" y1="0" x2="110" y2="50" stroke-width="4"/>
+      <line x1="118" y1="0" x2="118" y2="50" stroke-width="1.5"/>
+      <line x1="124" y1="0" x2="124" y2="50" stroke-width="2"/>
+      <line x1="132" y1="0" x2="132" y2="50" stroke-width="3"/>
+      <line x1="140" y1="0" x2="140" y2="50" stroke-width="1.5"/>
+      <line x1="148" y1="0" x2="148" y2="50" stroke-width="3.5"/>
+      <line x1="156" y1="0" x2="156" y2="50" stroke-width="2"/>
+      <line x1="164" y1="0" x2="164" y2="50" stroke-width="3"/>
+    </g>
+    <text x="100" y="80" text-anchor="middle" fill="#1f160a" font-family="Courier New, monospace" font-size="12" font-weight="bold">405-912-8801-PASS</text>
+  </g>
+
+  <text x="174" y="505" text-anchor="middle" fill="#cbd5e1" font-family="Tahoma, sans-serif" font-size="12.5" font-weight="bold">کنترل اصالت در مبادی ورودی</text>
+  <text x="174" y="530" text-anchor="middle" fill="#d4af37" font-family="Courier New, monospace" font-size="11.5">BUREAU OF INVESTIGATION</text>
 </svg>

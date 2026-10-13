@@ -376,6 +376,102 @@ body.is-blackout .delivery-footer {
 }
 
 /* ==========================================================================
+   BLACKOUT PHASE 2: TACTICAL PULSING GREEN RADAR BEACON (دایره سبز نئونی تپنده)
+   ۲ دقیقه اول تاریکی کامل، سپس این دایره در مرکز صفحه به آرامی نفس می‌کشد تا کاربر صفحه را رفرش نکند
+   ========================================================================== */
+.blackout-radar-beacon {
+  position: fixed;
+  inset: 0;
+  display: none !important;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none !important;
+  z-index: 99999999 !important;
+  background: transparent !important;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease;
+}
+
+/* نمایش دایره سبز تپنده فقط و فقط در فاز دوم بلک‌اوت */
+body.is-blackout .blackout-radar-beacon.active {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* به محض شروع اسکن سایبری یا خروج از بلک‌اوت، حذف و مخفی‌سازی قطعی دایره سبز */
+body:not(.is-blackout) .blackout-radar-beacon,
+.active-cyber ~ .blackout-radar-beacon,
+#cyberOverlay.active-cyber ~ #blackoutPulsingRadarDot,
+.blackout-radar-beacon:not(.active) {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.radar-beacon-center {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-core-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #4ade80 0%, #22c55e 55%, #15803d 100%);
+  box-shadow: 0 0 22px #22c55e, 0 0 45px rgba(34, 197, 94, 0.75);
+  animation: tacticalDotBreathe 2.6s ease-in-out infinite;
+}
+
+.radar-ping-ring {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(74, 222, 128, 0.55);
+  animation: tacticalRingPulse 2.6s cubic-bezier(0.2, 0.9, 0.3, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes tacticalDotBreathe {
+  0% {
+    transform: scale(0.72);
+    opacity: 0.22;
+    box-shadow: 0 0 6px #22c55e;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 1;
+    box-shadow: 0 0 32px #22c55e, 0 0 68px rgba(34, 197, 94, 0.9);
+  }
+  100% {
+    transform: scale(0.72);
+    opacity: 0.22;
+    box-shadow: 0 0 6px #22c55e;
+  }
+}
+
+@keyframes tacticalRingPulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.85;
+  }
+  65% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* ==========================================================================
    CLASSIFIED DETECTIVE INTELLIGENCE CONSOLE (ACTIVE INTRO)
    ========================================================================== */
 
@@ -1324,5 +1420,45 @@ body.is-blackout .delivery-footer {
     width: 100%;
     max-width: 580px;
   }
+}
+
+/* ==========================================================================
+   SHOCK TRANSITION: EXPLOSIVE STROBE & WARP GLITCH
+   ========================================================================== */
+.cyber-shock-flash {
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+  z-index: 999999999;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.cyber-shock-flash.is-flashing {
+  animation: shockFlashStrobe 0.7s cubic-bezier(0.1, 0.9, 0.2, 1) forwards;
+}
+
+@keyframes shockFlashStrobe {
+  0% { opacity: 0; }
+  8% { opacity: 1; background: #ffffff; }
+  18% { opacity: 0.15; }
+  28% { opacity: 0.95; background: #38bdf8; }
+  45% { opacity: 0.2; }
+  60% { opacity: 0.65; background: #22c55e; }
+  100% { opacity: 0; }
+}
+
+body.shock-screen-shake {
+  animation: intenseWarpGlitch 0.65s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+@keyframes intenseWarpGlitch {
+  0% { transform: translate(0, 0) scale(1); filter: brightness(1); }
+  15% { transform: translate(-8px, 6px) scale(1.02); filter: brightness(2.2) contrast(1.5); }
+  30% { transform: translate(7px, -5px) scale(0.99); filter: hue-rotate(90deg) brightness(1.8); }
+  45% { transform: translate(-5px, -4px) scale(1.01); filter: invert(0.2) contrast(1.4); }
+  65% { transform: translate(4px, 3px) scale(1.005); filter: brightness(1.4); }
+  85% { transform: translate(-2px, 1px) scale(1); filter: brightness(1.1); }
+  100% { transform: translate(0, 0) scale(1); filter: brightness(1) contrast(1); }
 }
 
