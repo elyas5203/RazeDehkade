@@ -716,7 +716,6 @@ async function confirmClearCurrentChat() {
   }
   const s = sessionsMap[activeSessionId];
   const sName = s ? (s.name || `جلسه ${s.code}`) : `جلسه ${activeSessionId}`;
-  
   const ok = confirm(`🧹 آیا مطمئن هستید که می‌خواهید تاریخچه گفتگو و تخته مدارک «${sName}» را پاکسازی کنید؟\n\n⚠️ تمام پیام‌ها و مدارک این کلاس بلادرنگ پاک خواهند شد، اما عکس‌ها و فایل‌های سرور باقی می‌مانند.`);
   if (!ok) return;
 
