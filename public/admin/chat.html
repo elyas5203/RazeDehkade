@@ -2,16 +2,17 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>اتاق فرمان | SYSTEM</title>
-  <link rel="stylesheet" href="/assets/css/main.css?v=3.6">
-  <link rel="stylesheet" href="/assets/css/cyber.css?v=3.6">
-  <link rel="stylesheet" href="/assets/css/admin.css?v=3.6">
-  <link rel="stylesheet" href="/assets/css/admin-polish.css?v=3.6">
-  <link rel="stylesheet" href="/assets/css/voice-player.css?v=3.6">
+  <link rel="stylesheet" href="/assets/css/main.css?v=3.9">
+  <link rel="stylesheet" href="/assets/css/admin.css?v=3.9">
+  <link rel="stylesheet" href="/assets/css/admin-polish.css?v=3.9">
+  <link rel="stylesheet" href="/assets/css/admin-mobile-chat.css?v=1.1">
+  <link rel="stylesheet" href="/assets/css/voice-player.css?v=3.9">
   <script src="/socket.io/socket.io.js" defer></script>
-  <script src="/assets/js/voice-recorder.js?v=3.6" defer></script>
-  <script src="/assets/js/admin-chat.js?v=3.6" defer></script>
+  <script src="/assets/js/voice-recorder.js?v=3.9" defer></script>
+  <script src="/assets/js/live-audio-codec.js?v=1.0" defer></script>
+  <script src="/assets/js/admin-chat.js?v=4.0" defer></script>
 </head>
 <body class="command-page">
   <header class="command-bar">
@@ -64,13 +65,13 @@
     <!-- بخش میانی: پیام‌ها و چت اصلی -->
     <section class="command-chat" id="panel-chat">
       <div class="mobile-chat-header">
-        <button type="button" onclick="switchMobileTab('sidebar')" class="mobile-back-btn">← بازگشت به لیست جلسه‌ها</button>
+        <button type="button" onclick="switchMobileTab('sidebar')" class="mobile-back-btn">← لیست جلسه‌ها</button>
         <span id="mobile-chat-session-title">انتخاب جلسه</span>
       </div>
       <div class="messages-list" id="admin-messages-box"></div>
       <div id="admin-typing-indicator" class="admin-typing"></div>
 
-      <div class="admin-composer" style="position:relative;">
+      <div class="admin-composer">
         <!-- پنل انتخاب ایموجی سمت ادمین -->
         <div id="admin-emoji-picker" class="admin-emoji-picker" hidden aria-label="انتخاب ایموجی">
           <div class="admin-emoji-header">
@@ -86,15 +87,30 @@
         </div>
 
         <input type="file" id="admin-file-input" hidden onchange="handleAdminFileUpload(event)">
-        <button type="button" onclick="triggerAdminFileInput('*')" class="command-button icon" title="آپلود فوری">پیوست</button>
-        <button type="button" id="admin-emoji-btn" onclick="toggleAdminEmojiPicker(event)" class="command-button icon" title="افزودن ایموجی" aria-label="افزودن ایموجی">😊</button>
-        <select id="admin-sender-type" aria-label="نقش فرستنده">
-          <option value="admin">مرکز</option>
-          <option value="system">سیستم</option>
-          <option value="hacker">مزداک</option>
-        </select>
-        <textarea id="admin-msg-input" rows="1" onkeydown="handleAdminComposerKeydown(event)" oninput="handleAdminComposerInput(this)" aria-label="متن پیام جلسه" placeholder="پیام جلسه را بنویسید… (Enter ارسال · Shift+Enter خط جدید)"></textarea>
-        <button type="button" onclick="sendAdminMessage()" class="command-button primary">ارسال پیام</button>
+
+        <div class="admin-composer-main">
+          <!-- ردیف ابزارهای بالایی (نقش فرستنده، پیوست و ایموجی) -->
+          <div class="composer-actions-bar">
+            <div class="composer-left-tools">
+              <select id="admin-sender-type" aria-label="نقش فرستنده">
+                <option value="admin">مرکز</option>
+                <option value="system">سیستم</option>
+                <option value="hacker">مزداک</option>
+              </select>
+              <button type="button" onclick="triggerAdminFileInput('*')" class="command-button icon attach-btn" title="آپلود فوری">📎 پیوست</button>
+              <button type="button" id="admin-emoji-btn" onclick="toggleAdminEmojiPicker(event)" class="command-button icon emoji-btn" title="افزودن ایموجی" aria-label="افزودن ایموجی">😊</button>
+            </div>
+          </div>
+
+          <!-- ردیف کادر متن و دکمه ارسال پیام همیشه در دسترس و مشهود در کنار هم -->
+          <div class="composer-textarea-row">
+            <textarea id="admin-msg-input" rows="1" onkeydown="handleAdminComposerKeydown(event)" oninput="handleAdminComposerInput(this)" aria-label="متن پیام جلسه" placeholder="پیام جلسه را بنویسید… (ارسال با دکمه ارسال پیام)"></textarea>
+            <button type="button" onclick="sendAdminMessage()" class="command-button primary send-message-btn" id="admin-send-btn">
+              <span class="send-btn-label">ارسال پیام</span>
+              <span class="send-btn-icon" aria-hidden="true">➤</span>
+            </button>
+          </div>
+        </div>
       </div>
     </section>
 

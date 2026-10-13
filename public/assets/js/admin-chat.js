@@ -49,6 +49,21 @@ if (!adminToken) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // هماهنگ‌سازی دقیق ارتفاع بدنه با visualViewport در گوشی برای جلوگیری از بریده شدن کادر چت
+  if (window.visualViewport) {
+    const syncViewport = () => {
+      if (window.innerWidth <= 900) {
+        document.body.style.setProperty('--admin-visible-height', `${window.visualViewport.height}px`);
+      } else {
+        document.body.style.removeProperty('--admin-visible-height');
+      }
+    };
+    window.visualViewport.addEventListener('resize', syncViewport);
+    window.visualViewport.addEventListener('scroll', syncViewport);
+    window.addEventListener('orientationchange', syncViewport);
+    syncViewport();
+  }
+
   loadAdminSessions();
   loadWeeklyContent(1);
   initAdminSocket();
@@ -56,15 +71,12 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function handleAdminComposerKeydown(e) {
+  // بر اساس نیازمندی صریح: کلید اینتر پیام را ارسال نمی‌کند و فقط به خط بعدی می‌رود.
+  // ارسال پیام تنها با کلیک روی دکمه «ارسال پیام» انجام می‌گردد.
   if (e.key === 'Enter' || e.keyCode === 13) {
-    if (!e.shiftKey) {
-      e.preventDefault();
-      if (e.isComposing || e.keyCode === 229) {
-        return;
-      }
-      sendAdminMessage();
-    }
-    // Shift+Enter creates a new line
+    setTimeout(() => {
+      handleAdminComposerInput(e.target);
+    }, 0);
   }
 }
 
@@ -88,8 +100,9 @@ function initAdminSocket() {
     statusEl.innerHTML = '<span class="status-dot"></span> مرکز متصل است';
     if (activeSessionId) {
       socket.emit('join_session', { sessionId: activeSessionId });
-      switchSession(activeSessionId);
+      if (historyLoadedFor !== activeSessionId) switchSession(activeSessionId);
     }
+    if (isAudioListening && activeSessionId) socket.emit('start_audio_stream', { sessionId: activeSessionId });
   });
 
   socket.io.on('reconnect', () => {
@@ -101,13 +114,23 @@ function initAdminSocket() {
   });
 
   socket.on('disconnect', () => {
+    if (adminPeerConnection) { adminPeerConnection.close(); adminPeerConnection = null; }
+    if (isAudioListening) updateAudioUI('reconnecting');
     statusEl.className = 'status-indicator offline';
     statusEl.innerHTML = '<span class="status-dot"></span> در حال وصل شدن مجدد...';
   });
 
+  let loadAdminSessionsTimer = null;
+  function debouncedLoadAdminSessions(delay = 1200) {
+    if (loadAdminSessionsTimer) clearTimeout(loadAdminSessionsTimer);
+    loadAdminSessionsTimer = setTimeout(() => {
+      loadAdminSessions();
+    }, delay);
+  }
+
   socket.on('new_message', (msg) => {
     if (Number(msg.session_id) === Number(activeSessionId)) {
-      renderAdminMessage(msg);
+      renderAdminMessage(msg, true);
       if (sessionsMap[msg.session_id]) {
         sessionsMap[msg.session_id].unread_count = 0;
       }
@@ -119,8 +142,9 @@ function initAdminSocket() {
     }
     if (sessionsMap[msg.session_id]) {
       sessionsMap[msg.session_id].last_activity_at = new Date().toISOString();
+      renderSessionsSidebar(Object.values(sessionsMap));
     }
-    loadAdminSessions();
+    debouncedLoadAdminSessions(1200);
   });
 
   socket.on('session_read', (data) => {
@@ -133,8 +157,9 @@ function initAdminSocket() {
   socket.on('session_updated', (data) => {
     if (data && data.sessionId && sessionsMap[data.sessionId]) {
       sessionsMap[data.sessionId].last_activity_at = new Date().toISOString();
+      renderSessionsSidebar(Object.values(sessionsMap));
     }
-    loadAdminSessions();
+    debouncedLoadAdminSessions(1200);
   });
 
   socket.on('user_typing', (data) => {
@@ -175,6 +200,16 @@ function initAdminSocket() {
     handleAdminPcmChunk(data.pcm, data.sessionId);
   });
 
+  socket.on('admin_audio_stream_adpcm', (data) => {
+    if (!isAudioListening || !data || Number(data.sessionId) !== Number(activeSessionId)) return;
+    if (adminPeerConnection && adminPeerConnection.connectionState === 'connected') return;
+    if (!window.LiveAudioCodec) return;
+    try {
+      const samples = LiveAudioCodec.decode(data.packet);
+      if (samples) playAdminLiveSamples(samples, LiveAudioCodec.sampleRate);
+    } catch (err) { console.warn('Invalid live audio packet:', err); }
+  });
+
   // دریافت چانک‌های صوتی استریم کاربر از طریق سوکت (فال‌بک کمکی)
   socket.on('admin_audio_stream_chunk', (data) => {
     if (!isAudioListening || !data || Number(data.sessionId) !== Number(activeSessionId)) return;
@@ -189,9 +224,10 @@ function initAdminSocket() {
   });
 
   socket.on('webrtc_ice_candidate', async (data) => {
-    if (adminPeerConnection && data.candidate && isAudioListening) {
+    if (adminPeerConnection && data.candidate && isAudioListening && Number(data.sessionId) === Number(activeSessionId)) {
       try {
-        await adminPeerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        if (adminPeerConnection.remoteDescription) await adminPeerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+        else pendingAdminCandidates.push(new RTCIceCandidate(data.candidate));
       } catch (e) {
         console.error('Error adding ICE candidate on admin:', e);
       }
@@ -211,6 +247,14 @@ function initAdminSocket() {
     if (Number(data.sessionId) === Number(activeSessionId)) {
       const msgEl = document.querySelector(`[data-message-id="${data.messageId}"]`);
       if (msgEl) msgEl.remove();
+    }
+  });
+
+  socket.on('chat_cleared', (data) => {
+    if (!data || Number(data.sessionId) === Number(activeSessionId) || data.all) {
+      const box = document.getElementById('admin-messages-box');
+      if (box) box.innerHTML = '';
+      if (activeSessionId) sessionDrafts.delete(activeSessionId);
     }
   });
 
@@ -384,7 +428,11 @@ async function switchSession(nextSessionId) {
       if (sessionsMap[activeSessionId]) sessionsMap[activeSessionId].is_chat_locked = Boolean(lockState);
 
       const box = document.getElementById('admin-messages-box');
-      data.data.forEach(renderAdminMessage);
+      if (box && Array.isArray(data.data)) {
+        box.innerHTML = '';
+        data.data.forEach(m => renderAdminMessage(m, false));
+        box.scrollTop = box.scrollHeight;
+      }
     }
   } catch (err) {
     console.error('Error loading session messages:', err);
@@ -453,9 +501,9 @@ function fixMojibakeText(value) {
   return str;
 }
 
-function renderAdminMessage(msg) {
+function renderAdminMessage(msg, autoScroll = true) {
   const box = document.getElementById('admin-messages-box');
-  if (Number(msg.session_id) !== Number(activeSessionId)) return;
+  if (!box || Number(msg.session_id) !== Number(activeSessionId)) return;
   if (box.querySelector(`[data-message-id="${Number(msg.id)}"]`)) return;
   const div = document.createElement('div');
   div.dataset.messageId = Number(msg.id);
@@ -509,7 +557,9 @@ function renderAdminMessage(msg) {
 
   const laterMessage = [...box.children].find(child => Number(child.dataset.messageId) > Number(msg.id));
   box.insertBefore(div, laterMessage || null);
-  box.scrollTop = box.scrollHeight;
+  if (autoScroll) {
+    box.scrollTop = box.scrollHeight;
+  }
 }
 
 let pendingAdminEditMessageId = null;
@@ -643,7 +693,91 @@ function switchMobileTab(tabName) {
   document.querySelectorAll('.mobile-tab-btn').forEach(btn => btn.classList.remove('active'));
   const activeBtn = document.getElementById(`tab-btn-${tabName}`);
   if (activeBtn) activeBtn.classList.add('active');
+
+  if (tabName === 'chat' && !activeSessionId) {
+    const box = document.getElementById('admin-messages-box');
+    if (box && !box.children.length) {
+      box.innerHTML = `
+        <div class="empty-chat-hint">
+          <div style="font-size:36px;margin-bottom:10px;">🕵️</div>
+          <strong style="font-size:15px;color:#f1f5f9;">جلسه‌ای انتخاب نشده است</strong>
+          <p style="color:#94a3b8;font-size:12.5px;margin:8px 0 16px;max-width:280px;line-height:1.6;">لطفاً برای مشاهده پیام‌ها، ارسال مدارک یا پاسخ به دانش‌آموزان، ابتدا یک کلاس را از لیست انتخاب نمایید.</p>
+          <button type="button" class="command-button primary" onclick="switchMobileTab('sidebar')" style="padding:8px 18px;font-size:13px;">📋 انتخاب از لیست جلسه‌ها</button>
+        </div>
+      `;
+    }
+  }
 }
+
+async function confirmClearCurrentChat() {
+  if (!activeSessionId) {
+    alert('لطفاً ابتدا یک جلسه را از لیست انتخاب کنید.');
+    return;
+  }
+  const s = sessionsMap[activeSessionId];
+  const sName = s ? (s.name || `جلسه ${s.code}`) : `جلسه ${activeSessionId}`;
+
+  const ok = confirm(`🧹 آیا مطمئن هستید که می‌خواهید تاریخچه گفتگو و تخته مدارک «${sName}» را پاکسازی کنید؟\n\n⚠️ تمام پیام‌ها و مدارک این کلاس بلادرنگ پاک خواهند شد، اما عکس‌ها و فایل‌های سرور باقی می‌مانند.`);
+  if (!ok) return;
+
+  try {
+    const res = await fetch(`/api/sessions/${activeSessionId}/clear-history`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminToken}`,
+      },
+    });
+    const data = await res.json();
+    if (data.success) {
+      const box = document.getElementById('admin-messages-box');
+      if (box) box.innerHTML = '';
+      sessionDrafts.delete(activeSessionId);
+      const input = document.getElementById('admin-msg-input');
+      if (input) input.value = '';
+      alert(`✅ تاریخچه چت و تخته مدارک «${sName}» با موفقیت پاکسازی شد (${data.deletedCount} پیام).`);
+    } else {
+      alert(`❌ خطا در پاکسازی: ${data.message || 'خطای نامشخص'}`);
+    }
+  } catch (err) {
+    console.error('Error clearing chat history:', err);
+    alert('خطا در برقراری ارتباط با سرور.');
+  }
+}
+window.confirmClearCurrentChat = confirmClearCurrentChat;
+
+async function confirmClearAllChats() {
+  const ok1 = confirm('⚠️ هشدار مهم:\n\nآیا مطمئن هستید که می‌خواهید تاریخچه چت و تخته مدارک تمامی کلاس‌ها را پاکسازی کنید؟');
+  if (!ok1) return;
+
+  const ok2 = confirm('🚨 تایید نهایی:\n\nآیا ۱۰۰٪ مطمئن هستید؟ این عملیات قابل بازگشت نیست!');
+  if (!ok2) return;
+
+  try {
+    const res = await fetch('/api/sessions/clear-all-history', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminToken}`,
+      },
+    });
+    const data = await res.json();
+    if (data.success) {
+      const box = document.getElementById('admin-messages-box');
+      if (box) box.innerHTML = '';
+      sessionDrafts.clear();
+      const input = document.getElementById('admin-msg-input');
+      if (input) input.value = '';
+      alert(`✅ تمامی چت‌ها و تخته مدارک تمام جلسات با موفقیت پاکسازی شدند (${data.deletedCount} پیام).`);
+    } else {
+      alert(`❌ خطا در پاکسازی سراسری: ${data.message || 'خطای نامشخص'}`);
+    }
+  } catch (err) {
+    console.error('Error clearing all chat history:', err);
+    alert('خطا در برقراری ارتباط با سرور.');
+  }
+}
+window.confirmClearAllChats = confirmClearAllChats;
 
 async function loadCannedResponses() {
   try {
@@ -783,6 +917,7 @@ async function promptNewCanned() {
 let adminAudioCtx = null;
 let nextPcmPlayTime = 0;
 let audioWatchdogTimer = null;
+let pendingAdminCandidates = [];
 
 function initAdminAudioContext() {
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -833,6 +968,23 @@ function handleAdminPcmChunk(pcmBuffer, sessionId) {
   } catch (err) {
     console.error('خطا در پخش صدای استریم PCM:', err);
   }
+}
+
+function playAdminLiveSamples(samples, sampleRate) {
+  const ctx = initAdminAudioContext();
+  if (!ctx || !samples.length) return;
+  const now = ctx.currentTime;
+  if (nextPcmPlayTime > now + 0.65) nextPcmPlayTime = now + 0.12;
+  if (nextPcmPlayTime < now) nextPcmPlayTime = now + 0.12;
+  const buffer = ctx.createBuffer(1, samples.length, sampleRate);
+  const channel = buffer.getChannelData(0);
+  for (let i = 0; i < samples.length; i++) channel[i] = samples[i] / 32768;
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.connect(ctx.destination);
+  source.start(nextPcmPlayTime);
+  nextPcmPlayTime += buffer.duration;
+  updateAudioUI('live');
 }
 
 let audioQueue = [];
@@ -979,12 +1131,13 @@ function startAdminAudioListening() {
     socket.emit('start_audio_stream', { sessionId: activeSessionId });
   }
 
-  // واچ‌داگ آرام: بررسی سلامت اتصال هر ۱۰ ثانیه بدون ریست مخرب اتصال کاربر
+  // Retry the request if no media arrived, including after Socket.IO reconnects.
   if (audioKeepAliveTimer) clearInterval(audioKeepAliveTimer);
   audioKeepAliveTimer = setInterval(() => {
     if (!isAudioListening || !activeSessionId) return;
     if (socket && socket.connected) {
-      if (adminAudioCtx && (adminAudioCtx.currentTime - nextPcmPlayTime > 8)) {
+      if (adminAudioCtx && (adminAudioCtx.currentTime - nextPcmPlayTime > 8) &&
+          (!adminPeerConnection || adminPeerConnection.connectionState !== 'connected')) {
         socket.emit('start_audio_stream', { sessionId: activeSessionId });
       }
     }
@@ -1017,6 +1170,7 @@ function stopAdminAudioListening() {
     try { adminAudioCtx.suspend(); } catch (_) {}
   }
   nextPcmPlayTime = 0;
+  pendingAdminCandidates = [];
 
   if (adminPeerConnection) {
     try { adminPeerConnection.close(); } catch (_) {}
@@ -1037,6 +1191,7 @@ async function handleUserOffer(offer, userSocketId) {
   }
 
   adminPeerConnection = new RTCPeerConnection(rtcConfig);
+  pendingAdminCandidates = [];
 
   // پایش وضعیت اتصال و وصل مجدد خودکار در صورت قطعی
   adminPeerConnection.onconnectionstatechange = () => {
@@ -1044,6 +1199,7 @@ async function handleUserOffer(offer, userSocketId) {
     const state = adminPeerConnection.connectionState;
     console.log('WebRTC Connection state:', state);
     if (state === 'connected') {
+      nextPcmPlayTime = adminAudioCtx ? adminAudioCtx.currentTime : 0;
       updateAudioUI('live');
     } else if (state === 'disconnected' || state === 'failed') {
       if (isAudioListening) {
@@ -1091,6 +1247,7 @@ async function handleUserOffer(offer, userSocketId) {
 
   try {
     await adminPeerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+    for (const candidate of pendingAdminCandidates.splice(0)) await adminPeerConnection.addIceCandidate(candidate);
     const answer = await adminPeerConnection.createAnswer();
     await adminPeerConnection.setLocalDescription(answer);
 

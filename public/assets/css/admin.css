@@ -1,21 +1,53 @@
 @import url('local-fonts.css');
 
+/* Root reset & ultra-smooth mobile viewport */
+html {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
+  -webkit-text-size-adjust: 100%;
+}
+
 /* Base Command Page Theme */
 .command-page {
   font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: #080b0e;
   color: #e8e5dc;
-  height: 100dvh;
-  max-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  width: 100% !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  height: auto !important;
+  max-height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   --command-line: #34383a;
   --command-paper: #15191b;
   --command-amber: #e7aa45;
   --command-red: #b8473f;
+}
+
+/* غیرفعال‌سازی هرگونه خطوط و بافت‌های سنگین اسکن‌لاین جهت حذف لگ موبایل */
+body.command-page::before,
+body.command-page::after {
+  content: none !important;
+  display: none !important;
 }
 
 /* Command Bar (Header) */
@@ -309,22 +341,48 @@
 }
 
 .admin-composer {
-  display: grid;
-  grid-template-columns: auto auto 86px minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 8px;
-  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 14px;
   border-top: 1px solid var(--command-line);
   background: #0e1214;
   position: relative;
   flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-composer-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.composer-textarea-row {
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.composer-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+}
+
+.composer-left-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .admin-composer .command-button {
-  height: 42px !important;
-  min-height: 42px !important;
-  max-height: 42px !important;
-  align-self: end !important;
+  height: 38px !important;
+  min-height: 38px !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -335,7 +393,7 @@
 }
 
 .admin-composer #admin-emoji-btn {
-  width: 42px;
+  width: 38px;
   padding: 0;
   font-size: 17px;
 }
@@ -427,44 +485,72 @@
 }
 
 .admin-composer select {
-  height: 42px !important;
-  min-height: 42px !important;
-  max-height: 42px !important;
-  align-self: end !important;
+  height: 38px !important;
+  min-height: 38px !important;
   border-radius: 6px;
   background: #15191b;
   border: 1px solid #3a4043;
   color: #e8e5dc;
-  padding: 0 8px;
+  padding: 0 10px;
   font-family: inherit;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 700;
   outline: none;
   box-sizing: border-box;
+  cursor: pointer;
 }
 
-.admin-composer input, .admin-composer textarea {
+.admin-composer textarea {
   border-radius: 6px;
   background: #15191b;
   border: 1px solid #3a4043;
   color: #e8e5dc;
-  padding: 9px 12px;
+  padding: 10px 12px;
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.5;
   outline: none;
   resize: none;
-  height: 42px;
-  min-height: 42px;
-  max-height: 96px;
-  align-self: end;
+  min-height: 44px;
+  max-height: 120px;
   width: 100%;
   box-sizing: border-box;
   overflow-y: auto;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .admin-composer textarea:focus {
   border-color: var(--command-amber);
+  box-shadow: 0 0 0 2px rgba(231, 170, 69, 0.2);
+}
+
+.admin-composer .send-message-btn,
+.composer-actions-bar .send-message-btn,
+.composer-textarea-row .send-message-btn {
+  background: var(--command-amber) !important;
+  color: #0c1012 !important;
+  font-weight: 800 !important;
+  padding: 0 20px !important;
+  border: none !important;
+  font-size: 13.5px !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  border-radius: 6px !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  box-shadow: 0 2px 8px rgba(231, 170, 69, 0.25) !important;
+  transition: opacity 0.15s ease, transform 0.15s ease !important;
+}
+
+.admin-composer .send-message-btn:hover,
+.composer-actions-bar .send-message-btn:hover,
+.composer-textarea-row .send-message-btn:hover {
+  opacity: 0.92 !important;
+  transform: translateY(-1px) !important;
 }
 
 /* ==========================================================================
@@ -897,10 +983,10 @@
   }
   
   .command-layout {
-    flex: 1;
-    min-height: 0;
-    height: auto;
-    max-height: none;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
     grid-template-columns: 1fr;
     padding: 0;
     margin: 0;
@@ -911,19 +997,20 @@
   
   .command-sidebar, .command-chat, .media-library-panel, .mobile-tools-panel {
     display: none;
-    flex: 1;
-    height: 100%;
-    min-height: 0;
+    flex: 1 1 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
     overflow: hidden;
     border: none;
     border-radius: 0;
   }
   
   /* نمایش تب فعال در موبایل و تبلت */
-  body.mobile-tab-sidebar #panel-sidebar { display: flex; flex-direction: column; padding: 12px; overflow: hidden; }
-  body.mobile-tab-chat #panel-chat { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
-  body.mobile-tab-media #panel-media { display: flex; flex-direction: column; padding: 12px; overflow: hidden; }
-  body.mobile-tab-tools #panel-tools { display: flex; flex-direction: column; padding: 16px; overflow-y: auto; }
+  body.mobile-tab-sidebar #panel-sidebar { display: flex; flex-direction: column; padding: 12px; overflow: hidden; flex: 1 1 0; min-height: 0; height: auto; }
+  body.mobile-tab-chat #panel-chat { display: flex !important; flex-direction: column !important; flex: 1 1 0 !important; height: auto !important; max-height: none !important; min-height: 0 !important; overflow: hidden !important; }
+  body.mobile-tab-media #panel-media { display: flex; flex-direction: column; padding: 12px; overflow: hidden; flex: 1 1 0; min-height: 0; height: auto; }
+  body.mobile-tab-tools #panel-tools { display: flex; flex-direction: column; padding: 16px; overflow-y: auto; flex: 1 1 0; min-height: 0; height: auto; }
 
   /* حالت پیش‌فرض اگر تبی تعیین نشده باشد */
   body:not(.mobile-tab-chat):not(.mobile-tab-media):not(.mobile-tab-tools) #panel-sidebar {
@@ -937,8 +1024,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    padding: 8px 12px;
+    gap: 6px;
+    padding: 8px 10px;
     background: #14191c;
     border-bottom: 1px solid var(--command-line);
     flex-shrink: 0;
@@ -947,7 +1034,23 @@
   .mobile-chat-header .mobile-back-btn {
     padding: 6px 10px;
     font-size: 11px;
+    background: #1e2529;
+    color: #e8e5dc;
+    border: 1px solid #34383a;
+    border-radius: 4px;
     flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .mobile-chat-header .mobile-clear-btn {
+    padding: 6px 9px;
+    font-size: 11px;
+    background: rgba(239, 68, 68, 0.16);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.38);
+    border-radius: 4px;
+    flex-shrink: 0;
+    cursor: pointer;
   }
 
   #mobile-chat-session-title {
@@ -957,68 +1060,193 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    flex: 1;
+    text-align: center;
+    padding: 0 4px;
   }
   
   #admin-messages-box {
-    flex: 1 1 0;
-    min-height: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 10px 12px;
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+    padding: 10px 12px !important;
+    contain: layout;
+  }
+
+  .message-bubble {
+    contain: layout style;
+    content-visibility: auto;
+    contain-intrinsic-size: 70px;
+  }
+
+  .empty-chat-hint {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    min-height: 220px;
+    padding: 30px 16px;
+    color: #cbd5e1;
   }
   
+  /* کامپوزر فوق‌العاده واکنش‌گرا، مشهود و همیشه در دسترس روی موبایل */
   .admin-composer {
-    flex-shrink: 0;
-    grid-template-columns: auto auto 72px minmax(0, 1fr) auto;
-    align-items: end;
-    padding: 8px 10px;
-    gap: 6px;
-    background: #0c1012;
-    border-top: 1px solid var(--command-line);
+    display: flex !important;
+    flex-direction: column !important;
+    flex-shrink: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 6px 10px max(10px, env(safe-area-inset-bottom, 10px)) 10px !important;
+    gap: 6px !important;
+    background: #0b0f12 !important;
+    border-top: 1px solid var(--command-line) !important;
+    position: relative !important;
+    bottom: 0 !important;
+    z-index: 50 !important;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.5) !important;
+  }
+
+  .admin-composer-main {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 5px !important;
+    width: 100% !important;
+  }
+
+  .composer-actions-bar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    width: 100% !important;
+    height: 32px !important;
+    min-height: 32px !important;
+  }
+
+  .composer-left-tools {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
   }
   
   #admin-sender-type {
     display: inline-flex !important;
-    width: 72px;
-    font-size: 12px;
-    padding: 0 4px;
+    width: 76px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    font-size: 12px !important;
+    padding: 0 4px !important;
+    border-radius: 6px !important;
+    background: #171d20 !important;
+    border: 1px solid #3e464a !important;
+    color: #e8e5dc !important;
   }
   
-  .admin-composer input, .admin-composer textarea {
-    font-size: 13.5px;
-    height: 40px;
-    min-height: 40px;
-    max-height: 92px;
-    padding: 8px 10px;
-  }
-  
-  .admin-composer .command-button,
-  .admin-composer select {
-    height: 40px !important;
-    min-height: 40px !important;
-    max-height: 40px !important;
-    padding: 0 10px;
-    font-size: 12px;
+  .admin-composer .command-button {
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+    border-radius: 6px !important;
   }
 
   .admin-composer #admin-emoji-btn {
-    width: 38px;
-    padding: 0;
+    width: 32px !important;
+    padding: 0 !important;
+    font-size: 16px !important;
+  }
+
+  /* ردیف کادر متن و دکمه ارسال پیام در کنار هم کاملاً مشهود */
+  .composer-textarea-row {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    box-sizing: border-box !important;
+  }
+
+  .composer-textarea-row textarea {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+    font-size: 14px !important;
+    min-height: 42px !important;
+    height: 42px !important;
+    max-height: 96px !important;
+    padding: 8px 12px !important;
+    border-radius: 8px !important;
+    background: #171d20 !important;
+    border: 1.5px solid #3e464a !important;
+    color: #f8fafc !important;
+    box-sizing: border-box !important;
+    line-height: 1.4 !important;
+    resize: none !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .composer-textarea-row textarea:focus {
+    border-color: var(--command-amber) !important;
+    box-shadow: 0 0 0 2px rgba(231, 170, 69, 0.25) !important;
+  }
+
+  .composer-textarea-row .send-message-btn {
+    flex-shrink: 0 !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 16px !important;
+    font-size: 13.5px !important;
+    border-radius: 8px !important;
+    font-weight: 800 !important;
+    background: var(--command-amber) !important;
+    color: #0c1012 !important;
+    border: none !important;
+    cursor: pointer !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    box-shadow: 0 2px 10px rgba(231, 170, 69, 0.4) !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 }
 
 @media (max-width: 480px) {
   .admin-composer {
-    grid-template-columns: auto auto 64px minmax(0, 1fr) auto;
-    gap: 4px;
-    padding: 6px 8px;
+    padding: 5px 8px max(10px, env(safe-area-inset-bottom, 10px)) 8px !important;
+    gap: 5px !important;
   }
   #admin-sender-type {
-    width: 64px;
-    font-size: 11.5px;
+    width: 68px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    font-size: 11.5px !important;
   }
   .admin-composer .command-button {
-    padding: 0 8px;
-    font-size: 11.5px;
+    height: 30px !important;
+    min-height: 30px !important;
+    padding: 0 8px !important;
+    font-size: 11.5px !important;
+  }
+  .composer-textarea-row {
+    gap: 6px !important;
+  }
+  .composer-textarea-row textarea {
+    min-height: 40px !important;
+    height: 40px !important;
+    padding: 8px 10px !important;
+    font-size: 13.5px !important;
+  }
+  .composer-textarea-row .send-message-btn {
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 14px !important;
+    font-size: 12.5px !important;
   }
 }
