@@ -45,3 +45,35 @@
     font-size: 14px !important;
   }
 }
+
+.admin-media-confirm-dialog {
+  width: min(420px, calc(100vw - 28px));
+  max-height: min(620px, calc(100dvh - 28px));
+  margin: auto;
+  padding: 22px;
+  box-sizing: border-box;
+  overflow: auto;
+  border: 1px solid var(--command-amber, #e7aa45);
+  border-radius: 14px;
+  background: #151b1e;
+  color: #f4f5f2;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .65);
+  font-family: inherit;
+  direction: rtl;
+}
+.admin-media-confirm-dialog::backdrop { background: rgba(2, 7, 9, .78); }
+.admin-media-confirm-icon { font-size: 28px; margin-bottom: 8px; }
+.admin-media-confirm-dialog h2 { margin: 0 0 8px; font-size: 18px; }
+.admin-media-confirm-dialog p { margin: 0 0 16px; color: #c9d0d0; line-height: 1.6; }
+.admin-media-confirm-details { margin: 0 0 20px; display: grid; gap: 8px; }
+.admin-media-confirm-details > div { display: flex; justify-content: space-between; gap: 12px; min-width: 0; }
+.admin-media-confirm-details > div[hidden] { display: none; }
+.admin-media-confirm-details dt { color: #aeb9b9; flex: none; }
+.admin-media-confirm-details dd { margin: 0; overflow-wrap: anywhere; text-align: left; }
+.admin-media-confirm-actions { display: flex; gap: 8px; }
+.admin-media-confirm-actions .command-button { flex: 1; min-height: 44px; }
+@media (max-width: 480px) {
+  .admin-media-confirm-dialog { padding: 18px; }
+  .admin-media-confirm-actions { flex-direction: column-reverse; }
+  .admin-media-confirm-actions .command-button { width: 100%; flex: none; }
+}

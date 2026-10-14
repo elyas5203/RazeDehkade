@@ -7,12 +7,12 @@
   <link rel="stylesheet" href="/assets/css/main.css?v=3.9">
   <link rel="stylesheet" href="/assets/css/admin.css?v=3.9">
   <link rel="stylesheet" href="/assets/css/admin-polish.css?v=3.9">
-  <link rel="stylesheet" href="/assets/css/admin-mobile-chat.css?v=1.1">
+  <link rel="stylesheet" href="/assets/css/admin-mobile-chat.css?v=1.2">
   <link rel="stylesheet" href="/assets/css/voice-player.css?v=3.9">
   <script src="/socket.io/socket.io.js" defer></script>
   <script src="/assets/js/voice-recorder.js?v=3.9" defer></script>
   <script src="/assets/js/live-audio-codec.js?v=1.0" defer></script>
-  <script src="/assets/js/admin-chat.js?v=4.0" defer></script>
+  <script src="/assets/js/admin-chat.js?v=4.1" defer></script>
 </head>
 <body class="command-page">
   <header class="command-bar">
@@ -212,6 +212,21 @@
         <button type="button" onclick="closeAddStepDialog()" class="command-button" style="flex:1;">انصراف</button>
       </div>
     </form>
+  </dialog>
+
+  <dialog id="admin-media-confirm-dialog" class="admin-media-confirm-dialog" aria-labelledby="admin-media-confirm-title" aria-describedby="admin-media-confirm-description">
+    <div class="admin-media-confirm-icon" aria-hidden="true" id="admin-media-confirm-icon">📎</div>
+    <h2 id="admin-media-confirm-title">تأیید ارسال فایل</h2>
+    <p id="admin-media-confirm-description">پیش از ارسال، مقصد فایل را بررسی کنید.</p>
+    <dl class="admin-media-confirm-details">
+      <div><dt>فایل</dt><dd id="admin-media-confirm-name"></dd></div>
+      <div><dt>کلاس</dt><dd id="admin-media-confirm-session"></dd></div>
+      <div id="admin-media-confirm-size-row" hidden><dt>حجم</dt><dd id="admin-media-confirm-size"></dd></div>
+    </dl>
+    <div class="admin-media-confirm-actions">
+      <button type="button" id="admin-media-confirm-cancel" class="command-button">انصراف</button>
+      <button type="button" id="admin-media-confirm-send" class="command-button primary">تأیید و ارسال</button>
+    </div>
   </dialog>
 
   <!-- مودال ویرایش پیام در پنل فرماندهی -->

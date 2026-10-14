@@ -29,6 +29,7 @@ let activeSessionId = requestedSessionId || parseInt(sessionStorage.getItem('act
 let sessionsMap = {};
 const sessionDrafts = new Map();
 let historyLoadedFor = null;
+let composerMediaPending = false;
 
 let adminPeerConnection = null;
 let isAudioListening = false;
@@ -375,9 +376,19 @@ function renderSessionsSidebar(sessions) {
 
 async function switchSession(nextSessionId) {
   const prevSessionId = activeSessionId;
+  const isDifferentSession = prevSessionId != null && Number(prevSessionId) !== Number(nextSessionId);
+  if (!isDifferentSession && Number(historyLoadedFor) === Number(nextSessionId)) {
+    if (window.innerWidth <= 900) switchMobileTab('chat');
+    return;
+  }
   const input = document.getElementById('admin-msg-input');
   if (prevSessionId && input) sessionDrafts.set(prevSessionId, input.value);
-  stopAdminAudioListening();
+  if (isDifferentSession) {
+    stopAdminAudioListening();
+    if (activeAdminUpload) cancelCurrentAdminUpload();
+    clearStagedMedia();
+    activeStagedStep = null;
+  }
   activeSessionId = nextSessionId;
   historyLoadedFor = nextSessionId;
   if (input) {
@@ -646,7 +657,7 @@ function deleteChatMessage(messageId) {
   }
 }
 
-function sendAdminMessage() {
+async function sendAdminMessage() {
   if (!activeSessionId) {
     alert('لطفاً ابتدا یک جلسه را از لیست جلسه‌ها انتخاب کنید.');
     return;
@@ -660,30 +671,53 @@ function sendAdminMessage() {
 
   // ارسال رسانه آماده استیج‌شده (عکس، ویدیو، صوت، سند)
   if (activeStagedStep && activeStagedStep.type !== 'text') {
+    if (composerMediaPending) return;
+    composerMediaPending = true;
     const staged = activeStagedStep;
-    socket.emit('send_message', {
-      sessionId: activeSessionId,
+    const targetSessionId = Number(activeSessionId);
+    if (Number(staged.sessionId) !== targetSessionId) {
+      clearStagedMedia();
+      alert('کلاس تغییر کرده است؛ فایل را دوباره انتخاب کنید.');
+      composerMediaPending = false;
+      return;
+    }
+    const approved = await confirmAdminMediaSend({
+      type: staged.type, name: staged.title || staged.fileName,
+      sessionId: targetSessionId,
+    });
+    if (!approved) { composerMediaPending = false; return; }
+    if (!socket?.connected) {
+      composerMediaPending = false;
+      alert('اتصال چت برقرار نیست؛ دوباره تلاش کنید.');
+      return;
+    }
+    socket.timeout(10000).emit('send_message', {
+      sessionId: targetSessionId,
       content: content || staged.title,
       senderType: selectedSenderType,
       messageType: staged.type,
       fileUrl: staged.fileUrl,
       fileName: staged.fileName,
+    }, (error, ack) => {
+      composerMediaPending = false;
+      if (error || !ack?.success) {
+        alert(ack?.message || 'ارسال فایل تأیید نشد؛ دوباره تلاش کنید.');
+        return;
+      }
+      markStepAsSent(targetSessionId, staged.stepId);
+      if (activeStagedStep === staged) clearStagedMedia();
+      if (Number(activeSessionId) !== targetSessionId) return;
+      if (sessionsMap[targetSessionId]) {
+        sessionsMap[targetSessionId].unread_count = 0;
+        renderSessionsSidebar(Object.values(sessionsMap));
+      }
+      socket.emit('mark_as_read', { sessionId: targetSessionId });
+      if (input) {
+        input.value = '';
+        input.style.height = '42px';
+      }
+      sendAdminTyping(false);
     });
-
-    markStepAsSent(activeSessionId, staged.stepId);
-    clearStagedMedia();
-
-    if (sessionsMap[activeSessionId]) {
-      sessionsMap[activeSessionId].unread_count = 0;
-      renderSessionsSidebar(Object.values(sessionsMap));
-    }
-    socket.emit('mark_as_read', { sessionId: activeSessionId });
-
-    if (input) {
-      input.value = '';
-      input.style.height = '42px';
-    }
-    sendAdminTyping(false);
     return;
   }
 
@@ -1325,6 +1359,46 @@ function triggerAdminFileInput(acceptType) {
   }
 }
 
+function confirmAdminMediaSend({ type, name, sessionId, size }) {
+  const dialog = document.getElementById('admin-media-confirm-dialog');
+  if (!dialog || dialog.open) return Promise.resolve(false);
+  const kind = String(type || 'file').toLowerCase();
+  const label = kind.startsWith('image') || kind === 'image' ? 'عکس'
+    : kind.startsWith('video') || kind === 'video' ? 'ویدیو'
+    : kind.startsWith('audio') || kind === 'voice' ? 'صوت' : 'فایل';
+  const icon = label === 'عکس' ? '📷' : label === 'ویدیو' ? '🎬' : label === 'صوت' ? '🎙️' : '📎';
+  document.getElementById('admin-media-confirm-icon').textContent = icon;
+  document.getElementById('admin-media-confirm-title').textContent = `تأیید ارسال ${label}`;
+  document.getElementById('admin-media-confirm-description').textContent = 'پس از تأیید، فایل به کلاس زیر ارسال می‌شود.';
+  document.getElementById('admin-media-confirm-name').textContent = name || 'فایل انتخاب‌شده';
+  document.getElementById('admin-media-confirm-session').textContent = sessionsMap[sessionId]?.name || `کلاس ${sessionId}`;
+  const sizeRow = document.getElementById('admin-media-confirm-size-row');
+  sizeRow.hidden = size == null;
+  if (size != null) document.getElementById('admin-media-confirm-size').textContent = formatAdminFileSizeFa(size);
+  const cancelButton = document.getElementById('admin-media-confirm-cancel');
+  const sendButton = document.getElementById('admin-media-confirm-send');
+  return new Promise(resolve => {
+    let settled = false;
+    const finish = approved => {
+      if (settled) return;
+      settled = true;
+      cancelButton.removeEventListener('click', cancel);
+      sendButton.removeEventListener('click', send);
+      dialog.removeEventListener('cancel', escape);
+      dialog.close();
+      resolve(approved && Number(activeSessionId) === Number(sessionId));
+    };
+    const cancel = () => finish(false);
+    const send = () => finish(true);
+    const escape = event => { event.preventDefault(); finish(false); };
+    cancelButton.addEventListener('click', cancel);
+    sendButton.addEventListener('click', send);
+    dialog.addEventListener('cancel', escape);
+    dialog.showModal();
+    cancelButton.focus();
+  });
+}
+
 let activeAdminUpload = null;
 
 function formatAdminFileSizeFa(bytes) {
@@ -1476,19 +1550,33 @@ function sendAdminChunkViaSocket(payload) {
 async function handleAdminFileUpload(event) {
   if (!activeSessionId) {
     alert('لطفا ابتدا یک جلسه را انتخاب کنید.');
+    event.target.value = '';
     return;
   }
 
   const file = event.target.files[0];
   if (!file) return;
 
+  const uploadSessionId = Number(activeSessionId);
+  const cleanOriginalName = fixMojibakeText(file.name || 'فایل ارسالی');
+  const approved = await confirmAdminMediaSend({
+    type: file.type, name: cleanOriginalName, sessionId: uploadSessionId, size: file.size,
+  });
+  if (!approved) {
+    event.target.value = '';
+    return;
+  }
+  if (!socket?.connected) {
+    alert('اتصال چت برقرار نیست؛ پس از اتصال دوباره فایل را انتخاب کنید.');
+    event.target.value = '';
+    return;
+  }
+
   if (activeAdminUpload) {
     cancelCurrentAdminUpload();
   }
 
-  const uploadSessionId = activeSessionId;
   const uploadSenderType = document.getElementById('admin-sender-type').value;
-  const cleanOriginalName = fixMojibakeText(file.name || 'فایل ارسالی');
 
   const uploadState = {
     uploadId: `adm_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
@@ -1559,6 +1647,15 @@ async function handleAdminFileUpload(event) {
   }
 
   if (uploadState.cancelled) return;
+
+  if (Number(activeSessionId) !== uploadSessionId) {
+    activeAdminUpload = null;
+    const container = document.getElementById('admin-typing-indicator');
+    if (container) container.innerHTML = '';
+    event.target.value = '';
+    alert('کلاس در زمان آپلود تغییر کرد؛ فایل به چت ارسال نشد.');
+    return;
+  }
 
   if (finalResult && finalResult.success && finalResult.data) {
     updateAdminUploadProgress(100, 'تکمیل شد — ارسال به جلسه...', file.size);
@@ -1656,12 +1753,10 @@ async function sendQuickMedia(file) {
     return;
   }
 
-  const sName = sessionsMap[activeSessionId]?.name || activeSessionId;
-  const fileTitle = file.title || file.name;
-
-  if (!confirm(`آیا از ارسال فایل «${fileTitle}» به جلسه «${sName}» اطمینان دارید؟`)) {
-    return;
-  }
+  const targetSessionId = Number(activeSessionId);
+  if (!await confirmAdminMediaSend({
+    type: file.type, name: file.title || file.name, sessionId: targetSessionId,
+  })) return;
 
   const feedback = document.getElementById('media-library-feedback');
   if (feedback) feedback.textContent = 'در حال ارسال فایل به جلسه…';
@@ -1670,12 +1765,12 @@ async function sendQuickMedia(file) {
     const response = await fetch('/api/media-library/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
-      body: JSON.stringify({ sessionId: activeSessionId, name: file.name, title: file.title || '' }),
+      body: JSON.stringify({ sessionId: targetSessionId, name: file.name, title: file.title || '' }),
     });
     const result = await response.json();
     if (!response.ok || !result.success) throw new Error(result.message || 'ارسال انجام نشد.');
     if (feedback) feedback.textContent = '✅ فایل با موفقیت به جلسه ارسال شد.';
-    if (result.data) renderAdminMessage(result.data);
+    if (result.data && Number(activeSessionId) === targetSessionId) renderAdminMessage(result.data);
     setTimeout(() => { if (feedback) feedback.textContent = ''; }, 3000);
   } catch (error) {
     if (feedback) feedback.textContent = error.message || 'خطا در ارسال فایل.';
@@ -1922,7 +2017,7 @@ async function loadWeeklyContent(week = currentSelectedWeek) {
         ${resolvedThumbUrl !== '#' ? `<img src="${resolvedThumbUrl}" alt="${safeTitle}" style="width:100%;max-height:95px;object-fit:cover;border-radius:4px;border:1px solid #2d3538;margin-top:2px;" loading="lazy">` : ''}
         ${safeFile ? `<small style="font-size:10px;color:#64748b;direction:ltr;text-align:right;">${safeFile}</small>` : ''}
         <div class="step-actions-row" style="display:flex;gap:6px;margin-top:6px;align-items:center;">
-          <button type="button" class="command-button primary step-insert-btn" style="flex:1;padding:7px 10px;font-size:11.5px;font-weight:600;" title="قرار دادن در کادر چت">📝 درج در کادر چت</button>
+          <button type="button" class="command-button primary step-insert-btn" style="flex:1;padding:7px 10px;font-size:11.5px;font-weight:600;" title="${item.content_type === 'text' ? 'قرار دادن در کادر چت' : 'تأیید و ارسال رسانه'}">${item.content_type === 'text' ? '📝 درج در کادر چت' : '📤 تأیید و ارسال'}</button>
           <button type="button" class="command-button danger step-del-btn" style="padding:6px 8px;font-size:11px;flex-shrink:0;" title="حذف این مرحله">🗑️</button>
         </div>
       `;
@@ -1940,6 +2035,10 @@ async function loadWeeklyContent(week = currentSelectedWeek) {
 
 function insertStepToComposer(item) {
   if (!item) return;
+  if (item.content_type !== 'text') {
+    sendConfirmedWeeklyMedia(item);
+    return;
+  }
   const input = document.getElementById('admin-msg-input');
   const chip = document.getElementById('staged-media-chip');
   const chipIcon = document.getElementById('staged-media-icon');
@@ -2001,6 +2100,49 @@ function insertStepToComposer(item) {
       feedback.textContent = `✅ فایل ${icon} «${item.title}» در کادر چت قرار گرفت. برای ارسال، دکمه «ارسال پیام» را بزنید.`;
       setTimeout(() => { if (feedback) feedback.textContent = ''; }, 3500);
     }
+  }
+}
+
+const pendingWeeklyMedia = new Set();
+async function sendConfirmedWeeklyMedia(item) {
+  if (!activeSessionId) {
+    alert('لطفاً ابتدا یک کلاس را انتخاب کنید.');
+    return;
+  }
+  const targetSessionId = Number(activeSessionId);
+  const pendingKey = `${targetSessionId}:${item.id}`;
+  if (pendingWeeklyMedia.has(pendingKey)) return;
+  pendingWeeklyMedia.add(pendingKey);
+  const feedback = document.getElementById('weekly-content-feedback');
+  try {
+    const approved = await confirmAdminMediaSend({
+      type: item.content_type, name: item.title || item.file_name, sessionId: targetSessionId,
+    });
+    if (!approved) return;
+    if (!socket?.connected) throw new Error('اتصال چت برقرار نیست؛ دوباره تلاش کنید.');
+    const fileUrl = safeFileUrl(item.file_url || item.payload || '');
+    if (fileUrl === '#') throw new Error('مسیر فایل معتبر نیست.');
+    if (feedback) feedback.textContent = 'در حال ارسال فایل به کلاس…';
+    const senderType = document.getElementById('admin-sender-type')?.value || 'admin';
+    await new Promise((resolve, reject) => {
+      socket.timeout(10000).emit('send_message', {
+        sessionId: targetSessionId,
+        content: item.title || item.file_name || 'فایل',
+        senderType,
+        messageType: item.content_type,
+        fileUrl,
+        fileName: item.file_name || item.title,
+      }, (error, ack) => {
+        if (error || !ack?.success) reject(new Error(ack?.message || 'ارسال فایل تأیید نشد.'));
+        else resolve();
+      });
+    });
+    markStepAsSent(targetSessionId, item.id);
+    if (feedback) feedback.textContent = 'فایل با موفقیت به کلاس ارسال شد.';
+  } catch (error) {
+    if (feedback) feedback.textContent = error.message || 'خطا در ارسال فایل.';
+  } finally {
+    pendingWeeklyMedia.delete(pendingKey);
   }
 }
 
