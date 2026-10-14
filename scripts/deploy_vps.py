@@ -14,6 +14,7 @@ FILES_TO_UPLOAD = [
     'MASTER_ADMIN_UX_COUNTDOWN_BLACKOUT.md',
     'MASTER_ADMIN_MOBILE_AND_STABILITY.md',
     'MASTER_ADMIN_MOBILE_CHAT_COMPOSER.md',
+    'MASTER_CANNED_RESPONSES_PROGRESS_TRACKING.md',
     'server.js',
     'public/admin/chat.html',
     'public/assets/css/admin.css',
@@ -37,7 +38,8 @@ FILES_TO_UPLOAD = [
     'src/socket/index.js',
     'src/utils/logger.js',
     'tests/admin-ux-and-blackout.test.js',
-    'tests/admin-stability-and-clear.test.js'
+    'tests/admin-stability-and-clear.test.js',
+    'tests/admin-scenario-progress.test.js'
 ]
 
 def main():
@@ -87,7 +89,7 @@ def main():
 
     # Run tests on server
     print("\nRunning automated tests on VPS...")
-    stdin, stdout, stderr = ssh.exec_command('cd /home/user615/RazeDehkade && node --test tests/admin-ux-and-blackout.test.js')
+    stdin, stdout, stderr = ssh.exec_command('cd /home/user615/RazeDehkade && node --test tests/admin-scenario-progress.test.js tests/admin-ux-and-blackout.test.js')
     test_out = stdout.read().decode('utf-8')
     test_err = stderr.read().decode('utf-8')
     print(test_out)

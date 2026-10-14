@@ -137,6 +137,13 @@ function initAdminSocket() {
       if (socket) {
         socket.emit('mark_as_read', { sessionId: activeSessionId });
       }
+      if (msg.sender_type !== 'user') {
+        if (msg.message_type === 'text') {
+          checkAndMarkMatchingTextStep(msg.session_id, msg.content);
+        } else {
+          checkAndMarkMatchingMediaStep(msg.session_id, msg);
+        }
+      }
     } else if (sessionsMap[msg.session_id] && msg.sender_type === 'user') {
       sessionsMap[msg.session_id].unread_count = (sessionsMap[msg.session_id].unread_count || 0) + 1;
     }
@@ -390,6 +397,7 @@ async function switchSession(nextSessionId) {
 
   updateActiveHeader();
   renderSessionsSidebar(Object.values(sessionsMap));
+  refreshWeeklyStepsProgress();
 
   // در تبلت و گوشی موبایل با انتخاب یک جلسه، بلافاصله به تب اتاق گفتگو هدایت شود
   if (window.innerWidth <= 900) {
@@ -432,7 +440,9 @@ async function switchSession(nextSessionId) {
         box.innerHTML = '';
         data.data.forEach(m => renderAdminMessage(m, false));
         box.scrollTop = box.scrollHeight;
+        hydrateSessionSentStepsFromMessages(activeSessionId, data.data);
       }
+      refreshWeeklyStepsProgress();
     }
   } catch (err) {
     console.error('Error loading session messages:', err);
@@ -665,6 +675,14 @@ function sendAdminMessage() {
     renderSessionsSidebar(Object.values(sessionsMap));
   }
   socket.emit('mark_as_read', { sessionId: activeSessionId });
+
+  // اگر مرحله‌ای در کادر درج شده بود یا با مراحل متنی سناریو تطابق دارد، ارسال آن را ثبت کن
+  if (activeStagedStep && Number(activeStagedStep.sessionId) === Number(activeSessionId) && activeStagedStep.stepId) {
+    markStepAsSent(activeSessionId, activeStagedStep.stepId);
+    activeStagedStep = null;
+  } else {
+    checkAndMarkMatchingTextStep(activeSessionId, content);
+  }
 
   input.value = '';
   input.style.height = '42px';
@@ -1631,11 +1649,184 @@ async function sendQuickMedia(file) {
 }
 
 /* ==========================================================================
-   مدیریت سناریوی ۵ هفته‌ای (هفته ۱ تا ۵) و قفل چت توسط پشتیبان
+   مدیریت سناریوی ۵ هفته‌ای (هفته ۱ تا ۵) و رهگیری پیشرفت ارسال به تفکیک کلاس
    ========================================================================== */
 
 let currentSelectedWeek = 1;
 let weeklyContentCache = {};
+const sessionSentStepsMap = new Map(); // sessionId -> Set of stepIds
+let activeStagedStep = null; // { sessionId, stepId, text }
+
+function getSessionSentSteps(sessionId) {
+  const sId = Number(sessionId);
+  if (!sId) return new Set();
+  if (!sessionSentStepsMap.has(sId)) {
+    try {
+      const stored = localStorage.getItem(`raze_session_${sId}_sent_steps`);
+      const arr = stored ? JSON.parse(stored) : [];
+      sessionSentStepsMap.set(sId, new Set(arr.map(x => String(x))));
+    } catch (e) {
+      sessionSentStepsMap.set(sId, new Set());
+    }
+  }
+  return sessionSentStepsMap.get(sId);
+}
+
+function markStepAsSent(sessionId, stepId) {
+  const sId = Number(sessionId);
+  if (!sId || !stepId) return;
+  const set = getSessionSentSteps(sId);
+  set.add(String(stepId));
+  try {
+    localStorage.setItem(`raze_session_${sId}_sent_steps`, JSON.stringify(Array.from(set)));
+  } catch (e) {
+    console.warn('localStorage save failed:', e);
+  }
+  if (Number(activeSessionId) === sId) {
+    updateStepCardVisual(stepId, true);
+  }
+}
+
+function isStepSentInSession(sessionId, stepId) {
+  const sId = Number(sessionId);
+  if (!sId || !stepId) return false;
+  return getSessionSentSteps(sId).has(String(stepId));
+}
+
+function updateStepCardVisual(stepId, isSent) {
+  const card = document.querySelector(`.weekly-step-card[data-step-id="${stepId}"]`);
+  if (!card) return;
+
+  const headerRight = card.querySelector('.step-header-meta') || card.firstElementChild;
+  let badge = card.querySelector('.step-sent-badge');
+  const sendBtn = card.querySelector('.step-send-btn');
+  const insertBtn = card.querySelector('.step-insert-btn');
+
+  if (isSent) {
+    card.classList.add('sent-step');
+    if (!badge && headerRight) {
+      badge = document.createElement('span');
+      badge.className = 'step-sent-badge';
+      badge.innerHTML = '✓ ارسال شده';
+      headerRight.insertBefore(badge, headerRight.firstChild);
+    }
+    if (sendBtn) {
+      sendBtn.innerHTML = '✓ ارسال مجدد';
+      sendBtn.title = 'این مرحله قبلاً ارسال شده است؛ برای ارسال دوباره کلیک کنید (دکمه باز است)';
+      sendBtn.disabled = false;
+    }
+    if (insertBtn) {
+      insertBtn.innerHTML = '✓ درج مجدد';
+      insertBtn.disabled = false;
+    }
+  } else {
+    card.classList.remove('sent-step');
+    if (badge) badge.remove();
+    if (sendBtn) {
+      sendBtn.innerHTML = '📤 ارسال به جلسه';
+      sendBtn.title = 'ارسال مستقیم این محتوا به جلسه';
+      sendBtn.disabled = false;
+    }
+    if (insertBtn) {
+      insertBtn.innerHTML = '📝 درج در کادر';
+      insertBtn.disabled = false;
+    }
+  }
+}
+
+function refreshWeeklyStepsProgress() {
+  const sId = Number(activeSessionId);
+  const sentSet = getSessionSentSteps(sId);
+  const cards = document.querySelectorAll('.weekly-step-card');
+  cards.forEach(card => {
+    const stepId = card.dataset.stepId;
+    if (!stepId) return;
+    const isSent = sId ? sentSet.has(String(stepId)) : false;
+    updateStepCardVisual(stepId, isSent);
+  });
+}
+
+function hydrateSessionSentStepsFromMessages(sessionId, messages) {
+  if (!sessionId || !Array.isArray(messages)) return;
+  const sId = Number(sessionId);
+  const sentSet = getSessionSentSteps(sId);
+
+  Object.values(weeklyContentCache).forEach(stepList => {
+    if (!Array.isArray(stepList)) return;
+    stepList.forEach(item => {
+      const stepIdStr = String(item.id);
+      if (sentSet.has(stepIdStr)) return;
+
+      const stepText = (item.text_content || (item.content_type === 'text' ? item.payload : '') || '').trim();
+      const stepFile = (item.file_url || (item.content_type !== 'text' ? item.payload : '') || '').trim();
+      const stepTitle = (item.title || '').trim();
+
+      const match = messages.some(m => {
+        if (m.sender_type === 'user') return false;
+        if (item.content_type === 'text') {
+          const mContent = (m.content || '').trim();
+          return stepText && (mContent === stepText || (stepText.length > 20 && mContent.includes(stepText.slice(0, 50))));
+        } else {
+          if (stepFile && m.file_url) {
+            const cleanStepFile = stepFile.split('?')[0].split('/').pop();
+            const cleanMsgFile = m.file_url.split('?')[0].split('/').pop();
+            if (cleanStepFile && cleanMsgFile && cleanStepFile === cleanMsgFile) return true;
+          }
+          if (stepTitle && m.content && m.content.trim() === stepTitle) return true;
+          return false;
+        }
+      });
+
+      if (match) {
+        sentSet.add(stepIdStr);
+      }
+    });
+  });
+
+  try {
+    localStorage.setItem(`raze_session_${sId}_sent_steps`, JSON.stringify(Array.from(sentSet)));
+  } catch (e) {}
+}
+
+function checkAndMarkMatchingTextStep(sessionId, text) {
+  if (!sessionId || !text) return;
+  const trimmed = text.trim();
+  Object.values(weeklyContentCache).forEach(stepList => {
+    if (!Array.isArray(stepList)) return;
+    stepList.forEach(item => {
+      if (item.content_type === 'text') {
+        const stepText = (item.text_content || item.payload || '').trim();
+        if (stepText && (stepText === trimmed || (stepText.length > 20 && trimmed.includes(stepText.slice(0, 50))))) {
+          markStepAsSent(sessionId, item.id);
+        }
+      }
+    });
+  });
+}
+
+function checkAndMarkMatchingMediaStep(sessionId, msg) {
+  if (!sessionId || !msg) return;
+  const sId = Number(sessionId);
+  Object.values(weeklyContentCache).forEach(stepList => {
+    if (!Array.isArray(stepList)) return;
+    stepList.forEach(item => {
+      if (item.content_type !== 'text') {
+        const stepFile = (item.file_url || item.payload || '').trim();
+        const stepTitle = (item.title || '').trim();
+        let match = false;
+        if (stepFile && msg.file_url) {
+          const cleanStepFile = stepFile.split('?')[0].split('/').pop();
+          const cleanMsgFile = msg.file_url.split('?')[0].split('/').pop();
+          if (cleanStepFile && cleanMsgFile && cleanStepFile === cleanMsgFile) match = true;
+        }
+        if (stepTitle && msg.content && msg.content.trim() === stepTitle) match = true;
+        if (match) {
+          markStepAsSent(sId, item.id);
+        }
+      }
+    });
+  });
+}
 
 function selectWeek(week) {
   currentSelectedWeek = Number(week);
@@ -1678,9 +1869,6 @@ async function loadWeeklyContent(week = currentSelectedWeek) {
 
     result.data.forEach(item => {
       const card = document.createElement('div');
-      card.className = 'weekly-step-card';
-      card.style.cssText = 'background:#14191c;border:1px solid #343c3e;padding:10px;border-radius:4px;display:flex;flex-direction:column;gap:6px;transition:border-color 0.2s;';
-
       const stepOrder = item.order_num || item.step_order || 1;
       const stepWeek = item.week || item.week_number || week;
       const stepText = item.text_content || (item.content_type === 'text' ? item.payload : '');
@@ -1700,12 +1888,23 @@ async function loadWeeklyContent(week = currentSelectedWeek) {
       const safeFile = stepFile ? escapeHtml(item.file_name || stepFile) : '';
       const resolvedThumbUrl = item.content_type === 'image' ? safeFileUrl(stepFile) : '#';
 
+      const isSent = isStepSentInSession(activeSessionId, item.id);
+      card.className = `weekly-step-card${isSent ? ' sent-step' : ''}`;
+      card.dataset.stepId = String(item.id);
+      card.dataset.week = String(stepWeek);
+
+      const sendBtnLabel = isSent ? '✓ ارسال مجدد' : '📤 ارسال به جلسه';
+      const insertBtnLabel = isSent ? '✓ درج مجدد' : '📝 درج در کادر';
+
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:11px;font-weight:bold;color:${typeColor};">
             #${stepOrder} ${icon} ${typeFa}
           </span>
-          <span style="font-size:10px;color:#8d9699;">هفته ${stepWeek}</span>
+          <div class="step-header-meta" style="display:flex;align-items:center;gap:6px;">
+            ${isSent ? `<span class="step-sent-badge">✓ ارسال شده</span>` : ''}
+            <span style="font-size:10px;color:#8d9699;">هفته ${stepWeek}</span>
+          </div>
         </div>
         <strong style="font-size:13px;color:#f8fafc;">${safeTitle}</strong>
         ${safeText ? `<p style="font-size:11px;color:#94a3b8;line-height:1.6;margin:0;max-height:54px;overflow:hidden;text-overflow:ellipsis;">${safeText}</p>` : ''}
@@ -1713,15 +1912,17 @@ async function loadWeeklyContent(week = currentSelectedWeek) {
         ${safeFile ? `<small style="font-size:10px;color:#64748b;direction:ltr;text-align:right;">${safeFile}</small>` : ''}
         <div style="display:flex;gap:6px;margin-top:4px;">
           ${item.content_type === 'text'
-            ? `<button type="button" class="command-button primary step-insert-btn" style="flex:1;padding:6px 8px;font-size:11px;">📝 درج در کادر چت</button>`
-            : `<button type="button" class="command-button step-send-btn" style="flex:1;padding:6px 8px;font-size:11px;background:rgba(56,189,248,0.15);color:#38bdf8;border-color:#38bdf8;">📤 ارسال به جلسه</button>`
+            ? `<button type="button" class="command-button step-send-btn step-send-text-direct-btn" style="flex:1;padding:6px 8px;font-size:11px;background:rgba(56,189,248,0.15);color:#38bdf8;border-color:#38bdf8;" title="ارسال مستقیم متن به جلسه">${sendBtnLabel}</button>
+               <button type="button" class="command-button primary step-insert-btn" style="padding:6px 8px;font-size:11px;" title="قرار دادن در کادر چت جهت ویرایش">${insertBtnLabel}</button>`
+            : `<button type="button" class="command-button step-send-btn" style="flex:1;padding:6px 8px;font-size:11px;background:rgba(56,189,248,0.15);color:#38bdf8;border-color:#38bdf8;" title="ارسال فایل به جلسه">${sendBtnLabel}</button>`
           }
           <button type="button" class="command-button danger step-del-btn" style="padding:4px 8px;font-size:10px;" title="حذف این مرحله">🗑️</button>
         </div>
       `;
 
       if (item.content_type === 'text') {
-        card.querySelector('.step-insert-btn').onclick = () => insertTextToComposer(stepText);
+        card.querySelector('.step-send-text-direct-btn').onclick = () => sendWeeklyTextDirect(item);
+        card.querySelector('.step-insert-btn').onclick = () => insertTextToComposer(stepText, item.id);
       } else {
         card.querySelector('.step-send-btn').onclick = () => sendWeeklyMedia({ ...item, file_url: stepFile, payload: stepFile });
       }
@@ -1735,7 +1936,44 @@ async function loadWeeklyContent(week = currentSelectedWeek) {
   }
 }
 
-function insertTextToComposer(text) {
+async function sendWeeklyTextDirect(item) {
+  if (!activeSessionId) {
+    alert('لطفاً ابتدا یک جلسه را از لیست جلسه‌ها انتخاب کنید.');
+    return;
+  }
+
+  const stepText = item.text_content || (item.content_type === 'text' ? item.payload : '');
+  if (!stepText) return;
+
+  const sName = sessionsMap[activeSessionId]?.name || `کلاس #${activeSessionId}`;
+  if (!confirm(`آیا از ارسال مستقیم متن «${item.title}» به جلسه «${sName}» اطمینان دارید؟`)) {
+    return;
+  }
+
+  const senderTypeSelect = document.getElementById('admin-sender-type');
+  const selectedSenderType = senderTypeSelect ? senderTypeSelect.value : 'admin';
+
+  socket.emit('send_message', {
+    sessionId: activeSessionId,
+    content: stepText,
+    senderType: selectedSenderType,
+    messageType: 'text',
+  }, (res) => {
+    if (res && !res.success) {
+      alert(res.message || 'خطا در ارسال پیام');
+    }
+  });
+
+  markStepAsSent(activeSessionId, item.id);
+
+  const feedback = document.getElementById('weekly-content-feedback');
+  if (feedback) {
+    feedback.textContent = `✅ پیام «${item.title}» با موفقیت به جلسه ارسال شد.`;
+    setTimeout(() => { if (feedback) feedback.textContent = ''; }, 3000);
+  }
+}
+
+function insertTextToComposer(text, stepId = null) {
   const input = document.getElementById('admin-msg-input');
   if (input) {
     input.value = text;
@@ -1743,9 +1981,12 @@ function insertTextToComposer(text) {
     input.style.height = Math.min(Math.max(input.scrollHeight, 42), 96) + 'px';
     input.focus();
     input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (stepId && activeSessionId) {
+      activeStagedStep = { sessionId: activeSessionId, stepId: stepId, text: text };
+    }
     const feedback = document.getElementById('weekly-content-feedback');
     if (feedback) {
-      feedback.textContent = '✅ متن در کادر چت قرار گرفت. برای ارسال کلید Enter را بزنید.';
+      feedback.textContent = '✅ متن در کادر چت قرار گرفت. برای ارسال، دکمه «ارسال پیام» را بزنید.';
       setTimeout(() => { if (feedback) feedback.textContent = ''; }, 3000);
     }
   }
@@ -1790,6 +2031,8 @@ async function sendWeeklyMedia(item) {
         if (feedback) feedback.textContent = res.message || 'خطا در ارسال فایل';
       }
     });
+
+    markStepAsSent(activeSessionId, item.id);
 
     if (feedback) {
       feedback.textContent = `✅ فایل «${item.title}» با موفقیت به جلسه ارسال شد.`;

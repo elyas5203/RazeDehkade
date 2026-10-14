@@ -208,6 +208,71 @@ body.command-page::after {
   padding-left: 2px;
 }
 
+/* وضعیت مراحل سناریو و پیام‌های آماده */
+.weekly-step-card {
+  position: relative;
+  background: #14191c;
+  border: 1px solid #343c3e;
+  padding: 10px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.2s, background-color 0.2s, box-shadow 0.2s;
+  overflow: hidden;
+}
+
+.weekly-step-card:hover {
+  border-color: #4a5559;
+}
+
+/* کارت ارسال‌شده به کلاس فعال (رنگ سبز زمردی، نشان واضح و تیک) */
+.weekly-step-card.sent-step {
+  border-color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.08) !important;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.12) inset, 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+}
+
+.weekly-step-card.sent-step::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  background: #10b981;
+  border-radius: 4px 0 0 4px;
+}
+
+.weekly-step-card .step-sent-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  padding: 1.5px 7px;
+  border-radius: 10px;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.weekly-step-card.sent-step .step-send-btn,
+.weekly-step-card.sent-step .step-insert-btn {
+  background: rgba(16, 185, 129, 0.18) !important;
+  border-color: #10b981 !important;
+  color: #34d399 !important;
+}
+
+.weekly-step-card.sent-step .step-send-btn:hover,
+.weekly-step-card.sent-step .step-insert-btn:hover {
+  background: rgba(16, 185, 129, 0.28) !important;
+  border-color: #34d399 !important;
+  color: #a7f3d0 !important;
+}
+
 .command-page .session-card {
   flex-shrink: 0;
   border-radius: 5px;
