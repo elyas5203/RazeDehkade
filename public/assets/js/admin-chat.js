@@ -654,19 +654,51 @@ function sendAdminMessage() {
 
   const input = document.getElementById('admin-msg-input');
   const senderTypeSelect = document.getElementById('admin-sender-type');
-  const rawContent = input.value.trim();
+  const rawContent = input ? input.value.trim() : '';
   const content = rawContent.replace(/\n{3,}/g, '\n\n');
+  const selectedSenderType = senderTypeSelect ? senderTypeSelect.value : 'admin';
+
+  // ارسال رسانه آماده استیج‌شده (عکس، ویدیو، صوت، سند)
+  if (activeStagedStep && activeStagedStep.type !== 'text') {
+    const staged = activeStagedStep;
+    socket.emit('send_message', {
+      sessionId: activeSessionId,
+      content: content || staged.title,
+      senderType: selectedSenderType,
+      messageType: staged.type,
+      fileUrl: staged.fileUrl,
+      fileName: staged.fileName,
+    });
+
+    markStepAsSent(activeSessionId, staged.stepId);
+    clearStagedMedia();
+
+    if (sessionsMap[activeSessionId]) {
+      sessionsMap[activeSessionId].unread_count = 0;
+      renderSessionsSidebar(Object.values(sessionsMap));
+    }
+    socket.emit('mark_as_read', { sessionId: activeSessionId });
+
+    if (input) {
+      input.value = '';
+      input.style.height = '42px';
+    }
+    sendAdminTyping(false);
+    return;
+  }
 
   if (!content) {
-    input.value = '';
-    input.style.height = '42px';
+    if (input) {
+      input.value = '';
+      input.style.height = '42px';
+    }
     return;
   }
 
   socket.emit('send_message', {
     sessionId: activeSessionId,
     content: content,
-    senderType: senderTypeSelect ? senderTypeSelect.value : 'admin',
+    senderType: selectedSenderType,
     messageType: 'text',
   });
 
@@ -684,8 +716,10 @@ function sendAdminMessage() {
     checkAndMarkMatchingTextStep(activeSessionId, content);
   }
 
-  input.value = '';
-  input.style.height = '42px';
+  if (input) {
+    input.value = '';
+    input.style.height = '42px';
+  }
   sendAdminTyping(false);
 }
 
@@ -1699,8 +1733,6 @@ function updateStepCardVisual(stepId, isSent) {
 
   const headerRight = card.querySelector('.step-header-meta') || card.firstElementChild;
   let badge = card.querySelector('.step-sent-badge');
-  const sendBtn = card.querySelector('.step-send-btn');
-  const insertBtn = card.querySelector('.step-insert-btn');
 
   if (isSent) {
     card.classList.add('sent-step');
@@ -1710,27 +1742,9 @@ function updateStepCardVisual(stepId, isSent) {
       badge.innerHTML = '✓ ارسال شده';
       headerRight.insertBefore(badge, headerRight.firstChild);
     }
-    if (sendBtn) {
-      sendBtn.innerHTML = '✓ ارسال مجدد';
-      sendBtn.title = 'این مرحله قبلاً ارسال شده است؛ برای ارسال دوباره کلیک کنید (دکمه باز است)';
-      sendBtn.disabled = false;
-    }
-    if (insertBtn) {
-      insertBtn.innerHTML = '✓ درج مجدد';
-      insertBtn.disabled = false;
-    }
   } else {
     card.classList.remove('sent-step');
     if (badge) badge.remove();
-    if (sendBtn) {
-      sendBtn.innerHTML = '📤 ارسال به جلسه';
-      sendBtn.title = 'ارسال مستقیم این محتوا به جلسه';
-      sendBtn.disabled = false;
-    }
-    if (insertBtn) {
-      insertBtn.innerHTML = '📝 درج در کادر';
-      insertBtn.disabled = false;
-    }
   }
 }
 
@@ -1893,9 +1907,6 @@ async function loadWeeklyContent(week = currentSelectedWeek) {
       card.dataset.stepId = String(item.id);
       card.dataset.week = String(stepWeek);
 
-      const sendBtnLabel = isSent ? '✓ ارسال مجدد' : '📤 ارسال به جلسه';
-      const insertBtnLabel = isSent ? '✓ درج مجدد' : '📝 درج در کادر';
-
       card.innerHTML = `
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <span style="font-size:11px;font-weight:bold;color:${typeColor};">
@@ -1911,21 +1922,12 @@ async function loadWeeklyContent(week = currentSelectedWeek) {
         ${resolvedThumbUrl !== '#' ? `<img src="${resolvedThumbUrl}" alt="${safeTitle}" style="width:100%;max-height:95px;object-fit:cover;border-radius:4px;border:1px solid #2d3538;margin-top:2px;" loading="lazy">` : ''}
         ${safeFile ? `<small style="font-size:10px;color:#64748b;direction:ltr;text-align:right;">${safeFile}</small>` : ''}
         <div class="step-actions-row" style="display:flex;gap:6px;margin-top:6px;align-items:center;">
-          ${item.content_type === 'text'
-            ? `<button type="button" class="command-button step-send-btn step-send-text-direct-btn" style="flex:1;padding:6px 6px;font-size:11px;background:rgba(56,189,248,0.15);color:#38bdf8;border-color:#38bdf8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="ارسال مستقیم متن به جلسه">${sendBtnLabel}</button>
-               <button type="button" class="command-button primary step-insert-btn" style="flex:1;padding:6px 6px;font-size:11px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="قرار دادن در کادر چت جهت ویرایش">${insertBtnLabel}</button>`
-            : `<button type="button" class="command-button step-send-btn" style="flex:1;padding:6px 8px;font-size:11px;background:rgba(56,189,248,0.15);color:#38bdf8;border-color:#38bdf8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="ارسال فایل به جلسه">${sendBtnLabel}</button>`
-          }
+          <button type="button" class="command-button primary step-insert-btn" style="flex:1;padding:7px 10px;font-size:11.5px;font-weight:600;" title="قرار دادن در کادر چت">📝 درج در کادر چت</button>
           <button type="button" class="command-button danger step-del-btn" style="padding:6px 8px;font-size:11px;flex-shrink:0;" title="حذف این مرحله">🗑️</button>
         </div>
       `;
 
-      if (item.content_type === 'text') {
-        card.querySelector('.step-send-text-direct-btn').onclick = () => sendWeeklyTextDirect(item);
-        card.querySelector('.step-insert-btn').onclick = () => insertTextToComposer(stepText, item.id);
-      } else {
-        card.querySelector('.step-send-btn').onclick = () => sendWeeklyMedia({ ...item, file_url: stepFile, payload: stepFile });
-      }
+      card.querySelector('.step-insert-btn').onclick = () => insertStepToComposer(item);
       card.querySelector('.step-del-btn').onclick = () => deleteWeeklyStep(item.id, stepWeek);
 
       list.appendChild(card);
@@ -1936,113 +1938,80 @@ async function loadWeeklyContent(week = currentSelectedWeek) {
   }
 }
 
-async function sendWeeklyTextDirect(item) {
-  if (!activeSessionId) {
-    alert('لطفاً ابتدا یک جلسه را از لیست جلسه‌ها انتخاب کنید.');
-    return;
-  }
-
-  const stepText = item.text_content || (item.content_type === 'text' ? item.payload : '');
-  if (!stepText) return;
-
-  const sName = sessionsMap[activeSessionId]?.name || `کلاس #${activeSessionId}`;
-  if (!confirm(`آیا از ارسال مستقیم متن «${item.title}» به جلسه «${sName}» اطمینان دارید؟`)) {
-    return;
-  }
-
-  const senderTypeSelect = document.getElementById('admin-sender-type');
-  const selectedSenderType = senderTypeSelect ? senderTypeSelect.value : 'admin';
-
-  socket.emit('send_message', {
-    sessionId: activeSessionId,
-    content: stepText,
-    senderType: selectedSenderType,
-    messageType: 'text',
-  }, (res) => {
-    if (res && !res.success) {
-      alert(res.message || 'خطا در ارسال پیام');
-    }
-  });
-
-  markStepAsSent(activeSessionId, item.id);
-
-  const feedback = document.getElementById('weekly-content-feedback');
-  if (feedback) {
-    feedback.textContent = `✅ پیام «${item.title}» با موفقیت به جلسه ارسال شد.`;
-    setTimeout(() => { if (feedback) feedback.textContent = ''; }, 3000);
-  }
-}
-
-function insertTextToComposer(text, stepId = null) {
+function insertStepToComposer(item) {
+  if (!item) return;
   const input = document.getElementById('admin-msg-input');
-  if (input) {
-    input.value = text;
-    input.style.height = '42px';
-    input.style.height = Math.min(Math.max(input.scrollHeight, 42), 96) + 'px';
-    input.focus();
-    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    if (stepId && activeSessionId) {
-      activeStagedStep = { sessionId: activeSessionId, stepId: stepId, text: text };
-    }
-    const feedback = document.getElementById('weekly-content-feedback');
-    if (feedback) {
-      feedback.textContent = '✅ متن در کادر چت قرار گرفت. برای ارسال، دکمه «ارسال پیام» را بزنید.';
-      setTimeout(() => { if (feedback) feedback.textContent = ''; }, 3000);
-    }
-  }
-}
-
-async function sendWeeklyMedia(item) {
-  if (!activeSessionId) {
-    alert('لطفاً ابتدا یک جلسه را از لیست جلسه‌ها انتخاب کنید.');
-    return;
-  }
-
-  const sName = sessionsMap[activeSessionId]?.name || activeSessionId;
-  if (!confirm(`آیا از ارسال فایل «${item.title}» به جلسه «${sName}» اطمینان دارید؟`)) {
-    return;
-  }
-
+  const chip = document.getElementById('staged-media-chip');
+  const chipIcon = document.getElementById('staged-media-icon');
+  const chipTitle = document.getElementById('staged-media-title');
   const feedback = document.getElementById('weekly-content-feedback');
-  if (feedback) feedback.textContent = 'در حال ارسال فایل به جلسه…';
 
-  try {
-    let rawFile = item.file_url || item.payload || '';
-    let resolvedUrl = safeFileUrl(rawFile);
-    if (resolvedUrl === '#') {
-      alert('آدرس فایل معتبر نیست.');
-      if (feedback) feedback.textContent = 'خطا: آدرس فایل معتبر نیست.';
-      return;
+  const stepOrder = item.order_num || item.step_order || 1;
+  const stepText = item.text_content || (item.content_type === 'text' ? item.payload : '');
+  const stepFile = item.file_url || (item.content_type !== 'text' ? item.payload : '');
+
+  if (item.content_type === 'text') {
+    clearStagedMedia();
+    if (input) {
+      input.value = stepText;
+      input.style.height = '42px';
+      input.style.height = Math.min(Math.max(input.scrollHeight, 42), 96) + 'px';
+      input.focus();
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-
-    const senderTypeSelect = document.getElementById('admin-sender-type');
-    const selectedSenderType = senderTypeSelect ? senderTypeSelect.value : 'admin';
-
-    socket.emit('send_message', {
+    activeStagedStep = {
       sessionId: activeSessionId,
-      content: item.title,
-      senderType: selectedSenderType,
-      messageType: item.content_type,
-      fileUrl: resolvedUrl,
-      fileName: item.file_name || item.title,
-    }, (res) => {
-      if (res && !res.success) {
-        alert(res.message || 'خطا در ارسال فایل');
-        if (feedback) feedback.textContent = res.message || 'خطا در ارسال فایل';
-      }
-    });
-
-    markStepAsSent(activeSessionId, item.id);
-
+      stepId: item.id,
+      type: 'text',
+      text: stepText,
+    };
     if (feedback) {
-      feedback.textContent = `✅ فایل «${item.title}» با موفقیت به جلسه ارسال شد.`;
+      feedback.textContent = `✅ متن مرحله #${stepOrder} در کادر چت قرار گرفت. برای ارسال، دکمه «ارسال پیام» را بزنید.`;
       setTimeout(() => { if (feedback) feedback.textContent = ''; }, 3500);
     }
-  } catch (err) {
-    console.error('Error sending weekly media:', err);
-    if (feedback) feedback.textContent = 'خطا در ارسال فایل به جلسه.';
+  } else {
+    let resolvedUrl = safeFileUrl(stepFile);
+    let icon = '📎';
+    if (item.content_type === 'image') icon = '📷';
+    else if (item.content_type === 'video') icon = '🎬';
+    else if (item.content_type === 'voice') icon = '🎙️';
+    else if (item.content_type === 'file') icon = '📁';
+
+    activeStagedStep = {
+      sessionId: activeSessionId,
+      stepId: item.id,
+      type: item.content_type,
+      title: item.title,
+      fileUrl: resolvedUrl,
+      fileName: item.file_name || item.title,
+    };
+
+    if (chip && chipIcon && chipTitle) {
+      chipIcon.textContent = icon;
+      chipTitle.textContent = `#${stepOrder} ${item.title}`;
+      chip.style.display = 'inline-flex';
+    }
+
+    if (input) {
+      input.focus();
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    if (feedback) {
+      feedback.textContent = `✅ فایل ${icon} «${item.title}» در کادر چت قرار گرفت. برای ارسال، دکمه «ارسال پیام» را بزنید.`;
+      setTimeout(() => { if (feedback) feedback.textContent = ''; }, 3500);
+    }
   }
 }
+
+function clearStagedMedia() {
+  const chip = document.getElementById('staged-media-chip');
+  if (chip) chip.style.display = 'none';
+  if (activeStagedStep && activeStagedStep.type !== 'text') {
+    activeStagedStep = null;
+  }
+}
+window.clearStagedMedia = clearStagedMedia;
 
 async function deleteWeeklyStep(stepId, week) {
   if (!confirm('آیا از حذف این مرحله از سناریو اطمینان دارید؟')) return;

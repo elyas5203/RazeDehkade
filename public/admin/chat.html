@@ -100,6 +100,11 @@
               <button type="button" onclick="triggerAdminFileInput('*')" class="command-button icon attach-btn" title="آپلود فوری">📎 پیوست</button>
               <button type="button" id="admin-emoji-btn" onclick="toggleAdminEmojiPicker(event)" class="command-button icon emoji-btn" title="افزودن ایموجی" aria-label="افزودن ایموجی">😊</button>
             </div>
+            <div id="staged-media-chip" style="display:none;align-items:center;gap:6px;background:rgba(56,189,248,0.12);border:1px solid #38bdf8;padding:3px 10px;border-radius:12px;font-size:11px;color:#38bdf8;max-width:260px;">
+              <span id="staged-media-icon">📎</span>
+              <span id="staged-media-title" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;">رسانه آماده</span>
+              <button type="button" onclick="clearStagedMedia()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:bold;font-size:12px;padding:0 2px;margin-right:2px;" title="لغو پیوست">✕</button>
+            </div>
           </div>
 
           <!-- ردیف کادر متن و دکمه ارسال پیام همیشه در دسترس و مشهود در کنار هم -->
