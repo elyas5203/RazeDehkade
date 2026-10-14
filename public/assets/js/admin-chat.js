@@ -30,6 +30,12 @@ let sessionsMap = {};
 const sessionDrafts = new Map();
 let historyLoadedFor = null;
 let composerMediaPending = false;
+let adminTextPending = false;
+
+function setAdminSendFeedback(message) {
+  const feedback = document.getElementById('admin-send-feedback');
+  if (feedback) feedback.textContent = message || '';
+}
 
 let adminPeerConnection = null;
 let isAudioListening = false;
@@ -658,6 +664,7 @@ function deleteChatMessage(messageId) {
 }
 
 async function sendAdminMessage() {
+  if (adminTextPending) return;
   if (!activeSessionId) {
     alert('لطفاً ابتدا یک جلسه را از لیست جلسه‌ها انتخاب کنید.');
     return;
@@ -729,32 +736,53 @@ async function sendAdminMessage() {
     return;
   }
 
-  socket.emit('send_message', {
-    sessionId: activeSessionId,
+  if (!socket?.connected) {
+    setAdminSendFeedback('اتصال چت قطع است؛ متن حفظ شد. پس از اتصال دوباره ارسال کنید.');
+    return;
+  }
+
+  const targetSessionId = Number(activeSessionId);
+  const stagedText = activeStagedStep;
+  adminTextPending = true;
+  const sendButton = document.getElementById('admin-send-btn');
+  if (sendButton) sendButton.disabled = true;
+  setAdminSendFeedback('در حال تأیید ارسال پیام…');
+  socket.timeout(10000).emit('send_message', {
+    sessionId: targetSessionId,
     content: content,
     senderType: selectedSenderType,
     messageType: 'text',
+  }, (error, ack) => {
+    adminTextPending = false;
+    if (sendButton) sendButton.disabled = false;
+    if (error || !ack?.success) {
+      setAdminSendFeedback(ack?.message || 'ارسال تأیید نشد؛ متن حفظ شد. اتصال را بررسی و دوباره ارسال کنید.');
+      return;
+    }
+    setAdminSendFeedback('');
+
+    if (sessionsMap[targetSessionId]) {
+      sessionsMap[targetSessionId].unread_count = 0;
+      renderSessionsSidebar(Object.values(sessionsMap));
+    }
+    if (socket.connected) socket.emit('mark_as_read', { sessionId: targetSessionId });
+
+    if (stagedText && Number(stagedText.sessionId) === targetSessionId && stagedText.stepId) {
+      markStepAsSent(targetSessionId, stagedText.stepId);
+      if (activeStagedStep === stagedText) activeStagedStep = null;
+    } else {
+      checkAndMarkMatchingTextStep(targetSessionId, content);
+    }
+
+    if (Number(activeSessionId) === targetSessionId && input && input.value.trim() === rawContent) {
+      input.value = '';
+      input.style.height = '42px';
+      sessionDrafts.delete(targetSessionId);
+      sendAdminTyping(false);
+    } else if (sessionDrafts.get(targetSessionId)?.trim() === rawContent) {
+      sessionDrafts.delete(targetSessionId);
+    }
   });
-
-  if (sessionsMap[activeSessionId]) {
-    sessionsMap[activeSessionId].unread_count = 0;
-    renderSessionsSidebar(Object.values(sessionsMap));
-  }
-  socket.emit('mark_as_read', { sessionId: activeSessionId });
-
-  // اگر مرحله‌ای در کادر درج شده بود یا با مراحل متنی سناریو تطابق دارد، ارسال آن را ثبت کن
-  if (activeStagedStep && Number(activeStagedStep.sessionId) === Number(activeSessionId) && activeStagedStep.stepId) {
-    markStepAsSent(activeSessionId, activeStagedStep.stepId);
-    activeStagedStep = null;
-  } else {
-    checkAndMarkMatchingTextStep(activeSessionId, content);
-  }
-
-  if (input) {
-    input.value = '';
-    input.style.height = '42px';
-  }
-  sendAdminTyping(false);
 }
 
 let adminTypingTimeout = null;
@@ -1662,22 +1690,36 @@ async function handleAdminFileUpload(event) {
     const { fileUrl, fileName, messageType } = finalResult.data;
     const cleanName = fixMojibakeText(fileName || cleanOriginalName);
 
-    socket.emit('send_message', {
+    if (!socket?.connected) {
+      activeAdminUpload = null;
+      setAdminSendFeedback('آپلود انجام شد، اما اتصال چت قطع شد؛ فایل به گروه فرستاده نشد. دوباره انتخاب کنید.');
+      event.target.value = '';
+      return;
+    }
+    socket.timeout(10000).emit('send_message', {
       sessionId: uploadSessionId,
       content: cleanName,
       senderType: uploadSenderType,
       messageType: messageType,
       fileUrl: fileUrl,
       fileName: cleanName,
-    }, (ack) => {
+    }, (error, ack) => {
       if (activeAdminUpload === uploadState) activeAdminUpload = null;
       const container = document.getElementById('admin-typing-indicator');
       if (container) container.innerHTML = '';
-      if (ack && !ack.success) {
-        alert(ack.message || 'خطا در ارسال فایل به چت');
+      if (error || !ack?.success) {
+        setAdminSendFeedback(ack?.message || 'ارسال عکس یا فایل به گروه تأیید نشد؛ دوباره تلاش کنید.');
+      } else {
+        setAdminSendFeedback('');
       }
     });
 
+    event.target.value = '';
+  } else {
+    activeAdminUpload = null;
+    const container = document.getElementById('admin-typing-indicator');
+    if (container) container.innerHTML = '';
+    setAdminSendFeedback('آپلود کامل نشد؛ فایل به گروه ارسال نشد. دوباره تلاش کنید.');
     event.target.value = '';
   }
 }

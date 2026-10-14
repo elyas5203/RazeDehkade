@@ -61,6 +61,16 @@
   font-family: inherit;
   direction: rtl;
 }
+.admin-send-feedback:not(:empty) {
+  color: #f3bb63;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 4px 2px 0;
+}
+@media (max-width: 480px) {
+  .admin-composer .composer-left-tools { min-width: 0; gap: 4px !important; }
+  .admin-composer .photo-btn, .admin-composer .attach-btn { padding: 0 7px !important; font-size: 12px !important; }
+}
 .admin-media-confirm-dialog::backdrop { background: rgba(2, 7, 9, .78); }
 .admin-media-confirm-icon { font-size: 28px; margin-bottom: 8px; }
 .admin-media-confirm-dialog h2 { margin: 0 0 8px; font-size: 18px; }

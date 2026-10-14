@@ -311,6 +311,7 @@ function setupSocketIO(io) {
 
         const targetSessionId = authorizedSessionId(user, sessionId);
         if (!targetSessionId) {
+          if (typeof ack === 'function') ack({ success: false, message: 'اجازه ارسال به این جلسه را ندارید.' });
           return socket.emit('error_message', { message: 'اجازه ارسال به این جلسه را ندارید.' });
         }
 
@@ -338,7 +339,10 @@ function setupSocketIO(io) {
             return socket.emit('error_message', { message: 'پیوست معتبر نیست.' });
           }
         }
-        if (!safeContent && !validatedFileUrl) return socket.emit('error_message', { message: 'پیام خالی است.' });
+        if (!safeContent && !validatedFileUrl) {
+          if (typeof ack === 'function') ack({ success: false, message: 'پیام خالی است.' });
+          return socket.emit('error_message', { message: 'پیام خالی است.' });
+        }
 
         // پیشگیری قاطع از ثبت و ارسال پیام تکراری در فاصله کمتر از ۱.۵ ثانیه (جلوگیری از دابل کلیک یا رویداد همزمان)
         const dedupKey = `${targetSessionId}_${effectiveSenderType}_${safeContent}_${validatedFileUrl || ''}`;
@@ -370,11 +374,16 @@ function setupSocketIO(io) {
           ...savedMessage,
           sender_name: user.role === 'admin' ? (user.display_name || 'ادمین') : 'دستیاران کارآگاه',
         });
+        if (typeof ack === 'function') ack({ success: true, message: savedMessage });
 
         // اگر ادمین پیامی ارسال کرد، بدیهی است تمام پیام‌های کاربر در این جلسه را خوانده است
         if (effectiveSenderType !== 'user' || user.role === 'admin') {
-          await Message.markAsRead(targetSessionId, 'user');
-          io.to('admins').emit('session_read', { sessionId: targetSessionId });
+          try {
+            await Message.markAsRead(targetSessionId, 'user');
+            io.to('admins').emit('session_read', { sessionId: targetSessionId });
+          } catch (readError) {
+            console.error('Message saved but markAsRead failed:', readError);
+          }
         }
 
         // همچنین برای اکتیو ماندن لیست جلسات ادمین، رویداد به‌روزرسانی لیست جلسه ارسال می‌شود
@@ -382,7 +391,6 @@ function setupSocketIO(io) {
           sessionId: targetSessionId,
           lastMessage: savedMessage,
         });
-        if (typeof ack === 'function') ack({ success: true, message: savedMessage });
 
       } catch (err) {
         console.error('Error in send_message socket handler:', err);

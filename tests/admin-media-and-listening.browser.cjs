@@ -7,7 +7,7 @@ const { chromium } = require('playwright');
 const publicRoot = path.resolve(__dirname, '../public');
 let uploadRequests = 0;
 let librarySends = 0;
-const socketStub = `window.__adminEmits=[];window.io=()=>{const handlers={};const socket={connected:true,io:{on(){}},on(name,fn){handlers[name]=fn},emit(name,data,cb){window.__adminEmits.push({name,data});if(cb)cb({success:true})},timeout(){return {emit(name,data,cb){window.__adminEmits.push({name,data});cb(null,{success:true})}}}};setTimeout(()=>handlers.connect?.(),0);return socket}`;
+const socketStub = `window.__adminEmits=[];window.__nextAdminAck=null;window.io=()=>{const handlers={};const socket={connected:true,io:{on(){}},on(name,fn){handlers[name]=fn},emit(name,data,cb){window.__adminEmits.push({name,data});if(cb)cb({success:true})},timeout(){return {emit(name,data,cb){window.__adminEmits.push({name,data});const ack=window.__nextAdminAck;window.__nextAdminAck=null;cb(null,ack||{success:true})}}}};setTimeout(()=>handlers.connect?.(),0);return socket}`;
 const sessions = [{ id: 1, name: 'کلاس یک', code: '111', unread_count: 0 }, { id: 2, name: 'کلاس دو', code: '222', unread_count: 0 }];
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
@@ -40,6 +40,15 @@ const server = http.createServer((req, res) => {
     await page.goto(`http://127.0.0.1:${server.address().port}/admin/chat.html?session=1`, { waitUntil: 'networkidle' });
     await page.waitForFunction(() => typeof sessionsMap !== 'undefined' && sessionsMap[1]);
 
+    await page.locator('#admin-msg-input').fill('پیام گروه');
+    await page.evaluate(() => { window.__nextAdminAck = { success: false, message: 'خطای آزمایشی' }; });
+    await page.locator('#admin-send-btn').click();
+    assert.equal(await page.locator('#admin-msg-input').inputValue(), 'پیام گروه', 'failed message stays in composer');
+    assert.match(await page.locator('#admin-send-feedback').textContent(), /خطای آزمایشی/);
+    await page.locator('#admin-send-btn').click();
+    assert.equal(await page.locator('#admin-msg-input').inputValue(), '', 'confirmed message clears composer');
+    await page.evaluate(() => { window.__adminEmits = []; });
+
     const media = { id: 99, content_type: 'video', title: 'فیلم آزمایشی', file_url: '/assets/test.mp4', file_name: 'test.mp4' };
     await page.evaluate(item => insertStepToComposer(item), media);
     await page.locator('#admin-media-confirm-dialog[open]').waitFor();
@@ -59,6 +68,9 @@ const server = http.createServer((req, res) => {
     assert.equal(uploadRequests, 0, 'selection alone does not upload');
     await page.locator('#admin-media-confirm-cancel').click();
     assert.equal(uploadRequests, 0, 'cancel does not upload');
+
+    await page.locator('.photo-btn').click();
+    assert.equal(await page.locator('#admin-file-input').getAttribute('accept'), 'image/*', 'photo button opens image picker');
 
     await page.locator('#admin-file-input').setInputFiles({ name: 'test.png', mimeType: 'image/png', buffer: Buffer.from('image test') });
     await page.locator('#admin-media-confirm-send').click();

@@ -97,6 +97,7 @@
                 <option value="system">سیستم</option>
                 <option value="hacker">مزداک</option>
               </select>
+              <button type="button" onclick="triggerAdminFileInput('image/*')" class="command-button icon photo-btn" title="انتخاب و ارسال عکس" aria-label="ارسال عکس">📷 عکس</button>
               <button type="button" onclick="triggerAdminFileInput('*')" class="command-button icon attach-btn" title="آپلود فوری">📎 پیوست</button>
               <button type="button" id="admin-emoji-btn" onclick="toggleAdminEmojiPicker(event)" class="command-button icon emoji-btn" title="افزودن ایموجی" aria-label="افزودن ایموجی">😊</button>
             </div>
@@ -115,6 +116,7 @@
               <span class="send-btn-icon" aria-hidden="true">➤</span>
             </button>
           </div>
+          <div id="admin-send-feedback" class="admin-send-feedback" role="status" aria-live="polite"></div>
         </div>
       </div>
     </section>
