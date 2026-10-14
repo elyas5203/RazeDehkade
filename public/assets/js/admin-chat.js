@@ -1910,13 +1910,13 @@ async function loadWeeklyContent(week = currentSelectedWeek) {
         ${safeText ? `<p style="font-size:11px;color:#94a3b8;line-height:1.6;margin:0;max-height:54px;overflow:hidden;text-overflow:ellipsis;">${safeText}</p>` : ''}
         ${resolvedThumbUrl !== '#' ? `<img src="${resolvedThumbUrl}" alt="${safeTitle}" style="width:100%;max-height:95px;object-fit:cover;border-radius:4px;border:1px solid #2d3538;margin-top:2px;" loading="lazy">` : ''}
         ${safeFile ? `<small style="font-size:10px;color:#64748b;direction:ltr;text-align:right;">${safeFile}</small>` : ''}
-        <div style="display:flex;gap:6px;margin-top:4px;">
+        <div class="step-actions-row" style="display:flex;gap:6px;margin-top:6px;align-items:center;">
           ${item.content_type === 'text'
-            ? `<button type="button" class="command-button step-send-btn step-send-text-direct-btn" style="flex:1;padding:6px 8px;font-size:11px;background:rgba(56,189,248,0.15);color:#38bdf8;border-color:#38bdf8;" title="ارسال مستقیم متن به جلسه">${sendBtnLabel}</button>
-               <button type="button" class="command-button primary step-insert-btn" style="padding:6px 8px;font-size:11px;" title="قرار دادن در کادر چت جهت ویرایش">${insertBtnLabel}</button>`
-            : `<button type="button" class="command-button step-send-btn" style="flex:1;padding:6px 8px;font-size:11px;background:rgba(56,189,248,0.15);color:#38bdf8;border-color:#38bdf8;" title="ارسال فایل به جلسه">${sendBtnLabel}</button>`
+            ? `<button type="button" class="command-button step-send-btn step-send-text-direct-btn" style="flex:1;padding:6px 6px;font-size:11px;background:rgba(56,189,248,0.15);color:#38bdf8;border-color:#38bdf8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="ارسال مستقیم متن به جلسه">${sendBtnLabel}</button>
+               <button type="button" class="command-button primary step-insert-btn" style="flex:1;padding:6px 6px;font-size:11px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="قرار دادن در کادر چت جهت ویرایش">${insertBtnLabel}</button>`
+            : `<button type="button" class="command-button step-send-btn" style="flex:1;padding:6px 8px;font-size:11px;background:rgba(56,189,248,0.15);color:#38bdf8;border-color:#38bdf8;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="ارسال فایل به جلسه">${sendBtnLabel}</button>`
           }
-          <button type="button" class="command-button danger step-del-btn" style="padding:4px 8px;font-size:10px;" title="حذف این مرحله">🗑️</button>
+          <button type="button" class="command-button danger step-del-btn" style="padding:6px 8px;font-size:11px;flex-shrink:0;" title="حذف این مرحله">🗑️</button>
         </div>
       `;
 
