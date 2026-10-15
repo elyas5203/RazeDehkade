@@ -761,8 +761,8 @@
       const flirCornerPhaseTag = document.getElementById('flirCornerPhaseTag');
       const arrivalBlackoutSec = document.getElementById('arrivalBlackoutSec');
 
-      if (arrTitle) arrTitle.textContent = 'سفارش در محل تحویل تحویل داده شد!';
-      if (arrSub) arrSub.textContent = 'مختصات محل تحویل بسته (کوچه شهید کاوه ۱۳ مشهد) تثبیت و سفارش با موفقیت تحویل گردید.';
+      if (arrTitle) arrTitle.textContent = 'سفارش روی پشت‌بوم رها شد!';
+      if (arrSub) arrSub.textContent = 'بسته با موفقیت توسط ریزپرنده روی پشت‌بوم مقصد (مشهد، کوچه شهید کاوه ۱۳) رها و مستقر گردید.';
       if (pkgIcon) {
         pkgIcon.innerHTML = '<span style="font-size: 32px; color: #10b981; font-weight: 900;">✓</span>';
       }

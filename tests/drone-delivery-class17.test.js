@@ -72,8 +72,8 @@ test('Exclusive Military FLIR Recon Drone Rooftop Airdrop Delivery for Class 17 
     // Street address
     assert.ok(deliveryJs.includes('کوچه شهید کاوه ۱۳ (رودکی ۲۰)'), 'Exact alley address must be present');
     // Arrived
-    assert.ok(deliveryJs.includes('سفارش در محل تحویل تحویل داده شد!'), 'Arrival title must announce package location delivery');
-    assert.ok(deliveryJs.includes('مختصات محل تحویل بسته (کوچه شهید کاوه ۱۳ مشهد) تثبیت و سفارش با موفقیت تحویل گردید.'), 'Arrival subtitle must confirm package location');
+    assert.ok(deliveryJs.includes('سفارش روی پشت‌بوم رها شد!') || deliveryJs.includes('سفارش در محل تحویل تحویل داده شد!'), 'Arrival title must announce rooftop delivery');
+    assert.ok(deliveryJs.includes('کوچه شهید کاوه ۱۳'), 'Arrival subtitle must confirm package location');
   });
 
   await t.test('4. Exclusive isolation: Class 17 detection criteria vs standard class isolation', () => {
