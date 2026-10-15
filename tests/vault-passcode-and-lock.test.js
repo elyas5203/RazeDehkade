@@ -134,4 +134,38 @@ test('Vault Passcode 0110, Single Photo Reward, Zero Spoilers, and Admin Weekly 
     assert.strictEqual(zareClass.chatCode, '699275', 'Chat code must be 699275');
     assert.strictEqual(zareClass.activeCase, 'village', 'Active case must be village');
   });
+
+  await t.test('7. Dashboard Global Vault Lock Button and Endpoints (lock/unlock for all sessions simultaneously)', () => {
+    const dashboardHtmlPath = path.join(rootDir, 'public', 'admin', 'dashboard.html');
+    const dashboardJsPath = path.join(rootDir, 'public', 'assets', 'js', 'admin-dashboard.js');
+    const dashboardCssPath = path.join(rootDir, 'public', 'assets', 'css', 'admin-dashboard.css');
+
+    const dashHtml = fs.readFileSync(dashboardHtmlPath, 'utf8');
+    assert.ok(dashHtml.includes('id="global-vault-lock-btn"'), 'Dashboard header must have global-vault-lock-btn');
+    assert.ok(dashHtml.includes('toggleGlobalVaultLock()'), 'Button must call toggleGlobalVaultLock()');
+
+    const dashJs = fs.readFileSync(dashboardJsPath, 'utf8');
+    assert.ok(dashJs.includes('toggleGlobalVaultLock'), 'admin-dashboard.js must define toggleGlobalVaultLock');
+    assert.ok(dashJs.includes('updateGlobalVaultBtnUI'), 'admin-dashboard.js must define updateGlobalVaultBtnUI');
+    assert.ok(dashJs.includes('global_vault_lock_updated'), 'admin-dashboard.js must listen for global_vault_lock_updated');
+    assert.ok(dashJs.includes('vault-lock-all'), 'admin-dashboard.js must call /api/sessions/vault-lock-all');
+
+    const dashCss = fs.readFileSync(dashboardCssPath, 'utf8');
+    assert.ok(dashCss.includes('.vault-locked'), 'admin-dashboard.css must style vault-locked');
+    assert.ok(dashCss.includes('.vault-unlocked'), 'admin-dashboard.css must style vault-unlocked');
+
+    const sessionRoutes = fs.readFileSync(sessionRoutesPath, 'utf8');
+    assert.ok(sessionRoutes.includes('/vault-lock-all'), 'sessions.js must have POST /vault-lock-all');
+    assert.ok(sessionRoutes.includes('/vault-status-all'), 'sessions.js must have GET /vault-status-all');
+
+    const sessionModel = fs.readFileSync(sessionModelPath, 'utf8');
+    assert.ok(sessionModel.includes('setGlobalVaultLock'), 'Session model must define setGlobalVaultLock');
+    assert.ok(sessionModel.includes('getGlobalVaultStatus'), 'Session model must define getGlobalVaultStatus');
+
+    const socketJs = fs.readFileSync(socketPath, 'utf8');
+    assert.ok(socketJs.includes('toggle_global_vault_lock'), 'socket/index.js must handle toggle_global_vault_lock');
+
+    const userJs = fs.readFileSync(userJsPath, 'utf8');
+    assert.ok(userJs.includes('data.all'), 'user-chat.js must handle global broadcast data.all for vault_lock_updated');
+  });
 });

@@ -257,6 +257,66 @@ router.post('/:id/lock', requireAdmin, async (req, res) => {
 });
 
 /**
+ * GET /api/sessions/vault-status-all
+ * دریافت وضعیت کلی قفل گاوصندوق برای تمامی جلسات (مخصوص ادمین)
+ */
+router.get('/vault-status-all', requireAdmin, async (req, res) => {
+  try {
+    const status = await Session.getGlobalVaultStatus();
+    return res.json({
+      success: true,
+      ...status,
+    });
+  } catch (error) {
+    console.error('Error fetching global vault status:', error);
+    return res.status(500).json({ success: false, message: 'خطای سرور هنگام دریافت وضعیت سراسری گاوصندوق.' });
+  }
+});
+
+/**
+ * POST /api/sessions/vault-lock-all
+ * بازگشایی یا پلمپ همگانی گاوصندوق برای تمامی جلسات (مخصوص ادمین)
+ */
+router.post('/vault-lock-all', requireAdmin, async (req, res) => {
+  try {
+    const targetWeek = parseInt(req.body.week, 10) || 5;
+    let isUnlocked = req.body.isUnlocked;
+    if (typeof isUnlocked === 'undefined') {
+      const current = await Session.getGlobalVaultStatus();
+      isUnlocked = !current.isUnlocked;
+    } else {
+      isUnlocked = Boolean(isUnlocked);
+    }
+
+    await Session.setGlobalVaultLock(isUnlocked, targetWeek);
+
+    await SessionLog.log(
+      null,
+      'global_vault_lock_toggled',
+      `قفل همگانی گاوصندوق اسناد محرمانه (هفته ${targetWeek}) توسط ${req.user.display_name || req.user.username} برای تمامی جلسات ${isUnlocked ? '🔓 بازگشایی شد' : '🔒 پلمپ شد'}.`
+    );
+
+    const io = req.app.get('io');
+    if (io) {
+      // ارسال برای تمامی کلاینت‌های متصل، اتاق‌ها و ادمین‌ها
+      io.emit('vault_lock_updated', { all: true, isUnlocked, targetWeek });
+      io.to('admins').emit('global_vault_lock_updated', { isUnlocked, targetWeek });
+      io.to('admins').emit('vault_lock_updated', { all: true, isUnlocked, targetWeek });
+    }
+
+    return res.json({
+      success: true,
+      message: isUnlocked ? 'گاوصندوق اسناد برای تمامی جلسات با موفقیت بازگشایی شد.' : 'گاوصندوق اسناد برای تمامی جلسات با موفقیت پلمپ شد.',
+      isUnlocked,
+      targetWeek,
+    });
+  } catch (error) {
+    console.error('Error toggling global vault lock:', error);
+    return res.status(500).json({ success: false, message: 'خطای سرور هنگام تغییر وضعیت همگانی گاوصندوق.' });
+  }
+});
+
+/**
  * POST /api/sessions/:id/vault-lock
  * تغییر وضعیت قفل گاوصندوق برای جلسه مشخص (فقط ادمین)
  */

@@ -334,7 +334,7 @@ function initSocket() {
   });
 
   socket.on('vault_lock_updated', (data) => {
-    if (data && Number(data.sessionId) === Number(sessionData.id)) {
+    if (data && (data.all || Number(data.sessionId) === Number(sessionData.id))) {
       if (typeof window.setVaultAdminUnlocked === 'function') {
         window.setVaultAdminUnlocked(Boolean(data.isUnlocked), data.targetWeek || 5);
       }

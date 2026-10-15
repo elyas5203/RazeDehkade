@@ -256,14 +256,26 @@ class InMemoryDatabase {
     }
 
     if (/^UPDATE sessions SET is_vault_unlocked/i.test(cleanSql)) {
-      const [isUnlocked, targetWeek, id] = params;
-      const s = this.tables.sessions.find(x => x.id == id);
-      if (s) {
-        s.is_vault_unlocked = isUnlocked ? 1 : 0;
-        s.vault_target_week = targetWeek ? parseInt(targetWeek, 10) : 5;
-        s.updated_at = new Date();
+      if (/WHERE id = \?/i.test(cleanSql)) {
+        const [isUnlocked, targetWeek, id] = params;
+        const s = this.tables.sessions.find(x => x.id == id);
+        if (s) {
+          s.is_vault_unlocked = isUnlocked ? 1 : 0;
+          s.vault_target_week = targetWeek ? parseInt(targetWeek, 10) : 5;
+          s.updated_at = new Date();
+        }
+        return [{ affectedRows: s ? 1 : 0 }, []];
+      } else {
+        const [isUnlocked, targetWeek] = params;
+        let count = 0;
+        this.tables.sessions.forEach(s => {
+          s.is_vault_unlocked = isUnlocked ? 1 : 0;
+          s.vault_target_week = targetWeek ? parseInt(targetWeek, 10) : 5;
+          s.updated_at = new Date();
+          count++;
+        });
+        return [{ affectedRows: count }, []];
       }
-      return [{ affectedRows: s ? 1 : 0 }, []];
     }
 
     if (/^INSERT INTO session_cases/i.test(cleanSql)) {

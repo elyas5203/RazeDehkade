@@ -273,6 +273,18 @@ function initAdminSocket() {
   });
 
   socket.on('vault_lock_updated', (data) => {
+    if (data && data.all) {
+      Object.keys(sessionsMap).forEach(sId => {
+        if (sessionsMap[sId]) {
+          sessionsMap[sId].is_vault_unlocked = Boolean(data.isUnlocked);
+          sessionsMap[sId].vault_target_week = data.targetWeek || currentSelectedWeek || 5;
+        }
+      });
+      if (activeSessionId) {
+        updateVaultLockBtnUI(Boolean(data.isUnlocked), data.targetWeek || currentSelectedWeek || 5);
+      }
+      return;
+    }
     if (data && Number(data.sessionId) === Number(activeSessionId)) {
       updateVaultLockBtnUI(Boolean(data.isUnlocked), data.targetWeek || currentSelectedWeek || 5);
       if (sessionsMap[activeSessionId]) {

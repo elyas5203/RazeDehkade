@@ -172,8 +172,117 @@ function initDashboardSocket() {
     });
 
     dashboardSocket.on('session_updated', () => loadSessions());
+
+    dashboardSocket.on('global_vault_lock_updated', (data) => {
+      if (!data) return;
+      const isUn = Boolean(data.isUnlocked);
+      if (Array.isArray(allSessions)) {
+        allSessions.forEach(s => s.is_vault_unlocked = isUn ? 1 : 0);
+      }
+      updateGlobalVaultBtnUI(isUn, isUn);
+    });
+
+    dashboardSocket.on('vault_lock_updated', (data) => {
+      if (data && data.all) {
+        const isUn = Boolean(data.isUnlocked);
+        if (Array.isArray(allSessions)) {
+          allSessions.forEach(s => s.is_vault_unlocked = isUn ? 1 : 0);
+        }
+        updateGlobalVaultBtnUI(isUn, isUn);
+      } else if (data && data.sessionId) {
+        if (Array.isArray(allSessions)) {
+          const target = allSessions.find(s => Number(s.id) === Number(data.sessionId));
+          if (target) target.is_vault_unlocked = Boolean(data.isUnlocked);
+        }
+        updateGlobalVaultBtnUI();
+      }
+    });
   }
 }
+
+let isGlobalVaultUnlocked = false;
+
+function updateGlobalVaultBtnUI(explicitUnlocked, explicitAnyUnlocked) {
+  const btn = document.getElementById('global-vault-lock-btn');
+  if (!btn) return;
+
+  let allUnlocked = false;
+  let anyUnlocked = false;
+
+  if (typeof explicitUnlocked !== 'undefined') {
+    allUnlocked = Boolean(explicitUnlocked);
+    anyUnlocked = Boolean(explicitAnyUnlocked || explicitUnlocked);
+  } else if (Array.isArray(allSessions) && allSessions.length > 0) {
+    allUnlocked = allSessions.every(s => Boolean(s.is_vault_unlocked));
+    anyUnlocked = allSessions.some(s => Boolean(s.is_vault_unlocked));
+  }
+
+  isGlobalVaultUnlocked = allUnlocked;
+
+  if (allUnlocked) {
+    btn.innerHTML = '🔓 گاوصندوق: باز (همه جلسات)';
+    btn.className = 'dashboard-button vault-unlocked';
+    btn.title = 'گاوصندوق در تمامی جلسات بازگشایی شده است — برای پلمپ همگانی کلیک کنید';
+  } else if (anyUnlocked) {
+    btn.innerHTML = '⚠️ گاوصندوق: باز در برخی (کلیک برای پلمپ)';
+    btn.className = 'dashboard-button vault-locked';
+    btn.title = 'گاوصندوق در برخی جلسات باز است — برای پلمپ همگانی کلیک کنید';
+  } else {
+    btn.innerHTML = '🔒 گاوصندوق: پلمپ (همه جلسات)';
+    btn.className = 'dashboard-button vault-locked';
+    btn.title = 'گاوصندوق در تمامی جلسات پلمپ امنیتی است — برای بازگشایی همگانی کلیک کنید';
+  }
+}
+
+async function toggleGlobalVaultLock() {
+  const btn = document.getElementById('global-vault-lock-btn');
+  const anyUnlocked = Array.isArray(allSessions) ? allSessions.some(s => Boolean(s.is_vault_unlocked)) : isGlobalVaultUnlocked;
+  const nextUnlocked = !anyUnlocked;
+
+  // به‌روزرسانی فوری ظاهر دکمه جهت UX سریع و آنی
+  updateGlobalVaultBtnUI(nextUnlocked, nextUnlocked);
+  if (Array.isArray(allSessions)) {
+    allSessions.forEach(s => s.is_vault_unlocked = nextUnlocked ? 1 : 0);
+  }
+
+  try {
+    if (dashboardSocket && dashboardSocket.connected) {
+      dashboardSocket.emit('toggle_global_vault_lock', { isUnlocked: nextUnlocked, week: 5 });
+    }
+
+    const res = await fetch('/api/sessions/vault-lock-all', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + adminToken
+      },
+      body: JSON.stringify({ isUnlocked: nextUnlocked, week: 5 })
+    });
+
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      throw new Error(result.message || 'تغییر وضعیت قفل گاوصندوق انجام نشد.');
+    }
+
+    const notifEl = document.getElementById('notifications');
+    if (notifEl) {
+      notifEl.className = 'dashboard-notifications visible';
+      notifEl.innerHTML = nextUnlocked
+        ? `🔓 <strong>گاوصندوق اسناد محرمانه:</strong> قفل گاوصندوق برای تمامی جلسات با موفقیت <b>بازگشایی شد</b>.`
+        : `🛡️ <strong>گاوصندوق اسناد محرمانه:</strong> قفل گاوصندوق برای تمامی جلسات با موفقیت <b>پلمپ امنیتی</b> شد.`;
+      setTimeout(() => {
+        notifEl.className = 'dashboard-notifications';
+      }, 5000);
+    }
+  } catch (err) {
+    console.error('Error toggling global vault lock:', err);
+    alert('خطا در تغییر وضعیت همگانی قفل گاوصندوق: ' + (err.message || err));
+    loadSessions();
+  }
+}
+
+window.toggleGlobalVaultLock = toggleGlobalVaultLock;
+window.updateGlobalVaultBtnUI = updateGlobalVaultBtnUI;
 
 async function loadSessions() {
   try {
@@ -184,6 +293,7 @@ async function loadSessions() {
     if (result.success && Array.isArray(result.data)) {
       allSessions = result.data;
       updateStats(allSessions);
+      updateGlobalVaultBtnUI();
       renderSessions(allSessions);
     }
   } catch (err) {

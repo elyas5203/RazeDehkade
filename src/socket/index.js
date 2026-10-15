@@ -801,6 +801,50 @@ function setupSocketIO(io) {
     });
 
     /**
+     * رویداد toggle_global_vault_lock: بازگشایی یا پلمپ همگانی گاوصندوق برای تمامی جلسات توسط ادمین
+     */
+    socket.on('toggle_global_vault_lock', async (data = {}, ack = () => {}) => {
+      if (user.role !== 'admin') {
+        if (typeof ack === 'function') ack({ success: false, message: 'تنها ادمین مجاز به تغییر وضعیت گاوصندوق است.' });
+        return;
+      }
+      try {
+        const targetWeek = parseInt(data.week, 10) || 5;
+        let isUnlocked = data.isUnlocked;
+        if (typeof isUnlocked === 'undefined') {
+          const current = await Session.getGlobalVaultStatus();
+          isUnlocked = !current.isUnlocked;
+        } else {
+          isUnlocked = Boolean(isUnlocked);
+        }
+
+        await Session.setGlobalVaultLock(isUnlocked, targetWeek);
+        await SessionLog.log(
+          null,
+          'global_vault_lock_toggled',
+          `دسترسی سراسری به گاوصندوق اسناد (هفته ${targetWeek}) توسط مرکز فرماندهی ${isUnlocked ? '🔓 بازگشایی شد' : '🔒 پلمپ شد'}.`
+        );
+
+        io.emit('vault_lock_updated', {
+          all: true,
+          isUnlocked,
+          targetWeek,
+        });
+        io.to('admins').emit('global_vault_lock_updated', {
+          isUnlocked,
+          targetWeek,
+        });
+
+        if (typeof ack === 'function') {
+          ack({ success: true, isUnlocked, targetWeek });
+        }
+      } catch (err) {
+        console.error('Error in toggle_global_vault_lock:', err);
+        if (typeof ack === 'function') ack({ success: false, message: 'خطا در تغییر وضعیت سراسری گاوصندوق.' });
+      }
+    });
+
+    /**
      * آپلود تکه‌ای فایل از طریق Socket.io (فال‌بک ضدخطای Nginx/پروکسی و نمایش درصد دقیق)
      */
     socket.on('upload_file_chunk', async (data = {}, ack = () => {}) => {

@@ -193,6 +193,35 @@ body.dashboard-page {
   font-size: 14px;
 }
 
+/* دکمه پلمپ / بازگشایی همگانی گاوصندوق */
+.dashboard-button.vault-locked {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);
+}
+
+.dashboard-button.vault-locked:hover {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 0 18px rgba(239, 68, 68, 0.35);
+}
+
+.dashboard-button.vault-unlocked {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #34d399;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+
+.dashboard-button.vault-unlocked:hover {
+  background: rgba(16, 185, 129, 0.28);
+  border-color: #10b981;
+  color: #ffffff;
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.4);
+}
+
 /* ==========================================================================
    Main Container
    ========================================================================== */

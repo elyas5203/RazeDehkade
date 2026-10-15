@@ -321,6 +321,43 @@ class Session {
       targetWeek: res.rows[0].vault_target_week || 5,
     };
   }
+
+  /**
+   * تغییر وضعیت قفل گاوصندوق به صورت همگانی برای تمامی جلسات
+   * @param {boolean} isUnlocked
+   * @param {number} [targetWeek=5]
+   */
+  static async setGlobalVaultLock(isUnlocked, targetWeek = 5) {
+    const lockVal = isUnlocked ? 1 : 0;
+    const weekVal = parseInt(targetWeek, 10) || 5;
+    await query(
+      `UPDATE sessions
+       SET is_vault_unlocked = ?, vault_target_week = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id > 0`,
+      [lockVal, weekVal]
+    );
+    return { isUnlocked: Boolean(lockVal), targetWeek: weekVal };
+  }
+
+  /**
+   * بررسی وضعیت کلی قفل گاوصندوق برای تمامی جلسات
+   */
+  static async getGlobalVaultStatus() {
+    const res = await query(
+      `SELECT id, is_vault_unlocked, vault_target_week FROM sessions`
+    );
+    const sessions = res.rows || [];
+    const total = sessions.length;
+    const unlockedCount = sessions.filter(s => Boolean(s.is_vault_unlocked)).length;
+    const isUnlocked = total > 0 && unlockedCount === total;
+    return {
+      isUnlocked,
+      total,
+      unlockedCount,
+      hasAnyUnlocked: unlockedCount > 0,
+      targetWeek: sessions[0]?.vault_target_week || 5,
+    };
+  }
 }
 
 module.exports = Session;
