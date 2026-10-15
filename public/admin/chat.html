@@ -26,6 +26,7 @@
     <div class="command-actions" id="admin-actions-bar">
       <span id="admin-socket-status" class="status-indicator offline"><span class="status-dot"></span> در حال وصل شدن...</span>
       <button id="admin-chat-lock-btn" onclick="toggleAdminChatLock()" class="command-button" title="قفل / باز کردن چت این جلسه">🔒 قفل چت جلسه</button>
+      <button id="admin-vault-lock-btn" onclick="toggleAdminVaultLock()" class="command-button" title="پلمپ / بازگشایی گاوصندوق این جلسه">🔒 پلمپ گاوصندوق</button>
       <button id="admin-audio-toggle-btn" onclick="toggleAdminAudioStream()" class="command-button">🎙️ شروع شنود صدا</button>
       <div id="audio-listening-indicator" style="display:none;align-items:center;gap:6px;padding:4px 10px;background:rgba(239,68,68,0.18);border:1px solid #ef4444;border-radius:14px;font-size:11px;color:#fca5a5;white-space:nowrap;">
         <span class="live-dot" style="width:7px;height:7px;border-radius:50%;background:#ef4444;display:inline-block;box-shadow:0 0 6px #ef4444;"></span>
@@ -132,13 +133,18 @@
       </div>
 
       <!-- تب‌های ۵ هفته -->
-      <div class="weekly-tabs-container" style="display:flex;gap:4px;margin:10px 0 8px;padding-bottom:4px;overflow-x:auto;flex-shrink:0;">
+      <div class="weekly-tabs-container" style="display:flex;gap:4px;margin:10px 0 6px;padding-bottom:4px;overflow-x:auto;flex-shrink:0;">
         <button type="button" class="command-button week-tab-btn active" data-week="1" onclick="selectWeek(1)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۱</button>
         <button type="button" class="command-button week-tab-btn" data-week="2" onclick="selectWeek(2)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۲</button>
         <button type="button" class="command-button week-tab-btn" data-week="3" onclick="selectWeek(3)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۳</button>
         <button type="button" class="command-button week-tab-btn" data-week="4" onclick="selectWeek(4)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۴</button>
         <button type="button" class="command-button week-tab-btn" data-week="5" onclick="selectWeek(5)" style="flex:1;padding:6px 2px;font-size:11px;">هفته ۵</button>
       </div>
+
+      <!-- کنترل پلمپ / بازگشایی گاوصندوق در هفته انتخاب‌شده -->
+      <button id="weekly-vault-lock-btn" type="button" onclick="toggleAdminVaultLock()" class="command-button" style="width:100%;margin:0 0 8px;font-size:11.5px;padding:6px 10px;background:rgba(239,68,68,0.12);border:1px solid #ef4444;color:#fca5a5;flex-shrink:0;transition:all 0.2s;">
+        🔒 وضعیت گاوصندوق: پلمپ امنیتی — کلیک برای بازگشایی در هفته ۱
+      </button>
 
       <p class="media-help" style="font-size:11px;color:#8d9699;margin:0 0 6px;flex-shrink:0;">
         مراحل زیر به ترتیب سناریو چیده شده‌اند. با کلیک متن‌ها در کادر چت قرار می‌گیرند و فایل‌ها پس از تایید ارسال می‌شوند:
@@ -159,6 +165,7 @@
       <div class="panel-title"><span>ابزارها و کنترل‌های سریع</span></div>
       <div class="mobile-tools-actions">
         <button id="mobile-admin-chat-lock-btn" onclick="toggleAdminChatLock()" class="command-button wide">🔒 قفل چت جلسه</button>
+        <button id="mobile-admin-vault-lock-btn" onclick="toggleAdminVaultLock()" class="command-button wide">🔒 پلمپ گاوصندوق</button>
         <button id="mobile-admin-audio-toggle-btn" onclick="toggleAdminAudioStream()" class="command-button wide">🎙️ شروع شنود صدا</button>
         <div id="mobile-audio-listening-indicator" style="display:none;align-items:center;gap:6px;padding:6px 12px;background:rgba(239,68,68,0.18);border:1px solid #ef4444;border-radius:14px;font-size:12px;color:#fca5a5;justify-content:center;">
           <span class="live-dot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;display:inline-block;box-shadow:0 0 6px #ef4444;"></span>

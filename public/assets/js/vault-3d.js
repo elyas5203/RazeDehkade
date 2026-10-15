@@ -26,40 +26,49 @@
 
   const DEFAULT_VAULT_FLAGS = [
     {
-      id: 'mysterious-museum-finale',
-      codes: ['1405', '6062', 'museum', 'موزه'],
+      id: 'classified-village-vault',
+      codes: ['0110'],
       badge: 'خیلی محرمانه',
-      title: 'دعوت‌نامه رسمی موزه اسرارآمیز',
-      subtitle: '',
-      images: [
-        `/assets/vault/mysterious-museum-poster.svg?v=${ASSET_VERSION}`,
-        `/assets/vault/mysterious-museum-vip-pass.svg?v=${ASSET_VERSION}`
-      ]
-    },
-    {
-      id: 'session-flag-1',
-      codes: ['1001', 'flag1'],
-      badge: 'خیلی محرمانه',
-      title: 'دعوت‌نامه رسمی موزه اسرارآمیز',
+      title: 'سند محرمانه موزه اسرارآمیز',
       subtitle: '',
       images: [
         `/assets/vault/mysterious-museum-poster.svg?v=${ASSET_VERSION}`
-      ]
-    },
-    {
-      id: 'session-flag-2',
-      codes: ['2002', 'flag2'],
-      badge: 'خیلی محرمانه',
-      title: 'دعوت‌نامه رسمی موزه اسرارآمیز',
-      subtitle: '',
-      images: [
-        `/assets/vault/mysterious-museum-poster.svg?v=${ASSET_VERSION}`,
-        `/assets/vault/mysterious-museum-vip-pass.svg?v=${ASSET_VERSION}`
       ]
     }
   ];
 
   const MAX_VAULT_CODE_LENGTH = 4;
+
+  // وضعیت قفل/پلمپ گاوصندوق توسط مرکز فرماندهی (به صورت پیش‌فرض کاملاً قفل است)
+  let isVaultAdminUnlocked = false;
+  let vaultTargetWeek = 5;
+
+  function setVaultAdminUnlocked(unlocked, targetWeek = 5) {
+    isVaultAdminUnlocked = Boolean(unlocked);
+    if (targetWeek) vaultTargetWeek = Number(targetWeek);
+    updateVaultLockUI();
+  }
+
+  function updateVaultLockUI() {
+    const card = document.getElementById('quad-vault-card');
+    const badge = document.getElementById('vault-locked-seal-badge');
+    const sealText = document.getElementById('vault-seal-text');
+    if (!card) return;
+
+    if (!isVaultAdminUnlocked) {
+      card.classList.add('is-vault-locked');
+      if (badge) badge.style.display = 'inline-flex';
+      if (sealText) sealText.textContent = `پلمپ امنیتی // هفته ${vaultTargetWeek}`;
+    } else {
+      card.classList.remove('is-vault-locked');
+      if (badge) badge.style.display = 'none';
+    }
+  }
+
+  function showVaultLockedNotice() {
+    const msg = `🔒 دسترسی مسدود است: گاوصندوق اسناد محرمانه پلمپ بوده و هنوز توسط مرکز فرماندهی (برای هفته ${vaultTargetWeek}) فعال نشده است.`;
+    alert(msg);
+  }
 
   // نگهداری رفرنس تصاویر در حافظه مرورگر تا هرگز Garbage Collect نشوند و در لحظه رندر شوند
   const preloadedMemoryImages = [];
@@ -207,6 +216,11 @@
   function openVaultInteraction() {
     if (isUnlockAnimationRunning) return;
 
+    if (!isVaultAdminUnlocked) {
+      showVaultLockedNotice();
+      return;
+    }
+
     if (activeRewardFlag) {
       openVaultRewardModal(activeRewardFlag, 0);
       return;
@@ -217,6 +231,12 @@
 
   function openVaultPasswordModal() {
     if (isUnlockAnimationRunning) return;
+
+    if (!isVaultAdminUnlocked) {
+      showVaultLockedNotice();
+      return;
+    }
+
     const rewardDialog = document.getElementById('vault-reward-dialog');
     if (rewardDialog && rewardDialog.open) {
       rewardDialog.close();
@@ -602,6 +622,9 @@
       });
     }
 
+    // اعمال ظاهر پلمپ گاوصندوق طبق وضعیت فعلی
+    updateVaultLockUI();
+
     // شروع پیش‌بارگذاری و کش خودکار تصاویر به محض باز شدن سایت
     warmBrowserAssetCacheOnFirstVisit();
   }
@@ -623,5 +646,7 @@
   window.selectVaultGallerySlide = selectVaultGallerySlide;
   window.closeVaultRewardModal = closeVaultRewardModal;
   window.resetVaultToLockedOnRefresh = resetVaultToLockedOnRefresh;
+  window.setVaultAdminUnlocked = setVaultAdminUnlocked;
+  window.isVaultAdminUnlocked = () => isVaultAdminUnlocked;
   window.VAULT_FLAGS_CONFIG = DEFAULT_VAULT_FLAGS;
 })();

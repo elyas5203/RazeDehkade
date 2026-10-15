@@ -257,6 +257,11 @@ async function loadHistory() {
       if (data.session && typeof data.session.is_chat_locked !== 'undefined') {
         applyChatLock(Boolean(data.session.is_chat_locked));
       }
+      if (data.session && typeof data.session.is_vault_unlocked !== 'undefined') {
+        if (typeof window.setVaultAdminUnlocked === 'function') {
+          window.setVaultAdminUnlocked(Boolean(data.session.is_vault_unlocked), data.session.vault_target_week || 5);
+        }
+      }
       isHistoryLoaded = true;
     }
   } catch (err) {
@@ -325,6 +330,14 @@ function initSocket() {
   socket.on('chat_lock_updated', (data) => {
     if (data && Number(data.sessionId) === Number(sessionData.id)) {
       applyChatLock(Boolean(data.isLocked));
+    }
+  });
+
+  socket.on('vault_lock_updated', (data) => {
+    if (data && Number(data.sessionId) === Number(sessionData.id)) {
+      if (typeof window.setVaultAdminUnlocked === 'function') {
+        window.setVaultAdminUnlocked(Boolean(data.isUnlocked), data.targetWeek || 5);
+      }
     }
   });
 

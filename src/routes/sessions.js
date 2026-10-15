@@ -94,6 +94,8 @@ router.get('/:id/messages', authenticateToken, async (req, res) => {
       session: {
         id: sessionId,
         is_chat_locked: Boolean(session && session.is_chat_locked),
+        is_vault_unlocked: Boolean(session && session.is_vault_unlocked),
+        vault_target_week: (session && session.vault_target_week) || 5,
       },
     });
   } catch (error) {
@@ -251,6 +253,56 @@ router.post('/:id/lock', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error toggling chat lock:', error);
     return res.status(500).json({ success: false, message: 'خطای سرور هنگام تغییر وضعیت قفل چت' });
+  }
+});
+
+/**
+ * POST /api/sessions/:id/vault-lock
+ * تغییر وضعیت قفل گاوصندوق برای جلسه مشخص (فقط ادمین)
+ */
+router.post('/:id/vault-lock', requireAdmin, async (req, res) => {
+  try {
+    const sessionId = parseInt(req.params.id, 10);
+    if (!sessionId) {
+      return res.status(400).json({ success: false, message: 'شناسه جلسه معتبر نیست.' });
+    }
+
+    const targetWeek = parseInt(req.body.week, 10) || 5;
+    let isUnlocked = req.body.isUnlocked;
+    if (typeof isUnlocked === 'undefined') {
+      const current = await Session.getVaultStatus(sessionId);
+      isUnlocked = !current.isUnlocked;
+    } else {
+      isUnlocked = Boolean(isUnlocked);
+    }
+
+    const session = await Session.setVaultLock(sessionId, isUnlocked, targetWeek);
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'جلسه پیدا نشد.' });
+    }
+
+    await SessionLog.log(
+      sessionId,
+      'vault_lock_toggled',
+      `گاوصندوق اسناد محرمانه (هفته ${targetWeek}) توسط ${req.user.display_name || req.user.username} ${isUnlocked ? '🔓 بازگشایی شد' : '🔒 پلمپ شد'}.`
+    );
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`session_${sessionId}`).emit('vault_lock_updated', { sessionId, isUnlocked, targetWeek });
+      io.to('admins').emit('vault_lock_updated', { sessionId, isUnlocked, targetWeek });
+    }
+
+    return res.json({
+      success: true,
+      message: isUnlocked ? `گاوصندوق برای هفته ${targetWeek} بازگشایی شد.` : 'گاوصندوق با موفقیت پلمپ شد.',
+      isUnlocked,
+      targetWeek,
+      session,
+    });
+  } catch (error) {
+    console.error('Error toggling vault lock:', error);
+    return res.status(500).json({ success: false, message: 'خطای سرور هنگام تغییر وضعیت قفل گاوصندوق.' });
   }
 });
 

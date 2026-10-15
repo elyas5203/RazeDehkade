@@ -223,8 +223,13 @@
           </footer>
         </section>
 
-        <!-- قسمت ۴: گاوصندوق فولادی واقعی اسناد محرمانه (۱۰۰٪ فضای اسلات چهارم کاملاً رئال، فیزیکی و سنگین — مطابق VAULT_SLOT4_MASTER.md) -->
         <section class="quad-card quad-vault-card" id="quad-vault-card" aria-label="گاوصندوق اسناد محرمانه">
+          <!-- نشان پلمپ امنیتی گاوصندوق تا زمان بازگشایی توسط ادمین در هفته خاص -->
+          <div class="vault-locked-seal-overlay" id="vault-locked-seal-badge" style="display:none;">
+            <span>🔒</span>
+            <span id="vault-seal-text">پلمپ امنیتی // غیرفعال</span>
+          </div>
+
           <button type="button" class="vault-3d-trigger-btn" id="vault-3d-trigger-btn" onclick="openVaultInteraction()" aria-label="گاوصندوق اسناد محرمانه">
             <div class="vault-3d-chassis" aria-hidden="true">
 

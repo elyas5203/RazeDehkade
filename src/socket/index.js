@@ -754,6 +754,53 @@ function setupSocketIO(io) {
     });
 
     /**
+     * رویداد toggle_vault_lock: بازگشایی یا پلمپ گاوصندوق در هفته خاص توسط ادمین
+     */
+    socket.on('toggle_vault_lock', async (data, ack = () => {}) => {
+      if (user.role !== 'admin') {
+        if (typeof ack === 'function') ack({ success: false, message: 'تنها ادمین مجاز به تغییر وضعیت گاوصندوق است.' });
+        return;
+      }
+      try {
+        const sessionId = parseInt(data.sessionId, 10);
+        if (!sessionId) return;
+        const targetWeek = parseInt(data.week, 10) || 5;
+        let isUnlocked = data.isUnlocked;
+        if (typeof isUnlocked === 'undefined') {
+          const current = await Session.getVaultStatus(sessionId);
+          isUnlocked = !current.isUnlocked;
+        } else {
+          isUnlocked = Boolean(isUnlocked);
+        }
+        await Session.setVaultLock(sessionId, isUnlocked, targetWeek);
+        await SessionLog.log(
+          sessionId,
+          'vault_lock_toggled',
+          `دسترسی به گاوصندوق اسناد محرمانه (هفته ${targetWeek}) توسط مرکز فرماندهی ${isUnlocked ? '🔓 بازگشایی شد' : '🔒 پلمپ شد'}.`
+        );
+
+        const roomName = `session_${sessionId}`;
+        io.to(roomName).emit('vault_lock_updated', {
+          sessionId,
+          isUnlocked,
+          targetWeek,
+        });
+        io.to('admins').emit('vault_lock_updated', {
+          sessionId,
+          isUnlocked,
+          targetWeek,
+        });
+
+        if (typeof ack === 'function') {
+          ack({ success: true, sessionId, isUnlocked, targetWeek });
+        }
+      } catch (err) {
+        console.error('Error in toggle_vault_lock:', err);
+        if (typeof ack === 'function') ack({ success: false, message: 'خطا در تغییر وضعیت گاوصندوق.' });
+      }
+    });
+
+    /**
      * آپلود تکه‌ای فایل از طریق Socket.io (فال‌بک ضدخطای Nginx/پروکسی و نمایش درصد دقیق)
      */
     socket.on('upload_file_chunk', async (data = {}, ack = () => {}) => {

@@ -272,6 +272,16 @@ function initAdminSocket() {
     }
   });
 
+  socket.on('vault_lock_updated', (data) => {
+    if (data && Number(data.sessionId) === Number(activeSessionId)) {
+      updateVaultLockBtnUI(Boolean(data.isUnlocked), data.targetWeek || currentSelectedWeek || 5);
+      if (sessionsMap[activeSessionId]) {
+        sessionsMap[activeSessionId].is_vault_unlocked = Boolean(data.isUnlocked);
+        sessionsMap[activeSessionId].vault_target_week = data.targetWeek || currentSelectedWeek || 5;
+      }
+    }
+  });
+
   socket.on('audio_stream_stopped', (data) => {
     if (data.sessionId === activeSessionId) {
       stopAdminAudioListening();
@@ -451,6 +461,17 @@ async function switchSession(nextSessionId) {
         : (typeof data.is_chat_locked !== 'undefined' ? data.is_chat_locked : sessionsMap[activeSessionId]?.is_chat_locked);
       updateChatLockBtnUI(Boolean(lockState));
       if (sessionsMap[activeSessionId]) sessionsMap[activeSessionId].is_chat_locked = Boolean(lockState);
+
+      const vaultLockState = (data.session && typeof data.session.is_vault_unlocked !== 'undefined')
+        ? data.session.is_vault_unlocked
+        : sessionsMap[activeSessionId]?.is_vault_unlocked;
+      const vaultWeek = (data.session && data.session.vault_target_week)
+        || sessionsMap[activeSessionId]?.vault_target_week || currentSelectedWeek || 5;
+      updateVaultLockBtnUI(Boolean(vaultLockState), vaultWeek);
+      if (sessionsMap[activeSessionId]) {
+        sessionsMap[activeSessionId].is_vault_unlocked = Boolean(vaultLockState);
+        sessionsMap[activeSessionId].vault_target_week = vaultWeek;
+      }
 
       const box = document.getElementById('admin-messages-box');
       if (box && Array.isArray(data.data)) {
@@ -1994,6 +2015,9 @@ function selectWeek(week) {
       btn.style.fontWeight = 'normal';
     }
   });
+  const isUnlocked = activeSessionId && sessionsMap[activeSessionId]?.is_vault_unlocked;
+  const targetWeek = (activeSessionId && sessionsMap[activeSessionId]?.vault_target_week) || currentSelectedWeek;
+  updateVaultLockBtnUI(Boolean(isUnlocked), targetWeek);
   loadWeeklyContent(currentSelectedWeek);
 }
 
@@ -2362,6 +2386,101 @@ function updateChatLockBtnUI(isLocked) {
     }
   });
 }
+
+async function toggleAdminVaultLock() {
+  if (!activeSessionId) {
+    alert('لطفاً ابتدا یک جلسه را از سایدبار انتخاب کنید.');
+    return;
+  }
+  const currentUnlocked = sessionsMap[activeSessionId]?.is_vault_unlocked ? 1 : 0;
+  const targetWeek = currentSelectedWeek || 5;
+  const nextUnlockedState = currentUnlocked ? 0 : 1;
+
+  // تغییر فوری ظاهر دکمه جهت بازخورد بصری سریع
+  updateVaultLockBtnUI(nextUnlockedState, targetWeek);
+  if (sessionsMap[activeSessionId]) {
+    sessionsMap[activeSessionId].is_vault_unlocked = nextUnlockedState;
+    sessionsMap[activeSessionId].vault_target_week = targetWeek;
+  }
+
+  // ارسال از طریق سوکت
+  if (socket && socket.connected) {
+    socket.emit('toggle_vault_lock', {
+      sessionId: activeSessionId,
+      isUnlocked: Boolean(nextUnlockedState),
+      week: targetWeek
+    }, (res) => {
+      if (res && typeof res.isUnlocked !== 'undefined') {
+        updateVaultLockBtnUI(res.isUnlocked, res.targetWeek || targetWeek);
+        if (sessionsMap[activeSessionId]) {
+          sessionsMap[activeSessionId].is_vault_unlocked = res.isUnlocked ? 1 : 0;
+          sessionsMap[activeSessionId].vault_target_week = res.targetWeek || targetWeek;
+        }
+      }
+    });
+  }
+
+  // درخواست HTTP پشتیبان برای تضمین ذخیره قطعی
+  try {
+    const res = await fetch(`/api/sessions/${activeSessionId}/vault-lock`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminToken}`
+      },
+      body: JSON.stringify({ isUnlocked: Boolean(nextUnlockedState), week: targetWeek })
+    });
+    const data = await res.json();
+    if (data.success && typeof data.isUnlocked !== 'undefined') {
+      updateVaultLockBtnUI(data.isUnlocked, data.targetWeek || targetWeek);
+      if (sessionsMap[activeSessionId]) {
+        sessionsMap[activeSessionId].is_vault_unlocked = data.isUnlocked ? 1 : 0;
+        sessionsMap[activeSessionId].vault_target_week = data.targetWeek || targetWeek;
+      }
+    }
+  } catch (err) {
+    console.warn('HTTP vault lock toggle fallback notice:', err);
+  }
+}
+
+function updateVaultLockBtnUI(isUnlocked, week = currentSelectedWeek || 5) {
+  const btn = document.getElementById('admin-vault-lock-btn');
+  const mobileBtn = document.getElementById('mobile-admin-vault-lock-btn');
+  const weeklyBtn = document.getElementById('weekly-vault-lock-btn');
+  const btns = [btn, mobileBtn].filter(Boolean);
+
+  btns.forEach(b => {
+    if (isUnlocked) {
+      b.innerHTML = `🔓 گاوصندوق: باز (هفته ${week})`;
+      b.className = 'command-button success';
+      b.style.borderColor = '#10b981';
+      b.style.color = '#34d399';
+      b.title = `گاوصندوق برای هفته ${week} فعال و باز است. برای پلمپ کلیک کنید.`;
+    } else {
+      b.innerHTML = '🔒 پلمپ گاوصندوق';
+      b.className = 'command-button';
+      b.style.borderColor = '';
+      b.style.color = '';
+      b.title = 'گاوصندوق پلمپ و غیرفعال است؛ برای بازگشایی کلیک کنید.';
+    }
+  });
+
+  if (weeklyBtn) {
+    if (isUnlocked) {
+      weeklyBtn.innerHTML = `🔓 وضعیت گاوصندوق: بازگشایی‌شده (هفته ${week}) — کلیک برای پلمپ مجدد`;
+      weeklyBtn.style.background = 'rgba(16, 185, 129, 0.14)';
+      weeklyBtn.style.borderColor = '#10b981';
+      weeklyBtn.style.color = '#34d399';
+    } else {
+      weeklyBtn.innerHTML = `🔒 وضعیت گاوصندوق: پلمپ امنیتی — کلیک برای بازگشایی در هفته ${currentSelectedWeek || 1}`;
+      weeklyBtn.style.background = 'rgba(239, 68, 68, 0.12)';
+      weeklyBtn.style.borderColor = '#ef4444';
+      weeklyBtn.style.color = '#fca5a5';
+    }
+  }
+}
+
+window.toggleAdminVaultLock = toggleAdminVaultLock;
 
 /* ==========================================================================
    پنل انتخاب ایموجی (Emoji Picker) در ترمینال فرماندهی (ادمین)

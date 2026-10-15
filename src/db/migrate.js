@@ -27,7 +27,7 @@ async function runMigrations() {
       console.log(`📦 دیتابیس '${dbName}' بررسی/ایجاد گردید.`);
     }
 
-    const migrationFiles = ['001_initial_schema.sql', '002_features_update.sql'];
+    const migrationFiles = ['001_initial_schema.sql', '002_features_update.sql', '003_vault_unlock_support.sql'];
     for (const fileName of migrationFiles) {
       const filePath = path.join(__dirname, 'migrations', fileName);
       if (fs.existsSync(filePath)) {
@@ -59,6 +59,8 @@ async function runMigrations() {
       await ensureColumn('active_case', 'active_case VARCHAR(50) NULL AFTER order_expires_at');
       await ensureColumn('is_chat_locked', 'is_chat_locked TINYINT(1) DEFAULT 0 AFTER active_case');
       await ensureColumn('teacher_phone', 'teacher_phone VARCHAR(20) NULL AFTER is_chat_locked');
+      await ensureColumn('is_vault_unlocked', 'is_vault_unlocked TINYINT(1) DEFAULT 0 AFTER teacher_phone');
+      await ensureColumn('vault_target_week', 'vault_target_week TINYINT DEFAULT 5 AFTER is_vault_unlocked');
     }
 
     // ساخت جدول ذخیره وضعیت بات تلگرام در دیتابیس و پاکسازی موارد تست قبلی

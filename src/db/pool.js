@@ -255,6 +255,17 @@ class InMemoryDatabase {
       return [{ affectedRows: s ? 1 : 0 }, []];
     }
 
+    if (/^UPDATE sessions SET is_vault_unlocked/i.test(cleanSql)) {
+      const [isUnlocked, targetWeek, id] = params;
+      const s = this.tables.sessions.find(x => x.id == id);
+      if (s) {
+        s.is_vault_unlocked = isUnlocked ? 1 : 0;
+        s.vault_target_week = targetWeek ? parseInt(targetWeek, 10) : 5;
+        s.updated_at = new Date();
+      }
+      return [{ affectedRows: s ? 1 : 0 }, []];
+    }
+
     if (/^INSERT INTO session_cases/i.test(cleanSql)) {
       const [session_id, case_key, status] = params;
       let record = this.tables.session_cases.find(c => c.session_id == session_id && c.case_key === case_key);

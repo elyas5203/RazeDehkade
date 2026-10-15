@@ -15,11 +15,14 @@ FILES_TO_UPLOAD = [
     'MASTER_ADMIN_MOBILE_AND_STABILITY.md',
     'MASTER_ADMIN_MOBILE_CHAT_COMPOSER.md',
     'MASTER_CANNED_RESPONSES_PROGRESS_TRACKING.md',
+    'MASTER_VAULT_AND_PORTRAITS_V2.md',
     'server.js',
     'public/admin/chat.html',
     'public/assets/css/admin.css',
     'public/assets/js/admin-chat.js',
     'public/chat.html',
+    'public/assets/css/vault-3d.css',
+    'public/assets/js/vault-3d.js',
     'public/assets/js/user-chat.js',
     'public/admin/dashboard.html',
     'public/assets/css/admin-dashboard.css',
@@ -34,12 +37,18 @@ FILES_TO_UPLOAD = [
     'public/assets/sounds/tactical-alarm.wav',
     'public/assets/sounds/cyber-intro.wav',
     'public/assets/sounds/tactical-scan.wav',
+    'src/db/migrate.js',
+    'src/db/pool.js',
+    'src/db/migrations/003_vault_unlock_support.sql',
+    'src/models/Session.js',
+    'src/routes/sessions.js',
     'src/routes/store.js',
     'src/socket/index.js',
     'src/utils/logger.js',
     'tests/admin-ux-and-blackout.test.js',
     'tests/admin-stability-and-clear.test.js',
-    'tests/admin-scenario-progress.test.js'
+    'tests/admin-scenario-progress.test.js',
+    'tests/vault-passcode-and-lock.test.js'
 ]
 
 def main():
@@ -79,6 +88,14 @@ def main():
 
     sftp.close()
 
+    print("\nRunning database migrations on VPS...")
+    stdin, stdout, stderr = ssh.exec_command('cd /home/user615/RazeDehkade && node src/db/migrate.js')
+    m_out = stdout.read().decode('utf-8')
+    m_err = stderr.read().decode('utf-8')
+    print(m_out)
+    if m_err:
+        print("MIGRATE ERR:", m_err)
+
     print("\nRestarting raze-dehkade PM2 process on VPS...")
     stdin, stdout, stderr = ssh.exec_command('cd /home/user615/RazeDehkade && pm2 restart raze-dehkade && pm2 status')
     out = stdout.read().decode('utf-8')
@@ -89,7 +106,7 @@ def main():
 
     # Run tests on server
     print("\nRunning automated tests on VPS...")
-    stdin, stdout, stderr = ssh.exec_command('cd /home/user615/RazeDehkade && node --test tests/admin-scenario-progress.test.js tests/admin-ux-and-blackout.test.js')
+    stdin, stdout, stderr = ssh.exec_command('cd /home/user615/RazeDehkade && node --test tests/vault-passcode-and-lock.test.js tests/admin-scenario-progress.test.js tests/admin-ux-and-blackout.test.js')
     test_out = stdout.read().decode('utf-8')
     test_err = stderr.read().decode('utf-8')
     print(test_out)

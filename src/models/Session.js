@@ -287,6 +287,40 @@ class Session {
     );
     return res.rows[0] || null;
   }
+
+  /**
+   * تغییر وضعیت قفل گاوصندوق جلسه و تعیین هفته هدف
+   * @param {number} sessionId
+   * @param {boolean} isUnlocked
+   * @param {number} [targetWeek=5]
+   */
+  static async setVaultLock(sessionId, isUnlocked, targetWeek = 5) {
+    const lockVal = isUnlocked ? 1 : 0;
+    const weekVal = parseInt(targetWeek, 10) || 5;
+    await query(
+      `UPDATE sessions
+       SET is_vault_unlocked = ?, vault_target_week = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [lockVal, weekVal, sessionId]
+    );
+    return await Session.findById(sessionId);
+  }
+
+  /**
+   * بررسی وضعیت قفل گاوصندوق جلسه
+   * @param {number} sessionId
+   */
+  static async getVaultStatus(sessionId) {
+    const res = await query(
+      `SELECT is_vault_unlocked, vault_target_week FROM sessions WHERE id = ?`,
+      [sessionId]
+    );
+    if (!res.rows[0]) return { isUnlocked: false, targetWeek: 5 };
+    return {
+      isUnlocked: Boolean(res.rows[0].is_vault_unlocked),
+      targetWeek: res.rows[0].vault_target_week || 5,
+    };
+  }
 }
 
 module.exports = Session;
