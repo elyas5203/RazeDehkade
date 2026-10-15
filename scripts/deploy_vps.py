@@ -17,6 +17,7 @@ FILES_TO_UPLOAD = [
     'MASTER_CANNED_RESPONSES_PROGRESS_TRACKING.md',
     'MASTER_VAULT_AND_PORTRAITS_V2.md',
     'MASTER_PLAN_EARTH_ZOOM_DELIVERY.md',
+    'MASTER_BUTTONS_AND_OUTPUTS_MATRIX.md',
     'server.js',
     'public/admin/chat.html',
     'public/assets/css/admin.css',
@@ -25,6 +26,7 @@ FILES_TO_UPLOAD = [
     'public/assets/css/vault-3d.css',
     'public/assets/js/vault-3d.js',
     'public/assets/js/user-chat.js',
+    'public/assets/js/image-magnifier.js',
     'public/admin/dashboard.html',
     'public/assets/css/admin-dashboard.css',
     'public/assets/js/admin-dashboard.js',
@@ -59,7 +61,10 @@ FILES_TO_UPLOAD = [
     'tests/admin-stability-and-clear.test.js',
     'tests/admin-scenario-progress.test.js',
     'tests/vault-passcode-and-lock.test.js',
-    'tests/drone-delivery-class17.test.js'
+    'tests/vault-slot4.test.js',
+    'tests/drone-delivery-class17.test.js',
+    'tests/adversarial-buttons-stress.test.js',
+    'tests/adversarial-redteam-matrix.test.js'
 ]
 
 def main():
@@ -117,7 +122,7 @@ def main():
 
     # Run tests on server
     print("\nRunning automated tests on VPS...")
-    stdin, stdout, stderr = ssh.exec_command('cd /home/user615/RazeDehkade && node --test tests/drone-delivery-class17.test.js tests/vault-passcode-and-lock.test.js tests/admin-scenario-progress.test.js tests/admin-ux-and-blackout.test.js')
+    stdin, stdout, stderr = ssh.exec_command('cd /home/user615/RazeDehkade && npm test')
     test_out = stdout.read().decode('utf-8')
     test_err = stderr.read().decode('utf-8')
     print(test_out)

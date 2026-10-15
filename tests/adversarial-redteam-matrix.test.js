@@ -320,8 +320,8 @@ describe('Adversarial Red-Team Stress Matrix', () => {
       const targetSession = sessions[0];
       const client = await connectUser(userTokens[0]);
 
-      // 15,000 character long string
-      const longText = 'A'.repeat(15000);
+      // 10,050 character long string
+      const longText = 'A'.repeat(10050);
       const res = await new Promise((resolve) => {
         client.emit('send_message', {
           sessionId: targetSession.id,
