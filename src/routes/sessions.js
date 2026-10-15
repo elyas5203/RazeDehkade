@@ -214,7 +214,7 @@ router.delete('/:id', requireAdmin, async (req, res) => {
 router.post('/:id/lock', requireAdmin, async (req, res) => {
   try {
     const sessionId = parseInt(req.params.id, 10);
-    if (!sessionId) {
+    if (!sessionId || sessionId <= 0) {
       return res.status(400).json({ success: false, message: 'شناسه جلسه معتبر نیست.' });
     }
 
@@ -323,7 +323,7 @@ router.post('/vault-lock-all', requireAdmin, async (req, res) => {
 router.post('/:id/vault-lock', requireAdmin, async (req, res) => {
   try {
     const sessionId = parseInt(req.params.id, 10);
-    if (!sessionId) {
+    if (!sessionId || sessionId <= 0) {
       return res.status(400).json({ success: false, message: 'شناسه جلسه معتبر نیست.' });
     }
 
