@@ -41,6 +41,7 @@ FILES_TO_UPLOAD = [
     'public/assets/drone/drone-phase4-landed.jpg',
     'public/assets/map/earth-orbital-space.jpg',
     'public/assets/map/mashhad-regional-satellite.jpg',
+    'public/assets/map/mashhad-regional-neshan.jpg',
     'public/assets/map/mashhad-kaveh-satellite.jpg',
     'public/assets/map/mashhad-kaveh-street-map.png',
     'public/assets/sounds/tactical-alarm.wav',
