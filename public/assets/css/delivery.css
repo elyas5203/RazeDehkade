@@ -550,16 +550,17 @@ body[data-phase="arrived"] #droneDeliverySection {
 
 .drone-cinema-slide {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  left: 50%;
+  top: 50%;
+  width: max(1400px, 140vw);
+  height: max(1400px, 140vw);
+  background-size: 100% 100% !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
   opacity: 0;
-  transform: scale(1.0);
   will-change: transform, opacity;
   transition: opacity 0.5s cubic-bezier(0.2, 0, 0.2, 1);
+  pointer-events: none;
 }
 
 .drone-cinema-slide.active {
@@ -568,20 +569,22 @@ body[data-phase="arrived"] #droneDeliverySection {
 
 .drone-cinema-slide.slide-takeoff {
   transform-origin: 56% 48%;
+  transform: translate(-56%, -48%) scale(1.0);
 }
 
 .drone-cinema-slide.slide-transit {
   transform-origin: 52% 58%;
+  transform: translate(-52%, -58%) scale(1.0);
 }
 
 .drone-cinema-slide.slide-drop {
-  transform-origin: 53.34% 64.19%;
+  transform-origin: 52.73% 63.80%;
+  transform: translate(-52.73%, -63.80%) scale(1.0);
 }
 
 .drone-cinema-slide.slide-landed {
-  transform-origin: 53.34% 64.19%;
-  background-size: cover !important;
-  background-position: 53.34% 64.19% !important;
+  transform-origin: 52.73% 63.80%;
+  transform: translate(-52.73%, -63.80%) scale(1.0);
 }
 
 /* ==========================================================================
@@ -594,9 +597,9 @@ body[data-phase="arrived"] #droneDeliverySection {
 }
 
 @keyframes earthSpaceZoomDrift {
-  0% { transform: scale(1.0) translate(0, 0); filter: brightness(0.95); }
-  50% { transform: scale(1.15) translate(-1%, -1%); filter: brightness(1.05); }
-  100% { transform: scale(1.30) translate(-2%, -2%); filter: brightness(1.0); }
+  0% { transform: translate(-56%, -48%) scale(1.0); filter: brightness(0.95); }
+  50% { transform: translate(-56%, -48%) scale(1.15); filter: brightness(1.05); }
+  100% { transform: translate(-56%, -48%) scale(1.30); filter: brightness(1.0); }
 }
 
 .drone-cinema-slide.slide-transit.active {
@@ -604,9 +607,9 @@ body[data-phase="arrived"] #droneDeliverySection {
 }
 
 @keyframes mashhadAtmosphericDescent {
-  0% { transform: scale(1.0) translate(0, 0); }
-  50% { transform: scale(1.20) translate(-1%, 1%); }
-  100% { transform: scale(1.42) translate(-2%, 2%); }
+  0% { transform: translate(-52%, -58%) scale(1.0); }
+  50% { transform: translate(-52%, -58%) scale(1.20); }
+  100% { transform: translate(-52%, -58%) scale(1.42); }
 }
 
 .drone-cinema-slide.slide-drop.active {
@@ -614,9 +617,9 @@ body[data-phase="arrived"] #droneDeliverySection {
 }
 
 @keyframes kavehSatelliteApproach {
-  0% { transform: scale(1.0) translate(0, 0); }
-  50% { transform: scale(1.24) translate(0, 0); }
-  100% { transform: scale(1.48) translate(-1%, 1%); }
+  0% { transform: translate(-52.73%, -63.80%) scale(1.0); }
+  50% { transform: translate(-52.73%, -63.80%) scale(1.24); }
+  100% { transform: translate(-52.73%, -63.80%) scale(1.48); }
 }
 
 .drone-cinema-slide.slide-landed.active {
@@ -624,113 +627,406 @@ body[data-phase="arrived"] #droneDeliverySection {
 }
 
 @keyframes kavehStreetPinpointZoom {
-  0% { transform: scale(0.92); filter: contrast(1.05); }
-  40% { transform: scale(1.04); filter: contrast(1.08); }
-  100% { transform: scale(1.15); filter: contrast(1.1); }
+  0% { transform: translate(-52.73%, -63.80%) scale(0.92); filter: contrast(1.05); }
+  40% { transform: translate(-52.73%, -63.80%) scale(1.02); filter: contrast(1.08); }
+  100% { transform: translate(-52.73%, -63.80%) scale(1.12); filter: contrast(1.1); }
 }
 
 /* پین هدف تپنده و موقعیت مکانی تحویل بسته */
 .earth-target-pin-wrap {
   position: absolute;
-  left: 53.34%;
-  top: 64.19%;
-  transform: translate(-50%, -100%);
+  left: 52.73%;
+  top: 63.80%;
+  transform: translate(-50%, -50%);
   z-index: 25;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   pointer-events: none;
   opacity: 0;
-  animation: earthPinLand 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s forwards;
+  animation: earthPinLand 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s forwards;
 }
 
 @keyframes earthPinLand {
   0% {
     opacity: 0;
-    transform: translate(-50%, -220%) scale(0.3);
+    transform: translate(-50%, -50%) scale(0.3);
   }
   60% {
     opacity: 1;
-    transform: translate(-50%, -90%) scale(1.15);
+    transform: translate(-50%, -50%) scale(1.15);
   }
   100% {
     opacity: 1;
-    transform: translate(-50%, -100%) scale(1);
+    transform: translate(-50%, -50%) scale(1);
   }
+}
+
+.military-target-laser-crosshair {
+  width: 90px;
+  height: 90px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 0 12px rgba(0, 255, 102, 0.75));
+}
+
+.laser-reticle-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.reticle-rot-cw {
+  transform-origin: 50px 50px;
+  animation: reticleSpinClockwise 14s linear infinite;
+}
+
+.reticle-rot-ccw {
+  transform-origin: 50px 50px;
+  animation: reticleSpinCounterClockwise 10s linear infinite;
+}
+
+@keyframes reticleSpinClockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes reticleSpinCounterClockwise {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+.laser-core-pulse {
+  animation: laserCoreBlink 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes laserCoreBlink {
+  0% { transform: scale(0.85); opacity: 0.8; }
+  100% { transform: scale(1.35); opacity: 1; filter: drop-shadow(0 0 6px #ef4444); }
+}
+
+.military-laser-radar-ring {
+  position: absolute;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0, 255, 102, 0.7);
+  box-shadow: 0 0 15px rgba(0, 255, 102, 0.5);
+  animation: militaryRadarPulse 1.8s ease-out infinite;
+  pointer-events: none;
+}
+
+.military-laser-sonar-wave {
+  position: absolute;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 1px dashed rgba(0, 240, 255, 0.45);
+  animation: militarySonarWave 2.8s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes militaryRadarPulse {
+  0% { transform: scale(0.3); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes militarySonarWave {
+  0% { transform: scale(0.6) rotate(0deg); opacity: 0.8; }
+  100% { transform: scale(2.2) rotate(180deg); opacity: 0; }
+}
+
+.military-target-lock-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(2, 10, 6, 0.9);
+  border: 1px solid #00ff66;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-top: 4px;
+  box-shadow: 0 0 10px rgba(0, 255, 102, 0.4);
+}
+
+.tgt-lock-led {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #00ff66;
+  box-shadow: 0 0 6px #00ff66;
+  animation: flirRecBlink 0.8s infinite;
+}
+
+.tgt-lock-txt {
+  font-family: 'JetBrains Mono', 'Vazirmatn', monospace;
+  font-size: 9.5px;
+  font-weight: 800;
+  color: #00ff66;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .earth-target-crosshair {
   position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translate(-50%, 50%);
-  width: 48px;
-  height: 48px;
+  width: 54px;
+  height: 54px;
   border: 1.5px dashed rgba(0, 240, 255, 0.7);
   border-radius: 50%;
   animation: targetRotate 10s linear infinite;
+  pointer-events: none;
 }
 
 @keyframes targetRotate {
-  from { transform: translate(-50%, 50%) rotate(0deg); }
-  to { transform: translate(-50%, 50%) rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .earth-pin-marker {
-  width: 38px;
-  height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  filter: drop-shadow(0 4px 10px rgba(239, 68, 68, 0.8));
-  animation: pinBounceSubtle 2.4s ease-in-out infinite;
-}
-
-.pin-svg-icon {
-  font-size: 32px;
-  line-height: 1;
-}
-
-.pin-glow-dot {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #00ff66;
-  box-shadow: 0 0 10px #00ff66, 0 0 18px #00ff66;
-}
-
-@keyframes pinBounceSubtle {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  display: none;
 }
 
 .earth-pin-radar-ring {
   position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translate(-50%, 50%);
-  width: 46px;
-  height: 46px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   border: 2px solid #ef4444;
   background: rgba(239, 68, 68, 0.15);
   animation: pinRadarPulse 2s ease-out infinite;
+  pointer-events: none;
 }
 
 @keyframes pinRadarPulse {
-  0% {
-    transform: translate(-50%, 50%) scale(0.2);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(-50%, 50%) scale(2.5);
-    opacity: 0;
-  }
+  0% { transform: scale(0.2); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* ویجت اختصاصی شمارش معکوس گوشه تصویر */
+.flir-corner-countdown {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 30;
+  background: rgba(2, 10, 6, 0.9);
+  border: 1.5px solid rgba(0, 255, 102, 0.6);
+  border-radius: 6px;
+  padding: 5px 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8), 0 0 14px rgba(0, 255, 102, 0.25);
+  pointer-events: none;
+  direction: ltr;
+  text-align: left;
+  backdrop-filter: blur(6px);
+  min-width: 116px;
+}
+
+.corner-bracket-c {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-color: #00ff66;
+}
+.corner-bracket-c.c-tl { top: -2px; left: -2px; border-top: 2px solid; border-left: 2px solid; }
+.corner-bracket-c.c-tr { top: -2px; right: -2px; border-top: 2px solid; border-right: 2px solid; }
+.corner-bracket-c.c-bl { bottom: -2px; left: -2px; border-bottom: 2px solid; border-left: 2px solid; }
+.corner-bracket-c.c-br { bottom: -2px; right: -2px; border-bottom: 2px solid; border-right: 2px solid; }
+
+.corner-timer-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.corner-timer-led {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #00ff66;
+  box-shadow: 0 0 6px #00ff66;
+  animation: flirRecBlink 1s infinite;
+}
+
+.corner-timer-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
+}
+
+.corner-timer-display {
+  display: flex;
+  align-items: baseline;
+  font-family: 'JetBrains Mono', monospace;
+  line-height: 1;
+}
+
+.timer-prefix {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(0, 255, 102, 0.7);
+  margin-right: 1px;
+}
+
+.timer-big-digits {
+  font-size: 24px;
+  font-weight: 900;
+  color: #00ff66;
+  text-shadow: 0 0 10px rgba(0, 255, 102, 0.75);
+  letter-spacing: -0.5px;
+  min-width: 32px;
+}
+
+.timer-suffix {
+  font-size: 12px;
+  font-weight: 800;
+  color: #38bdf8;
+  margin-left: 2px;
+}
+
+.timer-sub-seconds {
+  font-size: 12px;
+  font-weight: 700;
+  color: #94a3b8;
+  margin-left: 2px;
+}
+
+.corner-timer-bar {
+  width: 100%;
+  height: 3px;
+  background: rgba(15, 23, 42, 0.8);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 2px;
+  border: 1px solid rgba(0, 255, 102, 0.25);
+}
+
+.corner-timer-bar-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #00ff66);
+  box-shadow: 0 0 6px #00ff66;
+  transition: width 0.1s linear;
+}
+
+.corner-timer-phase {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 7.5px;
+  font-weight: 700;
+  color: #a7f3d0;
+  letter-spacing: 0.3px;
+  margin-top: 1px;
+}
+
+/* بنر اعلام تثبیت و تحویل نهایی محموله در محل تحویل */
+.flir-arrival-banner {
+  position: absolute;
+  inset: 0;
+  z-index: 35;
+  background: rgba(2, 6, 8, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  direction: rtl;
+  text-align: center;
+  animation: arrivalBannerFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes arrivalBannerFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.arrival-banner-box {
+  background: rgba(6, 16, 18, 0.95);
+  border: 2px solid #00ff66;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 255, 102, 0.3);
+  border-radius: 12px;
+  padding: 18px 24px;
+  max-width: 540px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.arrival-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.arrival-glow-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #00ff66;
+  color: #020704;
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  font-size: 15px;
+  box-shadow: 0 0 14px #00ff66;
+}
+
+.arrival-banner-title {
+  font-size: 16px;
+  font-weight: 900;
+  color: #00ff66;
+  text-shadow: 0 0 12px rgba(0, 255, 102, 0.6);
+  letter-spacing: 0.3px;
+}
+
+.arrival-banner-street {
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  padding: 5px 14px;
+  border-radius: 6px;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+}
+
+.arrival-banner-coords {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
+}
+
+.arrival-banner-note {
+  font-size: 12.5px;
+  color: #cbd5e1;
+  line-height: 1.6;
+}
+
+.arrival-banner-timer-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 4px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  padding-top: 8px;
+  width: 100%;
+  justify-content: center;
+}
+
+.arrival-countdown-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  font-weight: 900;
+  color: #38bdf8;
+  padding: 0 4px;
 }
 
 /* کارت شیک محل تحویل بسته (داک‌شده در پایین کادر جهت دید کامل کوچه‌ها) */
@@ -1201,7 +1497,7 @@ body[data-phase="arrived"] #droneDeliverySection {
   color: #00ff66;
 }
 
-.flir-hud-meta.top-left { top: 6px; left: 6px; }
+.flir-hud-meta.top-left { top: 76px; left: 8px; }
 .flir-hud-meta.top-right { top: 6px; right: 6px; text-align: right; }
 .flir-hud-meta.bottom-left { bottom: 6px; left: 6px; }
 .flir-hud-meta.bottom-right { bottom: 6px; right: 6px; text-align: right; }

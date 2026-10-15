@@ -755,15 +755,56 @@
       const arrTitle = document.getElementById('arrivedTitle');
       const arrSub = document.getElementById('arrivedSub');
       const pkgIcon = document.getElementById('packageIconWrap');
+      const flirArrivalBanner = document.getElementById('flirArrivalBanner');
+      const flirCornerTimerDigits = document.getElementById('flirCornerTimerDigits');
+      const flirCornerTimerFill = document.getElementById('flirCornerTimerFill');
+      const flirCornerPhaseTag = document.getElementById('flirCornerPhaseTag');
+      const arrivalBlackoutSec = document.getElementById('arrivalBlackoutSec');
+
       if (arrTitle) arrTitle.textContent = 'سفارش در محل تحویل تحویل داده شد!';
       if (arrSub) arrSub.textContent = 'مختصات محل تحویل بسته (کوچه شهید کاوه ۱۳ مشهد) تثبیت و سفارش با موفقیت تحویل گردید.';
-      if (pkgIcon) pkgIcon.innerHTML = '📍';
+      if (pkgIcon) {
+        pkgIcon.innerHTML = '<span style="font-size: 32px; color: #10b981; font-weight: 900;">✓</span>';
+      }
+
+      // نمایش بنر اختصاصی و واضح تحویل در نمایشگر با تثبیت مختصات
+      if (flirArrivalBanner) {
+        flirArrivalBanner.style.display = 'flex';
+      }
+      if (flirCornerTimerDigits) {
+        flirCornerTimerDigits.textContent = '00';
+      }
+      if (flirCornerTimerFill) {
+        flirCornerTimerFill.style.width = '0%';
+      }
+      if (flirCornerPhaseTag) {
+        flirCornerPhaseTag.textContent = 'DELIVERY CONFIRMED';
+      }
+
+      let bannerRemainingSec = 8;
+      if (arrivalBlackoutSec) arrivalBlackoutSec.textContent = String(bannerRemainingSec);
+      const bannerInterval = setInterval(() => {
+        bannerRemainingSec--;
+        if (arrivalBlackoutSec && bannerRemainingSec >= 0) {
+          arrivalBlackoutSec.textContent = String(bannerRemainingSec);
+        }
+        if (bannerRemainingSec <= 0) {
+          clearInterval(bannerInterval);
+        }
+      }, 1000);
+
+      // ۸.۰ ثانیه سفارش تحویل شده و آدرس کامل کوچه کاوه ۱۳ نمایش داده می‌شود تا کاربر با آرامش بخواند
+      setTimeout(() => {
+        clearInterval(bannerInterval);
+        triggerCyberTransformation();
+      }, 8000);
+      return;
     }
 
-    // ۱.۵ ثانیه سفارش تحویل شده نمایش داده می‌شود، سپس بلک‌اوت کامل آغاز می‌گردد
+    // برای سایر کلاس‌های عادی:
     setTimeout(() => {
       triggerCyberTransformation();
-    }, 1500);
+    }, 2000);
   };
 
   // موتور رندر پیوسته و بدون پله زوم ماهواره‌ای (Continuous 60FPS Satellite Recon Zoom Engine)
@@ -778,18 +819,18 @@
     if (ratio <= 0.32) {
       const p1 = ratio / 0.32;
       const scale1 = 1.0 + p1 * 1.55; // 1.0 -> 2.55
-      s1.style.transform = `scale(${scale1.toFixed(3)})`;
+      s1.style.transform = `translate(-56%, -48%) scale(${scale1.toFixed(3)})`;
       const op1 = ratio < 0.20 ? 1 : Math.max(0, 1 - (ratio - 0.20) / 0.12);
       s1.style.opacity = op1.toFixed(2);
     } else {
       s1.style.opacity = '0';
     }
 
-    // لایه ۲: افق منطقه‌ای مشهد (نسبت ۰.۱۸ تا ۰.۶۶)
+    // لایه ۲: افق منطقه‌ای مشهد (نسبت ۰.۱۶ تا ۰.۶۶)
     if (ratio >= 0.16 && ratio <= 0.67) {
       const p2 = (ratio - 0.16) / (0.67 - 0.16);
       const scale2 = 0.92 + p2 * 1.78; // 0.92 -> 2.70
-      s2.style.transform = `scale(${scale2.toFixed(3)})`;
+      s2.style.transform = `translate(-52%, -58%) scale(${scale2.toFixed(3)})`;
       let op2 = 1;
       if (ratio < 0.28) {
         op2 = (ratio - 0.16) / 0.12;
@@ -801,11 +842,11 @@
       s2.style.opacity = '0';
     }
 
-    // لایه ۳: بافت ماهواره‌ای رضاشهر و بلوار کاوه (نسبت ۰.۴۸ تا ۰.۸۶)
+    // لایه ۳: بافت ماهواره‌ای رضاشهر و بلوار کاوه (نسبت ۰.۴۶ تا ۰.۸۸)
     if (ratio >= 0.46 && ratio <= 0.88) {
       const p3 = (ratio - 0.46) / (0.88 - 0.46);
       const scale3 = 0.94 + p3 * 1.40; // 0.94 -> 2.34
-      s3.style.transform = `scale(${scale3.toFixed(3)})`;
+      s3.style.transform = `translate(-52.73%, -63.80%) scale(${scale3.toFixed(3)})`;
       let op3 = 1;
       if (ratio < 0.58) {
         op3 = (ratio - 0.46) / 0.12;
@@ -817,11 +858,11 @@
       s3.style.opacity = '0';
     }
 
-    // لایه ۴: نقشه خیابانی شفاف با نام دقیق کوچه‌ها (نسبت ۰.۷۰ تا ۱.۰۰)
+    // لایه ۴: نقشه خیابانی شفاف با نام دقیق کوچه‌ها (نسبت ۰.۶۸ تا ۱.۰۰)
     if (ratio >= 0.68) {
       const p4 = Math.min(1, (ratio - 0.68) / 0.32);
-      const scale4 = 0.84 + p4 * 0.24; // 0.84 -> 1.08
-      s4.style.transform = `scale(${scale4.toFixed(3)})`;
+      const scale4 = 0.88 + p4 * 0.20; // 0.88 -> 1.08
+      s4.style.transform = `translate(-52.73%, -63.80%) scale(${scale4.toFixed(3)})`;
       const op4 = Math.min(1, (ratio - 0.68) / 0.12);
       s4.style.opacity = op4.toFixed(2);
     } else {
@@ -861,6 +902,23 @@
       const flirClockDisplay = document.getElementById('flirClockDisplay');
       const reticleLockStatus = document.getElementById('reticleLockStatus');
 
+      const flirCornerTimerDigits = document.getElementById('flirCornerTimerDigits');
+      const flirCornerTimerMs = document.getElementById('flirCornerTimerMs');
+      const flirCornerTimerFill = document.getElementById('flirCornerTimerFill');
+      const flirCornerPhaseTag = document.getElementById('flirCornerPhaseTag');
+
+      if (flirCornerTimerDigits) {
+        flirCornerTimerDigits.textContent = String(seconds).padStart(2, '0');
+      }
+      if (flirCornerTimerMs) {
+        const sub = Math.floor((remaining % 1000) / 100);
+        flirCornerTimerMs.textContent = `.${sub}`;
+      }
+      if (flirCornerTimerFill) {
+        const pct = Math.max(0, Math.min(100, (remaining / TOTAL_DURATION_MS) * 100));
+        flirCornerTimerFill.style.width = `${pct.toFixed(1)}%`;
+      }
+
       if (droneHeaderTimer) {
         droneHeaderTimer.textContent = numberFormat.format(seconds);
       }
@@ -896,40 +954,44 @@
 
           if (newStage === 'takeoff') {
             activateDroneSlide('slideTakeoff');
+            if (flirCornerPhaseTag) flirCornerPhaseTag.textContent = 'ORBITAL RECON';
             if (droneStatusTitle) droneStatusTitle.textContent = 'رهگیری ماهواره‌ای مختصات هدف // شناسایی محل تحویل بسته';
             if (droneMissionNote) droneMissionNote.textContent = 'ماهواره شناسایی در مدار زمین فعال شد // آغاز تقرب اپتیکال به مختصات محل تحویل بسته (۳۶.۲۸۴۳ , ۵۹.۵۴۴۸)';
             if (flirZoomVal) flirZoomVal.textContent = '1.0X GLOBE';
             if (flirFovVal) flirFovVal.textContent = '120° ORBIT';
             if (flirActuatorVal) flirActuatorVal.textContent = 'GPS: 36.2843N 59.5448E';
             if (reticleLockStatus) reticleLockStatus.textContent = 'ACQUIRING MASHHAD...';
-            notifyLifecyclePhase('satellite_orbital', '🛰️ رهگیری ماهواره‌ای // شناسایی محل تحویل بسته', seconds);
+            notifyLifecyclePhase('satellite_orbital', 'رهگیری ماهواره‌ای // شناسایی محل تحویل بسته', seconds);
           } else if (newStage === 'transit') {
             activateDroneSlide('slideTransit');
+            if (flirCornerPhaseTag) flirCornerPhaseTag.textContent = 'ATMOSPHERIC RE-ENTRY';
             if (droneStatusTitle) droneStatusTitle.textContent = 'تقرب مداری به حریم هوایی مشهد // کاهش ارتفاع عملیاتی';
             if (droneMissionNote) droneMissionNote.textContent = 'ورود به جو و اسکن لایه‌های هوایی مشهد // تمرکز بر محور جنوب‌غربی و منطقه رضاشهر.';
             if (flirZoomVal) flirZoomVal.textContent = '12X REGIONAL';
             if (flirFovVal) flirFovVal.textContent = '45° MASHHAD';
             if (flirActuatorVal) flirActuatorVal.textContent = 'SENSOR: MULTISPECTRAL';
             if (reticleLockStatus) reticleLockStatus.textContent = 'TRACKING REZA SHAHR...';
-            notifyLifecyclePhase('satellite_reentry', '🛰️ تقرب به مشهد // کاهش ارتفاع عملیاتی', seconds);
+            notifyLifecyclePhase('satellite_reentry', 'تقرب به مشهد // کاهش ارتفاع عملیاتی', seconds);
           } else if (newStage === 'kaveh') {
             activateDroneSlide('slideDrop');
+            if (flirCornerPhaseTag) flirCornerPhaseTag.textContent = 'APPROACH KAVEH';
             if (droneStatusTitle) droneStatusTitle.textContent = 'تثبیت ماهواره‌ای روی منطقه ۹ و رضاشهر // تقرب به بلوار کاوه';
             if (droneMissionNote) droneMissionNote.textContent = 'تفکیک معابر و خیابان‌های فرعی در محور بلوار شهید کاوه و رودکی // آماده‌سازی تثبیت محل تحویل بسته.';
             if (flirZoomVal) flirZoomVal.textContent = '45X TACTICAL';
             if (flirFovVal) flirFovVal.textContent = '18° STREET';
             if (flirActuatorVal) flirActuatorVal.textContent = 'SECTOR: KAVEH BLVD';
             if (reticleLockStatus) reticleLockStatus.textContent = 'LOCKING KAVEH 13...';
-            notifyLifecyclePhase('satellite_kaveh', '🛰️ بلوار کاوه // تقرب به کوچه ۱۳', seconds);
+            notifyLifecyclePhase('satellite_kaveh', 'بلوار کاوه // تقرب به کوچه ۱۳', seconds);
           } else if (newStage === 'airdrop') {
             activateDroneSlide('slideLanded');
+            if (flirCornerPhaseTag) flirCornerPhaseTag.textContent = 'PINPOINT LOCKED';
             if (droneStatusTitle) droneStatusTitle.textContent = 'موقعیت مکانی محل تحویل بسته با موفقیت تثبیت شد';
-            if (droneMissionNote) droneMissionNote.textContent = '📍 محل تحویل بسته: مشهد، بلوار شهید کاوه، کوچه شهید کاوه ۱۳ (رودکی ۲۰) // تحویل در این نقطه انجام شد.';
+            if (droneMissionNote) droneMissionNote.textContent = 'محل تحویل بسته: مشهد، بلوار شهید کاوه، کوچه شهید کاوه ۱۳ (رودکی ۲۰) // تحویل در این نقطه انجام شد.';
             if (flirZoomVal) flirZoomVal.textContent = '120X STREET';
             if (flirFovVal) flirFovVal.textContent = '05° KAVEH 13';
             if (flirActuatorVal) flirActuatorVal.textContent = 'CONFIRMED: ROUDAKI 20';
             if (reticleLockStatus) reticleLockStatus.textContent = 'TARGET LOCKED [100%]';
-            notifyLifecyclePhase('satellite_locked', '📍 محل تحویل بسته // کوچه شهید کاوه ۱۳ (رودکی ۲۰)', seconds);
+            notifyLifecyclePhase('satellite_locked', 'محل تحویل بسته // کوچه شهید کاوه ۱۳ (رودکی ۲۰)', seconds);
           }
         }
 

@@ -126,4 +126,27 @@ test('Exclusive Military FLIR Recon Drone Rooftop Airdrop Delivery for Class 17 
     assert.ok(storeJs.includes('تثبیت ماهواره‌ای روی منطقه ۹ و رضاشهر // تقرب به بلوار کاوه'), 'store.js must emit Stage 3 satellite label');
     assert.ok(storeJs.includes('موقعیت مکانی محل تحویل بسته با موفقیت تثبیت شد: کوچه شهید کاوه ۱۳ مشهد'), 'store.js must emit Stage 4 satellite label');
   });
+
+  await t.test('6. Corner countdown widget, centered street pinpoint alignment, 8s arrival duration, and military vector HUD', () => {
+    // Corner countdown widget
+    assert.ok(orderStatusHtml.includes('id="flirCornerCountdown"'), 'Must have flirCornerCountdown container');
+    assert.ok(orderStatusHtml.includes('id="flirCornerTimerDigits"'), 'Must have flirCornerTimerDigits element');
+    assert.ok(orderStatusHtml.includes('id="flirCornerTimerFill"'), 'Must have flirCornerTimerFill element');
+    assert.ok(orderStatusHtml.includes('id="flirCornerPhaseTag"'), 'Must have flirCornerPhaseTag element');
+    assert.ok(deliveryJs.includes('flirCornerTimerDigits'), 'JS must update flirCornerTimerDigits');
+
+    // Centered map alignment on Kaveh 13
+    assert.ok(deliveryCss.includes('translate(-52.73%, -63.80%)'), 'CSS must translate slide 4 to dead center');
+    assert.ok(deliveryJs.includes('translate(-52.73%, -63.80%)'), 'JS must maintain translation to dead center during zoom');
+
+    // 8-second readable arrival duration and arrival banner
+    assert.ok(orderStatusHtml.includes('id="flirArrivalBanner"'), 'Must have flirArrivalBanner element');
+    assert.ok(orderStatusHtml.includes('id="arrivalBlackoutSec"'), 'Must have arrivalBlackoutSec countdown');
+    assert.ok(deliveryJs.includes('8000'), 'Must wait 8000ms (8.0 seconds) on arrival display before blackout');
+
+    // Military HUD vector reticle
+    assert.ok(orderStatusHtml.includes('military-target-laser-crosshair'), 'Must have military vector crosshair');
+    assert.ok(orderStatusHtml.includes('laser-reticle-svg'), 'Must have SVG laser reticle');
+    assert.ok(!orderStatusHtml.includes('📍'), 'Must NOT have childish pin emoji in orderStatusHtml');
+  });
 });

@@ -69,7 +69,7 @@
             <div class="flir-status-indicator">
               <span class="flir-rec-dot"></span>
               <span class="flir-rec-text">OPTICS-714 // RECON</span>
-              <span class="flir-timer-badge" id="droneHeaderTimer">⏱️ <b id="droneTimerSec">۳۰</b> ثانیه</span>
+              <span class="flir-timer-badge" id="droneHeaderTimer"><span class="mil-timer-glyph">◷</span> <b id="droneTimerSec">۳۰</b> ثانیه</span>
             </div>
             <div class="flir-mission-badge" id="droneStatusTitle">رهگیری ماهواره‌ای مختصات هدف // شناسایی محل تحویل بسته</div>
             <div class="flir-optics-tag">GPS: 36.2843°N, 59.5448°E</div>
@@ -81,6 +81,52 @@
             <div class="flir-scanlines"></div>
             <div class="flir-noise-overlay"></div>
             <div class="flir-vignette-lens"></div>
+
+            <!-- ویجت اختصاصی شمارش معکوس گوشه تصویر (از ۳۰ تا ۰) -->
+            <div class="flir-corner-countdown" id="flirCornerCountdown">
+              <div class="corner-bracket-c c-tl"></div>
+              <div class="corner-bracket-c c-tr"></div>
+              <div class="corner-bracket-c c-bl"></div>
+              <div class="corner-bracket-c c-br"></div>
+              <div class="corner-timer-header">
+                <span class="corner-timer-led"></span>
+                <span class="corner-timer-label">T-MINUS COUNTDOWN</span>
+              </div>
+              <div class="corner-timer-display">
+                <span class="timer-prefix">T-</span>
+                <span class="timer-big-digits" id="flirCornerTimerDigits">30</span>
+                <span class="timer-suffix">S</span>
+                <span class="timer-sub-seconds" id="flirCornerTimerMs">.0</span>
+              </div>
+              <div class="corner-timer-bar">
+                <div class="corner-timer-bar-fill" id="flirCornerTimerFill"></div>
+              </div>
+              <div class="corner-timer-phase" id="flirCornerPhaseTag">ORBITAL RECON</div>
+            </div>
+
+            <!-- بنر اعلام تثبیت و تحویل نهایی محموله در محل تحویل (با فرصت ۸ ثانیه جهت مطالعه کامل) -->
+            <div class="flir-arrival-banner" id="flirArrivalBanner" style="display: none;">
+              <div class="arrival-banner-box">
+                <div class="arrival-banner-header">
+                  <span class="arrival-glow-icon">✓</span>
+                  <span class="arrival-banner-title">سفارش در محل تحویل تحویل داده شد!</span>
+                </div>
+                <div class="arrival-banner-street">
+                  مشهد، بلوار شهید کاوه، کوچه شهید کاوه ۱۳ (رودکی ۲۰)
+                </div>
+                <div class="arrival-banner-coords">
+                  GPS LOCK: 36.2843°N, 59.5448°E // تثبیت ۱۰۰٪ موقعیت
+                </div>
+                <div class="arrival-banner-note">
+                  مختصات محل تحویل بسته (کوچه شهید کاوه ۱۳ مشهد) تثبیت و سفارش با موفقیت تحویل گردید.
+                </div>
+                <div class="arrival-banner-timer-row">
+                  <span>انتقال امن به درگاه کارآگاهی در</span>
+                  <b class="arrival-countdown-num" id="arrivalBlackoutSec">۸</b>
+                  <span>ثانیه...</span>
+                </div>
+              </div>
+            </div>
 
             <!-- نمای هوایی متحرک زاویه بالا از فضا تا کوچه کاوه ۱۳ مشهد -->
             <div class="flir-aerial-world" id="flirAerialWorld">
@@ -95,12 +141,31 @@
                 <div class="drone-cinema-slide slide-drop" id="slideDrop" style="background-image: url('/assets/map/mashhad-kaveh-satellite.jpg');"></div>
                 <!-- فاز ۴: نقشه خیابانی فوق‌العاده شفاف با نام دقیق کوچه‌ها به فارسی -->
                 <div class="drone-cinema-slide slide-landed" id="slideLanded" style="background-image: url('/assets/map/mashhad-kaveh-street-map.png');">
-                  <!-- پین هدف و پالس تپنده دقیق در کوچه شهید کاوه ۱۳ -->
+                  <!-- پین هدف و رتیکل لیزری دقیق در کوچه شهید کاوه ۱۳ -->
                   <div class="earth-target-pin-wrap" id="earthTargetPinWrap">
+                    <div class="military-laser-radar-ring"></div>
+                    <div class="military-laser-sonar-wave"></div>
                     <div class="earth-pin-radar-ring"></div>
                     <div class="earth-target-crosshair"></div>
-                    <div class="earth-pin-marker">
-                      <span class="pin-svg-icon">📍</span>
+                    <div class="military-target-laser-crosshair">
+                      <svg viewBox="0 0 100 100" class="laser-reticle-svg" aria-hidden="true">
+                        <circle cx="50" cy="50" r="44" stroke="#00ff66" stroke-width="1.5" stroke-dasharray="14 6" fill="none" class="reticle-rot-cw" />
+                        <circle cx="50" cy="50" r="30" stroke="#00f0ff" stroke-width="1" stroke-dasharray="4 4" fill="none" class="reticle-rot-ccw" />
+                        <circle cx="50" cy="50" r="16" stroke="#00ff66" stroke-width="2" fill="none" />
+                        <path d="M 34 26 L 24 26 L 24 36" stroke="#00ff66" stroke-width="2.5" fill="none" />
+                        <path d="M 66 26 L 76 26 L 76 36" stroke="#00ff66" stroke-width="2.5" fill="none" />
+                        <path d="M 34 74 L 24 74 L 24 64" stroke="#00ff66" stroke-width="2.5" fill="none" />
+                        <path d="M 66 74 L 76 74 L 76 64" stroke="#00ff66" stroke-width="2.5" fill="none" />
+                        <circle cx="50" cy="50" r="4" fill="#ef4444" class="laser-core-pulse" />
+                        <circle cx="50" cy="50" r="1.5" fill="#ffffff" />
+                      </svg>
+                    </div>
+                    <div class="military-target-lock-badge">
+                      <span class="tgt-lock-led"></span>
+                      <span class="tgt-lock-txt">TARGET LOCK // کوچه کاوه ۱۳</span>
+                    </div>
+                    <div class="earth-pin-marker" style="display: none;">
+                      <span class="pin-svg-icon"></span>
                       <span class="pin-glow-dot"></span>
                     </div>
                   </div>
@@ -112,7 +177,7 @@
                 <div class="addr-header">
                   <div class="addr-badge-wrap">
                     <span class="addr-live-dot"></span>
-                    <span class="addr-badge">📍 محل تحویل بسته</span>
+                    <span class="addr-badge"><span class="mil-crosshair-glyph">⌖</span> محل تحویل بسته</span>
                   </div>
                   <span class="addr-coords-tag">۳۶.۲۸۴۳°N, ۵۹.۵۴۴۸°E</span>
                 </div>
@@ -228,7 +293,7 @@
 
           <!-- پیام توصیفی وضعیت عملیات میدانی رصد ماهواره‌ای -->
           <p class="flir-mission-note" id="droneMissionNote">
-            📍 محل تحویل بسته: مشهد، بلوار شهید کاوه، کوچه شهید کاوه ۱۳ (رودکی ۲۰) // پایش و ارسال بسته به این نقطه انجام شد.
+            محل تحویل بسته: مشهد، بلوار شهید کاوه، کوچه شهید کاوه ۱۳ (رودکی ۲۰) // پایش و ارسال بسته به این نقطه انجام شد.
           </p>
 
         </div>
@@ -253,10 +318,13 @@
       <!-- فاز دوم: تحویل نهایی سفارش (بدون دکمه یا پیام اضافی، فقط اعلام تحویل) -->
       <section class="delivery-arrived" id="arrivedSection" aria-live="polite">
         <div class="package-icon-wrap" id="packageIconWrap" aria-hidden="true">
-          📦
+          <svg viewBox="0 0 48 48" class="arrived-check-svg" width="48" height="48" fill="none">
+            <circle cx="24" cy="24" r="22" stroke="#10b981" stroke-width="2.5" fill="rgba(16, 185, 129, 0.15)"/>
+            <path d="M14 24 L21 31 L34 17" stroke="#10b981" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </div>
         <h2 id="arrivedTitle">سفارش در محل تحویل تحویل داده شد!</h2>
-        <p class="delivery-success-sub" id="arrivedSub">مختصات محل تحویل بسته (کوچه شهید کاوه ۱۳ مشهد) تثبیت و سفارش تحویل گردید.</p>
+        <p class="delivery-success-sub" id="arrivedSub">مختصات محل تحویل بسته (کوچه شهید کاوه ۱۳ مشهد) تثبیت و سفارش با موفقیت تحویل گردید.</p>
       </section>
 
     </div>
