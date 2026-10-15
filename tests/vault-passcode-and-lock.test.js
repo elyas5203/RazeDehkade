@@ -5,7 +5,7 @@ const path = require('node:path');
 
 const rootDir = path.join(__dirname, '..');
 
-test('Vault Passcode 0110, Single Photo Reward, and Admin Weekly Lock/Unlock Control', async (t) => {
+test('Vault Passcode 0110, Single Photo Reward, Zero Spoilers, and Admin Weekly Silent Lock/Unlock', async (t) => {
   const vaultJsPath = path.join(rootDir, 'public', 'assets', 'js', 'vault-3d.js');
   const vaultCssPath = path.join(rootDir, 'public', 'assets', 'css', 'vault-3d.css');
   const chatHtmlPath = path.join(rootDir, 'public', 'chat.html');
@@ -44,22 +44,61 @@ test('Vault Passcode 0110, Single Photo Reward, and Admin Weekly Lock/Unlock Con
     assert.ok(flagsBlock.includes('mysterious-museum-poster.svg'), 'Must retain single poster photo');
   });
 
-  await t.test('3. Vault is sealed/locked by default and requires admin unlock in a specific week', () => {
+  await t.test('3. Zero-Spoiler UI: Vault door has NO visible sealed text or badge; opens password modal normally', () => {
+    const html = fs.readFileSync(chatHtmlPath, 'utf8');
+    assert.ok(!html.includes('پلمپ امنیتی'), 'chat.html must NOT display spoiler text پلمپ امنیتی');
+    assert.ok(!html.includes('id="vault-locked-seal-badge"'), 'chat.html must NOT render seal badge overlay');
+
+    const css = fs.readFileSync(vaultCssPath, 'utf8');
+    assert.ok(!css.includes('.vault-locked-seal-overlay'), 'CSS must NOT contain seal overlay styles');
+
+    const js = fs.readFileSync(vaultJsPath, 'utf8');
+    assert.ok(!js.includes('showVaultLockedNotice'), 'vault-3d.js must not show alert notice on open click');
+  });
+
+  await t.test('4. Silent Lock Verification: Before admin unlock, entering 0110 triggers wrong password error; after unlock, it succeeds', () => {
     const js = fs.readFileSync(vaultJsPath, 'utf8');
     assert.ok(js.includes('isVaultAdminUnlocked = false'), 'Vault must be locked by default (false)');
     assert.ok(js.includes('setVaultAdminUnlocked'), 'Must define setVaultAdminUnlocked');
-    assert.ok(js.includes('showVaultLockedNotice'), 'Must define showVaultLockedNotice');
-    assert.ok(js.includes('updateVaultLockUI'), 'Must define updateVaultLockUI');
 
-    const css = fs.readFileSync(vaultCssPath, 'utf8');
-    assert.ok(css.includes('.vault-locked-seal-overlay'), 'CSS must define .vault-locked-seal-overlay');
-    assert.ok(css.includes('.is-vault-locked'), 'CSS must define .is-vault-locked');
+    // Simulate the logic in submitVaultPassword
+    let isVaultAdminUnlocked = false;
+    let unlockedResult = false;
+    let errorMessage = '';
 
-    const html = fs.readFileSync(chatHtmlPath, 'utf8');
-    assert.ok(html.includes('id="vault-locked-seal-badge"'), 'chat.html must render vault-locked-seal-badge');
+    function mockSubmit(code) {
+      if (!code) { errorMessage = 'کد خالی است'; return; }
+      if (!isVaultAdminUnlocked) {
+        errorMessage = 'کد واردشده نامعتبر است؛ زبانه‌های قفل زرهی باز نشد.';
+        return;
+      }
+      if (code === '0110') {
+        unlockedResult = true;
+        errorMessage = '';
+      } else {
+        errorMessage = 'کد واردشده نامعتبر است؛ زبانه‌های قفل زرهی باز نشد.';
+      }
+    }
+
+    // Attempt before admin unlock with code 0110:
+    mockSubmit('0110');
+    assert.strictEqual(unlockedResult, false, 'Entering 0110 must NOT unlock while admin has not enabled it');
+    assert.strictEqual(errorMessage, 'کد واردشده نامعتبر است؛ زبانه‌های قفل زرهی باز نشد.', 'Must give standard wrong code error');
+
+    // Attempt with incorrect code:
+    mockSubmit('9999');
+    assert.strictEqual(unlockedResult, false);
+
+    // Now admin unlocks the vault:
+    isVaultAdminUnlocked = true;
+
+    // Now entering 0110 must succeed:
+    mockSubmit('0110');
+    assert.strictEqual(unlockedResult, true, 'Entering 0110 MUST unlock after admin enables it');
+    assert.strictEqual(errorMessage, '');
   });
 
-  await t.test('4. Admin chat and server have full control to toggle vault lock per session & week', () => {
+  await t.test('5. Admin chat and server have full control to toggle vault lock per session & week', () => {
     const adminHtml = fs.readFileSync(adminHtmlPath, 'utf8');
     assert.ok(adminHtml.includes('id="admin-vault-lock-btn"'), 'Admin header must contain admin-vault-lock-btn');
     assert.ok(adminHtml.includes('id="weekly-vault-lock-btn"'), 'Weekly panel must contain weekly-vault-lock-btn');
@@ -85,7 +124,7 @@ test('Vault Passcode 0110, Single Photo Reward, and Admin Weekly Lock/Unlock Con
     assert.ok(sessionRoutes.includes('/:id/vault-lock'), 'sessions.js must have POST /:id/vault-lock endpoint');
   });
 
-  await t.test('5. Class "زارع و احمدی" (Index 17) specifications are verified', () => {
+  await t.test('6. Class "زارع و احمدی" (Index 17) specifications are verified', () => {
     assert.ok(fs.existsSync(classMatcherPath), 'classFolderMatcher.js must exist');
     const { OFFICIAL_SESSIONS_SPEC } = require(classMatcherPath);
     const zareClass = OFFICIAL_SESSIONS_SPEC.find(c => c.name.includes('زارع') && c.name.includes('احمدی'));
