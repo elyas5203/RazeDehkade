@@ -101,7 +101,7 @@ test('Vault Passcode 0110, Single Photo Reward, Zero Spoilers, and Admin Weekly 
   await t.test('5. Admin chat and server have full control to toggle vault lock per session & week', () => {
     const adminHtml = fs.readFileSync(adminHtmlPath, 'utf8');
     assert.ok(adminHtml.includes('id="admin-vault-lock-btn"'), 'Admin header must contain admin-vault-lock-btn');
-    assert.ok(adminHtml.includes('id="weekly-vault-lock-btn"'), 'Weekly panel must contain weekly-vault-lock-btn');
+    assert.ok(!adminHtml.includes('id="weekly-vault-lock-btn"'), 'Redundant weekly-vault-lock-btn must be removed from weekly panel');
 
     const adminJs = fs.readFileSync(adminJsPath, 'utf8');
     assert.ok(adminJs.includes('toggleAdminVaultLock'), 'admin-chat.js must define toggleAdminVaultLock');

@@ -2458,7 +2458,6 @@ async function toggleAdminVaultLock() {
 function updateVaultLockBtnUI(isUnlocked, week = currentSelectedWeek || 5) {
   const btn = document.getElementById('admin-vault-lock-btn');
   const mobileBtn = document.getElementById('mobile-admin-vault-lock-btn');
-  const weeklyBtn = document.getElementById('weekly-vault-lock-btn');
   const btns = [btn, mobileBtn].filter(Boolean);
 
   btns.forEach(b => {
@@ -2476,20 +2475,6 @@ function updateVaultLockBtnUI(isUnlocked, week = currentSelectedWeek || 5) {
       b.title = 'گاوصندوق پلمپ و غیرفعال است؛ برای بازگشایی کلیک کنید.';
     }
   });
-
-  if (weeklyBtn) {
-    if (isUnlocked) {
-      weeklyBtn.innerHTML = `🔓 وضعیت گاوصندوق: بازگشایی‌شده (هفته ${week}) — کلیک برای پلمپ مجدد`;
-      weeklyBtn.style.background = 'rgba(16, 185, 129, 0.14)';
-      weeklyBtn.style.borderColor = '#10b981';
-      weeklyBtn.style.color = '#34d399';
-    } else {
-      weeklyBtn.innerHTML = `🔒 وضعیت گاوصندوق: پلمپ امنیتی — کلیک برای بازگشایی در هفته ${currentSelectedWeek || 1}`;
-      weeklyBtn.style.background = 'rgba(239, 68, 68, 0.12)';
-      weeklyBtn.style.borderColor = '#ef4444';
-      weeklyBtn.style.color = '#fca5a5';
-    }
-  }
 }
 
 window.toggleAdminVaultLock = toggleAdminVaultLock;
