@@ -192,13 +192,18 @@ router.post('/order', async (req, res) => {
         totalSecondsToLogin: totalSecondsToGate,
       });
 
+      const isDroneClass = (existingSession.id === 17 || String(existingSession.order_code).trim() === '590019' || String(existingSession.name || '').includes('زارع'));
+      const initialPhaseLabel = isDroneClass 
+        ? `🛸 ریزپرنده در پرواز // بسته با ریزپرنده ارسال شد (${courierSeconds} ثانیه)`
+        : `🛵 پیک در راه است // ${courierSeconds} ثانیه تا تحویل`;
+
       if (typeof io.updateSessionPhase === 'function') {
         io.updateSessionPhase(existingSession.id, {
           phase: 'countdown',
           secondsLeft: courierSeconds,
           totalSecondsToLogin: totalSecondsToGate,
           sessionName: existingSession.name,
-          phaseLabel: `🛵 پیک در راه است // ${courierSeconds} ثانیه تا تحویل`,
+          phaseLabel: initialPhaseLabel,
         });
       }
 
@@ -217,16 +222,27 @@ router.post('/order', async (req, res) => {
             sessionName: existingSession.name,
             secondsLeft: courierRemaining,
             totalSecondsToLogin: totalLeft,
-            stage: 'courier',
+            stage: isDroneClass ? 'drone' : 'courier',
           });
 
           if (typeof io.updateSessionPhase === 'function') {
+            let tickPhaseLabel = `🛵 پیک در راه است // ${courierRemaining} ثانیه تا تحویل`;
+            if (isDroneClass) {
+              if (courierRemaining > 20) {
+                tickPhaseLabel = `🛸 ریزپرنده در پرواز // بسته با ریزپرنده ارسال شد (${courierRemaining} ثانیه)`;
+              } else if (courierRemaining > 8) {
+                tickPhaseLabel = `🛸 ناوبری هوایی // ریزپرنده در حال حرکت به سمت مقصد (${courierRemaining} ثانیه)`;
+              } else {
+                tickPhaseLabel = `📦 فرود روی پشت‌بوم // ریزپرنده بسته انداخت روی پشت‌بوم (${courierRemaining} ثانیه)`;
+              }
+            }
+
             io.updateSessionPhase(existingSession.id, {
               phase: 'countdown',
               secondsLeft: courierRemaining,
               totalSecondsToLogin: totalLeft,
               sessionName: existingSession.name,
-              phaseLabel: `🛵 پیک در راه است // ${courierRemaining} ثانیه تا تحویل`,
+              phaseLabel: tickPhaseLabel,
             });
           }
 

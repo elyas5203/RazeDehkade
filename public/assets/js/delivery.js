@@ -25,6 +25,51 @@
     );
   }
 
+  // بررسی اختصاصی کلاس ۱۷ (زارع و احمدی) با کد سفارش 590019 جهت فعال‌سازی تحویل با ریزپرنده
+  function checkIsDroneSession() {
+    const cleanDigits = (v) => String(v || '').replace(/\D/g, '');
+    const discount = String(order?.discountCode || order?.order_code || urlParams.get('discount') || urlParams.get('order_code') || urlParams.get('code') || '').trim();
+    const chatCode = String(order?.chat_code || sessionStorage.getItem('prefillCode') || urlParams.get('chat_code') || '').trim();
+    const sessionId = Number(order?.orderId || order?.sessionId || order?.session_id || urlParams.get('session') || urlParams.get('sessionId') || sessionStorage.getItem('session_id') || 0);
+    const sessionName = String(order?.sessionName || order?.name || order?.customerName || '').trim();
+
+    let storedSession = null;
+    try {
+      storedSession = JSON.parse(sessionStorage.getItem('orderSession') || 'null');
+    } catch (_) {}
+    const storedId = Number(storedSession?.id || 0);
+    const storedCode = String(storedSession?.order_code || storedSession?.chat_code || '').trim();
+    const storedName = String(storedSession?.name || '').trim();
+
+    return (
+      discount === '590019' ||
+      chatCode === '699275' ||
+      sessionId === 17 ||
+      sessionName.includes('زارع') ||
+      sessionName.includes('احمدی') ||
+      storedId === 17 ||
+      storedCode === '590019' ||
+      storedCode === '699275' ||
+      storedName.includes('زارع') ||
+      storedName.includes('احمدی') ||
+      urlParams.get('drone') === '1'
+    );
+  }
+
+  const isDroneDelivery = checkIsDroneSession();
+
+  // در صورت مراجعه مستقیم با پارامترهای کلاس ۱۷، اطلاعات سفارش را در حافظه محلی ذخیره کنیم
+  if (isDroneDelivery && !order) {
+    order = {
+      orderId: 17,
+      discountCode: '590019',
+      chat_code: '699275',
+      customerName: 'زارع و احمدی',
+      countdownStartedAt: Date.now(),
+    };
+    try { localStorage.setItem('golha_last_order', JSON.stringify(order)); } catch (_) {}
+  }
+
   const isTest = checkIsTestUser();
   // مدت‌زمان شمارش معکوس تحویل سفارش پیک: ۳۰ ثانیه طبق نیازمندی دقیق
   const TOTAL_DURATION_MS = isTest ? 10000 : 30000;
@@ -631,6 +676,10 @@
     }, actualBlackoutDuration);
   }
 
+  let currentDroneStage = null;
+  let hasDroneDropped = false;
+  let hasDroneLanded = false;
+
   // تحویل سفارش
   window.triggerImmediateArrival = function() {
     if (isArrived) return;
@@ -640,6 +689,15 @@
     document.body.dataset.phase = 'arrived';
     if (ring) ring.style.strokeDashoffset = String(CIRCLE_CIRCUMFERENCE);
     if (timerDisplay) timerDisplay.textContent = numberFormat.format(0);
+
+    if (isDroneDelivery) {
+      const arrTitle = document.getElementById('arrivedTitle');
+      const arrSub = document.getElementById('arrivedSub');
+      const pkgIcon = document.getElementById('packageIconWrap');
+      if (arrTitle) arrTitle.textContent = 'سفارش شما روی پشت‌بوم تحویل داده شد!';
+      if (arrSub) arrSub.textContent = 'ریزپرنده بسته را با موفقیت روی پشت‌بوم انداخت و مأموریت پایان یافت.';
+      if (pkgIcon) pkgIcon.innerHTML = '🛸';
+    }
 
     // ۱.۵ ثانیه سفارش تحویل شده نمایش داده می‌شود، سپس بلک‌اوت کامل آغاز می‌گردد
     setTimeout(() => {
@@ -661,6 +719,84 @@
       lastSeconds = seconds;
       if (timerDisplay) {
         timerDisplay.textContent = numberFormat.format(seconds);
+      }
+    }
+
+    // هدایت فازها، تیترها و تلمتری اختصاصی ریزپرنده تاکتیکال کلاس ۱۷
+    if (isDroneDelivery) {
+      const droneSection = document.getElementById('droneDeliverySection');
+      const droneStatusTitle = document.getElementById('droneStatusTitle');
+      const droneMissionNote = document.getElementById('droneMissionNote');
+      const droneAltVal = document.getElementById('droneAltVal');
+      const droneSpeedVal = document.getElementById('droneSpeedVal');
+
+      if (droneSection) {
+        const ratio = Math.min(1, Math.max(0, elapsed / TOTAL_DURATION_MS));
+        let newStage = 'takeoff';
+        if (ratio < 0.33) {
+          newStage = 'takeoff';
+        } else if (ratio < 0.73) {
+          newStage = 'transit';
+        } else {
+          newStage = 'airdrop';
+        }
+
+        if (newStage !== currentDroneStage) {
+          currentDroneStage = newStage;
+          droneSection.classList.remove('stage-takeoff', 'stage-transit', 'stage-airdrop');
+          droneSection.classList.add(`stage-${newStage}`);
+
+          if (newStage === 'takeoff') {
+            if (droneStatusTitle) droneStatusTitle.textContent = 'بسته با ریزپرنده ارسال شد';
+            if (droneMissionNote) droneMissionNote.textContent = 'ریزپرنده تاکتیکال از آشیانه برخاسته و با قفل روی مختصات هدف در حال اوج‌گیری است.';
+            notifyLifecyclePhase('drone_takeoff', '🛸 پرواز ریزپرنده // بسته با ریزپرنده ارسال شد', seconds);
+          } else if (newStage === 'transit') {
+            if (droneStatusTitle) droneStatusTitle.textContent = 'ریزپرنده در حال حرکت به سمت مقصد';
+            if (droneMissionNote) droneMissionNote.textContent = 'ریزپرنده با سرعت عملیاتی در کریدور هوایی امن به سمت پشت‌بوم ساختمان مقصد در حال حرکت است.';
+            notifyLifecyclePhase('drone_transit', '🛸 ناوبری هوایی // ریزپرنده در حال حرکت به سمت مقصد', seconds);
+          } else if (newStage === 'airdrop') {
+            if (droneStatusTitle) droneStatusTitle.textContent = 'ریزپرنده بسته انداخت روی پشت‌بوم';
+            if (droneMissionNote) droneMissionNote.textContent = 'ریزپرنده بالای پشت‌بوم در موقعیت پرواز درجا قرار گرفت و بسته را روی پشت‌بوم رها کرد.';
+            notifyLifecyclePhase('drone_airdrop', '📦 پرتاب روی پشت‌بوم // ریزپرنده بسته انداخت روی پشت‌بوم', seconds);
+          }
+        }
+
+        // کنترل رهایش چتر و فرود روی پد هدف در فاز ۳:
+        if (newStage === 'airdrop') {
+          if (ratio >= 0.75 && !hasDroneDropped) {
+            hasDroneDropped = true;
+            droneSection.classList.add('is-dropping');
+          }
+          if (ratio >= 0.88 && !hasDroneLanded) {
+            hasDroneLanded = true;
+            droneSection.classList.remove('is-dropping');
+            droneSection.classList.add('has-landed');
+            if (droneStatusTitle) droneStatusTitle.textContent = 'ریزپرنده بسته انداخت روی پشت‌بوم';
+            if (droneMissionNote) droneMissionNote.textContent = 'فرود بسته با موفقیت روی پشت‌بوم تأیید شد // ریزپرنده در حال بازگشت به پایگاه است.';
+          }
+        }
+
+        // تلمتری زنده بر اساس فاز
+        if (newStage === 'takeoff') {
+          const alt = Math.round(15 + (ratio / 0.33) * 30);
+          const spd = Math.round(20 + (ratio / 0.33) * 25);
+          if (droneAltVal) droneAltVal.textContent = `ALT: ${alt}m`;
+          if (droneSpeedVal) droneSpeedVal.textContent = `SPD: ${spd} km/h`;
+        } else if (newStage === 'transit') {
+          const alt = Math.round(45 - ((ratio - 0.33) / 0.40) * 12);
+          const spd = Math.round(52 + Math.sin(elapsed / 600) * 4);
+          if (droneAltVal) droneAltVal.textContent = `ALT: ${alt}m`;
+          if (droneSpeedVal) droneSpeedVal.textContent = `SPD: ${spd} km/h`;
+        } else {
+          if (hasDroneLanded) {
+            if (droneAltVal) droneAltVal.textContent = 'ALT: 0m (LANDED)';
+            if (droneSpeedVal) droneSpeedVal.textContent = 'SPD: 0 km/h';
+          } else {
+            const alt = Math.max(2, Math.round(18 - ((ratio - 0.73) / 0.15) * 16));
+            if (droneAltVal) droneAltVal.textContent = `ALT: ${alt}m`;
+            if (droneSpeedVal) droneSpeedVal.textContent = `SPD: 8 km/h`;
+          }
+        }
       }
     }
 
@@ -690,6 +826,16 @@
       // ورود با شماره همراه ثبت‌شده: مستقیماً بدون معطلی وارد سکانس سایبری می‌شود
       triggerCyberTransformation(200);
       return;
+    }
+
+    if (isDroneDelivery) {
+      document.body.classList.add('is-drone-mode');
+      const courierStepDot = document.getElementById('courierStepDot');
+      const courierStepLabel = document.getElementById('courierStepLabel');
+      if (courierStepDot) courierStepDot.textContent = '🛸';
+      if (courierStepLabel) courierStepLabel.textContent = 'ارسال با ریزپرنده';
+      const timerSubtitle = document.getElementById('timerSubtitle');
+      if (timerSubtitle) timerSubtitle.textContent = 'ثانیه تا فرود روی پشت‌بوم';
     }
 
     update();

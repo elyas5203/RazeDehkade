@@ -52,27 +52,124 @@
         </div>
         <div class="step-line done" id="courierLine"></div>
         <div class="step-item active" id="courierStep">
-          <div class="step-dot">🛵</div>
-          <span>ارسال سریع با پیک</span>
+          <div class="step-dot" id="courierStepDot">🛵</div>
+          <span id="courierStepLabel">ارسال سریع با پیک</span>
         </div>
       </div>
 
-      <!-- فاز اول: شمارش معکوس ارسال پیک -->
+      <!-- فاز اول: شمارش معکوس ارسال پیک یا ریزپرنده -->
       <section class="delivery-countdown" id="countdownSection" aria-label="زمان تحویل سفارش">
-        <span class="delivery-label">پیک اختصاصی در مسیر تحویل است…</span>
+        <span class="delivery-label" id="deliveryStatusLabel">پیک اختصاصی در مسیر تحویل است…</span>
         
-        <div class="delivery-dial">
+        <!-- بخش تحویل تاکتیکال با ریزپرنده (مخصوص کلاس زارع و احمدی) -->
+        <div class="drone-delivery-section" id="droneDeliverySection" style="display: none;" aria-label="تحویل با ریزپرنده">
+          <div class="drone-status-badge-wrap">
+            <div class="drone-pulse-radar-dot"></div>
+            <span class="drone-status-title" id="droneStatusTitle">بسته با ریزپرنده ارسال شد</span>
+            <span class="drone-callsign-tag">UAV-714 // RECON</span>
+          </div>
+
+          <div class="drone-air-theater" id="droneAirTheater">
+            <div class="drone-sky-backdrop">
+              <div class="drone-stars-layer"></div>
+              <div class="drone-clouds-layer"></div>
+              <div class="drone-moon"></div>
+            </div>
+
+            <div class="drone-city-skyline"></div>
+
+            <div class="rooftop-structure">
+              <div class="rooftop-surface">
+                <div class="rooftop-helipad-target" id="rooftopTarget">
+                  <div class="target-radar-ring"></div>
+                  <div class="target-crosshair-icon">⌖</div>
+                  <span class="target-label">DROP ZONE</span>
+                </div>
+                <div class="roof-water-tank"></div>
+                <div class="roof-antenna">
+                  <span class="antenna-beacon"></span>
+                </div>
+                <div class="roof-vent-chiller"></div>
+              </div>
+            </div>
+
+            <div class="tactical-uav-drone" id="tacticalUavDrone">
+              <div class="uav-searchlight-beam" id="uavSearchlight"></div>
+              
+              <div class="uav-fuselage">
+                <svg viewBox="0 0 140 70" class="uav-svg-body">
+                  <path d="M25 40 L55 35 L85 35 L115 40" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.8"/>
+                  <path d="M30 25 L55 35 L85 35 L110 25" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.8"/>
+                  <polygon points="50,30 90,30 98,38 90,46 50,46 42,38" fill="#111827" stroke="#38bdf8" stroke-width="1.8"/>
+                  <circle cx="70" cy="46" r="5" fill="#00ff66" stroke="#000" stroke-width="1"/>
+                  <circle cx="70" cy="46" r="2.2" fill="#ffffff"/>
+                  <path d="M48 46 L45 56 L62 56" stroke="#64748b" stroke-width="2" fill="none"/>
+                  <path d="M92 46 L95 56 L78 56" stroke="#64748b" stroke-width="2" fill="none"/>
+                </svg>
+
+                <div class="uav-rotor rotor-tl"><div class="blade-blur"></div><div class="rotor-hub"></div></div>
+                <div class="uav-rotor rotor-tr"><div class="blade-blur"></div><div class="rotor-hub"></div></div>
+                <div class="uav-rotor rotor-bl"><div class="blade-blur"></div><div class="rotor-hub"></div></div>
+                <div class="uav-rotor rotor-br"><div class="blade-blur"></div><div class="rotor-hub"></div></div>
+
+                <span class="nav-light nav-green"></span>
+                <span class="nav-light nav-red"></span>
+                <span class="nav-strobe nav-white"></span>
+              </div>
+
+              <div class="airdrop-cargo-package" id="airdropCargoPackage">
+                <div class="cargo-chute-canopy" id="cargoChuteCanopy">
+                  <div class="chute-dome"></div>
+                  <div class="chute-lines">
+                    <span class="chute-line l1"></span>
+                    <span class="chute-line l2"></span>
+                    <span class="chute-line l3"></span>
+                    <span class="chute-line l4"></span>
+                  </div>
+                </div>
+                <div class="cargo-box-body">
+                  <span class="cargo-hazard-strap"></span>
+                  <span class="cargo-symbol">📦</span>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="theater-hud-overlay">
+              <span class="hud-corner c-tl"></span>
+              <span class="hud-corner c-tr"></span>
+              <span class="hud-corner c-bl"></span>
+              <span class="hud-corner c-br"></span>
+              <div class="theater-telemetry-top">
+                <span class="uav-mode-pill">NAV: GPS-AUTO</span>
+                <span class="uav-coords-mono">35°41'N 51°25'E</span>
+              </div>
+              <div class="theater-telemetry-bottom">
+                <span id="droneAltVal">ALT: 45m</span>
+                <span id="droneSpeedVal">SPD: 54 km/h</span>
+                <span id="droneBattVal">BAT: 92%</span>
+              </div>
+            </div>
+
+          </div>
+
+          <p class="drone-mission-note" id="droneMissionNote">
+            ریزپرنده تاکتیکال از آشیانه برخاسته و با قفل روی مختصات هدف در حال اوج‌گیری است.
+          </p>
+        </div>
+
+        <div class="delivery-dial" id="standardDial">
           <svg viewBox="0 0 200 200" aria-hidden="true">
             <circle class="bg" cx="100" cy="100" r="90" />
             <circle class="bar" id="delivery-ring" cx="100" cy="100" r="90" />
           </svg>
           <div class="dial-center">
             <span id="timerDisplay">۳۰</span>
-            <small>ثانیه تا تحویل سفارش</small>
+            <small id="timerSubtitle">ثانیه تا تحویل سفارش</small>
           </div>
         </div>
 
-        <p class="delivery-status-note">
+        <p class="delivery-status-note" id="deliveryStatusNote">
           سفارش گل و گیاه شما آماده شده و پیک سریع در مسیر آدرس شماست.<br>
           لطفاً منتظر تحویل بسته باشید.
         </p>
@@ -80,11 +177,11 @@
 
       <!-- فاز دوم: تحویل نهایی سفارش (بدون دکمه یا پیام اضافی، فقط اعلام تحویل) -->
       <section class="delivery-arrived" id="arrivedSection" aria-live="polite">
-        <div class="package-icon-wrap" aria-hidden="true">
+        <div class="package-icon-wrap" id="packageIconWrap" aria-hidden="true">
           📦
         </div>
-        <h2>سفارش شما تحویل داده شد!</h2>
-        <p class="delivery-success-sub">بسته با موفقیت درب منزل تحویل داده شد.</p>
+        <h2 id="arrivedTitle">سفارش شما تحویل داده شد!</h2>
+        <p class="delivery-success-sub" id="arrivedSub">بسته با موفقیت درب منزل تحویل داده شد.</p>
       </section>
 
     </div>
