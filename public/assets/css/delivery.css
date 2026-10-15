@@ -329,47 +329,90 @@ body[data-phase="arrived"] .step-item:nth-child(5) .step-dot {
    مانیتور زنده دوربین اپتیکال و دید در شب پهپاد شناسایی نظامی // کلاس زارع و احمدی
    ========================================================================== */
 
+body.is-drone-mode {
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100vh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.is-drone-mode .delivery-brand,
+body.is-drone-mode .delivery-footer,
+body.is-drone-mode #standardDial,
+body.is-drone-mode #deliveryStatusLabel,
+body.is-drone-mode #deliveryStatusNote {
+  display: none !important;
+}
+
+body.is-drone-mode .delivery-stage {
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: 100vh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  padding: 6px 10px !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+}
+
 body.is-drone-mode .delivery-card-shell {
-  width: min(840px, 98vw);
-  background: rgba(6, 12, 16, 0.96);
-  border-color: rgba(0, 240, 255, 0.35);
-  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.95), 0 0 45px rgba(0, 240, 255, 0.15);
+  width: min(1040px, 98vw);
+  height: calc(100dvh - 12px) !important;
+  max-height: calc(100dvh - 12px) !important;
+  margin: 0 !important;
+  padding: 8px 12px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  overflow: hidden !important;
+  background: rgba(6, 12, 16, 0.98);
+  border-color: rgba(0, 240, 255, 0.4);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.95), 0 0 45px rgba(0, 240, 255, 0.2);
 }
 
 body.is-drone-mode .delivery-card-shell::before {
   background: linear-gradient(90deg, transparent, #00f0ff, transparent);
 }
 
-body.is-drone-mode #deliveryStatusLabel,
-body.is-drone-mode #deliveryStatusNote {
-  display: none !important;
+body.is-drone-mode .delivery-stepper {
+  margin: 0 0 4px 0 !important;
+  padding: 2px 0 !important;
+  transform: scale(0.85);
+  transform-origin: top center;
+  flex-shrink: 0;
+}
+
+body.is-drone-mode #countdownSection {
+  flex: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 body.is-drone-mode #droneDeliverySection {
-  display: block !important;
-  animation: fadeInFlirMonitor 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  flex: 1;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0;
+  overflow: hidden !important;
+  margin: 0 !important;
+  animation: fadeInFlirMonitor 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes fadeInFlirMonitor {
-  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  from { opacity: 0; transform: translateY(8px) scale(0.99); }
   to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-body.is-drone-mode .delivery-dial {
-  margin: 12px auto 14px;
-  width: 170px;
-  height: 170px;
-}
-
-body.is-drone-mode .delivery-dial circle.bar {
-  stroke: #00ff66;
-  filter: drop-shadow(0 0 12px rgba(0, 255, 102, 0.65));
-}
-
-body.is-drone-mode .dial-center #timerDisplay {
-  color: #ffffff;
-  text-shadow: 0 0 20px rgba(0, 255, 102, 0.5);
-  font-family: 'JetBrains Mono', monospace;
 }
 
 body.is-drone-mode .step-item.active {
@@ -387,23 +430,26 @@ body[data-phase="arrived"] #droneDeliverySection {
   display: none !important;
 }
 
-/* هدر وضعیت مانیتور پهپاد */
+/* هدر وضعیت مانیتور رهگیری ماهواره‌ای */
 .flir-status-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
-  padding: 10px 16px;
-  background: rgba(6, 16, 11, 0.88);
-  border: 1px solid rgba(0, 255, 102, 0.28);
-  border-radius: 12px;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 255, 102, 0.06);
+  gap: 10px;
+  padding: 6px 12px;
+  background: rgba(6, 16, 14, 0.94);
+  border: 1px solid rgba(0, 255, 102, 0.35);
+  border-radius: 10px;
+  margin-bottom: 6px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(0, 255, 102, 0.08);
+  flex-shrink: 0;
 }
 
 .flir-status-indicator {
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
 }
 
 .flir-rec-dot {
@@ -413,6 +459,7 @@ body[data-phase="arrived"] #droneDeliverySection {
   background: #ef4444;
   box-shadow: 0 0 10px #ef4444;
   animation: flirRecBlink 1s infinite;
+  flex-shrink: 0;
 }
 
 @keyframes flirRecBlink {
@@ -427,12 +474,30 @@ body[data-phase="arrived"] #droneDeliverySection {
   letter-spacing: 0.5px;
 }
 
+.flir-timer-badge {
+  font-family: 'JetBrains Mono', 'Vazirmatn', monospace;
+  font-size: 12px;
+  font-weight: 800;
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.14);
+  border: 1px solid rgba(0, 240, 255, 0.45);
+  padding: 2px 8px;
+  border-radius: 6px;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+  white-space: nowrap;
+}
+
 .flir-mission-badge {
-  font-size: 16px;
+  text-align: center;
+  font-size: 14px;
   font-weight: 800;
   color: #00ff66;
-  letter-spacing: 0.4px;
-  text-shadow: 0 0 12px rgba(0, 255, 102, 0.55);
+  letter-spacing: 0.3px;
+  text-shadow: 0 0 12px rgba(0, 255, 102, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 6px;
 }
 
 .flir-optics-tag {
@@ -440,28 +505,27 @@ body[data-phase="arrived"] #droneDeliverySection {
   font-size: 11px;
   color: #94a3b8;
   padding: 2px 8px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(0, 255, 102, 0.25);
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(0, 255, 102, 0.3);
   border-radius: 6px;
+  white-space: nowrap;
 }
 
 /* نمایشگر اپتیکال دوربین دید در شب پهپاد (FLIR Viewport) */
 .flir-screen-frame {
   position: relative;
+  flex: 1;
   width: 100%;
-  height: 420px;
-  border-radius: 18px;
-  overflow: hidden;
+  height: auto !important;
+  min-height: 260px;
+  max-height: calc(100dvh - 110px);
+  border-radius: 14px;
+  overflow: hidden !important;
   background: #020704;
   border: 2px solid rgba(0, 240, 255, 0.4);
   box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.95), 0 16px 45px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.15);
+  margin: 0;
   transition: transform 0.2s ease;
-}
-
-@media (max-width: 640px) {
-  .flir-screen-frame {
-    height: 310px;
-  }
 }
 
 .flir-screen-frame.impact-screen-shake {
@@ -475,72 +539,84 @@ body[data-phase="arrived"] #droneDeliverySection {
   40%, 60% { transform: translate3d(3px, -2px, 0); }
 }
 
-/* اسلایدهای سینمایی فوتورئال و های‌رزولوشن ۴ فاز عملیات پروازی پهپاد */
+/* اسلایدهای پیوسته زوم ماهواره‌ای از فضا تا کوچه محل تحویل بسته */
 .drone-cinema-slides {
   position: absolute;
   inset: 0;
   overflow: hidden;
   z-index: 2;
+  background: #020608;
 }
 
 .drone-cinema-slide {
   position: absolute;
-  inset: -15px;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   opacity: 0;
-  transform: scale(1.02);
-  transition: opacity 0.85s cubic-bezier(0.4, 0, 0.2, 1), transform 8s cubic-bezier(0.1, 0, 0.2, 1);
-  will-change: opacity, transform;
+  transform: scale(1.0);
+  will-change: transform, opacity;
+  transition: opacity 0.5s cubic-bezier(0.2, 0, 0.2, 1);
 }
 
 .drone-cinema-slide.active {
   opacity: 1;
-  transform: scale(1.07);
+}
+
+.drone-cinema-slide.slide-takeoff {
+  transform-origin: 56% 48%;
+}
+
+.drone-cinema-slide.slide-transit {
+  transform-origin: 52% 58%;
+}
+
+.drone-cinema-slide.slide-drop {
+  transform-origin: 53.34% 64.19%;
+}
+
+.drone-cinema-slide.slide-landed {
+  transform-origin: 53.34% 64.19%;
+  background-size: cover !important;
+  background-position: 53.34% 64.19% !important;
 }
 
 /* ==========================================================================
    EARTH-TO-STREET SATELLITE ZOOM & TARGET PIN STYLING (CLASS 17)
    ========================================================================== */
 
-/* فاز ۱: کره زمین در اعماق فضا */
+/* انیمیشن‌های زوم پیوسته */
 .drone-cinema-slide.slide-takeoff.active {
   animation: earthSpaceZoomDrift 8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 @keyframes earthSpaceZoomDrift {
   0% { transform: scale(1.0) translate(0, 0); filter: brightness(0.95); }
-  50% { transform: scale(1.08) translate(-1%, -1%); filter: brightness(1.05); }
-  100% { transform: scale(1.18) translate(-2%, -2%); filter: brightness(1.0); }
+  50% { transform: scale(1.15) translate(-1%, -1%); filter: brightness(1.05); }
+  100% { transform: scale(1.30) translate(-2%, -2%); filter: brightness(1.0); }
 }
 
-/* فاز ۲: ورود به جو ایران و افق مشهد */
 .drone-cinema-slide.slide-transit.active {
   animation: mashhadAtmosphericDescent 8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 @keyframes mashhadAtmosphericDescent {
-  0% { transform: scale(1.05) translate(0, 0); }
-  50% { transform: scale(1.16) translate(-1%, 1%); }
-  100% { transform: scale(1.28) translate(-2%, 2%); }
+  0% { transform: scale(1.0) translate(0, 0); }
+  50% { transform: scale(1.20) translate(-1%, 1%); }
+  100% { transform: scale(1.42) translate(-2%, 2%); }
 }
 
-/* فاز ۳: بافت ماهواره‌ای شهری رضاشهر و بلوار کاوه */
 .drone-cinema-slide.slide-drop.active {
   animation: kavehSatelliteApproach 8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
 @keyframes kavehSatelliteApproach {
-  0% { transform: scale(1.08) translate(1%, -1%); }
-  50% { transform: scale(1.22) translate(0, 0); }
-  100% { transform: scale(1.36) translate(-1%, 1%); }
-}
-
-/* فاز ۴: نقشه خیابانی فوق‌العاده شفاف کوچه کاوه ۱۳ */
-.drone-cinema-slide.slide-landed {
-  background-size: 155% !important;
-  background-position: 53.34% 64.19% !important;
+  0% { transform: scale(1.0) translate(0, 0); }
+  50% { transform: scale(1.24) translate(0, 0); }
+  100% { transform: scale(1.48) translate(-1%, 1%); }
 }
 
 .drone-cinema-slide.slide-landed.active {
@@ -548,12 +624,12 @@ body[data-phase="arrived"] #droneDeliverySection {
 }
 
 @keyframes kavehStreetPinpointZoom {
-  0% { transform: scale(1.0); filter: contrast(1.05); }
-  40% { transform: scale(1.12); filter: contrast(1.1); }
-  100% { transform: scale(1.22); filter: contrast(1.12); }
+  0% { transform: scale(0.92); filter: contrast(1.05); }
+  40% { transform: scale(1.04); filter: contrast(1.08); }
+  100% { transform: scale(1.15); filter: contrast(1.1); }
 }
 
-/* پین هدف تپنده و کارت آدرس جلسه اینجاست */
+/* پین هدف تپنده و موقعیت مکانی تحویل بسته */
 .earth-target-pin-wrap {
   position: absolute;
   left: 53.34%;
@@ -563,15 +639,15 @@ body[data-phase="arrived"] #droneDeliverySection {
   display: flex;
   flex-direction: column;
   align-items: center;
-  pointer-events: auto;
+  pointer-events: none;
   opacity: 0;
-  animation: earthPinLand 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.6s forwards;
+  animation: earthPinLand 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s forwards;
 }
 
 @keyframes earthPinLand {
   0% {
     opacity: 0;
-    transform: translate(-50%, -240%) scale(0.3);
+    transform: translate(-50%, -220%) scale(0.3);
   }
   60% {
     opacity: 1;
@@ -583,24 +659,54 @@ body[data-phase="arrived"] #droneDeliverySection {
   }
 }
 
+.earth-target-crosshair {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  width: 48px;
+  height: 48px;
+  border: 1.5px dashed rgba(0, 240, 255, 0.7);
+  border-radius: 50%;
+  animation: targetRotate 10s linear infinite;
+}
+
+@keyframes targetRotate {
+  from { transform: translate(-50%, 50%) rotate(0deg); }
+  to { transform: translate(-50%, 50%) rotate(360deg); }
+}
+
 .earth-pin-marker {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 6px 12px rgba(239, 68, 68, 0.6));
+  position: relative;
+  filter: drop-shadow(0 4px 10px rgba(239, 68, 68, 0.8));
   animation: pinBounceSubtle 2.4s ease-in-out infinite;
 }
 
 .pin-svg-icon {
-  font-size: 38px;
+  font-size: 32px;
   line-height: 1;
+}
+
+.pin-glow-dot {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00ff66;
+  box-shadow: 0 0 10px #00ff66, 0 0 18px #00ff66;
 }
 
 @keyframes pinBounceSubtle {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  50% { transform: translateY(-5px); }
 }
 
 .earth-pin-radar-ring {
@@ -608,11 +714,11 @@ body[data-phase="arrived"] #droneDeliverySection {
   bottom: 0;
   left: 50%;
   transform: translate(-50%, 50%);
-  width: 50px;
-  height: 50px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   border: 2px solid #ef4444;
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.15);
   animation: pinRadarPulse 2s ease-out infinite;
 }
 
@@ -622,38 +728,49 @@ body[data-phase="arrived"] #droneDeliverySection {
     opacity: 1;
   }
   100% {
-    transform: translate(-50%, 50%) scale(2.4);
+    transform: translate(-50%, 50%) scale(2.5);
     opacity: 0;
   }
 }
 
-/* کارت شیک آدرس جلسه اینجاست */
+/* کارت شیک محل تحویل بسته (داک‌شده در پایین کادر جهت دید کامل کوچه‌ها) */
 .earth-address-card {
   position: absolute;
-  bottom: 52px;
-  white-space: nowrap;
-  background: rgba(8, 16, 24, 0.94);
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 28;
+  max-width: min(580px, 94%);
+  width: max-content;
+  background: rgba(6, 14, 22, 0.92);
   border: 1.5px solid #00f0ff;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85), 0 0 25px rgba(0, 240, 255, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 25px rgba(0, 240, 255, 0.35);
   border-radius: 12px;
-  padding: 8px 14px;
+  padding: 8px 16px;
   text-align: right;
   direction: rtl;
-  backdrop-filter: blur(10px);
-  animation: cardFadeUp 0.6s ease-out 1s both;
+  backdrop-filter: blur(12px);
+  animation: cardDockSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  pointer-events: auto;
 }
 
-@keyframes cardFadeUp {
-  from { opacity: 0; transform: translateY(8px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+@keyframes cardDockSlideUp {
+  from { opacity: 0; transform: translate(-50%, 20px) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
 }
 
 .addr-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 12px;
+  margin-bottom: 2px;
+}
+
+.addr-badge-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .addr-badge {
@@ -661,7 +778,7 @@ body[data-phase="arrived"] #droneDeliverySection {
   font-weight: 800;
   color: #00f0ff;
   letter-spacing: 0.3px;
-  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.7);
 }
 
 .addr-live-dot {
@@ -673,26 +790,27 @@ body[data-phase="arrived"] #droneDeliverySection {
   animation: flirRecBlink 1s infinite;
 }
 
+.addr-coords-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #94a3b8;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
 .addr-main {
   font-size: 14px;
   font-weight: 800;
   color: #ffffff;
   margin-bottom: 2px;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
 }
 
 .addr-details {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-bottom: 4px;
-}
-
-.addr-coords {
-  font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
   color: #38bdf8;
-  letter-spacing: 0.5px;
-  direction: ltr;
-  text-align: left;
 }
 
 /* پرتو نورافکن حجمی متحرک و اتمسفر شب */
@@ -717,9 +835,9 @@ body[data-phase="arrived"] #droneDeliverySection {
   inset: 0;
   pointer-events: none;
   z-index: 15;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
-  background-size: 100% 4px;
-  opacity: 0.55;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+  background-size: 100% 3px;
+  opacity: 0.15;
 }
 
 .flir-noise-overlay {

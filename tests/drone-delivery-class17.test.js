@@ -39,8 +39,9 @@ test('Exclusive Military FLIR Recon Drone Rooftop Airdrop Delivery for Class 17 
     assert.ok(orderStatusHtml.includes('id="arrivedSub"'), 'Must have arrivedSub element');
   });
 
-  await t.test('2. CSS has high-tech military FLIR night-vision HUD & Earth-to-street zoom animations', () => {
+  await t.test('2. CSS has high-tech military FLIR night-vision HUD, zero-scroll 100vh layout & Earth-to-street zoom animations', () => {
     assert.ok(deliveryCss.includes('body.is-drone-mode'), 'Must have body.is-drone-mode styling');
+    assert.ok(deliveryCss.includes('overflow: hidden !important'), 'Must enforce overflow hidden to prevent scrolling');
     assert.ok(deliveryCss.includes('flir-screen-frame'), 'Must have flir-screen-frame styling');
     assert.ok(deliveryCss.includes('flir-scanlines'), 'Must have flir-scanlines styling');
     assert.ok(deliveryCss.includes('flir-aerial-world'), 'Must have flir-aerial-world styling');
@@ -54,23 +55,25 @@ test('Exclusive Military FLIR Recon Drone Rooftop Airdrop Delivery for Class 17 
     assert.ok(deliveryCss.includes('flir-center-crosshair'), 'Must have flir-center-crosshair styling');
   });
 
-  await t.test('3. Exact Persian status progression strings, coordinates and address during 30s countdown', () => {
+  await t.test('3. Exact Persian status progression strings, coordinates and package delivery location during 30s countdown', () => {
+    // Continuous zoom engine
+    assert.ok(deliveryJs.includes('renderContinuousReconZoom'), 'Must have continuous 60fps reconnaissance zoom renderer');
     // Stage 1: Deep space Earth orbit
-    assert.ok(deliveryJs.includes('رهگیری ماهواره‌ای مختصات هدف // شناسایی موقعیت جلسه'), 'Stage 1 label must be present');
+    assert.ok(deliveryJs.includes('رهگیری ماهواره‌ای مختصات هدف // شناسایی محل تحویل بسته'), 'Stage 1 label must be present');
     // Stage 2: Atmospheric descent over Mashhad
     assert.ok(deliveryJs.includes('تقرب مداری به حریم هوایی مشهد // کاهش ارتفاع عملیاتی'), 'Stage 2 label must be present');
     // Stage 3: Kaveh blvd reconnaissance
     assert.ok(deliveryJs.includes('تثبیت ماهواره‌ای روی منطقه ۹ و رضاشهر // تقرب به بلوار کاوه'), 'Stage 3 label must be present');
-    // Stage 4: Meeting street pinpoint lock
-    assert.ok(deliveryJs.includes('موقعیت مکانی جلسه با موفقیت تثبیت شد'), 'Stage 4 label must be present');
+    // Stage 4: Package delivery location pinpoint lock
+    assert.ok(deliveryJs.includes('موقعیت مکانی محل تحویل بسته با موفقیت تثبیت شد'), 'Stage 4 label must be present');
     // Exact GPS coordinates
     assert.ok(deliveryJs.includes('36.2843'), 'Latitude 36.2843 must be present');
     assert.ok(deliveryJs.includes('59.5448'), 'Longitude 59.5448 must be present');
     // Street address
     assert.ok(deliveryJs.includes('کوچه شهید کاوه ۱۳ (رودکی ۲۰)'), 'Exact alley address must be present');
     // Arrived
-    assert.ok(deliveryJs.includes('سفارش در موقعیت جلسه تحویل داده شد!'), 'Arrival title must announce location delivery');
-    assert.ok(deliveryJs.includes('مختصات جلسه (کوچه شهید کاوه ۱۳ مشهد) تثبیت و سفارش با موفقیت تحویل گردید.'), 'Arrival subtitle must confirm street coordinates');
+    assert.ok(deliveryJs.includes('سفارش در محل تحویل تحویل داده شد!'), 'Arrival title must announce package location delivery');
+    assert.ok(deliveryJs.includes('مختصات محل تحویل بسته (کوچه شهید کاوه ۱۳ مشهد) تثبیت و سفارش با موفقیت تحویل گردید.'), 'Arrival subtitle must confirm package location');
   });
 
   await t.test('4. Exclusive isolation: Class 17 detection criteria vs standard class isolation', () => {
@@ -118,9 +121,9 @@ test('Exclusive Military FLIR Recon Drone Rooftop Airdrop Delivery for Class 17 
   await t.test('5. Server store routes reflect drone delivery status for Class 17 during admin live updates', () => {
     assert.ok(storeJs.includes('isDroneClass'), 'store.js must identify isDroneClass');
     assert.ok(storeJs.includes('590019'), 'store.js must check 590019');
-    assert.ok(storeJs.includes('رهگیری ماهواره‌ای مختصات هدف // شناسایی موقعیت جلسه'), 'store.js must emit Stage 1 satellite label');
+    assert.ok(storeJs.includes('رهگیری ماهواره‌ای مختصات هدف // شناسایی محل تحویل بسته'), 'store.js must emit Stage 1 satellite label');
     assert.ok(storeJs.includes('تقرب مداری به حریم هوایی مشهد // کاهش ارتفاع عملیاتی'), 'store.js must emit Stage 2 satellite label');
     assert.ok(storeJs.includes('تثبیت ماهواره‌ای روی منطقه ۹ و رضاشهر // تقرب به بلوار کاوه'), 'store.js must emit Stage 3 satellite label');
-    assert.ok(storeJs.includes('موقعیت مکانی جلسه با موفقیت تثبیت شد: کوچه شهید کاوه ۱۳ مشهد'), 'store.js must emit Stage 4 satellite label');
+    assert.ok(storeJs.includes('موقعیت مکانی محل تحویل بسته با موفقیت تثبیت شد: کوچه شهید کاوه ۱۳ مشهد'), 'store.js must emit Stage 4 satellite label');
   });
 });

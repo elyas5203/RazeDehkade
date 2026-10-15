@@ -755,8 +755,8 @@
       const arrTitle = document.getElementById('arrivedTitle');
       const arrSub = document.getElementById('arrivedSub');
       const pkgIcon = document.getElementById('packageIconWrap');
-      if (arrTitle) arrTitle.textContent = 'سفارش در موقعیت جلسه تحویل داده شد!';
-      if (arrSub) arrSub.textContent = 'مختصات جلسه (کوچه شهید کاوه ۱۳ مشهد) تثبیت و سفارش با موفقیت تحویل گردید.';
+      if (arrTitle) arrTitle.textContent = 'سفارش در محل تحویل تحویل داده شد!';
+      if (arrSub) arrSub.textContent = 'مختصات محل تحویل بسته (کوچه شهید کاوه ۱۳ مشهد) تثبیت و سفارش با موفقیت تحویل گردید.';
       if (pkgIcon) pkgIcon.innerHTML = '📍';
     }
 
@@ -765,6 +765,69 @@
       triggerCyberTransformation();
     }, 1500);
   };
+
+  // موتور رندر پیوسته و بدون پله زوم ماهواره‌ای (Continuous 60FPS Satellite Recon Zoom Engine)
+  function renderContinuousReconZoom(ratio) {
+    const s1 = document.getElementById('slideTakeoff');
+    const s2 = document.getElementById('slideTransit');
+    const s3 = document.getElementById('slideDrop');
+    const s4 = document.getElementById('slideLanded');
+    if (!s1 || !s2 || !s3 || !s4) return;
+
+    // لایه ۱: کره زمین در فضا (نسبت ۰.۰۰ تا ۰.۳۲)
+    if (ratio <= 0.32) {
+      const p1 = ratio / 0.32;
+      const scale1 = 1.0 + p1 * 1.55; // 1.0 -> 2.55
+      s1.style.transform = `scale(${scale1.toFixed(3)})`;
+      const op1 = ratio < 0.20 ? 1 : Math.max(0, 1 - (ratio - 0.20) / 0.12);
+      s1.style.opacity = op1.toFixed(2);
+    } else {
+      s1.style.opacity = '0';
+    }
+
+    // لایه ۲: افق منطقه‌ای مشهد (نسبت ۰.۱۸ تا ۰.۶۶)
+    if (ratio >= 0.16 && ratio <= 0.67) {
+      const p2 = (ratio - 0.16) / (0.67 - 0.16);
+      const scale2 = 0.92 + p2 * 1.78; // 0.92 -> 2.70
+      s2.style.transform = `scale(${scale2.toFixed(3)})`;
+      let op2 = 1;
+      if (ratio < 0.28) {
+        op2 = (ratio - 0.16) / 0.12;
+      } else if (ratio > 0.52) {
+        op2 = Math.max(0, 1 - (ratio - 0.52) / 0.15);
+      }
+      s2.style.opacity = Math.max(0, Math.min(1, op2)).toFixed(2);
+    } else {
+      s2.style.opacity = '0';
+    }
+
+    // لایه ۳: بافت ماهواره‌ای رضاشهر و بلوار کاوه (نسبت ۰.۴۸ تا ۰.۸۶)
+    if (ratio >= 0.46 && ratio <= 0.88) {
+      const p3 = (ratio - 0.46) / (0.88 - 0.46);
+      const scale3 = 0.94 + p3 * 1.40; // 0.94 -> 2.34
+      s3.style.transform = `scale(${scale3.toFixed(3)})`;
+      let op3 = 1;
+      if (ratio < 0.58) {
+        op3 = (ratio - 0.46) / 0.12;
+      } else if (ratio > 0.74) {
+        op3 = Math.max(0, 1 - (ratio - 0.74) / 0.14);
+      }
+      s3.style.opacity = Math.max(0, Math.min(1, op3)).toFixed(2);
+    } else {
+      s3.style.opacity = '0';
+    }
+
+    // لایه ۴: نقشه خیابانی شفاف با نام دقیق کوچه‌ها (نسبت ۰.۷۰ تا ۱.۰۰)
+    if (ratio >= 0.68) {
+      const p4 = Math.min(1, (ratio - 0.68) / 0.32);
+      const scale4 = 0.84 + p4 * 0.24; // 0.84 -> 1.08
+      s4.style.transform = `scale(${scale4.toFixed(3)})`;
+      const op4 = Math.min(1, (ratio - 0.68) / 0.12);
+      s4.style.opacity = op4.toFixed(2);
+    } else {
+      s4.style.opacity = '0';
+    }
+  }
 
   function update() {
     if (isArrived) return;
@@ -788,6 +851,7 @@
       const droneSection = document.getElementById('droneDeliverySection');
       const droneStatusTitle = document.getElementById('droneStatusTitle');
       const droneMissionNote = document.getElementById('droneMissionNote');
+      const droneHeaderTimer = document.getElementById('droneTimerSec');
       const droneAltVal = document.getElementById('droneAltVal');
       const droneSpeedVal = document.getElementById('droneSpeedVal');
       const flirZoomVal = document.getElementById('flirZoomVal');
@@ -796,6 +860,10 @@
       const flirActuatorVal = document.getElementById('flirActuatorVal');
       const flirClockDisplay = document.getElementById('flirClockDisplay');
       const reticleLockStatus = document.getElementById('reticleLockStatus');
+
+      if (droneHeaderTimer) {
+        droneHeaderTimer.textContent = numberFormat.format(seconds);
+      }
 
       if (flirClockDisplay) {
         const d = new Date();
@@ -808,6 +876,8 @@
 
       if (droneSection) {
         const ratio = Math.min(1, Math.max(0, elapsed / TOTAL_DURATION_MS));
+        renderContinuousReconZoom(ratio);
+
         let newStage = 'takeoff';
         if (ratio < 0.25) {
           newStage = 'takeoff'; // فاز ۱: مدار فضایی زمین
@@ -826,13 +896,13 @@
 
           if (newStage === 'takeoff') {
             activateDroneSlide('slideTakeoff');
-            if (droneStatusTitle) droneStatusTitle.textContent = 'رهگیری ماهواره‌ای مختصات هدف // شناسایی موقعیت جلسه';
-            if (droneMissionNote) droneMissionNote.textContent = 'ماهواره شناسایی در مدار زمین فعال شد // آغاز تقرب اپتیکال به مختصات جغرافیایی ۳۶.۲۸۴۳ , ۵۹.۵۴۴۸';
+            if (droneStatusTitle) droneStatusTitle.textContent = 'رهگیری ماهواره‌ای مختصات هدف // شناسایی محل تحویل بسته';
+            if (droneMissionNote) droneMissionNote.textContent = 'ماهواره شناسایی در مدار زمین فعال شد // آغاز تقرب اپتیکال به مختصات محل تحویل بسته (۳۶.۲۸۴۳ , ۵۹.۵۴۴۸)';
             if (flirZoomVal) flirZoomVal.textContent = '1.0X GLOBE';
             if (flirFovVal) flirFovVal.textContent = '120° ORBIT';
             if (flirActuatorVal) flirActuatorVal.textContent = 'GPS: 36.2843N 59.5448E';
             if (reticleLockStatus) reticleLockStatus.textContent = 'ACQUIRING MASHHAD...';
-            notifyLifecyclePhase('satellite_orbital', '🛰️ رهگیری ماهواره‌ای // شناسایی موقعیت جلسه', seconds);
+            notifyLifecyclePhase('satellite_orbital', '🛰️ رهگیری ماهواره‌ای // شناسایی محل تحویل بسته', seconds);
           } else if (newStage === 'transit') {
             activateDroneSlide('slideTransit');
             if (droneStatusTitle) droneStatusTitle.textContent = 'تقرب مداری به حریم هوایی مشهد // کاهش ارتفاع عملیاتی';
@@ -845,7 +915,7 @@
           } else if (newStage === 'kaveh') {
             activateDroneSlide('slideDrop');
             if (droneStatusTitle) droneStatusTitle.textContent = 'تثبیت ماهواره‌ای روی منطقه ۹ و رضاشهر // تقرب به بلوار کاوه';
-            if (droneMissionNote) droneMissionNote.textContent = 'تفکیک معابر و خیابان‌های فرعی در محور بلوار شهید کاوه و رودکی // آماده‌سازی تثبیت نقطه جلسه.';
+            if (droneMissionNote) droneMissionNote.textContent = 'تفکیک معابر و خیابان‌های فرعی در محور بلوار شهید کاوه و رودکی // آماده‌سازی تثبیت محل تحویل بسته.';
             if (flirZoomVal) flirZoomVal.textContent = '45X TACTICAL';
             if (flirFovVal) flirFovVal.textContent = '18° STREET';
             if (flirActuatorVal) flirActuatorVal.textContent = 'SECTOR: KAVEH BLVD';
@@ -853,13 +923,13 @@
             notifyLifecyclePhase('satellite_kaveh', '🛰️ بلوار کاوه // تقرب به کوچه ۱۳', seconds);
           } else if (newStage === 'airdrop') {
             activateDroneSlide('slideLanded');
-            if (droneStatusTitle) droneStatusTitle.textContent = 'موقعیت مکانی جلسه با موفقیت تثبیت شد';
-            if (droneMissionNote) droneMissionNote.textContent = '📍 آدرس جلسه اینجاست: مشهد، بلوار شهید کاوه، کوچه شهید کاوه ۱۳ (رودکی ۲۰) // تحویل در این نقطه انجام شد.';
+            if (droneStatusTitle) droneStatusTitle.textContent = 'موقعیت مکانی محل تحویل بسته با موفقیت تثبیت شد';
+            if (droneMissionNote) droneMissionNote.textContent = '📍 محل تحویل بسته: مشهد، بلوار شهید کاوه، کوچه شهید کاوه ۱۳ (رودکی ۲۰) // تحویل در این نقطه انجام شد.';
             if (flirZoomVal) flirZoomVal.textContent = '120X STREET';
             if (flirFovVal) flirFovVal.textContent = '05° KAVEH 13';
             if (flirActuatorVal) flirActuatorVal.textContent = 'CONFIRMED: ROUDAKI 20';
             if (reticleLockStatus) reticleLockStatus.textContent = 'TARGET LOCKED [100%]';
-            notifyLifecyclePhase('satellite_locked', '📍 آدرس جلسه اینجاست // کاوه ۱۳ مشهد', seconds);
+            notifyLifecyclePhase('satellite_locked', '📍 محل تحویل بسته // کوچه شهید کاوه ۱۳ (رودکی ۲۰)', seconds);
           }
         }
 
@@ -941,6 +1011,16 @@
       if (courierStepLabel) courierStepLabel.textContent = 'پایش هوایی و تحویل با ریزپرنده';
       const timerSubtitle = document.getElementById('timerSubtitle');
       if (timerSubtitle) timerSubtitle.textContent = 'ثانیه تا رهایش محموله روی پشت‌بوم';
+
+      function smoothReconRaf() {
+        if (!isArrived) {
+          const el = Date.now() - startedAt;
+          const r = Math.min(1, Math.max(0, el / TOTAL_DURATION_MS));
+          renderContinuousReconZoom(r);
+          requestAnimationFrame(smoothReconRaf);
+        }
+      }
+      requestAnimationFrame(smoothReconRaf);
     }
 
     update();

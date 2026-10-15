@@ -68,9 +68,10 @@
           <div class="flir-status-header">
             <div class="flir-status-indicator">
               <span class="flir-rec-dot"></span>
-              <span class="flir-rec-text">ORBITAL RECON SATELLITE // OPTICS-714</span>
+              <span class="flir-rec-text">OPTICS-714 // RECON</span>
+              <span class="flir-timer-badge" id="droneHeaderTimer">⏱️ <b id="droneTimerSec">۳۰</b> ثانیه</span>
             </div>
-            <div class="flir-mission-badge" id="droneStatusTitle">رهگیری ماهواره‌ای مختصات هدف // شناسایی موقعیت جلسه</div>
+            <div class="flir-mission-badge" id="droneStatusTitle">رهگیری ماهواره‌ای مختصات هدف // شناسایی محل تحویل بسته</div>
             <div class="flir-optics-tag">GPS: 36.2843°N, 59.5448°E</div>
           </div>
 
@@ -84,7 +85,7 @@
             <!-- نمای هوایی متحرک زاویه بالا از فضا تا کوچه کاوه ۱۳ مشهد -->
             <div class="flir-aerial-world" id="flirAerialWorld">
               
-              <!-- اسلایدهای ۴ فاز زوم پیوسته از اعماق فضا تا کوچه جلسه -->
+              <!-- اسلایدهای ۴ فاز زوم پیوسته از اعماق فضا تا کوچه محل تحویل بسته -->
               <div class="drone-cinema-slides" id="droneCinemaSlides">
                 <!-- فاز ۱: کره زمین در اعماق فضا -->
                 <div class="drone-cinema-slide slide-takeoff active" id="slideTakeoff" style="background-image: url('/assets/map/earth-orbital-space.jpg');"></div>
@@ -97,21 +98,26 @@
                   <!-- پین هدف و پالس تپنده دقیق در کوچه شهید کاوه ۱۳ -->
                   <div class="earth-target-pin-wrap" id="earthTargetPinWrap">
                     <div class="earth-pin-radar-ring"></div>
+                    <div class="earth-target-crosshair"></div>
                     <div class="earth-pin-marker">
                       <span class="pin-svg-icon">📍</span>
-                    </div>
-                    <!-- کارت شیشه‌ای مشخصات آدرس جلسه -->
-                    <div class="earth-address-card" id="earthAddressCard">
-                      <div class="addr-header">
-                        <span class="addr-badge">📍 آدرس جلسه اینجاست</span>
-                        <span class="addr-live-dot"></span>
-                      </div>
-                      <div class="addr-main">کوچه شهید کاوه ۱۳ - رودکی ۲۰ مشهد</div>
-                      <div class="addr-details">بلوار شهید کاوه، شهید کاوه ۱۳</div>
-                      <div class="addr-coords">مختصات: ۳۶.۲۸۴۳° N , ۵۹.۵۴۴۸° E</div>
+                      <span class="pin-glow-dot"></span>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <!-- کارت شیشه‌ای مشخصات محل تحویل بسته (داک‌شده در پایین کادر جهت دید کامل کوچه‌ها) -->
+              <div class="earth-address-card docked-bottom" id="earthAddressCard">
+                <div class="addr-header">
+                  <div class="addr-badge-wrap">
+                    <span class="addr-live-dot"></span>
+                    <span class="addr-badge">📍 محل تحویل بسته</span>
+                  </div>
+                  <span class="addr-coords-tag">۳۶.۲۸۴۳°N, ۵۹.۵۴۴۸°E</span>
+                </div>
+                <div class="addr-main">مشهد، بلوار شهید کاوه، کوچه شهید کاوه ۱۳ (رودکی ۲۰)</div>
+                <div class="addr-details">تثبیت ماهواره‌ای موقعیت مکانی تحویل سفارش با موفقیت انجام شد</div>
               </div>
 
               <!-- لایه انیمیشن جوی و پرتو نورافکن -->
@@ -220,9 +226,9 @@
 
           </div>
 
-          <!-- پیام توصیفی وضعیت عملیات میدانی ریزپرنده -->
+          <!-- پیام توصیفی وضعیت عملیات میدانی رصد ماهواره‌ای -->
           <p class="flir-mission-note" id="droneMissionNote">
-            ریزپرنده شناسایی از آشیانه برخاسته و با قفل اپتیکال روی مختصات پشت‌بوم در حال حرکت است.
+            📍 محل تحویل بسته: مشهد، بلوار شهید کاوه، کوچه شهید کاوه ۱۳ (رودکی ۲۰) // پایش و ارسال بسته به این نقطه انجام شد.
           </p>
 
         </div>
@@ -249,8 +255,8 @@
         <div class="package-icon-wrap" id="packageIconWrap" aria-hidden="true">
           📦
         </div>
-        <h2 id="arrivedTitle">سفارش شما تحویل داده شد!</h2>
-        <p class="delivery-success-sub" id="arrivedSub">بسته با موفقیت درب منزل تحویل داده شد.</p>
+        <h2 id="arrivedTitle">سفارش در محل تحویل تحویل داده شد!</h2>
+        <p class="delivery-success-sub" id="arrivedSub">مختصات محل تحویل بسته (کوچه شهید کاوه ۱۳ مشهد) تثبیت و سفارش تحویل گردید.</p>
       </section>
 
     </div>
