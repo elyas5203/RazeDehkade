@@ -61,101 +61,136 @@
       <section class="delivery-countdown" id="countdownSection" aria-label="زمان تحویل سفارش">
         <span class="delivery-label" id="deliveryStatusLabel">پیک اختصاصی در مسیر تحویل است…</span>
         
-        <!-- بخش تحویل تاکتیکال با ریزپرنده (مخصوص کلاس زارع و احمدی) -->
-        <div class="drone-delivery-section" id="droneDeliverySection" style="display: none;" aria-label="تحویل با ریزپرنده">
-          <div class="drone-status-badge-wrap">
-            <div class="drone-pulse-radar-dot"></div>
-            <span class="drone-status-title" id="droneStatusTitle">بسته با ریزپرنده ارسال شد</span>
-            <span class="drone-callsign-tag">UAV-714 // RECON</span>
+        <!-- بخش مانیتور زنده دوربین حرارتی و دید در شب ریزپرنده (مخصوص کلاس زارع و احمدی) -->
+        <div class="flir-drone-monitor" id="droneDeliverySection" style="display: none;" aria-label="پایش زنده دوربین دید در شب ریزپرنده">
+          
+          <!-- نوار وضعیت تاکتیکال و عنوان مأموریت -->
+          <div class="flir-status-header">
+            <div class="flir-status-indicator">
+              <span class="flir-rec-dot"></span>
+              <span class="flir-rec-text">LIVE FLIR OPTICS // FEED-714</span>
+            </div>
+            <div class="flir-mission-badge" id="droneStatusTitle">بسته با ریزپرنده ارسال شد</div>
+            <div class="flir-optics-tag">SIGINT-UAV</div>
           </div>
 
-          <div class="drone-air-theater" id="droneAirTheater">
-            <div class="drone-sky-backdrop">
-              <div class="drone-stars-layer"></div>
-              <div class="drone-clouds-layer"></div>
-              <div class="drone-moon"></div>
-            </div>
+          <!-- نمایشگر دید هوایی اپتیکال پهپاد شناسایی (Military FLIR Recon Camera Screen) -->
+          <div class="flir-screen-frame" id="flirScreenFrame">
+            <!-- خطوط اسکن، نویز سنسور و تیرگی حاشیه عدسی لنز -->
+            <div class="flir-scanlines"></div>
+            <div class="flir-noise-overlay"></div>
+            <div class="flir-vignette-lens"></div>
 
-            <div class="drone-city-skyline"></div>
-
-            <div class="rooftop-structure">
-              <div class="rooftop-surface">
-                <div class="rooftop-helipad-target" id="rooftopTarget">
-                  <div class="target-radar-ring"></div>
-                  <div class="target-crosshair-icon">⌖</div>
-                  <span class="target-label">DROP ZONE</span>
-                </div>
-                <div class="roof-water-tank"></div>
-                <div class="roof-antenna">
-                  <span class="antenna-beacon"></span>
-                </div>
-                <div class="roof-vent-chiller"></div>
-              </div>
-            </div>
-
-            <div class="tactical-uav-drone" id="tacticalUavDrone">
-              <div class="uav-searchlight-beam" id="uavSearchlight"></div>
+            <!-- نمای هوایی متحرک زاویه بالا از فراز شهر و ساختمان‌ها -->
+            <div class="flir-aerial-world" id="flirAerialWorld">
               
-              <div class="uav-fuselage">
-                <svg viewBox="0 0 140 70" class="uav-svg-body">
-                  <path d="M25 40 L55 35 L85 35 L115 40" stroke="#00f0ff" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.8"/>
-                  <path d="M30 25 L55 35 L85 35 L110 25" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.8"/>
-                  <polygon points="50,30 90,30 98,38 90,46 50,46 42,38" fill="#111827" stroke="#38bdf8" stroke-width="1.8"/>
-                  <circle cx="70" cy="46" r="5" fill="#00ff66" stroke="#000" stroke-width="1"/>
-                  <circle cx="70" cy="46" r="2.2" fill="#ffffff"/>
-                  <path d="M48 46 L45 56 L62 56" stroke="#64748b" stroke-width="2" fill="none"/>
-                  <path d="M92 46 L95 56 L78 56" stroke="#64748b" stroke-width="2" fill="none"/>
-                </svg>
-
-                <div class="uav-rotor rotor-tl"><div class="blade-blur"></div><div class="rotor-hub"></div></div>
-                <div class="uav-rotor rotor-tr"><div class="blade-blur"></div><div class="rotor-hub"></div></div>
-                <div class="uav-rotor rotor-bl"><div class="blade-blur"></div><div class="rotor-hub"></div></div>
-                <div class="uav-rotor rotor-br"><div class="blade-blur"></div><div class="rotor-hub"></div></div>
-
-                <span class="nav-light nav-green"></span>
-                <span class="nav-light nav-red"></span>
-                <span class="nav-strobe nav-white"></span>
+              <!-- بافت شهر و خطوط ساختمان‌ها در شب با دید حرارتی/مادون قرمز -->
+              <div class="flir-city-grid">
+                <div class="flir-building b-1"></div>
+                <div class="flir-building b-2"></div>
+                <div class="flir-building b-3"></div>
+                <div class="flir-building b-4"></div>
+                <div class="flir-road-traffic">
+                  <span class="traffic-glow t-1"></span>
+                  <span class="traffic-glow t-2"></span>
+                </div>
               </div>
 
-              <div class="airdrop-cargo-package" id="airdropCargoPackage">
-                <div class="cargo-chute-canopy" id="cargoChuteCanopy">
-                  <div class="chute-dome"></div>
-                  <div class="chute-lines">
-                    <span class="chute-line l1"></span>
-                    <span class="chute-line l2"></span>
-                    <span class="chute-line l3"></span>
-                    <span class="chute-line l4"></span>
-                  </div>
+              <!-- ساختمان و پشت‌بوم مقصد (Target Rooftop) با جزییات حرارتی -->
+              <div class="flir-target-rooftop" id="flirTargetRooftop">
+                <div class="roof-perimeter-wall"></div>
+                <div class="roof-vent-chillers">
+                  <span class="vent-rotor r-1"></span>
+                  <span class="vent-rotor r-2"></span>
                 </div>
-                <div class="cargo-box-body">
-                  <span class="cargo-hazard-strap"></span>
-                  <span class="cargo-symbol">📦</span>
+                <div class="roof-elevator-penthouse"></div>
+                <div class="roof-water-reservoir"></div>
+                
+                <!-- پد لیزری هدف‌گیری روی پشت‌بوم -->
+                <div class="flir-drop-zone-reticle" id="rooftopTarget">
+                  <div class="reticle-box"></div>
+                  <span class="reticle-coords">TGT: 35.6892N 51.3890E</span>
+                  <span class="reticle-lock-status" id="reticleLockStatus">ACQUIRING...</span>
                 </div>
+
+                <!-- بسته تاکتیکال پرتاب‌شده روی پشت‌بوم -->
+                <div class="flir-payload-package" id="airdropCargoPackage">
+                  <div class="payload-ir-beacon"></div>
+                  <div class="payload-box-body"></div>
+                  <div class="payload-chute-deploy" id="cargoChuteCanopy"></div>
+                </div>
+
+                <!-- حلقه امواج ضربه فرود بسته روی پشت‌بوم -->
+                <div class="flir-impact-wave" id="flirImpactWave"></div>
               </div>
 
             </div>
 
-            <div class="theater-hud-overlay">
-              <span class="hud-corner c-tl"></span>
-              <span class="hud-corner c-tr"></span>
-              <span class="hud-corner c-bl"></span>
-              <span class="hud-corner c-br"></span>
-              <div class="theater-telemetry-top">
-                <span class="uav-mode-pill">NAV: GPS-AUTO</span>
-                <span class="uav-coords-mono">35°41'N 51°25'E</span>
+            <!-- کراس‌هیر و گرافیک‌های HUD هدف‌گیری پهپاد نظامی -->
+            <div class="flir-hud-overlay">
+              
+              <!-- گوشه‌های کادر اپتیکال -->
+              <span class="flir-bracket br-tl"></span>
+              <span class="flir-bracket br-tr"></span>
+              <span class="flir-bracket br-bl"></span>
+              <span class="flir-bracket br-br"></span>
+
+              <!-- نوار زاویه سمَت (Heading Azimuth Tape) بالا -->
+              <div class="flir-heading-tape">
+                <span class="tape-deg">030</span>
+                <span class="tape-deg">035</span>
+                <span class="tape-deg active">042°</span>
+                <span class="tape-deg">050</span>
+                <span class="tape-deg">055</span>
               </div>
-              <div class="theater-telemetry-bottom">
-                <span id="droneAltVal">ALT: 45m</span>
-                <span id="droneSpeedVal">SPD: 54 km/h</span>
-                <span id="droneBattVal">BAT: 92%</span>
+
+              <!-- نشانه‌گیر مرکزی (Center Reticle & Pitch Ladder) -->
+              <div class="flir-center-crosshair">
+                <div class="cross-line h-left"></div>
+                <div class="cross-line h-right"></div>
+                <div class="cross-line v-top"></div>
+                <div class="cross-line v-bottom"></div>
+                <div class="cross-mil-dots"></div>
+                <!-- جعبه دینامیک قفل هدف -->
+                <div class="flir-tracking-box" id="flirTrackingBox">
+                  <span class="track-tag">AUTO-TRACK</span>
+                </div>
               </div>
+
+              <!-- متادیتای نظامی و تلمتری در چهار گوشه تصویر -->
+              <div class="flir-hud-meta top-left">
+                <div>SENSOR: <b>FLIR-MWIR 3-5μm</b></div>
+                <div>FOV: <b id="flirFovVal">45.0° WIDE</b></div>
+                <div>ZOOM: <b id="flirZoomVal">1.0X</b></div>
+              </div>
+
+              <div class="flir-hud-meta top-right">
+                <div>PITCH: <b id="flirPitchVal">-32.4°</b></div>
+                <div>ROLL: <b>+00.8°</b></div>
+                <div>BAT: <b>94% [OK]</b></div>
+              </div>
+
+              <div class="flir-hud-meta bottom-left">
+                <div>RANGE: <b id="droneAltVal">LRF: 245m</b></div>
+                <div>SPEED: <b id="droneSpeedVal">GS: 35 km/h</b></div>
+                <div>ACTUATOR: <b id="flirActuatorVal">STANDBY</b></div>
+              </div>
+
+              <div class="flir-hud-meta bottom-right">
+                <div id="flirClockDisplay">09:30:14.2 UTC</div>
+                <div>LINK: <b>AES-256 [SECURE]</b></div>
+                <div style="color: #00ff66;">TARGET: <b>LOCKED</b></div>
+              </div>
+
             </div>
 
           </div>
 
-          <p class="drone-mission-note" id="droneMissionNote">
-            ریزپرنده تاکتیکال از آشیانه برخاسته و با قفل روی مختصات هدف در حال اوج‌گیری است.
+          <!-- پیام توصیفی وضعیت عملیات میدانی ریزپرنده -->
+          <p class="flir-mission-note" id="droneMissionNote">
+            ریزپرنده شناسایی از آشیانه برخاسته و با قفل اپتیکال روی مختصات پشت‌بوم در حال حرکت است.
           </p>
+
         </div>
 
         <div class="delivery-dial" id="standardDial">

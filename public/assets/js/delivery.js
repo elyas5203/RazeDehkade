@@ -722,13 +722,28 @@
       }
     }
 
-    // هدایت فازها، تیترها و تلمتری اختصاصی ریزپرنده تاکتیکال کلاس ۱۷
+    // هدایت فازها، تیترها و تلمتری مانیتور دید در شب FLIR ریزپرنده (کلاس ۱۷)
     if (isDroneDelivery) {
       const droneSection = document.getElementById('droneDeliverySection');
       const droneStatusTitle = document.getElementById('droneStatusTitle');
       const droneMissionNote = document.getElementById('droneMissionNote');
       const droneAltVal = document.getElementById('droneAltVal');
       const droneSpeedVal = document.getElementById('droneSpeedVal');
+      const flirZoomVal = document.getElementById('flirZoomVal');
+      const flirFovVal = document.getElementById('flirFovVal');
+      const flirPitchVal = document.getElementById('flirPitchVal');
+      const flirActuatorVal = document.getElementById('flirActuatorVal');
+      const flirClockDisplay = document.getElementById('flirClockDisplay');
+      const reticleLockStatus = document.getElementById('reticleLockStatus');
+
+      if (flirClockDisplay) {
+        const d = new Date();
+        const hh = String(d.getUTCHours()).padStart(2, '0');
+        const mm = String(d.getUTCMinutes()).padStart(2, '0');
+        const ss = String(d.getUTCSeconds()).padStart(2, '0');
+        const ms = Math.floor(d.getUTCMilliseconds() / 100);
+        flirClockDisplay.textContent = `${hh}:${mm}:${ss}.${ms} UTC`;
+      }
 
       if (droneSection) {
         const ratio = Math.min(1, Math.max(0, elapsed / TOTAL_DURATION_MS));
@@ -748,24 +763,37 @@
 
           if (newStage === 'takeoff') {
             if (droneStatusTitle) droneStatusTitle.textContent = 'بسته با ریزپرنده ارسال شد';
-            if (droneMissionNote) droneMissionNote.textContent = 'ریزپرنده تاکتیکال از آشیانه برخاسته و با قفل روی مختصات هدف در حال اوج‌گیری است.';
+            if (droneMissionNote) droneMissionNote.textContent = 'ریزپرنده شناسایی از آشیانه برخاسته و با قفل اپتیکال روی مختصات هدف در حال اوج‌گیری است.';
+            if (flirZoomVal) flirZoomVal.textContent = '1.0X';
+            if (flirFovVal) flirFovVal.textContent = '45.0° WIDE';
+            if (flirActuatorVal) flirActuatorVal.textContent = 'LOCKED';
+            if (reticleLockStatus) reticleLockStatus.textContent = 'ACQUIRING...';
             notifyLifecyclePhase('drone_takeoff', '🛸 پرواز ریزپرنده // بسته با ریزپرنده ارسال شد', seconds);
           } else if (newStage === 'transit') {
             if (droneStatusTitle) droneStatusTitle.textContent = 'ریزپرنده در حال حرکت به سمت مقصد';
-            if (droneMissionNote) droneMissionNote.textContent = 'ریزپرنده با سرعت عملیاتی در کریدور هوایی امن به سمت پشت‌بوم ساختمان مقصد در حال حرکت است.';
+            if (droneMissionNote) droneMissionNote.textContent = 'ناوبری در کریدور هوایی امن بر فراز شهر // تقرب اپتیکال به پشت‌بوم ساختمان مقصد.';
+            if (flirZoomVal) flirZoomVal.textContent = '2.5X';
+            if (flirFovVal) flirFovVal.textContent = '22.0° MED';
+            if (flirActuatorVal) flirActuatorVal.textContent = 'ARMED / READY';
+            if (reticleLockStatus) reticleLockStatus.textContent = 'TRACKING...';
             notifyLifecyclePhase('drone_transit', '🛸 ناوبری هوایی // ریزپرنده در حال حرکت به سمت مقصد', seconds);
           } else if (newStage === 'airdrop') {
             if (droneStatusTitle) droneStatusTitle.textContent = 'ریزپرنده بسته انداخت روی پشت‌بوم';
-            if (droneMissionNote) droneMissionNote.textContent = 'ریزپرنده بالای پشت‌بوم در موقعیت پرواز درجا قرار گرفت و بسته را روی پشت‌بوم رها کرد.';
+            if (droneMissionNote) droneMissionNote.textContent = 'پرواز ایستا بالای موقعیت // رهایش هوایی بسته و فرود روی پشت‌بوم.';
+            if (flirZoomVal) flirZoomVal.textContent = '5.0X';
+            if (flirFovVal) flirFovVal.textContent = '08.0° TIGHT';
+            if (flirActuatorVal) flirActuatorVal.textContent = 'RELEASING...';
+            if (reticleLockStatus) reticleLockStatus.textContent = 'LOCKED // DROP';
             notifyLifecyclePhase('drone_airdrop', '📦 پرتاب روی پشت‌بوم // ریزپرنده بسته انداخت روی پشت‌بوم', seconds);
           }
         }
 
-        // کنترل رهایش چتر و فرود روی پد هدف در فاز ۳:
+        // کنترل رهایش بسته تاکتیکال و فرود روی پد هدف در فاز ۳:
         if (newStage === 'airdrop') {
           if (ratio >= 0.75 && !hasDroneDropped) {
             hasDroneDropped = true;
             droneSection.classList.add('is-dropping');
+            if (flirActuatorVal) flirActuatorVal.textContent = 'RELEASED // DROPPING';
           }
           if (ratio >= 0.88 && !hasDroneLanded) {
             hasDroneLanded = true;
@@ -773,28 +801,34 @@
             droneSection.classList.add('has-landed');
             if (droneStatusTitle) droneStatusTitle.textContent = 'ریزپرنده بسته انداخت روی پشت‌بوم';
             if (droneMissionNote) droneMissionNote.textContent = 'فرود بسته با موفقیت روی پشت‌بوم تأیید شد // ریزپرنده در حال بازگشت به پایگاه است.';
+            if (flirActuatorVal) flirActuatorVal.textContent = 'CONFIRMED ON ROOF';
+            if (reticleLockStatus) reticleLockStatus.textContent = 'DELIVERED [OK]';
           }
         }
 
         // تلمتری زنده بر اساس فاز
         if (newStage === 'takeoff') {
-          const alt = Math.round(15 + (ratio / 0.33) * 30);
-          const spd = Math.round(20 + (ratio / 0.33) * 25);
-          if (droneAltVal) droneAltVal.textContent = `ALT: ${alt}m`;
-          if (droneSpeedVal) droneSpeedVal.textContent = `SPD: ${spd} km/h`;
+          const lrf = Math.round(245 - (ratio / 0.33) * 125);
+          const spd = Math.round(20 + (ratio / 0.33) * 20);
+          if (droneAltVal) droneAltVal.textContent = `LRF: ${lrf}m`;
+          if (droneSpeedVal) droneSpeedVal.textContent = `GS: ${spd} km/h`;
+          if (flirPitchVal) flirPitchVal.textContent = `-28.${Math.floor(ratio * 30)}°`;
         } else if (newStage === 'transit') {
-          const alt = Math.round(45 - ((ratio - 0.33) / 0.40) * 12);
+          const lrf = Math.round(120 - ((ratio - 0.33) / 0.40) * 85);
           const spd = Math.round(52 + Math.sin(elapsed / 600) * 4);
-          if (droneAltVal) droneAltVal.textContent = `ALT: ${alt}m`;
-          if (droneSpeedVal) droneSpeedVal.textContent = `SPD: ${spd} km/h`;
+          if (droneAltVal) droneAltVal.textContent = `LRF: ${lrf}m`;
+          if (droneSpeedVal) droneSpeedVal.textContent = `GS: ${spd} km/h`;
+          if (flirPitchVal) flirPitchVal.textContent = `-34.${Math.floor(Math.sin(elapsed / 400) * 5 + 5)}°`;
         } else {
           if (hasDroneLanded) {
-            if (droneAltVal) droneAltVal.textContent = 'ALT: 0m (LANDED)';
-            if (droneSpeedVal) droneSpeedVal.textContent = 'SPD: 0 km/h';
+            if (droneAltVal) droneAltVal.textContent = 'LRF: 0m (IMPACT OK)';
+            if (droneSpeedVal) droneSpeedVal.textContent = 'GS: 0 km/h';
+            if (flirPitchVal) flirPitchVal.textContent = '-12.0° (CLIMB)';
           } else {
-            const alt = Math.max(2, Math.round(18 - ((ratio - 0.73) / 0.15) * 16));
-            if (droneAltVal) droneAltVal.textContent = `ALT: ${alt}m`;
-            if (droneSpeedVal) droneSpeedVal.textContent = `SPD: 8 km/h`;
+            const lrf = Math.max(2, Math.round(35 - ((ratio - 0.73) / 0.15) * 33));
+            if (droneAltVal) droneAltVal.textContent = `LRF: ${lrf}m`;
+            if (droneSpeedVal) droneSpeedVal.textContent = 'GS: 6 km/h';
+            if (flirPitchVal) flirPitchVal.textContent = '-38.2° (HOVER)';
           }
         }
       }
@@ -832,10 +866,10 @@
       document.body.classList.add('is-drone-mode');
       const courierStepDot = document.getElementById('courierStepDot');
       const courierStepLabel = document.getElementById('courierStepLabel');
-      if (courierStepDot) courierStepDot.textContent = '🛸';
-      if (courierStepLabel) courierStepLabel.textContent = 'ارسال با ریزپرنده';
+      if (courierStepDot) courierStepDot.textContent = '🎯';
+      if (courierStepLabel) courierStepLabel.textContent = 'پایش هوایی و تحویل با ریزپرنده';
       const timerSubtitle = document.getElementById('timerSubtitle');
-      if (timerSubtitle) timerSubtitle.textContent = 'ثانیه تا فرود روی پشت‌بوم';
+      if (timerSubtitle) timerSubtitle.textContent = 'ثانیه تا رهایش محموله روی پشت‌بوم';
     }
 
     update();

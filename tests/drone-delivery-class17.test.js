@@ -5,7 +5,7 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const path = require('node:path');
 
-test('Exclusive Micro-UAV Drone Rooftop Airdrop Delivery for Class 17 (Zare & Ahmadi)', async (t) => {
+test('Exclusive Military FLIR Recon Drone Rooftop Airdrop Delivery for Class 17 (Zare & Ahmadi)', async (t) => {
   const deliveryJsPath = path.join(__dirname, '..', 'public', 'assets', 'js', 'delivery.js');
   const deliveryCssPath = path.join(__dirname, '..', 'public', 'assets', 'css', 'delivery.css');
   const orderStatusHtmlPath = path.join(__dirname, '..', 'public', 'golha', 'order-status.html');
@@ -18,14 +18,14 @@ test('Exclusive Micro-UAV Drone Rooftop Airdrop Delivery for Class 17 (Zare & Ah
   const orderStatusAlt = fs.readFileSync(orderStatusAltPath, 'utf8');
   const storeJs = fs.readFileSync(storeJsPath, 'utf8');
 
-  await t.test('1. HTML files synchronization and Drone Rooftop Airdrop DOM elements', () => {
+  await t.test('1. HTML files synchronization and Military FLIR HUD DOM elements', () => {
     assert.strictEqual(orderStatusHtml, orderStatusAlt, 'order-status.html and order_status.html must be identical');
 
     assert.ok(orderStatusHtml.includes('id="droneDeliverySection"'), 'Must have droneDeliverySection container');
     assert.ok(orderStatusHtml.includes('id="droneStatusTitle"'), 'Must have droneStatusTitle element');
-    assert.ok(orderStatusHtml.includes('id="droneAirTheater"'), 'Must have droneAirTheater element');
-    assert.ok(orderStatusHtml.includes('id="tacticalUavDrone"'), 'Must have tacticalUavDrone element');
-    assert.ok(orderStatusHtml.includes('id="uavSearchlight"'), 'Must have uavSearchlight beam element');
+    assert.ok(orderStatusHtml.includes('id="flirScreenFrame"'), 'Must have flirScreenFrame element');
+    assert.ok(orderStatusHtml.includes('id="flirAerialWorld"'), 'Must have flirAerialWorld element');
+    assert.ok(orderStatusHtml.includes('id="flirTargetRooftop"'), 'Must have flirTargetRooftop element');
     assert.ok(orderStatusHtml.includes('id="airdropCargoPackage"'), 'Must have airdropCargoPackage element');
     assert.ok(orderStatusHtml.includes('id="cargoChuteCanopy"'), 'Must have cargoChuteCanopy element');
     assert.ok(orderStatusHtml.includes('id="rooftopTarget"'), 'Must have rooftopTarget pad element');
@@ -36,18 +36,18 @@ test('Exclusive Micro-UAV Drone Rooftop Airdrop Delivery for Class 17 (Zare & Ah
     assert.ok(orderStatusHtml.includes('id="arrivedSub"'), 'Must have arrivedSub element');
   });
 
-  await t.test('2. CSS has high-tech animations for UAV drone, rotors, searchlight, and rooftop parachute airdrop', () => {
+  await t.test('2. CSS has high-tech military FLIR night-vision HUD styling and animations', () => {
     assert.ok(deliveryCss.includes('body.is-drone-mode'), 'Must have body.is-drone-mode styling');
-    assert.ok(deliveryCss.includes('drone-air-theater'), 'Must have drone-air-theater class');
-    assert.ok(deliveryCss.includes('tactical-uav-drone'), 'Must have tactical-uav-drone class');
-    assert.ok(deliveryCss.includes('uav-searchlight-beam'), 'Must have uav-searchlight-beam class');
-    assert.ok(deliveryCss.includes('propSpin'), 'Must have propSpin keyframes for spinning rotors');
-    assert.ok(deliveryCss.includes('cargoAirdropFall'), 'Must have cargoAirdropFall keyframes for rooftop drop');
-    assert.ok(deliveryCss.includes('droneTakeoffFlight'), 'Must have droneTakeoffFlight keyframes');
-    assert.ok(deliveryCss.includes('droneTransitFlight'), 'Must have droneTransitFlight keyframes');
-    assert.ok(deliveryCss.includes('droneHoverAirdrop'), 'Must have droneHoverAirdrop keyframes');
-    assert.ok(deliveryCss.includes('rooftop-helipad-target'), 'Must have rooftop-helipad-target styling');
-    assert.ok(deliveryCss.includes('cargo-chute-canopy'), 'Must have cargo-chute-canopy styling');
+    assert.ok(deliveryCss.includes('flir-screen-frame'), 'Must have flir-screen-frame styling');
+    assert.ok(deliveryCss.includes('flir-scanlines'), 'Must have flir-scanlines styling');
+    assert.ok(deliveryCss.includes('flir-aerial-world'), 'Must have flir-aerial-world styling');
+    assert.ok(deliveryCss.includes('flir-target-rooftop'), 'Must have flir-target-rooftop styling');
+    assert.ok(deliveryCss.includes('flir-drop-zone-reticle'), 'Must have flir-drop-zone-reticle styling');
+    assert.ok(deliveryCss.includes('flir-payload-package'), 'Must have flir-payload-package styling');
+    assert.ok(deliveryCss.includes('flirPayloadDropAnim'), 'Must have flirPayloadDropAnim keyframes');
+    assert.ok(deliveryCss.includes('flirGimbalDrift'), 'Must have flirGimbalDrift keyframes');
+    assert.ok(deliveryCss.includes('flir-hud-overlay'), 'Must have flir-hud-overlay styling');
+    assert.ok(deliveryCss.includes('flir-center-crosshair'), 'Must have flir-center-crosshair styling');
   });
 
   await t.test('3. Exact Persian status progression strings during 30s countdown', () => {
