@@ -1319,6 +1319,8 @@ async function ensureLocalAudioStream() {
     console.error('عدم دسترسی به میکروفون:', err);
     return null;
   }
+}
+
 let userAudioCtx = null;
 function warmUpUserAudioContext() {
   if (userAudioCtx && userAudioCtx.state === 'running') return;

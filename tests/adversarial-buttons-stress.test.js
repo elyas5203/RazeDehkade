@@ -165,4 +165,24 @@ describe('Adversarial Red-Team Stress Tests & Button Integrity', () => {
     assert.ok(matrixContent.includes('vault-3d-trigger-btn'), 'Matrix must document vault-3d-trigger-btn');
     assert.ok(matrixContent.includes('openAssistantsPhotoPopup'), 'Matrix must document openAssistantsPhotoPopup');
   });
+
+  test('6. JavaScript Syntax Integrity: All frontend scripts must compile cleanly without syntax errors', () => {
+    const rootDir = path.join(__dirname, '..');
+    const { execSync } = require('child_process');
+    const jsFiles = [
+      'public/assets/js/user-chat.js',
+      'public/assets/js/admin-chat.js',
+      'public/assets/js/admin-dashboard.js',
+      'public/assets/js/vault-3d.js',
+      'public/assets/js/delivery.js',
+      'public/assets/js/image-magnifier.js',
+      'public/assets/js/audio-unlock.js'
+    ];
+    jsFiles.forEach(file => {
+      const fullPath = path.join(rootDir, file);
+      assert.doesNotThrow(() => {
+        execSync(`node -c "${fullPath}"`, { stdio: 'pipe' });
+      }, `File ${file} must have valid JavaScript syntax`);
+    });
+  });
 });
