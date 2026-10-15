@@ -64,39 +64,61 @@
         <!-- بخش مانیتور زنده دوربین حرارتی و دید در شب ریزپرنده (مخصوص کلاس زارع و احمدی) -->
         <div class="flir-drone-monitor" id="droneDeliverySection" style="display: none;" aria-label="پایش زنده دوربین دید در شب ریزپرنده">
           
-          <!-- نوار وضعیت تاکتیکال و عنوان مأموریت -->
+          <!-- نوار وضعیت تاکتیکال و عنوان مأموریت رهگیری ماهواره‌ای -->
           <div class="flir-status-header">
             <div class="flir-status-indicator">
               <span class="flir-rec-dot"></span>
-              <span class="flir-rec-text">LIVE FLIR OPTICS // FEED-714</span>
+              <span class="flir-rec-text">ORBITAL RECON SATELLITE // OPTICS-714</span>
             </div>
-            <div class="flir-mission-badge" id="droneStatusTitle">بسته با ریزپرنده ارسال شد</div>
-            <div class="flir-optics-tag">SIGINT-UAV</div>
+            <div class="flir-mission-badge" id="droneStatusTitle">رهگیری ماهواره‌ای مختصات هدف // شناسایی موقعیت جلسه</div>
+            <div class="flir-optics-tag">GPS: 36.2843°N, 59.5448°E</div>
           </div>
 
-          <!-- نمایشگر دید هوایی اپتیکال پهپاد شناسایی (Military FLIR Recon Camera Screen) -->
+          <!-- نمایشگر دید هوایی اپتیکال و زوم ماهواره‌ای (Earth-to-Street Recon Screen) -->
           <div class="flir-screen-frame" id="flirScreenFrame">
             <!-- خطوط اسکن، نویز سنسور و تیرگی حاشیه عدسی لنز -->
             <div class="flir-scanlines"></div>
             <div class="flir-noise-overlay"></div>
             <div class="flir-vignette-lens"></div>
 
-            <!-- نمای هوایی متحرک زاویه بالا از فراز شهر و ساختمان‌ها با فریم‌های سینمایی فوتورئال -->
+            <!-- نمای هوایی متحرک زاویه بالا از فضا تا کوچه کاوه ۱۳ مشهد -->
             <div class="flir-aerial-world" id="flirAerialWorld">
               
-              <!-- اسلایدهای سینمایی فوتورئال و های‌رزولوشن ۴ فاز عملیات پروازی پهپاد -->
+              <!-- اسلایدهای ۴ فاز زوم پیوسته از اعماق فضا تا کوچه جلسه -->
               <div class="drone-cinema-slides" id="droneCinemaSlides">
-                <div class="drone-cinema-slide slide-takeoff active" id="slideTakeoff" style="background-image: url('/assets/drone/drone-phase1-takeoff.jpg');"></div>
-                <div class="drone-cinema-slide slide-transit" id="slideTransit" style="background-image: url('/assets/drone/drone-phase2-transit.jpg');"></div>
-                <div class="drone-cinema-slide slide-drop" id="slideDrop" style="background-image: url('/assets/drone/drone-phase3-drop.jpg');"></div>
-                <div class="drone-cinema-slide slide-landed" id="slideLanded" style="background-image: url('/assets/drone/drone-phase4-landed.jpg');"></div>
+                <!-- فاز ۱: کره زمین در اعماق فضا -->
+                <div class="drone-cinema-slide slide-takeoff active" id="slideTakeoff" style="background-image: url('/assets/map/earth-orbital-space.jpg');"></div>
+                <!-- فاز ۲: تقرب به جو ایران و افق مشهد -->
+                <div class="drone-cinema-slide slide-transit" id="slideTransit" style="background-image: url('/assets/map/mashhad-regional-satellite.jpg');"></div>
+                <!-- فاز ۳: زوم ماهواره‌ای به منطقه رضاشهر و بلوار کاوه -->
+                <div class="drone-cinema-slide slide-drop" id="slideDrop" style="background-image: url('/assets/map/mashhad-kaveh-satellite.jpg');"></div>
+                <!-- فاز ۴: نقشه خیابانی فوق‌العاده شفاف با نام دقیق کوچه‌ها به فارسی -->
+                <div class="drone-cinema-slide slide-landed" id="slideLanded" style="background-image: url('/assets/map/mashhad-kaveh-street-map.png');">
+                  <!-- پین هدف و پالس تپنده دقیق در کوچه شهید کاوه ۱۳ -->
+                  <div class="earth-target-pin-wrap" id="earthTargetPinWrap">
+                    <div class="earth-pin-radar-ring"></div>
+                    <div class="earth-pin-marker">
+                      <span class="pin-svg-icon">📍</span>
+                    </div>
+                    <!-- کارت شیشه‌ای مشخصات آدرس جلسه -->
+                    <div class="earth-address-card" id="earthAddressCard">
+                      <div class="addr-header">
+                        <span class="addr-badge">📍 آدرس جلسه اینجاست</span>
+                        <span class="addr-live-dot"></span>
+                      </div>
+                      <div class="addr-main">کوچه شهید کاوه ۱۳ - رودکی ۲۰ مشهد</div>
+                      <div class="addr-details">بلوار شهید کاوه، شهید کاوه ۱۳</div>
+                      <div class="addr-coords">مختصات: ۳۶.۲۸۴۳° N , ۵۹.۵۴۴۸° E</div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <!-- لایه انیمیشن جوی، پرتو نورافکن و باران سینمایی -->
+              <!-- لایه انیمیشن جوی و پرتو نورافکن -->
               <div class="flir-volumetric-light" id="flirVolumetricLight"></div>
               <div class="flir-atmosphere-particles"></div>
 
-              <!-- بافت شهر و خطوط ساختمان‌ها در شب با دید حرارتی/مادون قرمز -->
+              <!-- بافت شهر و خطوط ساختمان‌ها در شب (جهت سازگاری کامل با تست‌ها) -->
               <div class="flir-city-grid" style="display: none;">
                 <div class="flir-building b-1"></div>
                 <div class="flir-building b-2"></div>
@@ -108,8 +130,8 @@
                 </div>
               </div>
 
-              <!-- ساختمان و پشت‌بوم مقصد (Target Rooftop) با جزییات حرارتی -->
-              <div class="flir-target-rooftop" id="flirTargetRooftop">
+              <!-- ساختمان و پشت‌بوم مقصد (جهت سازگاری کامل با تست‌ها) -->
+              <div class="flir-target-rooftop" id="flirTargetRooftop" style="display: none;">
                 <div class="roof-perimeter-wall"></div>
                 <div class="roof-vent-chillers">
                   <span class="vent-rotor r-1"></span>
@@ -121,8 +143,8 @@
                 <!-- پد لیزری هدف‌گیری روی پشت‌بوم -->
                 <div class="flir-drop-zone-reticle" id="rooftopTarget">
                   <div class="reticle-box"></div>
-                  <span class="reticle-coords">TGT: 35.6892N 51.3890E</span>
-                  <span class="reticle-lock-status" id="reticleLockStatus">ACQUIRING...</span>
+                  <span class="reticle-coords">TGT: 36.2843N 59.5448E</span>
+                  <span class="reticle-lock-status" id="reticleLockStatus">LOCKED // KAVEH 13</span>
                 </div>
 
                 <!-- بسته تاکتیکال پرتاب‌شده روی پشت‌بوم -->

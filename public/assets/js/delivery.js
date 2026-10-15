@@ -755,9 +755,9 @@
       const arrTitle = document.getElementById('arrivedTitle');
       const arrSub = document.getElementById('arrivedSub');
       const pkgIcon = document.getElementById('packageIconWrap');
-      if (arrTitle) arrTitle.textContent = 'سفارش شما روی پشت‌بوم تحویل داده شد!';
-      if (arrSub) arrSub.textContent = 'ریزپرنده بسته را با موفقیت روی پشت‌بوم انداخت و مأموریت پایان یافت.';
-      if (pkgIcon) pkgIcon.innerHTML = '🛸';
+      if (arrTitle) arrTitle.textContent = 'سفارش در موقعیت جلسه تحویل داده شد!';
+      if (arrSub) arrSub.textContent = 'مختصات جلسه (کوچه شهید کاوه ۱۳ مشهد) تثبیت و سفارش با موفقیت تحویل گردید.';
+      if (pkgIcon) pkgIcon.innerHTML = '📍';
     }
 
     // ۱.۵ ثانیه سفارش تحویل شده نمایش داده می‌شود، سپس بلک‌اوت کامل آغاز می‌گردد
@@ -783,7 +783,7 @@
       }
     }
 
-    // هدایت فازها، تیترها و تلمتری مانیتور دید در شب FLIR ریزپرنده (کلاس ۱۷)
+    // هدایت فازها، تیترها و تلمتری زوم ماهواره‌ای از فضا تا کوچه کاوه ۱۳ مشهد (کلاس ۱۷)
     if (isDroneDelivery) {
       const droneSection = document.getElementById('droneDeliverySection');
       const droneStatusTitle = document.getElementById('droneStatusTitle');
@@ -809,62 +809,68 @@
       if (droneSection) {
         const ratio = Math.min(1, Math.max(0, elapsed / TOTAL_DURATION_MS));
         let newStage = 'takeoff';
-        if (ratio < 0.33) {
-          newStage = 'takeoff';
-        } else if (ratio < 0.73) {
-          newStage = 'transit';
+        if (ratio < 0.25) {
+          newStage = 'takeoff'; // فاز ۱: مدار فضایی زمین
+        } else if (ratio < 0.50) {
+          newStage = 'transit'; // فاز ۲: ورود به جو ایران و افق مشهد
+        } else if (ratio < 0.75) {
+          newStage = 'kaveh';   // فاز ۳: بافت ماهواره‌ای رضاشهر و بلوار کاوه
         } else {
-          newStage = 'airdrop';
+          newStage = 'airdrop'; // فاز ۴: نقشه خیابانی شفاف کوچه کاوه ۱۳ و فرود پین
         }
 
         if (newStage !== currentDroneStage) {
           currentDroneStage = newStage;
-          droneSection.classList.remove('stage-takeoff', 'stage-transit', 'stage-airdrop');
+          droneSection.classList.remove('stage-takeoff', 'stage-transit', 'stage-kaveh', 'stage-airdrop');
           droneSection.classList.add(`stage-${newStage}`);
 
           if (newStage === 'takeoff') {
             activateDroneSlide('slideTakeoff');
-            if (droneStatusTitle) droneStatusTitle.textContent = 'بسته با ریزپرنده ارسال شد';
-            if (droneMissionNote) droneMissionNote.textContent = 'ریزپرنده شناسایی از آشیانه برخاسته و با قفل اپتیکال روی مختصات هدف در حال اوج‌گیری است.';
-            if (flirZoomVal) flirZoomVal.textContent = '1.0X';
-            if (flirFovVal) flirFovVal.textContent = '45.0° WIDE';
-            if (flirActuatorVal) flirActuatorVal.textContent = 'LOCKED';
-            if (reticleLockStatus) reticleLockStatus.textContent = 'ACQUIRING...';
-            notifyLifecyclePhase('drone_takeoff', '🛸 پرواز ریزپرنده // بسته با ریزپرنده ارسال شد', seconds);
+            if (droneStatusTitle) droneStatusTitle.textContent = 'رهگیری ماهواره‌ای مختصات هدف // شناسایی موقعیت جلسه';
+            if (droneMissionNote) droneMissionNote.textContent = 'ماهواره شناسایی در مدار زمین فعال شد // آغاز تقرب اپتیکال به مختصات جغرافیایی ۳۶.۲۸۴۳ , ۵۹.۵۴۴۸';
+            if (flirZoomVal) flirZoomVal.textContent = '1.0X GLOBE';
+            if (flirFovVal) flirFovVal.textContent = '120° ORBIT';
+            if (flirActuatorVal) flirActuatorVal.textContent = 'GPS: 36.2843N 59.5448E';
+            if (reticleLockStatus) reticleLockStatus.textContent = 'ACQUIRING MASHHAD...';
+            notifyLifecyclePhase('satellite_orbital', '🛰️ رهگیری ماهواره‌ای // شناسایی موقعیت جلسه', seconds);
           } else if (newStage === 'transit') {
             activateDroneSlide('slideTransit');
-            if (droneStatusTitle) droneStatusTitle.textContent = 'ریزپرنده در حال حرکت به سمت مقصد';
-            if (droneMissionNote) droneMissionNote.textContent = 'ناوبری در کریدور هوایی امن بر فراز شهر // تقرب اپتیکال به پشت‌بوم ساختمان مقصد.';
-            if (flirZoomVal) flirZoomVal.textContent = '2.5X';
-            if (flirFovVal) flirFovVal.textContent = '22.0° MED';
-            if (flirActuatorVal) flirActuatorVal.textContent = 'ARMED / READY';
-            if (reticleLockStatus) reticleLockStatus.textContent = 'TRACKING...';
-            notifyLifecyclePhase('drone_transit', '🛸 ناوبری هوایی // ریزپرنده در حال حرکت به سمت مقصد', seconds);
+            if (droneStatusTitle) droneStatusTitle.textContent = 'تقرب مداری به حریم هوایی مشهد // کاهش ارتفاع عملیاتی';
+            if (droneMissionNote) droneMissionNote.textContent = 'ورود به جو و اسکن لایه‌های هوایی مشهد // تمرکز بر محور جنوب‌غربی و منطقه رضاشهر.';
+            if (flirZoomVal) flirZoomVal.textContent = '12X REGIONAL';
+            if (flirFovVal) flirFovVal.textContent = '45° MASHHAD';
+            if (flirActuatorVal) flirActuatorVal.textContent = 'SENSOR: MULTISPECTRAL';
+            if (reticleLockStatus) reticleLockStatus.textContent = 'TRACKING REZA SHAHR...';
+            notifyLifecyclePhase('satellite_reentry', '🛰️ تقرب به مشهد // کاهش ارتفاع عملیاتی', seconds);
+          } else if (newStage === 'kaveh') {
+            activateDroneSlide('slideDrop');
+            if (droneStatusTitle) droneStatusTitle.textContent = 'تثبیت ماهواره‌ای روی منطقه ۹ و رضاشهر // تقرب به بلوار کاوه';
+            if (droneMissionNote) droneMissionNote.textContent = 'تفکیک معابر و خیابان‌های فرعی در محور بلوار شهید کاوه و رودکی // آماده‌سازی تثبیت نقطه جلسه.';
+            if (flirZoomVal) flirZoomVal.textContent = '45X TACTICAL';
+            if (flirFovVal) flirFovVal.textContent = '18° STREET';
+            if (flirActuatorVal) flirActuatorVal.textContent = 'SECTOR: KAVEH BLVD';
+            if (reticleLockStatus) reticleLockStatus.textContent = 'LOCKING KAVEH 13...';
+            notifyLifecyclePhase('satellite_kaveh', '🛰️ بلوار کاوه // تقرب به کوچه ۱۳', seconds);
           } else if (newStage === 'airdrop') {
-            if (!hasDroneLanded) activateDroneSlide('slideDrop');
-            if (droneStatusTitle) droneStatusTitle.textContent = 'ریزپرنده بسته انداخت روی پشت‌بوم';
-            if (droneMissionNote) droneMissionNote.textContent = 'پرواز ایستا بالای موقعیت // رهایش هوایی بسته و فرود روی پشت‌بوم.';
-            if (flirZoomVal) flirZoomVal.textContent = '5.0X';
-            if (flirFovVal) flirFovVal.textContent = '08.0° TIGHT';
-            if (flirActuatorVal) flirActuatorVal.textContent = 'RELEASING...';
-            if (reticleLockStatus) reticleLockStatus.textContent = 'LOCKED // DROP';
-            notifyLifecyclePhase('drone_airdrop', '📦 پرتاب روی پشت‌بوم // ریزپرنده بسته انداخت روی پشت‌بوم', seconds);
+            activateDroneSlide('slideLanded');
+            if (droneStatusTitle) droneStatusTitle.textContent = 'موقعیت مکانی جلسه با موفقیت تثبیت شد';
+            if (droneMissionNote) droneMissionNote.textContent = '📍 آدرس جلسه اینجاست: مشهد، بلوار شهید کاوه، کوچه شهید کاوه ۱۳ (رودکی ۲۰) // تحویل در این نقطه انجام شد.';
+            if (flirZoomVal) flirZoomVal.textContent = '120X STREET';
+            if (flirFovVal) flirFovVal.textContent = '05° KAVEH 13';
+            if (flirActuatorVal) flirActuatorVal.textContent = 'CONFIRMED: ROUDAKI 20';
+            if (reticleLockStatus) reticleLockStatus.textContent = 'TARGET LOCKED [100%]';
+            notifyLifecyclePhase('satellite_locked', '📍 آدرس جلسه اینجاست // کاوه ۱۳ مشهد', seconds);
           }
         }
 
-        // کنترل رهایش بسته تاکتیکال و فرود روی پد هدف در فاز ۳:
+        // انیمیشن فرود آمدن پین هدف و کارت آدرس در فاز ۴:
         if (newStage === 'airdrop') {
-          if (ratio >= 0.75 && !hasDroneDropped) {
+          if (!hasDroneDropped) {
             hasDroneDropped = true;
-            droneSection.classList.add('is-dropping');
             playServoReleaseSound();
-            if (flirActuatorVal) flirActuatorVal.textContent = 'RELEASED // DROPPING';
           }
-          if (ratio >= 0.88 && !hasDroneLanded) {
+          if (!hasDroneLanded) {
             hasDroneLanded = true;
-            droneSection.classList.remove('is-dropping');
-            droneSection.classList.add('has-landed');
-            activateDroneSlide('slideLanded');
             playImpactThud();
             const screenFrame = document.getElementById('flirScreenFrame');
             if (screenFrame) {
@@ -872,37 +878,29 @@
               void screenFrame.offsetWidth;
               screenFrame.classList.add('impact-screen-shake');
             }
-            if (droneStatusTitle) droneStatusTitle.textContent = 'ریزپرنده بسته انداخت روی پشت‌بوم';
-            if (droneMissionNote) droneMissionNote.textContent = 'فرود بسته با موفقیت روی پشت‌بوم تأیید شد // ریزپرنده در حال بازگشت به پایگاه است.';
-            if (flirActuatorVal) flirActuatorVal.textContent = 'CONFIRMED ON ROOF';
-            if (reticleLockStatus) reticleLockStatus.textContent = 'DELIVERED [OK]';
           }
         }
 
-        // تلمتری زنده بر اساس فاز
+        // تلمتری زنده متغیر بر اساس فاز زوم ماهواره
         if (newStage === 'takeoff') {
-          const lrf = Math.round(245 - (ratio / 0.33) * 125);
-          const spd = Math.round(20 + (ratio / 0.33) * 20);
-          if (droneAltVal) droneAltVal.textContent = `LRF: ${lrf}m`;
-          if (droneSpeedVal) droneSpeedVal.textContent = `GS: ${spd} km/h`;
-          if (flirPitchVal) flirPitchVal.textContent = `-28.${Math.floor(ratio * 30)}°`;
+          const alt = Math.round(35420 - (ratio / 0.25) * 34220);
+          if (droneAltVal) droneAltVal.textContent = `ALT: ${alt.toLocaleString('en-US')} km`;
+          if (droneSpeedVal) droneSpeedVal.textContent = 'VEL: 7.8 km/s';
+          if (flirPitchVal) flirPitchVal.textContent = '-89.4° (NADIR)';
         } else if (newStage === 'transit') {
-          const lrf = Math.round(120 - ((ratio - 0.33) / 0.40) * 85);
-          const spd = Math.round(52 + Math.sin(elapsed / 600) * 4);
-          if (droneAltVal) droneAltVal.textContent = `LRF: ${lrf}m`;
-          if (droneSpeedVal) droneSpeedVal.textContent = `GS: ${spd} km/h`;
-          if (flirPitchVal) flirPitchVal.textContent = `-34.${Math.floor(Math.sin(elapsed / 400) * 5 + 5)}°`;
+          const alt = Math.round(18500 - ((ratio - 0.25) / 0.25) * 14000);
+          if (droneAltVal) droneAltVal.textContent = `ALT: ${alt.toLocaleString('en-US')} m`;
+          if (droneSpeedVal) droneSpeedVal.textContent = 'MACH 2.4';
+          if (flirPitchVal) flirPitchVal.textContent = '-72.1° (DESCENT)';
+        } else if (newStage === 'kaveh') {
+          const alt = Math.round(4500 - ((ratio - 0.50) / 0.25) * 3850);
+          if (droneAltVal) droneAltVal.textContent = `ALT: ${alt} m`;
+          if (droneSpeedVal) droneSpeedVal.textContent = 'GS: 180 km/h';
+          if (flirPitchVal) flirPitchVal.textContent = '-45.0° (OPTICAL)';
         } else {
-          if (hasDroneLanded) {
-            if (droneAltVal) droneAltVal.textContent = 'LRF: 0m (IMPACT OK)';
-            if (droneSpeedVal) droneSpeedVal.textContent = 'GS: 0 km/h';
-            if (flirPitchVal) flirPitchVal.textContent = '-12.0° (CLIMB)';
-          } else {
-            const lrf = Math.max(2, Math.round(35 - ((ratio - 0.73) / 0.15) * 33));
-            if (droneAltVal) droneAltVal.textContent = `LRF: ${lrf}m`;
-            if (droneSpeedVal) droneSpeedVal.textContent = 'GS: 6 km/h';
-            if (flirPitchVal) flirPitchVal.textContent = '-38.2° (HOVER)';
-          }
+          if (droneAltVal) droneAltVal.textContent = 'LAT: 36.2843°N  LON: 59.5448°E';
+          if (droneSpeedVal) droneSpeedVal.textContent = 'PINPOINT LOCK [OK]';
+          if (flirPitchVal) flirPitchVal.textContent = 'STREET ZOOM: 100%';
         }
       }
     }

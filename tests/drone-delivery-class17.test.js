@@ -18,17 +18,20 @@ test('Exclusive Military FLIR Recon Drone Rooftop Airdrop Delivery for Class 17 
   const orderStatusAlt = fs.readFileSync(orderStatusAltPath, 'utf8');
   const storeJs = fs.readFileSync(storeJsPath, 'utf8');
 
-  await t.test('1. HTML files synchronization and Military FLIR HUD DOM elements', () => {
+  await t.test('1. HTML files synchronization and Military FLIR Recon & Earth Zoom DOM elements', () => {
     assert.strictEqual(orderStatusHtml, orderStatusAlt, 'order-status.html and order_status.html must be identical');
 
     assert.ok(orderStatusHtml.includes('id="droneDeliverySection"'), 'Must have droneDeliverySection container');
     assert.ok(orderStatusHtml.includes('id="droneStatusTitle"'), 'Must have droneStatusTitle element');
     assert.ok(orderStatusHtml.includes('id="flirScreenFrame"'), 'Must have flirScreenFrame element');
     assert.ok(orderStatusHtml.includes('id="flirAerialWorld"'), 'Must have flirAerialWorld element');
-    assert.ok(orderStatusHtml.includes('id="flirTargetRooftop"'), 'Must have flirTargetRooftop element');
-    assert.ok(orderStatusHtml.includes('id="airdropCargoPackage"'), 'Must have airdropCargoPackage element');
-    assert.ok(orderStatusHtml.includes('id="cargoChuteCanopy"'), 'Must have cargoChuteCanopy element');
-    assert.ok(orderStatusHtml.includes('id="rooftopTarget"'), 'Must have rooftopTarget pad element');
+    assert.ok(orderStatusHtml.includes('id="droneCinemaSlides"'), 'Must have droneCinemaSlides element');
+    assert.ok(orderStatusHtml.includes('id="slideTakeoff"'), 'Must have slideTakeoff (orbital Earth) element');
+    assert.ok(orderStatusHtml.includes('id="slideTransit"'), 'Must have slideTransit (regional Mashhad) element');
+    assert.ok(orderStatusHtml.includes('id="slideDrop"'), 'Must have slideDrop (Kaveh satellite) element');
+    assert.ok(orderStatusHtml.includes('id="slideLanded"'), 'Must have slideLanded (Kaveh street map) element');
+    assert.ok(orderStatusHtml.includes('id="earthTargetPinWrap"'), 'Must have earthTargetPinWrap element');
+    assert.ok(orderStatusHtml.includes('id="earthAddressCard"'), 'Must have earthAddressCard element');
     assert.ok(orderStatusHtml.includes('id="droneMissionNote"'), 'Must have droneMissionNote element');
     assert.ok(orderStatusHtml.includes('id="courierStepDot"'), 'Must have courierStepDot element');
     assert.ok(orderStatusHtml.includes('id="courierStepLabel"'), 'Must have courierStepLabel element');
@@ -36,30 +39,38 @@ test('Exclusive Military FLIR Recon Drone Rooftop Airdrop Delivery for Class 17 
     assert.ok(orderStatusHtml.includes('id="arrivedSub"'), 'Must have arrivedSub element');
   });
 
-  await t.test('2. CSS has high-tech military FLIR night-vision HUD styling and animations', () => {
+  await t.test('2. CSS has high-tech military FLIR night-vision HUD & Earth-to-street zoom animations', () => {
     assert.ok(deliveryCss.includes('body.is-drone-mode'), 'Must have body.is-drone-mode styling');
     assert.ok(deliveryCss.includes('flir-screen-frame'), 'Must have flir-screen-frame styling');
     assert.ok(deliveryCss.includes('flir-scanlines'), 'Must have flir-scanlines styling');
     assert.ok(deliveryCss.includes('flir-aerial-world'), 'Must have flir-aerial-world styling');
-    assert.ok(deliveryCss.includes('flir-target-rooftop'), 'Must have flir-target-rooftop styling');
-    assert.ok(deliveryCss.includes('flir-drop-zone-reticle'), 'Must have flir-drop-zone-reticle styling');
-    assert.ok(deliveryCss.includes('flir-payload-package'), 'Must have flir-payload-package styling');
-    assert.ok(deliveryCss.includes('flirPayloadDropAnim'), 'Must have flirPayloadDropAnim keyframes');
-    assert.ok(deliveryCss.includes('flirGimbalDrift'), 'Must have flirGimbalDrift keyframes');
+    assert.ok(deliveryCss.includes('earthSpaceZoomDrift'), 'Must have earthSpaceZoomDrift keyframes');
+    assert.ok(deliveryCss.includes('mashhadAtmosphericDescent'), 'Must have mashhadAtmosphericDescent keyframes');
+    assert.ok(deliveryCss.includes('kavehSatelliteApproach'), 'Must have kavehSatelliteApproach keyframes');
+    assert.ok(deliveryCss.includes('kavehStreetPinpointZoom'), 'Must have kavehStreetPinpointZoom keyframes');
+    assert.ok(deliveryCss.includes('earthPinLand'), 'Must have earthPinLand keyframes');
+    assert.ok(deliveryCss.includes('earth-address-card'), 'Must have earth-address-card styling');
     assert.ok(deliveryCss.includes('flir-hud-overlay'), 'Must have flir-hud-overlay styling');
     assert.ok(deliveryCss.includes('flir-center-crosshair'), 'Must have flir-center-crosshair styling');
   });
 
-  await t.test('3. Exact Persian status progression strings during 30s countdown', () => {
-    // Stage 1
-    assert.ok(deliveryJs.includes('بسته با ریزپرنده ارسال شد'), 'Stage 1: بسته با ریزپرنده ارسال شد must be present');
-    // Stage 2
-    assert.ok(deliveryJs.includes('ریزپرنده در حال حرکت به سمت مقصد'), 'Stage 2: ریزپرنده در حال حرکت به سمت مقصد must be present');
-    // Stage 3
-    assert.ok(deliveryJs.includes('ریزپرنده بسته انداخت روی پشت‌بوم'), 'Stage 3: ریزپرنده بسته انداخت روی پشت‌بوم must be present');
+  await t.test('3. Exact Persian status progression strings, coordinates and address during 30s countdown', () => {
+    // Stage 1: Deep space Earth orbit
+    assert.ok(deliveryJs.includes('رهگیری ماهواره‌ای مختصات هدف // شناسایی موقعیت جلسه'), 'Stage 1 label must be present');
+    // Stage 2: Atmospheric descent over Mashhad
+    assert.ok(deliveryJs.includes('تقرب مداری به حریم هوایی مشهد // کاهش ارتفاع عملیاتی'), 'Stage 2 label must be present');
+    // Stage 3: Kaveh blvd reconnaissance
+    assert.ok(deliveryJs.includes('تثبیت ماهواره‌ای روی منطقه ۹ و رضاشهر // تقرب به بلوار کاوه'), 'Stage 3 label must be present');
+    // Stage 4: Meeting street pinpoint lock
+    assert.ok(deliveryJs.includes('موقعیت مکانی جلسه با موفقیت تثبیت شد'), 'Stage 4 label must be present');
+    // Exact GPS coordinates
+    assert.ok(deliveryJs.includes('36.2843'), 'Latitude 36.2843 must be present');
+    assert.ok(deliveryJs.includes('59.5448'), 'Longitude 59.5448 must be present');
+    // Street address
+    assert.ok(deliveryJs.includes('کوچه شهید کاوه ۱۳ (رودکی ۲۰)'), 'Exact alley address must be present');
     // Arrived
-    assert.ok(deliveryJs.includes('سفارش شما روی پشت‌بوم تحویل داده شد!'), 'Arrival title must announce rooftop delivery');
-    assert.ok(deliveryJs.includes('ریزپرنده بسته را با موفقیت روی پشت‌بوم انداخت و مأموریت پایان یافت.'), 'Arrival subtitle must confirm drone drop');
+    assert.ok(deliveryJs.includes('سفارش در موقعیت جلسه تحویل داده شد!'), 'Arrival title must announce location delivery');
+    assert.ok(deliveryJs.includes('مختصات جلسه (کوچه شهید کاوه ۱۳ مشهد) تثبیت و سفارش با موفقیت تحویل گردید.'), 'Arrival subtitle must confirm street coordinates');
   });
 
   await t.test('4. Exclusive isolation: Class 17 detection criteria vs standard class isolation', () => {
@@ -107,8 +118,9 @@ test('Exclusive Military FLIR Recon Drone Rooftop Airdrop Delivery for Class 17 
   await t.test('5. Server store routes reflect drone delivery status for Class 17 during admin live updates', () => {
     assert.ok(storeJs.includes('isDroneClass'), 'store.js must identify isDroneClass');
     assert.ok(storeJs.includes('590019'), 'store.js must check 590019');
-    assert.ok(storeJs.includes('بسته با ریزپرنده ارسال شد'), 'store.js must emit Stage 1 drone label');
-    assert.ok(storeJs.includes('ریزپرنده در حال حرکت به سمت مقصد'), 'store.js must emit Stage 2 drone label');
-    assert.ok(storeJs.includes('ریزپرنده بسته انداخت روی پشت‌بوم'), 'store.js must emit Stage 3 drone label');
+    assert.ok(storeJs.includes('رهگیری ماهواره‌ای مختصات هدف // شناسایی موقعیت جلسه'), 'store.js must emit Stage 1 satellite label');
+    assert.ok(storeJs.includes('تقرب مداری به حریم هوایی مشهد // کاهش ارتفاع عملیاتی'), 'store.js must emit Stage 2 satellite label');
+    assert.ok(storeJs.includes('تثبیت ماهواره‌ای روی منطقه ۹ و رضاشهر // تقرب به بلوار کاوه'), 'store.js must emit Stage 3 satellite label');
+    assert.ok(storeJs.includes('موقعیت مکانی جلسه با موفقیت تثبیت شد: کوچه شهید کاوه ۱۳ مشهد'), 'store.js must emit Stage 4 satellite label');
   });
 });

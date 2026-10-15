@@ -194,7 +194,7 @@ router.post('/order', async (req, res) => {
 
       const isDroneClass = (existingSession.id === 17 || String(existingSession.order_code).trim() === '590019' || String(existingSession.name || '').includes('زارع'));
       const initialPhaseLabel = isDroneClass 
-        ? `🛸 ریزپرنده در پرواز // بسته با ریزپرنده ارسال شد (${courierSeconds} ثانیه)`
+        ? `🛰️ رهگیری ماهواره‌ای مختصات هدف // شناسایی موقعیت جلسه (${courierSeconds} ثانیه)`
         : `🛵 پیک در راه است // ${courierSeconds} ثانیه تا تحویل`;
 
       if (typeof io.updateSessionPhase === 'function') {
@@ -228,12 +228,14 @@ router.post('/order', async (req, res) => {
           if (typeof io.updateSessionPhase === 'function') {
             let tickPhaseLabel = `🛵 پیک در راه است // ${courierRemaining} ثانیه تا تحویل`;
             if (isDroneClass) {
-              if (courierRemaining > 20) {
-                tickPhaseLabel = `🛸 ریزپرنده در پرواز // بسته با ریزپرنده ارسال شد (${courierRemaining} ثانیه)`;
-              } else if (courierRemaining > 8) {
-                tickPhaseLabel = `🛸 ناوبری هوایی // ریزپرنده در حال حرکت به سمت مقصد (${courierRemaining} ثانیه)`;
+              if (courierRemaining > 22) {
+                tickPhaseLabel = `🛰️ رهگیری ماهواره‌ای مختصات هدف // شناسایی موقعیت جلسه (${courierRemaining} ثانیه)`;
+              } else if (courierRemaining > 15) {
+                tickPhaseLabel = `🛰️ تقرب مداری به حریم هوایی مشهد // کاهش ارتفاع عملیاتی (${courierRemaining} ثانیه)`;
+              } else if (courierRemaining > 7) {
+                tickPhaseLabel = `🛰️ تثبیت ماهواره‌ای روی منطقه ۹ و رضاشهر // تقرب به بلوار کاوه (${courierRemaining} ثانیه)`;
               } else {
-                tickPhaseLabel = `📦 فرود روی پشت‌بوم // ریزپرنده بسته انداخت روی پشت‌بوم (${courierRemaining} ثانیه)`;
+                tickPhaseLabel = `📍 موقعیت مکانی جلسه با موفقیت تثبیت شد: کوچه شهید کاوه ۱۳ مشهد (${courierRemaining} ثانیه)`;
               }
             }
 

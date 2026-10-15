@@ -500,46 +500,199 @@ body[data-phase="arrived"] #droneDeliverySection {
   transform: scale(1.07);
 }
 
+/* ==========================================================================
+   EARTH-TO-STREET SATELLITE ZOOM & TARGET PIN STYLING (CLASS 17)
+   ========================================================================== */
+
+/* فاز ۱: کره زمین در اعماق فضا */
 .drone-cinema-slide.slide-takeoff.active {
-  animation: droneCinematicDrift 10s ease-out forwards;
+  animation: earthSpaceZoomDrift 8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
+@keyframes earthSpaceZoomDrift {
+  0% { transform: scale(1.0) translate(0, 0); filter: brightness(0.95); }
+  50% { transform: scale(1.08) translate(-1%, -1%); filter: brightness(1.05); }
+  100% { transform: scale(1.18) translate(-2%, -2%); filter: brightness(1.0); }
+}
+
+/* فاز ۲: ورود به جو ایران و افق مشهد */
 .drone-cinema-slide.slide-transit.active {
-  animation: droneTransitActionCam 8s ease-in-out infinite alternate;
+  animation: mashhadAtmosphericDescent 8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
 }
 
+@keyframes mashhadAtmosphericDescent {
+  0% { transform: scale(1.05) translate(0, 0); }
+  50% { transform: scale(1.16) translate(-1%, 1%); }
+  100% { transform: scale(1.28) translate(-2%, 2%); }
+}
+
+/* فاز ۳: بافت ماهواره‌ای شهری رضاشهر و بلوار کاوه */
 .drone-cinema-slide.slide-drop.active {
-  animation: droneHoverDrop 6s ease-out forwards;
+  animation: kavehSatelliteApproach 8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes kavehSatelliteApproach {
+  0% { transform: scale(1.08) translate(1%, -1%); }
+  50% { transform: scale(1.22) translate(0, 0); }
+  100% { transform: scale(1.36) translate(-1%, 1%); }
+}
+
+/* فاز ۴: نقشه خیابانی فوق‌العاده شفاف کوچه کاوه ۱۳ */
+.drone-cinema-slide.slide-landed {
+  background-size: 155% !important;
+  background-position: 53.34% 64.19% !important;
 }
 
 .drone-cinema-slide.slide-landed.active {
-  animation: droneLandedStill 8s ease-out forwards;
+  animation: kavehStreetPinpointZoom 8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes droneCinematicDrift {
-  0% { transform: scale(1.02) translateY(0); filter: brightness(0.95); }
-  50% { transform: scale(1.05) translateY(-5px); filter: brightness(1.04); }
-  100% { transform: scale(1.08) translateY(-10px); filter: brightness(1); }
+@keyframes kavehStreetPinpointZoom {
+  0% { transform: scale(1.0); filter: contrast(1.05); }
+  40% { transform: scale(1.12); filter: contrast(1.1); }
+  100% { transform: scale(1.22); filter: contrast(1.12); }
 }
 
-@keyframes droneTransitActionCam {
-  0% { transform: scale(1.03) translate(0, 0) rotate(0deg); }
-  25% { transform: scale(1.05) translate(-3px, 2px) rotate(-0.3deg); }
-  50% { transform: scale(1.04) translate(3px, -2px) rotate(0.2deg); }
-  75% { transform: scale(1.06) translate(-2px, -2px) rotate(-0.2deg); }
-  100% { transform: scale(1.05) translate(3px, 2px) rotate(0.3deg); }
+/* پین هدف تپنده و کارت آدرس جلسه اینجاست */
+.earth-target-pin-wrap {
+  position: absolute;
+  left: 53.34%;
+  top: 64.19%;
+  transform: translate(-50%, -100%);
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  opacity: 0;
+  animation: earthPinLand 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.6s forwards;
 }
 
-@keyframes droneHoverDrop {
-  0% { transform: scale(1.02) translateY(-8px); }
-  40% { transform: scale(1.06) translateY(0); }
-  60% { transform: scale(1.07) translateY(2px); }
-  100% { transform: scale(1.06) translateY(-2px); }
+@keyframes earthPinLand {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -240%) scale(0.3);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -90%) scale(1.15);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+  }
 }
 
-@keyframes droneLandedStill {
-  0% { transform: scale(1.03); }
-  100% { transform: scale(1.06); }
+.earth-pin-marker {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 6px 12px rgba(239, 68, 68, 0.6));
+  animation: pinBounceSubtle 2.4s ease-in-out infinite;
+}
+
+.pin-svg-icon {
+  font-size: 38px;
+  line-height: 1;
+}
+
+@keyframes pinBounceSubtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.earth-pin-radar-ring {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid #ef4444;
+  background: rgba(239, 68, 68, 0.2);
+  animation: pinRadarPulse 2s ease-out infinite;
+}
+
+@keyframes pinRadarPulse {
+  0% {
+    transform: translate(-50%, 50%) scale(0.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, 50%) scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* کارت شیک آدرس جلسه اینجاست */
+.earth-address-card {
+  position: absolute;
+  bottom: 52px;
+  white-space: nowrap;
+  background: rgba(8, 16, 24, 0.94);
+  border: 1.5px solid #00f0ff;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.85), 0 0 25px rgba(0, 240, 255, 0.4);
+  border-radius: 12px;
+  padding: 8px 14px;
+  text-align: right;
+  direction: rtl;
+  backdrop-filter: blur(10px);
+  animation: cardFadeUp 0.6s ease-out 1s both;
+}
+
+@keyframes cardFadeUp {
+  from { opacity: 0; transform: translateY(8px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.addr-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.addr-badge {
+  font-size: 13px;
+  font-weight: 800;
+  color: #00f0ff;
+  letter-spacing: 0.3px;
+  text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+.addr-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00ff66;
+  box-shadow: 0 0 8px #00ff66;
+  animation: flirRecBlink 1s infinite;
+}
+
+.addr-main {
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffffff;
+  margin-bottom: 2px;
+}
+
+.addr-details {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.addr-coords {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: #38bdf8;
+  letter-spacing: 0.5px;
+  direction: ltr;
+  text-align: left;
 }
 
 /* پرتو نورافکن حجمی متحرک و اتمسفر شب */
