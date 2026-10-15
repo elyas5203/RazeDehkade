@@ -118,10 +118,11 @@
   if (order && Number.isFinite(Number(order.countdownStartedAt))) {
     const elapsed = Date.now() - Number(order.countdownStartedAt);
     if (elapsed > 0 && elapsed < TOTAL_DURATION_MS) {
-      // اگر تازه از ثبت سفارش ریدایرکت شده، از ۳۰ ثانیه کامل شروع شود تا هیچ پرشی ایجاد نشود
-      if (elapsed < 4000) {
+      const isReload = sessionStorage.getItem('delivery_page_loaded') === 'true';
+      if (!isReload && elapsed < 4000) {
         startedAt = Date.now();
         order.countdownStartedAt = startedAt;
+        sessionStorage.setItem('delivery_page_loaded', 'true');
         try { localStorage.setItem('golha_last_order', JSON.stringify(order)); } catch (_) {}
       } else {
         startedAt = Number(order.countdownStartedAt);
@@ -129,8 +130,10 @@
     } else {
       startedAt = Date.now();
       order.countdownStartedAt = startedAt;
+      sessionStorage.setItem('delivery_page_loaded', 'true');
       try { localStorage.setItem('golha_last_order', JSON.stringify(order)); } catch (_) {}
     }
+    sessionStorage.setItem('delivery_page_loaded', 'true');
   } else {
     startedAt = Date.now();
     if (order) {
@@ -1050,6 +1053,21 @@
   }
 
   function startFlow() {
+    const savedBlackoutAt = Number(sessionStorage.getItem('delivery_blackout_at') || 0);
+    const now = Date.now();
+    if (savedBlackoutAt > 0 && (now - savedBlackoutAt) < BLACKOUT_DURATION_MS) {
+      isArrived = true;
+      document.body.dataset.phase = 'intro';
+      const stage = document.querySelector('.delivery-stage');
+      if (stage) stage.style.display = 'none';
+      const brand = document.querySelector('.delivery-brand');
+      if (brand) brand.style.display = 'none';
+      const footer = document.querySelector('.delivery-footer');
+      if (footer) footer.style.display = 'none';
+      triggerCyberTransformation();
+      return;
+    }
+
     if (isFromLogin) {
       isArrived = true;
       document.body.dataset.phase = 'intro';

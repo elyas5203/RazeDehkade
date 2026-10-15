@@ -312,6 +312,7 @@ function initSocket() {
       statusEl.innerHTML = '<span class="status-dot"></span> اتصال مجدد برقرار شد';
     }
     socket.emit('join_session', { sessionId: sessionData.id });
+    loadHistory();
   });
 
   socket.on('disconnect', () => {
@@ -408,8 +409,10 @@ function initSocket() {
     if (!data || Number(data.sessionId) === Number(sessionData.id) || data.all) {
       console.log('🧹 رویداد پاکسازی سراسری تاریخچه چت و تخته مدارک دریافت شد.');
       // ۱. پاکسازی ستون پیام‌های گفتگو
-      const chatBox = document.getElementById('chat-messages');
+      const chatBox = document.getElementById('chat-messages') || document.getElementById('messages-box');
       if (chatBox) chatBox.innerHTML = '';
+      if (typeof userMessagesMap !== 'undefined') userMessagesMap.clear();
+      if (typeof syncSessionCache === 'function') syncSessionCache();
 
       // ۲. پاکسازی کامل تخته مدارک
       const grid = document.getElementById('evidence-grid');
@@ -1097,9 +1100,20 @@ function initEvidenceMediaPlayer(msg) {
   // شروع درجا و آنی پخش به محض کلیک کاربر روی مدرک (استریم مستقیم HTTP 206)
   const playPromise = player.play();
   if (playPromise && typeof playPromise.catch === 'function') {
-    playPromise.catch(() => {
+    playPromise.catch((err) => {
       hideLoading();
       updateStreamUi();
+      if (statusEl) {
+        statusEl.innerHTML = '<span class="unmute-banner">🔇 پخش خودکار توسط مرورگر متوقف شد. <button type="button" class="unmute-btn" id="evidence-unmute-btn" style="margin-right:8px;padding:3px 10px;background:#f59e0b;color:#000;border:none;border-radius:4px;cursor:pointer;font-weight:bold;">🔊 برای پخش کلیک کنید</button></span>';
+        const unmuteBtn = document.getElementById('evidence-unmute-btn');
+        if (unmuteBtn) {
+          unmuteBtn.onclick = (e) => {
+            e.stopPropagation();
+            warmUpUserAudioContext();
+            player.play().then(() => updateStreamUi()).catch(() => {});
+          };
+        }
+      }
     });
   }
 
@@ -1305,6 +1319,30 @@ async function ensureLocalAudioStream() {
     console.error('عدم دسترسی به میکروفون:', err);
     return null;
   }
+let userAudioCtx = null;
+function warmUpUserAudioContext() {
+  if (userAudioCtx && userAudioCtx.state === 'running') return;
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!userAudioCtx) {
+      userAudioCtx = new AudioCtx();
+    }
+    if (userAudioCtx.state === 'suspended') {
+      userAudioCtx.resume().catch(() => {});
+    }
+    const buffer = userAudioCtx.createBuffer(1, 1, 22050);
+    const source = userAudioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(userAudioCtx.destination);
+    source.start(0);
+  } catch (_) {}
+}
+
+if (typeof window !== 'undefined') {
+  ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(evt => {
+    window.addEventListener(evt, warmUpUserAudioContext, { capture: true, once: true });
+  });
 }
 
 async function startPcmAudioStream() {
@@ -1669,6 +1707,19 @@ async function handleUserFileUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
+  const dangerousExtensions = ['.exe', '.bat', '.cmd', '.sh', '.php', '.js', '.vbs', '.msi'];
+  const ext = (file.name || '').slice((file.name || '').lastIndexOf('.')).toLowerCase();
+  if (dangerousExtensions.includes(ext)) {
+    alert('ارسال فایل‌های اجرایی یا اسکریپتی به دلایل امنیتی مجاز نیست.');
+    event.target.value = '';
+    return;
+  }
+  if (file.size > 80 * 1024 * 1024) {
+    alert('حجم فایل انتخاب‌شده بیش از حد مجاز (حداکثر ۸۰ مگابایت) است.');
+    event.target.value = '';
+    return;
+  }
+
   if (activeUserUpload) {
     cancelCurrentUserUpload();
   }
@@ -2003,11 +2054,17 @@ function initCalendarAndModals() {
   renderShamsiCalendar();
 
   // بستن مودال‌ها با کلیک روی بک‌دراپ
-  ['assistants-photo-dialog', 'user-edit-msg-dialog', 'user-delete-msg-dialog'].forEach(dialogId => {
+  ['assistants-photo-dialog', 'user-edit-msg-dialog', 'user-delete-msg-dialog', 'evidence-dialog'].forEach(dialogId => {
     const dlg = document.getElementById(dialogId);
     if (dlg) {
       dlg.addEventListener('click', (e) => {
-        if (e.target === dlg) dlg.close();
+        if (e.target === dlg) {
+          if (dialogId === 'evidence-dialog' && typeof closeEvidence === 'function') {
+            closeEvidence();
+          } else {
+            dlg.close();
+          }
+        }
       });
     }
   });
@@ -2064,7 +2121,8 @@ function renderShamsiCalendar() {
   if (badgeEl) {
     const selMonthName = SHAMSI_MONTH_NAMES[selectedJm - 1] || monthName;
     const selWeekday = SHAMSI_WEEKDAY_NAMES[getJalaliWeekdayIndex(selectedJy, selectedJm, selectedJd)];
-    badgeEl.textContent = `${selWeekday} ${toPersianDigits(selectedJd)} ${selMonthName}`;
+    badgeEl.textContent = 'امروز';
+    badgeEl.title = `${selWeekday} ${toPersianDigits(selectedJd)} ${selMonthName}`;
   }
 
   const daysInMonth = getJalaliMonthLength(viewJy, viewJm);
@@ -2747,3 +2805,6 @@ function confirmUserDeleteMessage() {
   });
 }
 
+// Master matrix global aliases
+window.sendUserMessage = sendMessage;
+window.saveUserEditMessage = submitUserEditMessage;

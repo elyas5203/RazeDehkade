@@ -398,12 +398,19 @@
     if (isUnlockAnimationRunning) return;
 
     const input = document.getElementById('vault-code-input');
-    const rawCode = input ? input.value.trim().slice(0, MAX_VAULT_CODE_LENGTH) : '';
+    const trimmedVal = input ? input.value.trim() : '';
 
-    if (!rawCode) {
+    if (!trimmedVal) {
       triggerVaultWrongPasswordError('ابتدا کد ۴ رقمی قفل گاوصندوق را وارد نمایید.');
       return;
     }
+
+    if (trimmedVal.length !== MAX_VAULT_CODE_LENGTH) {
+      triggerVaultWrongPasswordError('کد قفل باید دقیقاً ۴ رقم باشد.');
+      return;
+    }
+
+    const rawCode = trimmedVal;
 
     // اگر گاوصندوق هنوز توسط ادمین فعال نشده باشد،
     // حتی در صورت وارد کردن رمز 0110 هم خطای عادی رمز نامعتبر نشان داده می‌شود

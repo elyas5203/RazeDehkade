@@ -1469,8 +1469,12 @@ function formatAdminFileSizeFa(bytes) {
   return `${(num / (1024 * 1024)).toLocaleString('fa-IR', { maximumFractionDigits: 1 })} مگابایت`;
 }
 
+function getAdminUploadProgressContainer() {
+  return document.getElementById('admin-upload-progress-container') || document.getElementById('admin-typing-indicator');
+}
+
 function renderAdminUploadProgress(fileName, fileSize, percent = 0, statusText = 'در حال آپلود فایل...') {
-  const container = document.getElementById('admin-typing-indicator');
+  const container = getAdminUploadProgressContainer();
   if (!container) return;
   const clamped = Math.min(100, Math.max(0, Math.round(percent)));
   const cleanName = fixMojibakeText(fileName || 'فایل');
@@ -1532,7 +1536,7 @@ function cancelCurrentAdminUpload() {
   const fileInput = document.getElementById('admin-file-input');
   if (fileInput) fileInput.value = '';
 
-  const container = document.getElementById('admin-typing-indicator');
+  const container = getAdminUploadProgressContainer();
   if (container) {
     container.innerHTML = `<span style="color:#fca5a5;font-size:11.5px;padding:4px 12px;">⛔ ارسال فایل لغو شد.</span>`;
     setTimeout(() => {
@@ -1700,7 +1704,7 @@ async function handleAdminFileUpload(event) {
   } catch (err) {
     if (uploadState.cancelled || err.message === 'ABORTED') return;
     activeAdminUpload = null;
-    const container = document.getElementById('admin-typing-indicator');
+    const container = getAdminUploadProgressContainer();
     if (container) container.innerHTML = '';
     alert('خطا در آپلود فایل: ' + (err.message || 'ارتباط با سرور برقرار نشد.'));
     event.target.value = '';
@@ -1711,7 +1715,7 @@ async function handleAdminFileUpload(event) {
 
   if (Number(activeSessionId) !== uploadSessionId) {
     activeAdminUpload = null;
-    const container = document.getElementById('admin-typing-indicator');
+    const container = getAdminUploadProgressContainer();
     if (container) container.innerHTML = '';
     event.target.value = '';
     alert('کلاس در زمان آپلود تغییر کرد؛ فایل به چت ارسال نشد.');
@@ -1738,7 +1742,7 @@ async function handleAdminFileUpload(event) {
       fileName: cleanName,
     }, (error, ack) => {
       if (activeAdminUpload === uploadState) activeAdminUpload = null;
-      const container = document.getElementById('admin-typing-indicator');
+      const container = getAdminUploadProgressContainer();
       if (container) container.innerHTML = '';
       if (error || !ack?.success) {
         setAdminSendFeedback(ack?.message || 'ارسال عکس یا فایل به گروه تأیید نشد؛ دوباره تلاش کنید.');
@@ -1750,7 +1754,7 @@ async function handleAdminFileUpload(event) {
     event.target.value = '';
   } else {
     activeAdminUpload = null;
-    const container = document.getElementById('admin-typing-indicator');
+    const container = getAdminUploadProgressContainer();
     if (container) container.innerHTML = '';
     setAdminSendFeedback('آپلود کامل نشد؛ فایل به گروه ارسال نشد. دوباره تلاش کنید.');
     event.target.value = '';

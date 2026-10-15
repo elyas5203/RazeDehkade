@@ -349,23 +349,31 @@ function setupSocketIO(io) {
         const now = Date.now();
         cleanOldRecentMessages();
         if (recentMessagesMap.has(dedupKey) && (now - recentMessagesMap.get(dedupKey).time < 1500)) {
-          const cachedMsg = recentMessagesMap.get(dedupKey).message;
-          if (typeof ack === 'function') ack({ success: true, message: cachedMsg });
+          const cachedEntry = recentMessagesMap.get(dedupKey);
+          if (typeof ack === 'function') ack({ success: true, message: cachedEntry?.message || null });
           return;
         }
 
-        // ذخیره در دیتابیس
-        const savedMessage = await Message.create({
-          session_id: targetSessionId,
-          sender_type: effectiveSenderType,
-          sender_id: senderId,
-          content: safeContent,
-          message_type: effectiveMessageType,
-          file_url: validatedFileUrl,
-          file_name: fileName,
-        });
+        // علامت‌گذاری بلافاصله قبل از انجام عملیات ناهمگام دیتابیس برای خنثی‌سازی هرگونه Race Condition
+        recentMessagesMap.set(dedupKey, { time: now, message: null });
 
-        recentMessagesMap.set(dedupKey, { time: now, message: savedMessage });
+        // ذخیره در دیتابیس
+        let savedMessage;
+        try {
+          savedMessage = await Message.create({
+            session_id: targetSessionId,
+            sender_type: effectiveSenderType,
+            sender_id: senderId,
+            content: safeContent,
+            message_type: effectiveMessageType,
+            file_url: validatedFileUrl,
+            file_name: fileName,
+          });
+          recentMessagesMap.set(dedupKey, { time: now, message: savedMessage });
+        } catch (dbErr) {
+          recentMessagesMap.delete(dedupKey);
+          throw dbErr;
+        }
 
         const roomName = `session_${targetSessionId}`;
 

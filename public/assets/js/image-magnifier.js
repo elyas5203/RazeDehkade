@@ -2,9 +2,9 @@
 (() => {
   'use strict';
 
-  const MIN_ZOOM = 1.5;
-  const MAX_ZOOM = 6;
-  const DEFAULT_ZOOM = 2.2;
+  const MIN_ZOOM = 1.0;
+  const MAX_ZOOM = 3.0;
+  const DEFAULT_ZOOM = 2.0;
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
   window.createImageMagnifier = function createImageMagnifier({ stage, image, badge, zoomIn, zoomOut, reset }) {
@@ -142,7 +142,12 @@
     function hide() { point = null; draw(); }
     function onZoomIn() { changeZoom(0.2); }
     function onZoomOut() { changeZoom(-0.2); }
-    function onReset() { zoom = DEFAULT_ZOOM; draw(); }
+    function onReset() {
+      zoom = DEFAULT_ZOOM;
+      const rect = imageRect();
+      if (rect) point = { x: rect.width / 2, y: rect.height / 2 };
+      draw();
+    }
 
     stage.addEventListener('pointermove', onPointerMove);
     stage.addEventListener('pointerdown', onPointerDown);

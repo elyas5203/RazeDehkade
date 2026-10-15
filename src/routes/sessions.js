@@ -137,7 +137,26 @@ router.put('/:id/cases', requireAdmin, async (req, res) => {
     
     const session = await Session.findById(sessionId);
     const caseStatuses = await Session.getCaseStatuses(sessionId);
-    
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`session_${sessionId}`).emit('case_status_updated', {
+        sessionId,
+        active_case: session?.active_case,
+        cases: caseStatuses,
+      });
+      io.to('admins').emit('case_status_updated', {
+        sessionId,
+        active_case: session?.active_case,
+        cases: caseStatuses,
+      });
+      io.to('admins').emit('session_updated', {
+        sessionId,
+        active_case: session?.active_case,
+        cases: caseStatuses,
+      });
+    }
+
     return res.json({
       success: true,
       message: 'Cases updated successfully',
@@ -169,6 +188,12 @@ router.put('/:id', requireAdmin, async (req, res) => {
       return res.status(404).json({ success: false, message: 'جلسه پیدا نشد.' });
     }
 
+    const io = req.app.get('io');
+    if (io) {
+      io.to('admins').emit('session_updated', { sessionId, session: updatedSession });
+      io.to(`session_${sessionId}`).emit('session_details_updated', { sessionId, session: updatedSession });
+    }
+
     return res.json({
       success: true,
       message: 'جلسه با موفقیت ویرایش شد.',
@@ -194,6 +219,12 @@ router.delete('/:id', requireAdmin, async (req, res) => {
     const deleted = await Session.delete(sessionId);
     if (!deleted) {
       return res.status(404).json({ success: false, message: 'جلسه پیدا نشد.' });
+    }
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to('admins').emit('session_deleted', { sessionId });
+      io.to(`session_${sessionId}`).emit('session_terminated', { sessionId });
     }
 
     return res.json({

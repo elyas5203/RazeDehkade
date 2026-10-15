@@ -294,7 +294,13 @@ async function loadSessions() {
       allSessions = result.data;
       updateStats(allSessions);
       updateGlobalVaultBtnUI();
-      renderSessions(allSessions);
+      const searchInput = document.getElementById('sessionSearchInput');
+      const currentQuery = searchInput ? searchInput.value : '';
+      if (currentQuery && currentQuery.trim()) {
+        handleSearch(currentQuery);
+      } else {
+        renderSessions(allSessions);
+      }
     }
   } catch (err) {
     console.error('Failed to load sessions:', err);
@@ -694,6 +700,10 @@ async function copyCode(code, button) {
 function logoutAdmin() {
   localStorage.removeItem('adminToken');
   localStorage.removeItem('adminUser');
+  try {
+    sessionStorage.removeItem('activeAdminSessionId');
+    sessionStorage.clear();
+  } catch (_) {}
   window.location.href = '/admin/login.html';
 }
 
