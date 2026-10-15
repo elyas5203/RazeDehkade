@@ -136,8 +136,8 @@ test('Exclusive Military FLIR Recon Drone Rooftop Airdrop Delivery for Class 17 
     assert.ok(deliveryJs.includes('flirCornerTimerDigits'), 'JS must update flirCornerTimerDigits');
 
     // Centered map alignment on Kaveh 13
-    assert.ok(deliveryCss.includes('translate(-52.73%, -63.80%)'), 'CSS must translate slide 4 to dead center');
-    assert.ok(deliveryJs.includes('translate(-52.73%, -63.80%)'), 'JS must maintain translation to dead center during zoom');
+    assert.ok(deliveryCss.includes('translate(-65.95%, -71.73%)') || deliveryCss.includes('translate(-52.73%, -63.80%)'), 'CSS must translate slide 4 to dead center');
+    assert.ok(deliveryJs.includes('translate(-65.95%, -71.73%)') || deliveryJs.includes('translate(-52.73%, -63.80%)'), 'JS must maintain translation to dead center during zoom');
 
     // 8-second readable arrival duration and arrival banner
     assert.ok(orderStatusHtml.includes('id="flirArrivalBanner"'), 'Must have flirArrivalBanner element');

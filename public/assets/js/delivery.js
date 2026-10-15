@@ -819,7 +819,7 @@
     if (ratio <= 0.32) {
       const p1 = ratio / 0.32;
       const scale1 = 1.0 + p1 * 1.55; // 1.0 -> 2.55
-      s1.style.transform = `translate(-56%, -48%) scale(${scale1.toFixed(3)})`;
+      s1.style.transform = `scale(${scale1.toFixed(3)})`;
       const op1 = ratio < 0.20 ? 1 : Math.max(0, 1 - (ratio - 0.20) / 0.12);
       s1.style.opacity = op1.toFixed(2);
     } else {
@@ -829,8 +829,8 @@
     // لایه ۲: افق منطقه‌ای مشهد (نسبت ۰.۱۶ تا ۰.۶۶)
     if (ratio >= 0.16 && ratio <= 0.67) {
       const p2 = (ratio - 0.16) / (0.67 - 0.16);
-      const scale2 = 0.92 + p2 * 1.78; // 0.92 -> 2.70
-      s2.style.transform = `translate(-52%, -58%) scale(${scale2.toFixed(3)})`;
+      const scale2 = 0.95 + p2 * 1.55; // 0.95 -> 2.50
+      s2.style.transform = `scale(${scale2.toFixed(3)})`;
       let op2 = 1;
       if (ratio < 0.28) {
         op2 = (ratio - 0.16) / 0.12;
@@ -846,7 +846,7 @@
     if (ratio >= 0.46 && ratio <= 0.88) {
       const p3 = (ratio - 0.46) / (0.88 - 0.46);
       const scale3 = 0.94 + p3 * 1.40; // 0.94 -> 2.34
-      s3.style.transform = `translate(-52.73%, -63.80%) scale(${scale3.toFixed(3)})`;
+      s3.style.transform = `translate(-65.95%, -71.73%) scale(${scale3.toFixed(3)})`;
       let op3 = 1;
       if (ratio < 0.58) {
         op3 = (ratio - 0.46) / 0.12;
@@ -862,7 +862,7 @@
     if (ratio >= 0.68) {
       const p4 = Math.min(1, (ratio - 0.68) / 0.32);
       const scale4 = 0.88 + p4 * 0.20; // 0.88 -> 1.08
-      s4.style.transform = `translate(-52.73%, -63.80%) scale(${scale4.toFixed(3)})`;
+      s4.style.transform = `translate(-65.95%, -71.73%) scale(${scale4.toFixed(3)})`;
       const op4 = Math.min(1, (ratio - 0.68) / 0.12);
       s4.style.opacity = op4.toFixed(2);
     } else {
@@ -956,10 +956,10 @@
             activateDroneSlide('slideTakeoff');
             if (flirCornerPhaseTag) flirCornerPhaseTag.textContent = 'ORBITAL RECON';
             if (droneStatusTitle) droneStatusTitle.textContent = 'رهگیری ماهواره‌ای مختصات هدف // شناسایی محل تحویل بسته';
-            if (droneMissionNote) droneMissionNote.textContent = 'ماهواره شناسایی در مدار زمین فعال شد // آغاز تقرب اپتیکال به مختصات محل تحویل بسته (۳۶.۲۸۴۳ , ۵۹.۵۴۴۸)';
+            if (droneMissionNote) droneMissionNote.textContent = 'ماهواره شناسایی در مدار زمین فعال شد // آغاز تقرب اپتیکال به مختصات محل تحویل بسته (۳۶.۲۸۳۸ , ۵۹.۵۴۵۸)';
             if (flirZoomVal) flirZoomVal.textContent = '1.0X GLOBE';
             if (flirFovVal) flirFovVal.textContent = '120° ORBIT';
-            if (flirActuatorVal) flirActuatorVal.textContent = 'GPS: 36.2843N 59.5448E';
+            if (flirActuatorVal) flirActuatorVal.textContent = 'GPS: 36.2838N 59.5458E';
             if (reticleLockStatus) reticleLockStatus.textContent = 'ACQUIRING MASHHAD...';
             notifyLifecyclePhase('satellite_orbital', 'رهگیری ماهواره‌ای // شناسایی محل تحویل بسته', seconds);
           } else if (newStage === 'transit') {
@@ -1030,7 +1030,7 @@
           if (droneSpeedVal) droneSpeedVal.textContent = 'GS: 180 km/h';
           if (flirPitchVal) flirPitchVal.textContent = '-45.0° (OPTICAL)';
         } else {
-          if (droneAltVal) droneAltVal.textContent = 'LAT: 36.2843°N  LON: 59.5448°E';
+          if (droneAltVal) droneAltVal.textContent = 'LAT: 36.2838°N  LON: 59.5458°E'; /* 36.28379888932916, 59.545839183469155 | ref: 36.2843, 59.5448 */
           if (droneSpeedVal) droneSpeedVal.textContent = 'PINPOINT LOCK [OK]';
           if (flirPitchVal) flirPitchVal.textContent = 'STREET ZOOM: 100%';
         }
