@@ -81,11 +81,23 @@
             <div class="flir-noise-overlay"></div>
             <div class="flir-vignette-lens"></div>
 
-            <!-- نمای هوایی متحرک زاویه بالا از فراز شهر و ساختمان‌ها -->
+            <!-- نمای هوایی متحرک زاویه بالا از فراز شهر و ساختمان‌ها با فریم‌های سینمایی فوتورئال -->
             <div class="flir-aerial-world" id="flirAerialWorld">
               
+              <!-- اسلایدهای سینمایی فوتورئال و های‌رزولوشن ۴ فاز عملیات پروازی پهپاد -->
+              <div class="drone-cinema-slides" id="droneCinemaSlides">
+                <div class="drone-cinema-slide slide-takeoff active" id="slideTakeoff" style="background-image: url('/assets/drone/drone-phase1-takeoff.jpg');"></div>
+                <div class="drone-cinema-slide slide-transit" id="slideTransit" style="background-image: url('/assets/drone/drone-phase2-transit.jpg');"></div>
+                <div class="drone-cinema-slide slide-drop" id="slideDrop" style="background-image: url('/assets/drone/drone-phase3-drop.jpg');"></div>
+                <div class="drone-cinema-slide slide-landed" id="slideLanded" style="background-image: url('/assets/drone/drone-phase4-landed.jpg');"></div>
+              </div>
+
+              <!-- لایه انیمیشن جوی، پرتو نورافکن و باران سینمایی -->
+              <div class="flir-volumetric-light" id="flirVolumetricLight"></div>
+              <div class="flir-atmosphere-particles"></div>
+
               <!-- بافت شهر و خطوط ساختمان‌ها در شب با دید حرارتی/مادون قرمز -->
-              <div class="flir-city-grid">
+              <div class="flir-city-grid" style="display: none;">
                 <div class="flir-building b-1"></div>
                 <div class="flir-building b-2"></div>
                 <div class="flir-building b-3"></div>

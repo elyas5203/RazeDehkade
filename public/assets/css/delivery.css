@@ -330,14 +330,14 @@ body[data-phase="arrived"] .step-item:nth-child(5) .step-dot {
    ========================================================================== */
 
 body.is-drone-mode .delivery-card-shell {
-  width: min(680px, 100%);
-  background: rgba(8, 16, 12, 0.94);
-  border-color: rgba(0, 255, 102, 0.35);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 35px rgba(0, 255, 102, 0.12);
+  width: min(840px, 98vw);
+  background: rgba(6, 12, 16, 0.96);
+  border-color: rgba(0, 240, 255, 0.35);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.95), 0 0 45px rgba(0, 240, 255, 0.15);
 }
 
 body.is-drone-mode .delivery-card-shell::before {
-  background: linear-gradient(90deg, transparent, #00ff66, transparent);
+  background: linear-gradient(90deg, transparent, #00f0ff, transparent);
 }
 
 body.is-drone-mode #deliveryStatusLabel,
@@ -449,12 +449,113 @@ body[data-phase="arrived"] #droneDeliverySection {
 .flir-screen-frame {
   position: relative;
   width: 100%;
-  height: 310px;
-  border-radius: 16px;
+  height: 420px;
+  border-radius: 18px;
   overflow: hidden;
   background: #020704;
-  border: 2px solid rgba(0, 255, 102, 0.35);
-  box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.9), 0 12px 35px rgba(0, 0, 0, 0.7);
+  border: 2px solid rgba(0, 240, 255, 0.4);
+  box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.95), 0 16px 45px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 240, 255, 0.15);
+  transition: transform 0.2s ease;
+}
+
+@media (max-width: 640px) {
+  .flir-screen-frame {
+    height: 310px;
+  }
+}
+
+.flir-screen-frame.impact-screen-shake {
+  animation: flirScreenImpactShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes flirScreenImpactShake {
+  10%, 90% { transform: translate3d(-1px, 2px, 0); }
+  20%, 80% { transform: translate3d(2px, -3px, 0); }
+  30%, 50%, 70% { transform: translate3d(-3px, 3px, 0); }
+  40%, 60% { transform: translate3d(3px, -2px, 0); }
+}
+
+/* اسلایدهای سینمایی فوتورئال و های‌رزولوشن ۴ فاز عملیات پروازی پهپاد */
+.drone-cinema-slides {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.drone-cinema-slide {
+  position: absolute;
+  inset: -15px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transform: scale(1.02);
+  transition: opacity 0.85s cubic-bezier(0.4, 0, 0.2, 1), transform 8s cubic-bezier(0.1, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+.drone-cinema-slide.active {
+  opacity: 1;
+  transform: scale(1.07);
+}
+
+.drone-cinema-slide.slide-takeoff.active {
+  animation: droneCinematicDrift 10s ease-out forwards;
+}
+
+.drone-cinema-slide.slide-transit.active {
+  animation: droneTransitActionCam 8s ease-in-out infinite alternate;
+}
+
+.drone-cinema-slide.slide-drop.active {
+  animation: droneHoverDrop 6s ease-out forwards;
+}
+
+.drone-cinema-slide.slide-landed.active {
+  animation: droneLandedStill 8s ease-out forwards;
+}
+
+@keyframes droneCinematicDrift {
+  0% { transform: scale(1.02) translateY(0); filter: brightness(0.95); }
+  50% { transform: scale(1.05) translateY(-5px); filter: brightness(1.04); }
+  100% { transform: scale(1.08) translateY(-10px); filter: brightness(1); }
+}
+
+@keyframes droneTransitActionCam {
+  0% { transform: scale(1.03) translate(0, 0) rotate(0deg); }
+  25% { transform: scale(1.05) translate(-3px, 2px) rotate(-0.3deg); }
+  50% { transform: scale(1.04) translate(3px, -2px) rotate(0.2deg); }
+  75% { transform: scale(1.06) translate(-2px, -2px) rotate(-0.2deg); }
+  100% { transform: scale(1.05) translate(3px, 2px) rotate(0.3deg); }
+}
+
+@keyframes droneHoverDrop {
+  0% { transform: scale(1.02) translateY(-8px); }
+  40% { transform: scale(1.06) translateY(0); }
+  60% { transform: scale(1.07) translateY(2px); }
+  100% { transform: scale(1.06) translateY(-2px); }
+}
+
+@keyframes droneLandedStill {
+  0% { transform: scale(1.03); }
+  100% { transform: scale(1.06); }
+}
+
+/* پرتو نورافکن حجمی متحرک و اتمسفر شب */
+.flir-volumetric-light {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  background: radial-gradient(circle at 62% 42%, rgba(56, 189, 248, 0.16) 0%, rgba(0, 240, 255, 0.04) 30%, transparent 65%);
+  mix-blend-mode: screen;
+  animation: volumetricPulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes volumetricPulse {
+  0% { opacity: 0.6; transform: scale(0.98); }
+  100% { opacity: 1; transform: scale(1.03); }
 }
 
 /* خطوط اسکن و نویز سنسور اپتیکال */
@@ -463,9 +564,9 @@ body[data-phase="arrived"] #droneDeliverySection {
   inset: 0;
   pointer-events: none;
   z-index: 15;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.45) 50%);
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%);
   background-size: 100% 4px;
-  opacity: 0.65;
+  opacity: 0.55;
 }
 
 .flir-noise-overlay {
@@ -473,7 +574,7 @@ body[data-phase="arrived"] #droneDeliverySection {
   inset: 0;
   pointer-events: none;
   z-index: 14;
-  opacity: 0.08;
+  opacity: 0.06;
   background-image: repeating-radial-gradient(#00ff66 0 0.0001%, #000 0 0.0002%);
   animation: flirNoiseJitter 0.2s steps(2) infinite;
 }
@@ -489,13 +590,13 @@ body[data-phase="arrived"] #droneDeliverySection {
   inset: 0;
   pointer-events: none;
   z-index: 16;
-  background: radial-gradient(circle at center, transparent 58%, rgba(2, 8, 5, 0.85) 100%);
+  background: radial-gradient(circle at center, transparent 55%, rgba(2, 8, 5, 0.88) 100%);
 }
 
 /* نمای هوایی شهر و حرکت گیمبال ژیروسکوپ */
 .flir-aerial-world {
   position: absolute;
-  inset: -60px;
+  inset: 0;
   transform-origin: center center;
   transition: transform 1.8s cubic-bezier(0.16, 1, 0.3, 1);
   animation: flirGimbalDrift 6s ease-in-out infinite alternate;
@@ -503,81 +604,30 @@ body[data-phase="arrived"] #droneDeliverySection {
 
 @keyframes flirGimbalDrift {
   0% { transform: translate(0px, 0px) rotate(0deg); }
-  50% { transform: translate(-6px, 4px) rotate(-0.5deg); }
-  100% { transform: translate(6px, -4px) rotate(0.5deg); }
+  50% { transform: translate(-4px, 3px) rotate(-0.3deg); }
+  100% { transform: translate(4px, -3px) rotate(0.3deg); }
 }
 
-/* زوم‌های اپتیکال در ۳ فاز */
-.stage-takeoff .flir-aerial-world {
-  transform: scale(0.82) translate(15px, 20px);
-}
-
-.stage-transit .flir-aerial-world {
-  transform: scale(1.15) translate(-8px, -12px);
-}
-
-.stage-airdrop .flir-aerial-world {
-  transform: scale(1.68) translate(0px, 0px);
-}
-
-/* شبکه ساختمان‌ها و شهر در شب با دید حرارتی (IR) */
-.flir-city-grid {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.flir-building {
-  position: absolute;
-  background: rgba(6, 26, 17, 0.6);
-  border: 1px solid rgba(0, 255, 102, 0.2);
-  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8);
-}
-
-.flir-building.b-1 { left: 8%; top: 12%; width: 140px; height: 110px; }
-.flir-building.b-2 { right: 10%; top: 8%; width: 160px; height: 125px; }
-.flir-building.b-3 { left: 14%; bottom: 15%; width: 150px; height: 130px; }
-.flir-building.b-4 { right: 12%; bottom: 12%; width: 170px; height: 140px; }
-
-.flir-road-traffic {
-  position: absolute;
-  left: 0; right: 0; top: 48%; height: 24px;
-  background: rgba(4, 18, 12, 0.5);
-  border-top: 1px dashed rgba(0, 255, 102, 0.15);
-  border-bottom: 1px dashed rgba(0, 255, 102, 0.15);
-}
-
-.traffic-glow {
-  position: absolute;
-  width: 12px; height: 4px; border-radius: 2px;
-  background: #38bdf8; box-shadow: 0 0 8px #38bdf8;
-}
-.traffic-glow.t-1 { top: 6px; animation: trafficRun 7s linear infinite; }
-.traffic-glow.t-2 { top: 14px; animation: trafficRun 9s linear infinite reverse; }
-
-@keyframes trafficRun {
-  from { left: -30px; }
-  to { left: 100%; }
-}
-
-/* ساختمان و پشت‌بوم مقصد (Target Rooftop) */
+/* ساختمان و پشت‌بوم مقصد (Target Rooftop) و المان‌های تعقیب هدف */
 .flir-target-rooftop {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 230px;
+  width: 240px;
   height: 180px;
-  background: rgba(8, 34, 22, 0.85);
-  border: 2px solid rgba(0, 255, 102, 0.65);
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.95), inset 0 0 25px rgba(0, 255, 102, 0.08);
-  z-index: 5;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  z-index: 8;
+  pointer-events: none;
 }
 
 .roof-perimeter-wall {
   position: absolute;
   inset: 4px;
-  border: 1px solid rgba(0, 255, 102, 0.25);
+  border: 1px dashed rgba(0, 240, 255, 0.25);
+  border-radius: 8px;
 }
 
 .roof-vent-chillers {
@@ -586,14 +636,15 @@ body[data-phase="arrived"] #droneDeliverySection {
   top: 14px;
   display: flex;
   gap: 8px;
+  opacity: 0.4;
 }
 
 .vent-rotor {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 255, 102, 0.4);
-  background: radial-gradient(circle at center, #00ff66 10%, transparent 60%);
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  background: radial-gradient(circle at center, #00f0ff 10%, transparent 60%);
   animation: ventSpin 0.3s linear infinite;
 }
 
@@ -606,21 +657,21 @@ body[data-phase="arrived"] #droneDeliverySection {
   position: absolute;
   right: 14px;
   top: 14px;
-  width: 48px;
-  height: 38px;
-  background: rgba(12, 45, 30, 0.9);
-  border: 1px solid rgba(0, 255, 102, 0.45);
+  width: 36px;
+  height: 28px;
+  background: rgba(12, 45, 50, 0.2);
+  border: 1px dashed rgba(0, 240, 255, 0.3);
 }
 
 .roof-water-reservoir {
   position: absolute;
   right: 20px;
   bottom: 18px;
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 255, 102, 0.4);
-  background: rgba(10, 38, 26, 0.85);
+  border: 1px dashed rgba(0, 240, 255, 0.3);
+  background: rgba(10, 38, 46, 0.2);
 }
 
 /* رتیکل هدف‌گیری و پد رهایش روی پشت‌بوم */

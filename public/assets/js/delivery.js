@@ -224,6 +224,67 @@
 
   initTickAudioEngine();
 
+  function playServoReleaseSound() {
+    try {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtxClass) return;
+      if (!tickAudioCtx) tickAudioCtx = new AudioCtxClass();
+      if (tickAudioCtx.state === 'suspended') tickAudioCtx.resume().catch(() => {});
+      const now = tickAudioCtx.currentTime;
+      const osc = tickAudioCtx.createOscillator();
+      const gain = tickAudioCtx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(620, now);
+      osc.frequency.exponentialRampToValueAtTime(180, now + 0.14);
+
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+
+      osc.connect(gain);
+      gain.connect(tickAudioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } catch (_) {}
+  }
+
+  function playImpactThud() {
+    try {
+      const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtxClass) return;
+      if (!tickAudioCtx) tickAudioCtx = new AudioCtxClass();
+      if (tickAudioCtx.state === 'suspended') tickAudioCtx.resume().catch(() => {});
+      const now = tickAudioCtx.currentTime;
+      const osc = tickAudioCtx.createOscillator();
+      const gain = tickAudioCtx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(130, now);
+      osc.frequency.exponentialRampToValueAtTime(28, now + 0.38);
+
+      gain.gain.setValueAtTime(0.75, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+
+      osc.connect(gain);
+      gain.connect(tickAudioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.42);
+    } catch (_) {}
+  }
+
+  function activateDroneSlide(slideId) {
+    try {
+      const slides = document.querySelectorAll('.drone-cinema-slide');
+      slides.forEach(slide => {
+        if (slide.id === slideId) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+    } catch (_) {}
+  }
+
   // ==========================================
   // موتور پخش ساندترک سینمایی و استودیویی و ترنزیشن شوک ناگهانی
   // ==========================================
@@ -762,6 +823,7 @@
           droneSection.classList.add(`stage-${newStage}`);
 
           if (newStage === 'takeoff') {
+            activateDroneSlide('slideTakeoff');
             if (droneStatusTitle) droneStatusTitle.textContent = 'بسته با ریزپرنده ارسال شد';
             if (droneMissionNote) droneMissionNote.textContent = 'ریزپرنده شناسایی از آشیانه برخاسته و با قفل اپتیکال روی مختصات هدف در حال اوج‌گیری است.';
             if (flirZoomVal) flirZoomVal.textContent = '1.0X';
@@ -770,6 +832,7 @@
             if (reticleLockStatus) reticleLockStatus.textContent = 'ACQUIRING...';
             notifyLifecyclePhase('drone_takeoff', '🛸 پرواز ریزپرنده // بسته با ریزپرنده ارسال شد', seconds);
           } else if (newStage === 'transit') {
+            activateDroneSlide('slideTransit');
             if (droneStatusTitle) droneStatusTitle.textContent = 'ریزپرنده در حال حرکت به سمت مقصد';
             if (droneMissionNote) droneMissionNote.textContent = 'ناوبری در کریدور هوایی امن بر فراز شهر // تقرب اپتیکال به پشت‌بوم ساختمان مقصد.';
             if (flirZoomVal) flirZoomVal.textContent = '2.5X';
@@ -778,6 +841,7 @@
             if (reticleLockStatus) reticleLockStatus.textContent = 'TRACKING...';
             notifyLifecyclePhase('drone_transit', '🛸 ناوبری هوایی // ریزپرنده در حال حرکت به سمت مقصد', seconds);
           } else if (newStage === 'airdrop') {
+            if (!hasDroneLanded) activateDroneSlide('slideDrop');
             if (droneStatusTitle) droneStatusTitle.textContent = 'ریزپرنده بسته انداخت روی پشت‌بوم';
             if (droneMissionNote) droneMissionNote.textContent = 'پرواز ایستا بالای موقعیت // رهایش هوایی بسته و فرود روی پشت‌بوم.';
             if (flirZoomVal) flirZoomVal.textContent = '5.0X';
@@ -793,12 +857,21 @@
           if (ratio >= 0.75 && !hasDroneDropped) {
             hasDroneDropped = true;
             droneSection.classList.add('is-dropping');
+            playServoReleaseSound();
             if (flirActuatorVal) flirActuatorVal.textContent = 'RELEASED // DROPPING';
           }
           if (ratio >= 0.88 && !hasDroneLanded) {
             hasDroneLanded = true;
             droneSection.classList.remove('is-dropping');
             droneSection.classList.add('has-landed');
+            activateDroneSlide('slideLanded');
+            playImpactThud();
+            const screenFrame = document.getElementById('flirScreenFrame');
+            if (screenFrame) {
+              screenFrame.classList.remove('impact-screen-shake');
+              void screenFrame.offsetWidth;
+              screenFrame.classList.add('impact-screen-shake');
+            }
             if (droneStatusTitle) droneStatusTitle.textContent = 'ریزپرنده بسته انداخت روی پشت‌بوم';
             if (droneMissionNote) droneMissionNote.textContent = 'فرود بسته با موفقیت روی پشت‌بوم تأیید شد // ریزپرنده در حال بازگشت به پایگاه است.';
             if (flirActuatorVal) flirActuatorVal.textContent = 'CONFIRMED ON ROOF';
