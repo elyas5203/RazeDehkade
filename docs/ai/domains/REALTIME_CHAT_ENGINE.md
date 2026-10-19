@@ -1,0 +1,91 @@
+# 💬 سند والد دامنه موتور چت بلادرنگ، شنود زنده و هک (REALTIME_CHAT_ENGINE.md)
+> **سند والد دامنه (Parent Domain Master):** زیرساخت سوکت روم‌ها، تبادل زنده پیام‌ها، چیدمان حباب‌ها، ویرایش/حذف پیام توسط دانش‌آموز، شنود صوتی محیطی توسط ادمین، قفل چت و سناریوی هک مزداک.  
+> **سند بالادستی (Parent):** [`docs/ai/ROOT_MASTER.md`](file:///c:/xampp/htdocs/RazeDehkade/docs/ai/ROOT_MASTER.md)
+
+---
+
+## ۱. اهداف و معماری موتور چت (Domain Overview)
+
+این دامنه بستر اصلی تعامل کارآگاه و دانش‌آموزان است. ارتباط از طریق وب‌سوکت (`Socket.io 4.7.5`) روی روم‌های ایزوله `session_${sessionId}` برقرار می‌شود. پایانه دانش‌آموز دارای طراحی دارک کارآگاهی نوار با حداکثر فضای مفید و حذف هدر و فوترهای مزاحم است.
+قابلیت‌های کلیدی موتور چت:
+- **تفکیک حباب‌های گفتگو:** پیام‌های خود کاربر در سمت راست و پیام‌های کارآگاه/ادمین/هکر در سمت چپ.
+- **امکان ویرایش و حذف پیام توسط خود دانش‌آموز:** پاپ‌آپ اختصاصی با تم شیشه‌ای Liquid Glass برای اصلاح متن.
+- **سیستم شنود صدای محیط کلاس توسط کارآگاه:** استریم صدای میکروفون کلاینت به اتاق ادمین به صورت بسته‌های صوتی ADPCM هم‌زمان با حذف دکمه ارسال ویس دانش‌آموز.
+- **قفل/بازگشایی چت:** ادمین می‌تواند در لحظات حساس سناریو ارسال پیام دانش‌آموزان را متوقف کند.
+- **سکانس هک ۵۳.۵ ثانیه‌ای مزداک:** رویداد سینمایی تعاملی شامل گلیچ صفحه، سنتز صدای فرکانسی، متن‌های تهدیدآمیز هکر و بازگشت خودکار به وضعیت عادی.
+
+---
+
+## ۲. خطوط قرمز و نبایدهای دامنه (Domain Invariants)
+
+> ⛔ **قوانین غیرقابل‌تغییر دامنه چت و شنود:**
+1. **چیدمان استاندارد حباب‌های چت (`Bubble Alignment`):** پیام‌های خود کاربر (`.message-bubble.user`) حتماً سمت راست (`align-self: flex-start`) و پیام‌های ادمین/کارآگاه/هکر حتماً سمت چپ (`align-self: flex-end`) قرار می‌گیرند (`DEC-0014`).
+2. **مجوز ویرایش و حذف پیام:** دانش‌آموز فقط و فقط می‌تواند پیام‌های ارسال‌شده توسط خودش (`sender_type === 'user'`) را ویرایش یا حذف کند و امکان دستکاری پیام‌های کارآگاه وجود ندارد (`DEC-0013`).
+3. **حفظ استریم شنود زنده میکروفون:** دکمه ضبط ویس دانش‌آموز از رابط کاربری حذف شده اما سیستم شنود زنده محیطی توسط ادمین باید کاملاً سالم و فعال باقی بماند (`DEC-0011`).
+4. **پیشگیری از دابل‌سابمیت و اسپم پیام:** فلگ `in-flight` در کلاینت و کش ۵ ثانیه‌ای ضدتکرار در سرور باید از ثبت پیام‌های تکراری جلوگیری کنند (`DEC-0009`).
+5. **استاندارد کامپوزر ادمین:** زدن کلید `Enter` پیام را ارسال کرده و دکمه‌ها باید دارای ارتفاع ثابت ۴۲px و تراز پایینی باشند (`DEC-0018`).
+
+---
+
+## ۳. نمودار توالی ارسال پیام و شنود صوتی (Mermaid Sequence Diagram)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Student as دانش‌آموز (User)
+    participant Socket as سرور سوکت (Socket.io)
+    actor Detective as کارآگاه (Admin)
+    participant DB as پایگاه داده MySQL
+
+    Note over Student, Detective: برقراری اتصال در روم اختصاصی session_X
+    Detective->>Socket: درخواست آغاز شنود (listen_live_audio)
+    Socket->>Student: سیگنال ارسال بسته‌های صوتی
+    Student-->>Socket: ارسال چانک‌های صوتی ADPCM (audio_stream_data)
+    Socket-->>Detective: پخش زنده صدای میکروفون در پنل ادمین
+
+    Student->>Socket: ارسال پیام متنی (send_message)
+    Socket->>DB: درج در جدول messages با شناسه جلسه
+    Socket-->>Detective: انتشار آنی پیام در پنل ادمین
+    Socket-->>Student: تایید و نمایش حباب پیام در سمت راست
+
+    Detective->>Socket: ارسال پیام راهنمای کارآگاهی (send_message)
+    Socket->>DB: ذخیره پیام ادمین
+    Socket-->>Student: نمایش حباب کارآگاه در سمت چپ
+    
+    Student->>Socket: درخواست ویرایش پیام خود (edit_message)
+    Socket->>DB: به‌روزرسانی متن و ثبت لاگ ویرایش
+    Socket-->>Detective: اعلام تغییر پیام در روم
+    Socket-->>Student: به‌روزرسانی زنده متن در حباب
+```
+
+---
+
+## ۴. نگاشت میکروسکوپی فایل‌ها و ماژول‌ها (Deterministic Code Locations)
+
+- **هندلرهای سوکت چت و شنود صوتی:**  
+  مسیر: [`src/socket/index.js`](file:///c:/xampp/htdocs/RazeDehkade/src/socket/index.js#L170-L500)  
+  توابع: رویدادهای `send_message`، `edit_message`، `delete_message`، `listen_live_audio`، `audio_stream_data`.
+- **مدیریت سناریوی هک مزداک:**  
+  مسیر: [`src/socket/index.js`](file:///c:/xampp/htdocs/RazeDehkade/src/socket/index.js#L510-L585)  
+  توابع: `start_hack_sequence` و `stop_hack_sequence`.
+- **کنترلر کلاینت چت دانش‌آموز:**  
+  مسیر: [`public/assets/js/user-chat.js`](file:///c:/xampp/htdocs/RazeDehkade/public/assets/js/user-chat.js#L1-L820)  
+  توابع: `sendMessage`, `openUserEditModal`, `deleteUserMessage`, `initMicrophoneListening`.
+- **کنترلر کامپوزر و پنل ادمین:**  
+  مسیر: [`public/assets/js/admin-chat.js`](file:///c:/xampp/htdocs/RazeDehkade/public/assets/js/admin-chat.js#L1-L650)  
+  توابع: `sendAdminMessage`, `toggleLiveAudioListener`, `insertCannedResponseToComposer`.
+- **استایل‌های حباب‌های چت و مدیا:**  
+  مسیر: [`public/assets/css/chat.css`](file:///c:/xampp/htdocs/RazeDehkade/public/assets/css/chat.css#L160-L380)  
+  کلاس‌ها: `.message-bubble.user`, `.message-bubble.admin`, `.edit-message-dialog`.
+
+---
+
+## ۵. ماتریس اعتبارسنجی خودکار (Automated Verification Matrix)
+
+| شناسه تست | سناریوی آزمون | دستور / فایل تست | خروجی مورد انتظار | وضعیت |
+|---|---|---|---|---|
+| TC-CHT-01 | ارسال و تفکیک حباب‌های کاربر و ادمین | `tests/api.test.js` | چیدمان صحیح راست/چپ و عدم تداخل | PASS |
+| TC-CHT-02 | ویرایش و حذف پیام توسط دانش‌آموز | `tests/api.test.js` | اجازه ویرایش پیام خود و رد پیام ادمین | PASS |
+| TC-CHT-03 | قفل چت توسط ادمین و رد پیام | `tests/api.test.js` | مسدود شدن ارسال پیام دانش‌آموز | PASS |
+| TC-CHT-04 | فشرده‌سازی و یکپارچگی صوتی ADPCM | `tests/live-audio-codec.test.js` | کدگذاری و دیکد مستقل بدون خطا | PASS |
+| TC-CHT-05 | سناریوی هک ۵۳.۵ ثانیه‌ای مزداک | `tests/hack-sequence.test.js` | اجرای تمام فازها و بازیابی کنترل | PASS |
