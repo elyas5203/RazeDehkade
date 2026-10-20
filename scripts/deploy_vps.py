@@ -57,6 +57,7 @@ FILES_TO_UPLOAD = [
     'src/routes/store.js',
     'src/socket/index.js',
     'src/utils/logger.js',
+    'tests/api.test.js',
     'tests/admin-ux-and-blackout.test.js',
     'tests/admin-stability-and-clear.test.js',
     'tests/admin-scenario-progress.test.js',
