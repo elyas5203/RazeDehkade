@@ -679,6 +679,67 @@ describe('Detective Game Realtime Chat Integration Tests', function () {
     assert.strictEqual(checkAfterData.data.phone, testPhone);
   });
 
+  it('9b. Admin dashboard phone field view and update endpoint (/api/sessions/:id/phone)', async function () {
+    const adminPhone = '09359876543';
+
+    // 1. تغییر شماره همراه جلسه توسط ادمین
+    const updateRes = await fetch(`${serverUrl}/api/sessions/${sessionId}/phone`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({ phone: adminPhone }),
+    });
+    const updateData = await updateRes.json();
+    assert.strictEqual(updateRes.status, 200);
+    assert.strictEqual(updateData.success, true);
+    assert.strictEqual(updateData.data.teacher_phone, adminPhone);
+
+    // 2. دریافت لیست جلسات و اطمینان از وجود فیلد teacher_phone
+    const listRes = await fetch(`${serverUrl}/api/sessions`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const listData = await listRes.json();
+    assert.strictEqual(listRes.status, 200);
+    const targetSession = listData.data.find(s => s.id === sessionId);
+    assert.ok(targetSession, 'جلسه هدف باید در فهرست وجود داشته باشد');
+    assert.strictEqual(targetSession.teacher_phone, adminPhone, 'شماره همراه باید در لیست جلسات ادمین دیده شود');
+
+    // 3. اعتبارسنجی ورود مستقیم: کاربر با زدن این شماره کد چت خود را دریافت می‌کند
+    const checkRes = await fetch(`${serverUrl}/api/auth/teacher/check`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: adminPhone }),
+    });
+    const checkData = await checkRes.json();
+    assert.strictEqual(checkRes.status, 200);
+    assert.strictEqual(checkData.registered, true);
+    assert.strictEqual(checkData.data.chatCode, sessionCode, 'کد چت بازگردانده شده باید دقیقاً برابر کد جلسه باشد');
+
+    // 4. اعتبارسنجی فرمت نامعتبر
+    const badRes = await fetch(`${serverUrl}/api/sessions/${sessionId}/phone`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({ phone: '123' }),
+    });
+    assert.strictEqual(badRes.status, 400);
+
+    // 5. تست حذف شماره همراه
+    const clearRes = await fetch(`${serverUrl}/api/sessions/${sessionId}/phone`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({ phone: '' }),
+    });
+    assert.strictEqual(clearRes.status, 200);
+  });
+
   it('10. Weekly scenario content API (5 Weeks)', async function () {
     const week1Res = await fetch(`${serverUrl}/api/weekly-content?week=1`, {
       headers: { Authorization: `Bearer ${adminToken}` },

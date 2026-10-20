@@ -647,6 +647,95 @@ body.dashboard-page {
   color: var(--gold);
 }
 
+/* Phone Number Chip in Session Card */
+.session-phone-chip {
+  background: #060b10;
+  border: 1px solid rgba(56, 189, 248, 0.22);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.session-phone-chip:hover {
+  border-color: rgba(56, 189, 248, 0.5);
+  background: #081119;
+}
+
+.phone-chip-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.phone-chip-icon {
+  font-size: 13px;
+}
+
+.phone-chip-title {
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.phone-chip-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.phone-chip-val-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.phone-chip-number {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #38bdf8;
+  direction: ltr;
+}
+
+.phone-chip-empty {
+  font-size: 12px;
+  color: #64748b;
+  font-style: italic;
+}
+
+.phone-action-btn {
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.phone-action-btn:hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.phone-action-btn:active {
+  transform: translateY(0);
+}
+
 /* ==========================================================================
    بلوک مدیریت و رهگیری ۳ پرونده در هر جلسه (حل شده / فعال / قفل)
    ========================================================================== */

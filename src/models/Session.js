@@ -129,7 +129,7 @@ class Session {
    * @param {number} id
    * @param {Object} data
    */
-  static async update(id, { name, status, active_case }) {
+  static async update(id, { name, status, active_case, teacher_phone }) {
     await query(
       `UPDATE sessions
        SET name = COALESCE(?, name),
@@ -140,6 +140,10 @@ class Session {
        WHERE id = ?`,
       [name || null, status || null, active_case || null, id]
     );
+    if (teacher_phone !== undefined) {
+      const cleanPhone = teacher_phone ? String(teacher_phone).trim().replace(/[^0-9]/g, '') : null;
+      await Session.bindTeacherPhone(id, cleanPhone);
+    }
     return await Session.findById(id);
   }
 
