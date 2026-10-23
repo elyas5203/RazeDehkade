@@ -411,10 +411,123 @@
   color: #fde68a;
 }
 
+.user-msg-action-btn.reply:hover {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: rgba(56, 189, 248, 0.6);
+  color: #bae6fd;
+}
+
 .user-msg-action-btn.delete:hover {
   background: rgba(239, 68, 68, 0.25);
   border-color: rgba(239, 68, 68, 0.6);
   color: #fecaca;
+}
+
+/* کوت‌باکس شیک و شیشه‌ای ریپلای درون حباب پیام (Two-Way Quote Card) */
+.message-reply-quote {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 4px 8px 5px 6px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.16s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.message-reply-quote:hover {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(56, 189, 248, 0.35);
+  transform: translateY(-1px);
+}
+
+.message-reply-quote .reply-quote-bar {
+  width: 3.5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: #38bdf8;
+}
+
+.message-reply-quote .reply-quote-bar.user {
+  background: #10b981;
+}
+
+.message-reply-quote .reply-quote-bar.admin {
+  background: #f59e0b;
+}
+
+.message-reply-quote .reply-quote-bar.hacker {
+  background: #ef4444;
+}
+
+.message-reply-quote .reply-quote-bar.system {
+  background: #a855f7;
+}
+
+.message-reply-quote .reply-quote-inner {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.message-reply-quote .reply-quote-author {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #38bdf8;
+  line-height: 1.3;
+}
+
+.message-reply-quote .reply-quote-bar.admin ~ .reply-quote-inner .reply-quote-author {
+  color: #fbbf24;
+}
+
+.message-reply-quote .reply-quote-bar.user ~ .reply-quote-inner .reply-quote-author {
+  color: #6ee7b7;
+}
+
+.message-reply-quote .reply-quote-bar.hacker ~ .reply-quote-inner .reply-quote-author {
+  color: #fca5a5;
+}
+
+.message-reply-quote .reply-quote-snippet {
+  font-size: 11px;
+  color: rgba(226, 232, 240, 0.78);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.35;
+  margin-top: 1px;
+}
+
+/* انیمیشن پالس نئونی هنگام پرش به پیام مرجع (Jump-to-Message Neon Glow) */
+@keyframes replyHighlightPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.8), 0 0 24px rgba(56, 189, 248, 0.6);
+    filter: brightness(1.25);
+  }
+  40% {
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.9), 0 0 36px rgba(56, 189, 248, 0.75);
+    filter: brightness(1.35);
+  }
+  100% {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+    filter: brightness(1);
+  }
+}
+
+.message-bubble.highlight-pulse {
+  animation: replyHighlightPulse 1.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  z-index: 10;
 }
 
 .message-time {
@@ -968,10 +1081,99 @@
   transform: scale(1.14);
 }
 
-/* مخفی‌سازی کامل دکمه ضبط ویس کاربر در صورت تزریق احتمالی */
-#voice-record-btn,
-#voice-record-bar {
-  display: none !important;
+/* استایل پیش‌نمایش نوار ریپلای بالای کامپوزر دانش‌آموز */
+.composer-reply-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  animation: replySlideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  z-index: 5;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes replySlideDown {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.composer-reply-preview .reply-preview-bar-accent {
+  width: 3.5px;
+  height: 28px;
+  border-radius: 3px;
+  background: #38bdf8;
+  flex-shrink: 0;
+}
+
+.composer-reply-preview .reply-preview-bar-accent.admin {
+  background: #f59e0b;
+}
+
+.composer-reply-preview .reply-preview-bar-accent.user {
+  background: #10b981;
+}
+
+.composer-reply-preview .reply-preview-bar-accent.hacker {
+  background: #ef4444;
+}
+
+.composer-reply-preview .reply-preview-bar-accent.system {
+  background: #a855f7;
+}
+
+.composer-reply-preview .reply-preview-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  text-align: right;
+}
+
+.composer-reply-preview .reply-preview-sender-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #38bdf8;
+}
+
+.composer-reply-preview .reply-preview-title {
+  font-weight: 700;
+}
+
+.composer-reply-preview .reply-preview-snippet {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  margin-top: 1px;
+}
+
+.composer-reply-preview .reply-preview-cancel-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.composer-reply-preview .reply-preview-cancel-btn:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
 }
 
 .composer-hint {
@@ -1539,6 +1741,7 @@
 }
 
 .cal-day-cell {
+  position: relative;
   border: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(255, 255, 255, 0.035);
   color: #e2e8f0;
@@ -1552,6 +1755,14 @@
   cursor: pointer;
   transition: all 0.14s ease;
   line-height: 1;
+}
+
+.cal-day-cell .cal-day-num {
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 0 2px #000, 0 1px 2px #000;
+  font-weight: 800;
+  pointer-events: none;
 }
 
 .cal-day-cell.is-outside {
@@ -1587,6 +1798,127 @@
   font-weight: 900;
   box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
   opacity: 1;
+}
+
+/* --- نشانه‌گذاری‌های کارآگاهی تقویم شمسی (MASTER-09 / DEC-0030) --- */
+.cal-day-cell.has-mark {
+  overflow: visible;
+}
+
+/* ۱. دایره قرمز کارآگاهی (سرنخ‌های کلیدی پرونده - سه‌شنبه، چهارشنبه و پنج‌شنبه) - درخشان و پرکنتراست */
+.cal-day-cell.has-mark-circle {
+  background: rgba(239, 68, 68, 0.22) !important;
+  border-color: rgba(248, 113, 113, 0.75) !important;
+  color: #ffffff !important;
+}
+
+.cal-day-cell.has-mark-circle .cal-day-num {
+  color: #ffffff !important;
+  text-shadow: 0 0 3px #000, 0 1px 3px #000, 0 0 8px rgba(239, 68, 68, 0.9) !important;
+  font-weight: 900 !important;
+}
+
+.cal-day-cell.has-mark-circle::after {
+  content: '';
+  position: absolute;
+  inset: 0.5px;
+  border: 2px solid #f87171;
+  border-radius: 53% 47% 55% 45% / 46% 54% 46% 54%;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.95), inset 0 0 4px rgba(239, 68, 68, 0.45);
+  pointer-events: none;
+  transform: rotate(-3deg);
+  z-index: 2;
+}
+
+.cal-day-cell.has-mark-circle.is-today::after,
+.cal-day-cell.has-mark-circle.is-selected::after {
+  border-color: #fca5a5;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 1), inset 0 0 5px rgba(239, 68, 68, 0.55);
+}
+
+/* ۲. ضربدر کارآگاهی شارپ (رد فرضیه / رد پیگیری) - خطوط ماژیکی دوطرفه با کنتراست بالا */
+.cal-day-cell.has-mark-cross {
+  background: rgba(239, 68, 68, 0.16) !important;
+  border-color: rgba(239, 68, 68, 0.65) !important;
+  color: #fecdd3;
+}
+
+.cal-day-cell.has-mark-cross::before,
+.cal-day-cell.has-mark-cross::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 12%;
+  right: 12%;
+  height: 2px;
+  background: #f43f5e;
+  border-radius: 1px;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.95);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.cal-day-cell.has-mark-cross::before {
+  transform: translateY(-50%) rotate(34deg);
+}
+
+.cal-day-cell.has-mark-cross::after {
+  transform: translateY(-50%) rotate(-34deg);
+}
+
+/* ۳. تیک کارآگاهی شارپ (تأیید اقدام پرونده) - وکتور هندسی دقیق بدون ماتی */
+.cal-day-cell.has-mark-check {
+  background: rgba(16, 185, 129, 0.16) !important;
+  border-color: rgba(16, 185, 129, 0.65) !important;
+  color: #a7f3d0;
+}
+
+.cal-day-cell.has-mark-check::before {
+  display: none !important;
+}
+
+.cal-day-cell.has-mark-check::after {
+  content: '';
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  width: 5px;
+  height: 10px;
+  border: solid #22c55e;
+  border-width: 0 2.4px 2.4px 0;
+  transform: translate(-50%, -55%) rotate(42deg);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.95));
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* حالت انتخاب‌شده روز با حفظ کنتراست */
+.cal-day-cell.is-selected.has-mark-cross::before,
+.cal-day-cell.is-selected.has-mark-cross::after {
+  background: #881337;
+  box-shadow: none;
+}
+
+.cal-day-cell.is-selected.has-mark-check::after {
+  border-color: #064e3b;
+  filter: none;
+}
+
+.cal-day-cell.is-selected.has-mark-circle {
+  background: rgba(239, 68, 68, 0.32) !important;
+  border-color: #f87171 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.75) !important;
+}
+
+.cal-day-cell.is-selected.has-mark-circle .cal-day-num {
+  color: #ffffff !important;
+  text-shadow: 0 0 4px #000, 0 1px 3px #000 !important;
+}
+
+.cal-day-cell.is-selected.has-mark-circle::after {
+  border-color: #fca5a5;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.9);
 }
 
 /* --- قسمت ۲: ویترین سه‌گانه قاب‌بندی‌شده «عکس دستیاران کارآگاه» با لوپ ۱ دقیقه‌ای --- */

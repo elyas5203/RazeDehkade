@@ -28,6 +28,8 @@ const requestedSessionId = parseInt(new URLSearchParams(window.location.search).
 let activeSessionId = requestedSessionId || parseInt(sessionStorage.getItem('activeAdminSessionId'), 10) || null;
 let sessionsMap = {};
 const sessionDrafts = new Map();
+const adminMessagesMap = new Map();
+let activeAdminReplyId = null;
 let historyLoadedFor = null;
 let composerMediaPending = false;
 let adminTextPending = false;
@@ -78,6 +80,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function handleAdminComposerKeydown(e) {
+  if (e.key === 'Escape') {
+    if (activeAdminReplyId) {
+      cancelAdminReply();
+      e.preventDefault();
+      return;
+    }
+  }
   // بر اساس نیازمندی صریح: کلید اینتر پیام را ارسال نمی‌کند و فقط به خط بعدی می‌رود.
   // ارسال پیام تنها با کلیک روی دکمه «ارسال پیام» انجام می‌گردد.
   if (e.key === 'Enter' || e.keyCode === 13) {
@@ -216,7 +225,6 @@ function initAdminSocket() {
 
   socket.on('admin_audio_stream_adpcm', (data) => {
     if (!isAudioListening || !data || Number(data.sessionId) !== Number(activeSessionId)) return;
-    if (adminPeerConnection && adminPeerConnection.connectionState === 'connected') return;
     if (!window.LiveAudioCodec) return;
     try {
       const samples = LiveAudioCodec.decode(data.packet);
@@ -245,6 +253,32 @@ function initAdminSocket() {
       } catch (e) {
         console.error('Error adding ICE candidate on admin:', e);
       }
+    }
+  });
+
+  socket.on('admin_audio_stream_started_ack', (data) => {
+    if (data && Number(data.sessionId) === Number(activeSessionId) && isAudioListening) {
+      console.log('🎙️ تایید دریافت شنود جلسه توسط سرور:', data);
+      if (typeof data.isStudentOnline !== 'undefined' && !data.isStudentOnline) {
+        updateAudioUI('waiting_for_student');
+      }
+    }
+  });
+
+  socket.on('session_presence_changed', (data) => {
+    if (data && Number(data.sessionId) === Number(activeSessionId) && isAudioListening) {
+      if (data.isOnline) {
+        updateAudioUI('connecting');
+        socket.emit('start_audio_stream', { sessionId: activeSessionId });
+      } else {
+        updateAudioUI('waiting_for_student');
+      }
+    }
+  });
+
+  socket.on('admin_audio_stream_stopped_ack', (data) => {
+    if (data && Number(data.sessionId) === Number(activeSessionId)) {
+      console.log('🛑 تایید توقف شنود جلسه:', data);
     }
   });
 
@@ -565,6 +599,9 @@ function renderAdminMessage(msg, autoScroll = true) {
   const box = document.getElementById('admin-messages-box');
   if (!box || Number(msg.session_id) !== Number(activeSessionId)) return;
   if (box.querySelector(`[data-message-id="${Number(msg.id)}"]`)) return;
+
+  adminMessagesMap.set(Number(msg.id), { ...msg });
+
   const div = document.createElement('div');
   div.dataset.messageId = Number(msg.id);
   div.className = `message-bubble ${msg.sender_type}`;
@@ -601,19 +638,63 @@ function renderAdminMessage(msg, autoScroll = true) {
     bodyContent = `<a href="${fileUrl}" download target="_blank" rel="noopener" class="admin-file-badge"><span style="font-size:14px;">📁</span><span>${escapeHtml(cleanFileName || cleanContent || 'دریافت فایل')}</span></a>`;
   }
 
+  let replyQuoteMarkup = '';
+  if (msg.reply_to_id) {
+    let replySender = 'کارآگاه';
+    if (msg.reply_sender_type === 'user') {
+      replySender = 'دستیاران کارآگاه';
+    } else if (msg.reply_sender_type === 'admin') {
+      replySender = msg.reply_admin_name || 'مرکز فرماندهی (شما)';
+    } else if (msg.reply_sender_type === 'hacker') {
+      replySender = 'شبکه مزداک';
+    } else if (msg.reply_sender_type === 'system') {
+      replySender = 'پیام سیستم';
+    }
+
+    let replySnippet = msg.reply_content || '';
+    if (msg.reply_message_type === 'image') replySnippet = `📷 تصویر ${msg.reply_file_name || ''}`.trim();
+    else if (msg.reply_message_type === 'voice' || msg.reply_message_type === 'user_voice') replySnippet = '🎙️ پیام صوتی';
+    else if (msg.reply_message_type === 'video') replySnippet = '🎬 ویدیوی ارسالی';
+    else if (msg.reply_message_type === 'file') replySnippet = `📁 فایل ${msg.reply_file_name || ''}`.trim();
+    if (!replySnippet) replySnippet = 'پیام مرجع';
+    replySnippet = fixMojibakeText(replySnippet);
+    if (replySnippet.length > 70) replySnippet = replySnippet.slice(0, 67) + '…';
+
+    const safeReplyType = escapeHtml(msg.reply_sender_type || 'user');
+    replyQuoteMarkup = `
+      <div class="message-reply-quote" onclick="jumpToAdminMessage(${Number(msg.reply_to_id)})" role="button" tabindex="0" title="پرش به پیام اصلی">
+        <div class="reply-quote-bar ${safeReplyType}"></div>
+        <div class="reply-quote-inner">
+          <div class="reply-quote-author">
+            <span class="reply-icon" aria-hidden="true">↩</span>
+            <span class="reply-name">${escapeHtml(replySender)}</span>
+          </div>
+          <div class="reply-quote-snippet">${escapeHtml(replySnippet)}</div>
+        </div>
+      </div>
+    `;
+  }
+
   div.innerHTML = `
     <div class="message-sender">
       <span>${escapeHtml(senderTitle)}</span>
       <div style="display:flex;align-items:center;gap:6px;">
         <span class="msg-time-badge">${new Date(msg.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}</span>
         <div class="msg-actions">
+          <button type="button" class="msg-action-btn reply" onclick="stageAdminReply(${msg.id})" style="color:var(--command-blue, #38bdf8);" title="پاسخ به این پیام (یا دوبار کلیک)">↩️</button>
           <button type="button" class="msg-action-btn" onclick="editChatMessage(${msg.id})" style="color:var(--command-amber);" title="ویرایش پیام">✏️</button>
           <button type="button" class="msg-action-btn" onclick="deleteChatMessage(${msg.id})" style="color:var(--command-red);" title="حذف پیام">🗑️</button>
         </div>
       </div>
     </div>
+    ${replyQuoteMarkup}
     <div id="msg-content-${msg.id}" class="message-content">${bodyContent}</div>
   `;
+
+  div.addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    stageAdminReply(msg.id);
+  });
 
   const laterMessage = [...box.children].find(child => Number(child.dataset.messageId) > Number(msg.id));
   box.insertBefore(div, laterMessage || null);
@@ -621,6 +702,126 @@ function renderAdminMessage(msg, autoScroll = true) {
     box.scrollTop = box.scrollHeight;
   }
 }
+
+/**
+ * استیج کردن حالت پاسخ به یک پیام در اتاق فرمان ادمین
+ */
+function stageAdminReply(messageId) {
+  const numId = Number(messageId);
+  if (!numId) return;
+  activeAdminReplyId = numId;
+  const msg = adminMessagesMap.get(numId);
+
+  const bar = document.getElementById('admin-reply-preview-bar');
+  const titleEl = document.getElementById('admin-reply-preview-title');
+  const snippetEl = document.getElementById('admin-reply-preview-snippet');
+  const accentEl = document.getElementById('admin-reply-accent');
+  const textarea = document.getElementById('admin-msg-input');
+
+  let authorName = 'دستیاران کارآگاه';
+  let snippet = '';
+  let senderClass = 'user';
+
+  if (msg) {
+    senderClass = msg.sender_type || 'user';
+    if (msg.sender_type === 'user') {
+      authorName = 'دستیاران کارآگاه';
+    } else if (msg.sender_type === 'admin') {
+      authorName = msg.admin_sender_name || 'مرکز فرماندهی (شما)';
+    } else if (msg.sender_type === 'hacker') {
+      authorName = 'شبکه مزداک';
+    } else if (msg.sender_type === 'system') {
+      authorName = 'سیستم';
+    }
+
+    if (msg.message_type === 'image') {
+      snippet = `📷 تصویر ${msg.file_name || ''}`.trim();
+    } else if (msg.message_type === 'voice' || msg.message_type === 'user_voice') {
+      snippet = '🎙️ پیام صوتی';
+    } else if (msg.message_type === 'video') {
+      snippet = '🎬 ویدیوی ارسالی';
+    } else if (msg.message_type === 'file') {
+      snippet = `📁 فایل ${msg.file_name || ''}`.trim();
+    } else {
+      snippet = msg.content || '';
+    }
+  } else {
+    const bubble = document.querySelector(`[data-message-id="${numId}"]`);
+    if (bubble) {
+      if (bubble.classList.contains('user')) {
+        authorName = 'دستیاران کارآگاه';
+        senderClass = 'user';
+      } else if (bubble.classList.contains('admin')) {
+        authorName = 'مرکز فرماندهی';
+        senderClass = 'admin';
+      } else if (bubble.classList.contains('hacker')) {
+        authorName = 'شبکه مزداک';
+        senderClass = 'hacker';
+      }
+      const textEl = bubble.querySelector('.message-content');
+      snippet = textEl ? textEl.textContent.trim() : '';
+    }
+  }
+
+  snippet = fixMojibakeText(snippet || 'پیام انتخاب شده');
+  if (snippet.length > 70) snippet = snippet.slice(0, 67) + '…';
+
+  if (titleEl) titleEl.textContent = `پاسخ به ${authorName}`;
+  if (snippetEl) snippetEl.textContent = snippet;
+  if (accentEl) {
+    accentEl.className = 'reply-preview-bar-accent ' + senderClass;
+  }
+
+  if (bar) {
+    bar.hidden = false;
+    bar.style.display = 'flex';
+  }
+
+  if (textarea) {
+    textarea.focus();
+  }
+}
+window.stageAdminReply = stageAdminReply;
+
+/**
+ * لغو حالت پاسخ در کامپوزر ادمین
+ */
+function cancelAdminReply() {
+  activeAdminReplyId = null;
+  const bar = document.getElementById('admin-reply-preview-bar');
+  if (bar) {
+    bar.hidden = true;
+    bar.style.display = 'none';
+  }
+}
+window.cancelAdminReply = cancelAdminReply;
+
+/**
+ * پرش به پیام مرجع در چت ادمین با هایلایت نئونی طلایی
+ */
+function jumpToAdminMessage(replyId) {
+  const numId = Number(replyId);
+  if (!numId) return;
+  const targetEl = document.querySelector(`[data-message-id="${numId}"]`);
+  if (targetEl) {
+    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    targetEl.classList.remove('highlight-pulse');
+    void targetEl.offsetWidth; // اعمال مجدد انیمیشن
+    targetEl.classList.add('highlight-pulse');
+    setTimeout(() => {
+      targetEl.classList.remove('highlight-pulse');
+    }, 1800);
+  } else {
+    const feedback = document.getElementById('admin-send-feedback');
+    if (feedback) {
+      feedback.textContent = 'پیام مرجع در تاریخچه بالاتر قرار دارد.';
+      setTimeout(() => {
+        if (feedback.textContent.includes('تاریخچه بالاتر')) feedback.textContent = '';
+      }, 3500);
+    }
+  }
+}
+window.jumpToAdminMessage = jumpToAdminMessage;
 
 let pendingAdminEditMessageId = null;
 
@@ -731,6 +932,8 @@ async function sendAdminMessage() {
       alert('اتصال چت برقرار نیست؛ دوباره تلاش کنید.');
       return;
     }
+    const replyToId = activeAdminReplyId;
+    cancelAdminReply();
     socket.timeout(10000).emit('send_message', {
       sessionId: targetSessionId,
       content: content || staged.title,
@@ -738,9 +941,11 @@ async function sendAdminMessage() {
       messageType: staged.type,
       fileUrl: staged.fileUrl,
       fileName: staged.fileName,
+      replyToId: replyToId || null,
     }, (error, ack) => {
       composerMediaPending = false;
       if (error || !ack?.success) {
+        if (replyToId) stageAdminReply(replyToId);
         alert(ack?.message || 'ارسال فایل تأیید نشد؛ دوباره تلاش کنید.');
         return;
       }
@@ -780,15 +985,21 @@ async function sendAdminMessage() {
   const sendButton = document.getElementById('admin-send-btn');
   if (sendButton) sendButton.disabled = true;
   setAdminSendFeedback('در حال تأیید ارسال پیام…');
+
+  const replyToId = activeAdminReplyId;
+  cancelAdminReply();
+
   socket.timeout(10000).emit('send_message', {
     sessionId: targetSessionId,
     content: content,
     senderType: selectedSenderType,
     messageType: 'text',
+    replyToId: replyToId || null,
   }, (error, ack) => {
     adminTextPending = false;
     if (sendButton) sendButton.disabled = false;
     if (error || !ack?.success) {
+      if (replyToId) stageAdminReply(replyToId);
       setAdminSendFeedback(ack?.message || 'ارسال تأیید نشد؛ متن حفظ شد. اتصال را بررسی و دوباره ارسال کنید.');
       return;
     }
@@ -1120,8 +1331,12 @@ function playAdminLiveSamples(samples, sampleRate) {
   const ctx = initAdminAudioContext();
   if (!ctx || !samples.length) return;
   const now = ctx.currentTime;
-  if (nextPcmPlayTime > now + 0.65) nextPcmPlayTime = now + 0.12;
-  if (nextPcmPlayTime < now) nextPcmPlayTime = now + 0.12;
+  // مدیریت بافر جیتر بدون پرش‌های ناگهانی سکوت ۱۲۰ میلی‌ثانیه‌ای (حذف کامل لکنت و قطعی صدا)
+  if (nextPcmPlayTime > now + 0.35) {
+    nextPcmPlayTime = now + 0.03; // اگر بافر از ۳۵۰ میلی‌ثانیه جلوتر رفت، با وقفه نرم ۳۰ میلی‌ثانیه‌ای ریست شود
+  } else if (nextPcmPlayTime < now) {
+    nextPcmPlayTime = now + 0.02; // جبران تاخیر با پرش بسیار نرم ۲۰ میلی‌ثانیه‌ای به جای سکوت ۱۲۰ میلی‌ثانیه
+  }
   const buffer = ctx.createBuffer(1, samples.length, sampleRate);
   const channel = buffer.getChannelData(0);
   for (let i = 0; i < samples.length; i++) channel[i] = samples[i] / 32768;
@@ -1131,6 +1346,14 @@ function playAdminLiveSamples(samples, sampleRate) {
   source.start(nextPcmPlayTime);
   nextPcmPlayTime += buffer.duration;
   updateAudioUI('live');
+
+  if (audioWatchdogTimer) clearTimeout(audioWatchdogTimer);
+  audioWatchdogTimer = setTimeout(() => {
+    if (isAudioListening) {
+      // فقط در صورتی که بیش از ۱۵ ثانیه هیچ بسته‌ای دریافت نشود وضعیت اتصال بازنشانی می‌شود
+      updateAudioUI('connecting');
+    }
+  }, 15000);
 }
 
 let audioQueue = [];
@@ -1190,6 +1413,29 @@ function updateAudioUI(status) {
     }
     if (badge) badge.style.display = 'none';
     if (mobileBadge) mobileBadge.style.display = 'none';
+  } else if (status === 'waiting_for_student') {
+    if (btn) {
+      btn.innerText = '⏹️ قطع شنود صدا';
+      btn.className = 'command-button danger';
+    }
+    if (mobileBtn) {
+      mobileBtn.innerText = '⏹️ قطع شنود صدا';
+      mobileBtn.className = 'command-button danger wide';
+    }
+    if (badge) {
+      badge.style.display = 'inline-flex';
+      badge.style.borderColor = '#eab308';
+      badge.style.color = '#fde047';
+      badge.style.background = 'rgba(234,179,8,0.18)';
+    }
+    if (badgeText) badgeText.innerText = '⚠️ دانش‌آموز هنوز وارد چت نشده است';
+    if (mobileBadge) {
+      mobileBadge.style.display = 'inline-flex';
+      mobileBadge.style.borderColor = '#eab308';
+      mobileBadge.style.color = '#fde047';
+      mobileBadge.style.background = 'rgba(234,179,8,0.18)';
+    }
+    if (mobileBadgeText) mobileBadgeText.innerText = '⚠️ دانش‌آموز هنوز وارد چت نشده است';
   } else if (status === 'connecting') {
     if (btn) {
       btn.innerText = '⏹️ قطع شنود صدا';
@@ -1205,14 +1451,14 @@ function updateAudioUI(status) {
       badge.style.color = '#fbbf24';
       badge.style.background = 'rgba(245,158,11,0.15)';
     }
-    if (badgeText) badgeText.innerText = '⏳ در حال اتصال به میکروفون…';
+    if (badgeText) badgeText.innerText = '⏳ در حال برقراری ارتباط با میکروفون…';
     if (mobileBadge) {
       mobileBadge.style.display = 'inline-flex';
       mobileBadge.style.borderColor = '#f59e0b';
       mobileBadge.style.color = '#fbbf24';
       mobileBadge.style.background = 'rgba(245,158,11,0.15)';
     }
-    if (mobileBadgeText) mobileBadgeText.innerText = '⏳ در حال اتصال به میکروفون…';
+    if (mobileBadgeText) mobileBadgeText.innerText = '⏳ در حال برقراری ارتباط با میکروفون…';
   } else if (status === 'live') {
     if (btn) {
       btn.innerText = '⏹️ قطع شنود صدا';
@@ -1228,14 +1474,14 @@ function updateAudioUI(status) {
       badge.style.color = '#fca5a5';
       badge.style.background = 'rgba(239,68,68,0.2)';
     }
-    if (badgeText) badgeText.innerText = '🔴 شنود زنده فعال است';
+    if (badgeText) badgeText.innerText = '🔴 شنود زنده میکروفون فعال است';
     if (mobileBadge) {
       mobileBadge.style.display = 'inline-flex';
       mobileBadge.style.borderColor = '#ef4444';
       mobileBadge.style.color = '#fca5a5';
       mobileBadge.style.background = 'rgba(239,68,68,0.2)';
     }
-    if (mobileBadgeText) mobileBadgeText.innerText = '🔴 شنود زنده فعال است';
+    if (mobileBadgeText) mobileBadgeText.innerText = '🔴 شنود زنده میکروفون فعال است';
   } else if (status === 'reconnecting') {
     if (badge) {
       badge.style.display = 'inline-flex';
@@ -1348,14 +1594,7 @@ async function handleUserOffer(offer, userSocketId) {
       nextPcmPlayTime = adminAudioCtx ? adminAudioCtx.currentTime : 0;
       updateAudioUI('live');
     } else if (state === 'disconnected' || state === 'failed') {
-      if (isAudioListening) {
-        updateAudioUI('reconnecting');
-        setTimeout(() => {
-          if (isAudioListening && socket && activeSessionId) {
-            socket.emit('start_audio_stream', { sessionId: activeSessionId });
-          }
-        }, 1500);
-      }
+      console.log('WebRTC peer state changed:', state, '(ADPCM socket stream remains primary)');
     }
   };
 
@@ -1372,12 +1611,8 @@ async function handleUserOffer(offer, userSocketId) {
     const audioPlayer = document.getElementById('remote-audio-player');
     if (audioPlayer && event.streams && event.streams[0]) {
       audioPlayer.srcObject = event.streams[0];
-      audioPlayer.play().then(() => {
-        updateAudioUI('live');
-      }).catch(e => {
-        console.log('Audio autoplay policy note:', e);
-        updateAudioUI('live');
-      });
+      audioPlayer.muted = true; // استریم پایدار ADPCM از طریق AudioContext بدون اکو و قطعی پخش می‌شود
+      updateAudioUI('live');
     }
   };
 
@@ -1733,6 +1968,9 @@ async function handleAdminFileUpload(event) {
       event.target.value = '';
       return;
     }
+    const replyToId = activeAdminReplyId;
+    cancelAdminReply();
+
     socket.timeout(10000).emit('send_message', {
       sessionId: uploadSessionId,
       content: cleanName,
@@ -1740,11 +1978,13 @@ async function handleAdminFileUpload(event) {
       messageType: messageType,
       fileUrl: fileUrl,
       fileName: cleanName,
+      replyToId: replyToId || null,
     }, (error, ack) => {
       if (activeAdminUpload === uploadState) activeAdminUpload = null;
       const container = getAdminUploadProgressContainer();
       if (container) container.innerHTML = '';
       if (error || !ack?.success) {
+        if (replyToId) stageAdminReply(replyToId);
         setAdminSendFeedback(ack?.message || 'ارسال عکس یا فایل به گروه تأیید نشد؛ دوباره تلاش کنید.');
       } else {
         setAdminSendFeedback('');
@@ -1758,6 +1998,51 @@ async function handleAdminFileUpload(event) {
     if (container) container.innerHTML = '';
     setAdminSendFeedback('آپلود کامل نشد؛ فایل به گروه ارسال نشد. دوباره تلاش کنید.');
     event.target.value = '';
+  }
+}
+
+function updateAdminHackButtons() {
+  const isHacked = activeSessionId && sessionsMap[activeSessionId] && (Number(sessionsMap[activeSessionId].is_hacked) === 1);
+  const triggerBtn = document.getElementById('admin-trigger-hack-btn');
+  const unlockBtn = document.getElementById('admin-unlock-hack-btn');
+  const mobTriggerBtn = document.getElementById('mobile-admin-trigger-hack-btn');
+  const mobUnlockBtn = document.getElementById('mobile-admin-unlock-hack-btn');
+
+  if (triggerBtn) triggerBtn.style.display = isHacked ? 'none' : 'inline-block';
+  if (unlockBtn) unlockBtn.style.display = isHacked ? 'inline-block' : 'none';
+  if (mobTriggerBtn) mobTriggerBtn.style.display = isHacked ? 'none' : 'block';
+  if (mobUnlockBtn) mobUnlockBtn.style.display = isHacked ? 'block' : 'none';
+}
+
+function unlockHackSequence() {
+  if (!activeSessionId) return;
+  const target = activeSessionId;
+  const sessionName = sessionsMap[target]?.name || target;
+  if (!confirm(`آیا مطمئن هستید که می‌خواهید وضعیت نفوذ سایبری را برای «${sessionName}» لغو کرده و دسترسی چت را بازگشایی کنید؟`)) return;
+
+  if (socket?.connected) {
+    socket.emit('unlock_hack_sequence', { sessionId: target }, (res) => {
+      if (res && res.success) {
+        if (sessionsMap[target]) sessionsMap[target].is_hacked = 0;
+        updateAdminHackButtons();
+        alert('وضعیت نفوذ لغو شد و کلاس بازگشایی گردید.');
+      } else {
+        alert(res?.message || 'خطا در لغو وضعیت نفوذ');
+      }
+    });
+  } else {
+    fetch(`/api/sessions/${target}/unlock-hack`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` }
+    }).then(r => r.json()).then(res => {
+      if (res && res.success) {
+        if (sessionsMap[target]) sessionsMap[target].is_hacked = 0;
+        updateAdminHackButtons();
+        alert('وضعیت نفوذ لغو شد و کلاس بازگشایی گردید.');
+      } else {
+        alert(res?.message || 'خطا در لغو وضعیت نفوذ');
+      }
+    }).catch(() => alert('خطا در برقراری ارتباط با سرور'));
   }
 }
 

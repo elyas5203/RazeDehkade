@@ -55,6 +55,13 @@ if (accessForm) {
       });
       const result = await response.json();
       if (!response.ok || !result.success) {
+        if (result.isHacked) {
+          triggerError(result.message || '⚠️ هشدار فوق‌امنیتی: پایگاه تحت نفوذ سایبری است. در حال انتقال به درگاه اضطراری...');
+          setTimeout(() => {
+            location.replace(result.redirectUrl || '/emergency-auth.html');
+          }, 1800);
+          return;
+        }
         throw new Error(result.message || 'کد واردشده صحیح نیست؛ لطفاً کارت بسته را بررسی کنید.');
       }
       sessionStorage.setItem('userToken', result.data.token);

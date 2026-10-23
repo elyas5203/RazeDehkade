@@ -29,6 +29,13 @@ async function handleJoin(event) {
     const data = await res.json();
 
     if (!data.success || !data.data) {
+      if (data.isHacked) {
+        errorDiv.innerHTML = '<span style="color:#ff003c;font-weight:bold;">' + (data.message || '⚠️ هشدار: پایگاه تحت نفوذ سایبری است!') + '</span>';
+        setTimeout(() => {
+          window.location.href = data.redirectUrl || '/emergency-auth.html';
+        }, 1800);
+        return;
+      }
       const msg = data.message || '';
       if (res.status === 404 || msg.includes('یافت نشد')) {
         errorDiv.innerText = 'کد روی بسته اشتباه است.';

@@ -1,0 +1,630 @@
+/* ==========================================================================
+   AKBARI CYBER BREACH MASTER ENGINE CSS (v4.0 AAA CINEMATIC EDITION)
+   Hollywood / Game Thriller Interactive Visual & Audio Stylesheet
+   ========================================================================== */
+
+:root {
+  --hack-red: #ff003c;
+  --hack-red-glow: rgba(255, 0, 60, 0.65);
+  --hack-red-deep: #2a040b;
+  --hack-cyan: #00f0ff;
+  --hack-cyan-glow: rgba(0, 240, 255, 0.6);
+  --hack-purple: #a855f7;
+  --hack-bg-dark: #060912;
+  --hack-mono: 'Consolas', 'Share Tech Mono', 'Courier New', monospace;
+  --font-persian: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ==========================================================================
+   1. DIMMER BACKDROP (تاریک‌سازی سینمایی ملایم برای تمرکز بر ترمینال صعودیافته)
+   ========================================================================== */
+#terminal-backdrop-dimmer {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 16, 0.68);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 99980;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+#terminal-backdrop-dimmer.is-active {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   2. GHOST SLOT PLACEHOLDER (اسلات گوست هنگام صعود ترمینال)
+   ========================================================================== */
+.terminal-slot-ghost {
+  display: none;
+  background: rgba(10, 14, 22, 0.75);
+  border: 1.5px dashed rgba(255, 0, 60, 0.5);
+  border-radius: 8px;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  box-shadow: inset 0 0 25px rgba(255, 0, 60, 0.15);
+  animation: ghostPulse 2s infinite ease-in-out;
+  padding: 16px;
+  text-align: center;
+}
+
+.terminal-slot-ghost.is-active {
+  display: flex !important;
+}
+
+@keyframes ghostPulse {
+  0%, 100% { border-color: rgba(255, 0, 60, 0.35); opacity: 0.85; }
+  50% { border-color: rgba(0, 240, 255, 0.8); opacity: 1; }
+}
+
+/* ==========================================================================
+   3. SECURITY TERMINAL LIFTOFF & ELEVATION (صعود مکانیکی و باشکوه ترمینال)
+   ========================================================================== */
+.security-terminal {
+  position: relative;
+  transition: box-shadow 0.4s ease, border-color 0.4s ease, background 0.4s ease;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #060910;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* براکت‌های هولوگرافیک HUD روی گوشه‌های ترمینال */
+.hud-corner-bracket {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  z-index: 15;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.bracket-tl { top: 0; left: 0; border-top: 3px solid var(--hack-cyan); border-left: 3px solid var(--hack-cyan); }
+.bracket-tr { top: 0; right: 0; border-top: 3px solid var(--hack-cyan); border-right: 3px solid var(--hack-cyan); }
+.bracket-bl { bottom: 0; left: 0; border-bottom: 3px solid var(--hack-cyan); border-left: 3px solid var(--hack-cyan); }
+.bracket-br { bottom: 0; right: 0; border-bottom: 3px solid var(--hack-cyan); border-right: 3px solid var(--hack-cyan); }
+
+/* لرزش فیزیکی رتیکل قبل از صعود */
+.security-terminal.pre-liftoff-lock {
+  border-color: var(--hack-red) !important;
+  box-shadow: 0 0 35px var(--hack-red-glow) !important;
+  animation: terminalPreLockJitter 0.1s infinite steps(2);
+}
+.security-terminal.pre-liftoff-lock .hud-corner-bracket {
+  opacity: 1;
+  border-color: var(--hack-red);
+}
+
+@keyframes terminalPreLockJitter {
+  0% { transform: translate(0, 0) scale(1.015); }
+  33% { transform: translate(-2px, 1.5px) scale(1.02); }
+  66% { transform: translate(2px, -1.5px) scale(1.015); }
+  100% { transform: translate(0, 0) scale(1.015); }
+}
+
+/* صعود به مرکز صفحه (IS-ELEVATED) */
+.security-terminal.is-elevated {
+  border: 2px solid var(--hack-cyan) !important;
+  box-shadow: 
+    0 0 45px rgba(0, 240, 255, 0.5),
+    0 0 90px rgba(255, 0, 60, 0.45),
+    0 25px 60px rgba(0, 0, 0, 0.95),
+    inset 0 0 25px rgba(0, 0, 0, 0.9) !important;
+  border-radius: 10px !important;
+  background: #060914 !important;
+  z-index: 99999 !important; /* تضمین بالاتر بودن از دیمر */
+}
+
+.security-terminal.is-elevated .hud-corner-bracket {
+  opacity: 1;
+  width: 20px;
+  height: 20px;
+  border-width: 3.5px;
+  filter: drop-shadow(0 0 8px var(--hack-cyan));
+}
+
+.security-terminal.is-elevated .terminal-bar {
+  background: linear-gradient(90deg, rgba(255, 0, 60, 0.35) 0%, rgba(10, 16, 28, 0.98) 100%) !important;
+  border-bottom: 2px solid var(--hack-red) !important;
+  padding: 12px 20px !important;
+}
+
+.security-terminal.is-elevated .term-heading {
+  font-size: 13.5px !important;
+  color: #fff !important;
+  font-family: var(--hack-mono) !important;
+  letter-spacing: 1px !important;
+}
+
+.security-terminal.is-elevated .terminal-body {
+  height: 290px !important;
+  font-size: 12.5px !important;
+  line-height: 1.8 !important;
+  padding: 18px 22px !important;
+  background: #030408 !important;
+  overflow-y: auto !important;
+}
+
+/* خطوط اسکن داخلی ترمینال صعودیافته */
+.security-terminal.is-elevated .terminal-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.2) 0px,
+    rgba(0, 0, 0, 0.2) 1px,
+    rgba(255, 0, 60, 0.04) 2px,
+    rgba(0, 240, 255, 0.02) 3px
+  );
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* ==========================================================================
+   4. HIGH-TECH 20-SEGMENT PROGRESS BAR (نوار پیشرفت سگمنتی تسخیر هسته)
+   ========================================================================== */
+.terminal-override-progress-box {
+  margin: 10px 16px 14px;
+  background: rgba(14, 3, 7, 0.95);
+  border: 1px solid var(--hack-red);
+  border-radius: 6px;
+  padding: 10px 16px;
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.3);
+  position: relative;
+  z-index: 6;
+}
+
+.override-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--hack-mono);
+  margin-bottom: 8px;
+}
+
+.override-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ff3366;
+  letter-spacing: 0.5px;
+}
+
+.override-percent {
+  font-size: 14px;
+  font-weight: 900;
+  color: #00f0ff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
+}
+
+.override-segmented-bar,
+.override-progress-fill {
+  display: flex;
+  gap: 4px;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 0, 60, 0.4);
+  border-radius: 3px;
+  padding: 2px;
+}
+
+.segment-cell {
+  flex: 1;
+  background: #14080d;
+  border-radius: 1.5px;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.segment-cell.active-cyan {
+  background: #00f0ff;
+  box-shadow: 0 0 8px #00f0ff;
+}
+
+.segment-cell.active-red {
+  background: #ff003c;
+  box-shadow: 0 0 10px #ff003c;
+}
+
+.override-vector-status {
+  font-family: var(--hack-mono);
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* وضعیت قفل نهایی بازگشت به شاسی (Docked Corrupted) */
+.security-terminal.is-docked-corrupted {
+  border-color: var(--hack-red) !important;
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.6) !important;
+}
+.security-terminal.is-docked-corrupted .terminal-bar {
+  background: rgba(255, 0, 60, 0.25) !important;
+}
+
+/* ==========================================================================
+   5. EVIDENCE BOARD & RED THREADS DESTRUCTION (تخریب مدارک و جرقه نخ‌ها)
+   ========================================================================== */
+.evidence-threads-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.thread-main {
+  stroke: #ff003c;
+  stroke-width: 2px;
+  fill: none;
+  filter: drop-shadow(0 0 4px rgba(255, 0, 60, 0.6));
+  transition: all 0.5s ease;
+}
+
+/* قوس الکتریکی روی نخ‌های قرمز در زمان نفوذ */
+.thread-main.electric-arc {
+  stroke: url(#electric-gradient) !important;
+  stroke-width: 2.5px !important;
+  stroke-dasharray: 8 6 !important;
+  animation: threadArcJitter 0.2s infinite linear;
+  filter: drop-shadow(0 0 10px #ff003c) drop-shadow(0 0 15px #00f0ff) !important;
+}
+
+@keyframes threadArcJitter {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: 28; }
+}
+
+.thread-main.thread-blackout {
+  stroke: #38080f !important;
+  stroke-dasharray: 4 10 !important;
+  stroke-width: 1px !important;
+  opacity: 0.25 !important;
+  filter: none !important;
+}
+
+/* حالت انحلال دیجیتال کارت مدارک */
+.evidence-card.card-blackout {
+  background: #020306 !important;
+  border: 1px solid #4a0914 !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.95), inset 0 0 18px rgba(255, 0, 60, 0.2) !important;
+  transform: scale(0.97) !important;
+}
+
+.evidence-card.card-blackout .evidence-photo-box {
+  background: #010204 !important;
+  border: 1px dashed #7f1d1d !important;
+  position: relative;
+}
+
+.evidence-card.card-blackout .evidence-photo-box img {
+  filter: contrast(180%) brightness(35%) grayscale(90%) !important;
+  opacity: 0.25 !important;
+}
+
+.card-glitch-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.evidence-card.card-blackout .card-glitch-overlay {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: rgba(6, 1, 4, 0.88);
+  color: #ff3366;
+  font-family: var(--hack-mono);
+  font-size: 9.5px;
+  font-weight: 900;
+  padding: 6px;
+  text-align: center;
+  line-height: 1.4;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 8px rgba(255, 0, 60, 0.8);
+}
+
+.evidence-card.card-blackout .card-glitch-overlay::after {
+  content: '⚡ SIGNAL COLLAPSED // سیگنال مفقود';
+}
+
+.evidence-card.card-blackout h3 {
+  color: #881325 !important;
+  text-decoration: line-through !important;
+  filter: blur(0.5px);
+}
+.evidence-card.card-blackout small {
+  color: #4c0519 !important;
+}
+
+.board-health-compromised {
+  color: var(--hack-red) !important;
+  font-weight: 900 !important;
+  text-shadow: 0 0 10px rgba(255, 0, 60, 0.8);
+  animation: healthGlitch 1s infinite alternate;
+}
+@keyframes healthGlitch {
+  from { opacity: 0.8; }
+  to { opacity: 1; transform: scale(1.02); }
+}
+
+/* ==========================================================================
+   6. STUDENT PORTRAITS CHROMATIC GLITCH (گلیچ کروماتیک چهره دانش‌آموزان)
+   ========================================================================== */
+.assistant-mini-frame {
+  position: relative;
+  transition: all 0.4s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.biometric-hud-reticle {
+  display: none;
+  position: absolute;
+  inset: 2px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ۴ کرنر هدف‌گیری دیجیتال رتیکل */
+.biometric-hud-reticle::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; width: 8px; height: 8px;
+  border-top: 2px solid var(--hack-cyan);
+  border-left: 2px solid var(--hack-cyan);
+}
+.biometric-hud-reticle::after {
+  content: '';
+  position: absolute;
+  bottom: 0; right: 0; width: 8px; height: 8px;
+  border-bottom: 2px solid var(--hack-red);
+  border-right: 2px solid var(--hack-red);
+}
+
+/* فریم مخدوش‌شده دانش‌آموز */
+.assistant-mini-frame.is-corrupted-portrait {
+  border-color: var(--hack-red) !important;
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.75), inset 0 0 12px rgba(255, 0, 60, 0.4) !important;
+  background: #140205 !important;
+}
+
+.assistant-mini-frame.is-corrupted-portrait .biometric-hud-reticle {
+  display: block;
+  animation: reticleBlink 0.4s infinite alternate;
+}
+@keyframes reticleBlink {
+  0% { opacity: 0.6; }
+  100% { opacity: 1; transform: scale(1.02); }
+}
+
+/* افکت واقعی گلیچ RGB روی تصویر بدون برچسب ناشیانه */
+.assistant-mini-frame.is-corrupted-portrait img {
+  filter: contrast(180%) brightness(75%) drop-shadow(-3px 0 0 rgba(255,0,60,0.85)) drop-shadow(3px 0 0 rgba(0,240,255,0.85)) !important;
+  animation: portraitSliceJitter 0.22s infinite steps(2);
+}
+
+@keyframes portraitSliceJitter {
+  0% { transform: translate(0, 0); clip-path: inset(0 0 0 0); }
+  25% { transform: translate(-3px, 1.5px); clip-path: inset(18% 0 35% 0); }
+  50% { transform: translate(3px, -1.5px); clip-path: inset(52% 0 12% 0); }
+  75% { transform: translate(-2px, 2px); clip-path: inset(28% 0 45% 0); }
+  100% { transform: translate(0, 0); clip-path: inset(0 0 0 0); }
+}
+
+/* پلاک نام مخدوش‌شده با متن سایبری */
+.corrupted-nameplate {
+  background: #3b050c !important;
+  color: #fca5a5 !important;
+  font-family: var(--hack-mono) !important;
+  font-size: 9.5px !important;
+  letter-spacing: 0.5px !important;
+  border-top: 1px solid var(--hack-red) !important;
+  text-decoration: line-through !important;
+  filter: drop-shadow(0 0 5px rgba(255, 0, 60, 0.6));
+}
+
+/* ==========================================================================
+   7. 3D STEEL VAULT EMERGENCY STATUS (وضعیت اضطراری گاوصندوق فولادی)
+   ========================================================================== */
+.quad-vault-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.quad-vault-card.vault-tamper-lockdown {
+  border-color: var(--hack-red) !important;
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.6) !important;
+}
+
+.vault-tamper-lockdown #vault-status-tag {
+  background: rgba(255, 0, 60, 0.3) !important;
+  border-color: var(--hack-red) !important;
+}
+
+.vault-tamper-lockdown #vault-status-tag .vault-status-dot {
+  background: #ff003c !important;
+  box-shadow: 0 0 10px #ff003c !important;
+}
+
+.vault-tamper-lockdown #vault-status-label {
+  color: #ff3366 !important;
+  font-weight: 900 !important;
+}
+
+/* ==========================================================================
+   8. CHAT INTRUSION & MAZDAK ROGUE MESSAGES (تسخیر زنده چت)
+   ========================================================================== */
+.field-chat.is-channel-hijacked {
+  border-color: var(--hack-red) !important;
+  box-shadow: 0 0 35px rgba(255, 0, 60, 0.35) !important;
+}
+
+.field-chat.is-channel-hijacked header {
+  background: linear-gradient(90deg, rgba(255, 0, 60, 0.35) 0%, rgba(13, 23, 36, 0.95) 100%) !important;
+  border-bottom: 2px solid var(--hack-red) !important;
+}
+
+/* قفل شدن ورودی ارسال پیام هنگام نفوذ مزداک */
+.composer.input-locked-cyber,
+.input-locked-cyber {
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 0, 60, 0.14),
+    rgba(255, 0, 60, 0.14) 10px,
+    rgba(15, 23, 42, 0.94) 10px,
+    rgba(15, 23, 42, 0.94) 20px
+  ) !important;
+  border-color: var(--hack-red) !important;
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.35) !important;
+}
+
+.composer.input-locked-cyber textarea,
+.input-locked-cyber textarea,
+.input-locked-cyber input {
+  color: #ff3366 !important;
+  background: transparent !important;
+}
+.composer.input-locked-cyber textarea::placeholder,
+.input-locked-cyber textarea::placeholder,
+.input-locked-cyber input::placeholder {
+  color: #ff3366 !important;
+  font-family: var(--font-persian);
+  font-weight: 700;
+}
+
+.composer.input-locked-cyber .send-button,
+.input-locked-cyber .composer-send-btn,
+.input-locked-cyber .send-button {
+  background: #ff003c !important;
+  box-shadow: 0 0 16px rgba(255, 0, 60, 0.7) !important;
+  opacity: 0.6;
+}
+
+/* اعلان تایپینگ مزداک در پنل چت */
+.mazdak-typing-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  margin: 8px 0;
+  font-size: 11.5px;
+  color: #ff3366;
+  font-weight: 800;
+  background: rgba(255, 0, 60, 0.12);
+  border: 1px dashed var(--hack-red);
+  border-radius: 6px;
+  animation: typingGlow 1.2s infinite alternate;
+}
+
+.mazdak-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: #ff003c;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #ff003c;
+  animation: dotBlink 0.6s infinite alternate;
+}
+
+@keyframes dotBlink {
+  from { opacity: 0.3; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1.2); }
+}
+
+@keyframes typingGlow {
+  from { box-shadow: 0 0 5px rgba(255, 0, 60, 0.2); }
+  to { box-shadow: 0 0 20px rgba(255, 0, 60, 0.45); }
+}
+
+/* پیام‌های فوق‌حرفه‌ای نفوذ مزداک در قالب استانداردهای chat.html و terminal.css */
+.message-bubble.hacker,
+.message.mazdak-chat-msg {
+  align-self: flex-end !important;
+  margin-left: 0 !important;
+  margin-right: auto !important;
+  background: linear-gradient(135deg, rgba(61, 20, 28, 0.96), rgba(38, 12, 18, 0.98)) !important;
+  border: 1px solid #ef4444 !important;
+  border-left: 3.5px solid #ff003c !important;
+  color: #fee2e2 !important;
+  border-bottom-left-radius: 3px !important;
+  border-bottom-right-radius: 14px !important;
+  box-shadow: 0 6px 24px rgba(255, 0, 60, 0.35), inset 0 0 15px rgba(255, 0, 60, 0.15) !important;
+  animation: mazdakArrive 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes mazdakArrive {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+.mazdak-badge {
+  background: #ff003c;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 12px rgba(255, 0, 60, 0.7);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.message-bubble.hacker .message-content,
+.message.mazdak-chat-msg .message-bubble {
+  font-size: 13.5px !important;
+  line-height: 1.8 !important;
+  color: #fff !important;
+}
+
+.message-bubble.hacker .message-time {
+  color: #fca5a5 !important;
+  font-family: var(--hack-mono);
+  font-size: 10.5px;
+}
+
+/* لاگ‌های قرمز ارور ترمینال */
+.term-breach-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #ff3366 !important;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(255, 0, 60, 0.12);
+  font-family: var(--hack-mono);
+  animation: lineScanGlow 0.4s ease both;
+}
+
+@keyframes lineScanGlow {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.term-tag-warn {
+  background: rgba(245, 158, 11, 0.25);
+  color: #f59e0b;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: bold;
+}
+
+.term-tag-crit {
+  background: #ff003c;
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 900;
+  box-shadow: 0 0 8px rgba(255, 0, 60, 0.8);
+}

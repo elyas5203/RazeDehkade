@@ -101,6 +101,17 @@ router.post('/user/join', async (req, res) => {
       });
     }
 
+    // اگر کلاس مورد حمله سایبری مزداک قرار گرفته باشد، دسترسی به چت مسدود است و باید به درگاه احراز هویت اضطراری هدایت شوند
+    if (session.is_hacked) {
+      return res.status(403).json({
+        success: false,
+        isHacked: true,
+        message: '⚠️ هشدار فوق‌امنیتی: این پایگاه تحت نفوذ سایبری دشمن قرار گرفته و تمام دسترسی‌ها مسدود است! برای نجات پرونده فوراً به درگاه احراز هویت امنیتی مراجعه کنید.',
+        redirectUrl: '/emergency-auth.html',
+        sessionName: session.name,
+      });
+    }
+
     // اگر وضعیت جلسه waiting بود، به active تغییر دهیم
     if (session.status === 'waiting') {
       await Session.updateStatus(session.id, 'active');

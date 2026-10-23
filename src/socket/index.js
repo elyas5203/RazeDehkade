@@ -21,7 +21,38 @@ function setupSocketIO(io) {
   const recentMessagesMap = new Map();
   // نگاشت بلادرنگ کاربران آنلاین بر اساس شناسه جلسه (sessionId -> Set of socket.ids)
   const sessionOnlineUsers = new Map();
-  const liveAudioListeners = new Map(); // admin socket ID -> session ID
+  // نگاشت بلادرنگ شنودگران صوتی چند ادمین (ایزولاسیون کامل و پخش همزمان)
+  const adminListeningSessions = new Map(); // admin socket ID -> session ID (Number)
+  const sessionAudioListeners = new Map();  // session ID (Number) -> Set<adminSocketId>
+  const liveAudioListeners = adminListeningSessions; // Backwards-compatibility alias
+
+  function addLiveAudioListener(adminSocketId, sessionId) {
+    const sId = Number(sessionId);
+    adminListeningSessions.set(adminSocketId, sId);
+    if (!sessionAudioListeners.has(sId)) {
+      sessionAudioListeners.set(sId, new Set());
+    }
+    const listeners = sessionAudioListeners.get(sId);
+    const wasEmpty = listeners.size === 0;
+    listeners.add(adminSocketId);
+    return { wasEmpty, count: listeners.size };
+  }
+
+  function removeLiveAudioListener(adminSocketId) {
+    const sId = adminListeningSessions.get(adminSocketId);
+    if (sId === undefined) return null;
+    adminListeningSessions.delete(adminSocketId);
+    const listeners = sessionAudioListeners.get(sId);
+    if (listeners) {
+      listeners.delete(adminSocketId);
+      const isEmpty = listeners.size === 0;
+      if (isEmpty) {
+        sessionAudioListeners.delete(sId);
+      }
+      return { sessionId: sId, isEmpty, remainingCount: listeners.size };
+    }
+    return { sessionId: sId, isEmpty: true, remainingCount: 0 };
+  }
   // رهگیری زنده چرخه حیات کلاس‌ها (سفارش گل، شمارش معکوس، فاز ۱ و ۲ بلک‌اوت، اسکن و ورود)
   const sessionLifecyclePhases = new Map();
 
@@ -208,9 +239,12 @@ function setupSocketIO(io) {
       const packet = data.packet;
       const length = packet.byteLength || packet.length;
       if (!length || length < 5 || length > 2052) return;
-      for (const [adminId, listeningSessionId] of liveAudioListeners) {
-        if (listeningSessionId === sessionId && io.sockets.sockets.has(adminId)) {
-          io.to(adminId).volatile.emit('admin_audio_stream_adpcm', { sessionId, packet });
+      const listeners = sessionAudioListeners.get(Number(sessionId));
+      if (listeners && listeners.size > 0) {
+        for (const adminId of listeners) {
+          if (io.sockets.sockets.has(adminId)) {
+            io.to(adminId).emit('admin_audio_stream_adpcm', { sessionId: Number(sessionId), packet });
+          }
         }
       }
     });
@@ -307,12 +341,22 @@ function setupSocketIO(io) {
      */
     socket.on('send_message', async (data, ack = () => {}) => {
       try {
-        const { sessionId, content, messageType = 'text', fileUrl = null, fileName = null, senderType } = data;
+        const { sessionId, content, messageType = 'text', fileUrl = null, fileName = null, senderType, replyToId = null, reply_to_id = null } = data || {};
 
         const targetSessionId = authorizedSessionId(user, sessionId);
         if (!targetSessionId) {
           if (typeof ack === 'function') ack({ success: false, message: 'اجازه ارسال به این جلسه را ندارید.' });
           return socket.emit('error_message', { message: 'اجازه ارسال به این جلسه را ندارید.' });
+        }
+
+        // بررسی و اعتبارسنجی پیام مرجع ریپلای شده (حفظ ایزولاسیون کامل جلسات)
+        let targetReplyId = null;
+        const candidateReplyId = parseInt(replyToId || reply_to_id, 10);
+        if (candidateReplyId > 0) {
+          const refMsg = await Message.findById(candidateReplyId);
+          if (refMsg && Number(refMsg.session_id) === Number(targetSessionId)) {
+            targetReplyId = candidateReplyId;
+          }
         }
 
         // تعیین نوع فرستنده
@@ -345,7 +389,7 @@ function setupSocketIO(io) {
         }
 
         // پیشگیری قاطع از ثبت و ارسال پیام تکراری در فاصله کمتر از ۱.۵ ثانیه (جلوگیری از دابل کلیک یا رویداد همزمان)
-        const dedupKey = `${targetSessionId}_${effectiveSenderType}_${safeContent}_${validatedFileUrl || ''}`;
+        const dedupKey = `${targetSessionId}_${effectiveSenderType}_${safeContent}_${validatedFileUrl || ''}_${targetReplyId || ''}`;
         const now = Date.now();
         cleanOldRecentMessages();
         if (recentMessagesMap.has(dedupKey) && (now - recentMessagesMap.get(dedupKey).time < 1500)) {
@@ -368,6 +412,7 @@ function setupSocketIO(io) {
             message_type: effectiveMessageType,
             file_url: validatedFileUrl,
             file_name: fileName,
+            reply_to_id: targetReplyId,
           });
           recentMessagesMap.set(dedupKey, { time: now, message: savedMessage });
         } catch (dbErr) {
@@ -591,11 +636,21 @@ function setupSocketIO(io) {
       if (user.role !== 'admin') return;
       const sessionId = authorizedSessionId(user, data && data.sessionId);
       if (!sessionId) return;
-      liveAudioListeners.set(socket.id, sessionId);
-      const roomName = `session_${sessionId}`;
-      socket.to(roomName).emit('audio_stream_started', {
-        sessionId,
+      const sId = Number(sessionId);
+      const { wasEmpty, count } = addLiveAudioListener(socket.id, sId);
+      const roomName = `session_${sId}`;
+      const userSockets = sessionOnlineUsers.get(sId);
+      const isStudentOnline = Boolean(userSockets && userSockets.size > 0);
+      io.to(roomName).emit('audio_stream_started', {
+        sessionId: sId,
         adminSocketId: socket.id,
+        listenerCount: count,
+      });
+      socket.emit('admin_audio_stream_started_ack', {
+        sessionId: sId,
+        listenerCount: count,
+        isStudentOnline,
+        onlineCount: userSockets ? userSockets.size : 0,
       });
     });
 
@@ -603,11 +658,20 @@ function setupSocketIO(io) {
       if (user.role !== 'admin') return;
       const sessionId = authorizedSessionId(user, data && data.sessionId);
       if (!sessionId) return;
-      liveAudioListeners.delete(socket.id);
-      const roomName = `session_${sessionId}`;
-      io.to(roomName).emit('audio_stream_stopped', {
-        sessionId,
+      const sId = Number(sessionId);
+      const result = removeLiveAudioListener(socket.id);
+      socket.emit('admin_audio_stream_stopped_ack', {
+        sessionId: sId,
+        remainingCount: result ? result.remainingCount : 0,
       });
+      // تنها در صورتی که هیچ ادمین دیگری برای این کلاس در حال شنود نباشد سیگنال توقف به کلاینت‌ها ارسال می‌شود
+      if (result && result.isEmpty) {
+        const roomName = `session_${sId}`;
+        io.to(roomName).emit('audio_stream_stopped', {
+          sessionId: sId,
+          listenerCount: 0,
+        });
+      }
     });
 
     // تبادل Offer از سمت Peer
@@ -693,18 +757,73 @@ function setupSocketIO(io) {
       const roomName = `session_${sessionId}`;
       console.log(`☠️ سکانس هک مزداک برای جلسه ${sessionId} توسط ادمین فعال شد.`);
 
+      // ثبت وضعیت هک در دیتابیس برای این کلاس
+      await Session.setHackState(sessionId, true);
+
+      // واکشی دستیاران واقعی این کلاس جهت گلیچ تصاویر
+      let assistants = [];
+      try {
+        const SessionAssistant = require('../models/SessionAssistant');
+        assistants = await SessionAssistant.findBySessionId(sessionId);
+      } catch (_) {}
+
+      const session = await Session.findById(sessionId);
+
       // ثبت در لاگ‌های سیستم
       await SessionLog.log(sessionId, 'hack_triggered', `سکانس هک مزداک برای جلسه ${sessionId} تریگر شد.`);
 
       // انتشار رویداد به تمام کلاینت‌های موجود در اتاق جلسه
       io.to(roomName).emit('hack_sequence_triggered', {
         sessionId,
+        isHacked: true,
+        sessionName: session ? session.name : '',
         triggeredAt: Date.now(),
         hackerName: data.hackerName || 'مزداک',
+        assistants: assistants.map(a => ({
+          id: a.id,
+          student_name: a.student_name,
+          file_url: a.file_url,
+          name: a.student_name,
+          photoUrl: a.file_url,
+        })),
       });
-      if (typeof ack === 'function') ack({ success: true });
+
+      io.to('admins').emit('session_hack_updated', {
+        sessionId,
+        isHacked: true,
+        sessionName: session ? session.name : '',
+      });
+
+      if (typeof ack === 'function') ack({ success: true, sessionId });
       } catch (error) {
         if (typeof ack === 'function') ack({ success: false, message: 'اجرای سکانس انجام نشد؛ دوباره امتحان کنید.' });
+      }
+    });
+
+    socket.on('unlock_hack_sequence', async (data, ack = () => {}) => {
+      try {
+        if (user.role !== 'admin') {
+          return socket.emit('error_message', { message: 'تنها ادمین مجاز به بازگشایی قفل هک است.' });
+        }
+        const sessionId = parseInt(data && data.sessionId, 10);
+        if (!sessionId) return;
+
+        await Session.setHackState(sessionId, false);
+        const session = await Session.findById(sessionId);
+
+        await SessionLog.log(sessionId, 'hack_cleared', `نفوذ سایبری برای جلسه ${sessionId} لغو و دسترسی آزاد شد.`);
+
+        const roomName = `session_${sessionId}`;
+        io.to(roomName).emit('hack_cleared', { sessionId, isHacked: false });
+        io.to('admins').emit('session_hack_updated', {
+          sessionId,
+          isHacked: false,
+          sessionName: session ? session.name : '',
+        });
+
+        if (typeof ack === 'function') ack({ success: true, sessionId });
+      } catch (err) {
+        if (typeof ack === 'function') ack({ success: false, message: err.message });
       }
     });
 
@@ -875,7 +994,14 @@ function setupSocketIO(io) {
     });
 
     socket.on('disconnect', () => {
-      liveAudioListeners.delete(socket.id);
+      const result = removeLiveAudioListener(socket.id);
+      if (result && result.isEmpty) {
+        const roomName = `session_${result.sessionId}`;
+        io.to(roomName).emit('audio_stream_stopped', {
+          sessionId: Number(result.sessionId),
+          listenerCount: 0,
+        });
+      }
       if (user.role === 'user' && user.sessionId) {
         trackUserOffline(user.sessionId, socket.id);
       }

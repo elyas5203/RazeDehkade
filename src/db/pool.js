@@ -113,6 +113,10 @@ class InMemoryDatabase {
         active_case: 'village',
         is_chat_locked: 0,
         teacher_phone: null,
+        is_vault_unlocked: 0,
+        vault_target_week: 5,
+        is_hacked: 0,
+        hacked_at: null,
       };
       this.tables.sessions.push(record);
       return [{ affectedRows: 1, insertId: id }, []];
@@ -278,6 +282,29 @@ class InMemoryDatabase {
       }
     }
 
+    if (/^UPDATE sessions SET is_hacked/i.test(cleanSql)) {
+      if (/WHERE id = \?/i.test(cleanSql)) {
+        const [isHacked, hackedAt, id] = params;
+        const s = this.tables.sessions.find(x => x.id == id);
+        if (s) {
+          s.is_hacked = isHacked ? 1 : 0;
+          s.hacked_at = hackedAt || (isHacked ? new Date() : null);
+          s.updated_at = new Date();
+        }
+        return [{ affectedRows: s ? 1 : 0 }, []];
+      } else {
+        const [isHacked] = params;
+        let count = 0;
+        this.tables.sessions.forEach(s => {
+          s.is_hacked = isHacked ? 1 : 0;
+          s.hacked_at = isHacked ? new Date() : null;
+          s.updated_at = new Date();
+          count++;
+        });
+        return [{ affectedRows: count }, []];
+      }
+    }
+
     if (/^INSERT INTO session_cases/i.test(cleanSql)) {
       const [session_id, case_key, status] = params;
       let record = this.tables.session_cases.find(c => c.session_id == session_id && c.case_key === case_key);
@@ -295,7 +322,7 @@ class InMemoryDatabase {
 
     // 7. INSERT INTO messages
     if (/^INSERT INTO messages/i.test(cleanSql)) {
-      const [session_id, sender_type, sender_id, content, message_type, file_url, file_name] = params;
+      const [session_id, sender_type, sender_id, content, message_type, file_url, file_name, reply_to_id] = params;
       const id = this.autoIds.messages++;
       const record = {
         id,
@@ -306,6 +333,7 @@ class InMemoryDatabase {
         message_type,
         file_url,
         file_name,
+        reply_to_id: reply_to_id || null,
         is_read: 0,
         created_at: new Date(),
       };
@@ -321,13 +349,37 @@ class InMemoryDatabase {
     if (/^SELECT .* FROM messages/i.test(cleanSql)) {
       if (/WHERE m\.id = \?/i.test(cleanSql) || /WHERE id = \?/i.test(cleanSql)) {
         const m = this.tables.messages.find(x => x.id == params[0]);
-        return [m ? [m] : [], []];
+        if (!m) return [[], []];
+        const admin = this.tables.admins.find(a => a.id == m.sender_id);
+        const replyMsg = m.reply_to_id ? this.tables.messages.find(x => x.id == m.reply_to_id) : null;
+        const replyAdmin = replyMsg && replyMsg.sender_id ? this.tables.admins.find(a => a.id == replyMsg.sender_id) : null;
+        return [[{
+          ...m,
+          admin_sender_name: admin ? admin.display_name : null,
+          reply_content: replyMsg ? replyMsg.content : null,
+          reply_sender_type: replyMsg ? replyMsg.sender_type : null,
+          reply_message_type: replyMsg ? replyMsg.message_type : null,
+          reply_file_url: replyMsg ? replyMsg.file_url : null,
+          reply_file_name: replyMsg ? replyMsg.file_name : null,
+          reply_admin_name: replyAdmin ? replyAdmin.display_name : null,
+        }], []];
       }
       if (/WHERE m\.session_id = \?/i.test(cleanSql) || /WHERE session_id = \?/i.test(cleanSql)) {
         const session_id = params[0];
         const msgs = this.tables.messages.filter(m => m.session_id == session_id).map(m => {
           const admin = this.tables.admins.find(a => a.id == m.sender_id);
-          return { ...m, admin_sender_name: admin ? admin.display_name : null };
+          const replyMsg = m.reply_to_id ? this.tables.messages.find(x => x.id == m.reply_to_id) : null;
+          const replyAdmin = replyMsg && replyMsg.sender_id ? this.tables.admins.find(a => a.id == replyMsg.sender_id) : null;
+          return {
+            ...m,
+            admin_sender_name: admin ? admin.display_name : null,
+            reply_content: replyMsg ? replyMsg.content : null,
+            reply_sender_type: replyMsg ? replyMsg.sender_type : null,
+            reply_message_type: replyMsg ? replyMsg.message_type : null,
+            reply_file_url: replyMsg ? replyMsg.file_url : null,
+            reply_file_name: replyMsg ? replyMsg.file_name : null,
+            reply_admin_name: replyAdmin ? replyAdmin.display_name : null,
+          };
         });
         return [msgs, []];
       }

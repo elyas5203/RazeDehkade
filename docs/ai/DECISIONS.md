@@ -226,3 +226,32 @@
 - **Context & Rationale:** گاوصندوق اسلات ۴ باید کاملاً جدی و فولادی باشد. نباید برچسب پلمپ یا نوشته سبزی سناریو را لو دهد. رمز بازگشایی منحصراً `0110` است. با چرخش ۱۰۸۰ درجه دستگیره سه‌شاخه و عقب‌نشینی ۵ زبانه فولادی، پاکت کاهی محرمانه خارج شده و پوستر دعوت‌نامه «موزه اسرارآمیز» پدیدار می‌شود. با هر رفرش صفحه وضعیت به حالت قفل بازمی‌گردد.
 - **Impact:** `public/assets/js/vault-3d.js`, `public/assets/css/vault-3d.css`, `tests/vault-slot4.test.js`, `tests/vault-passcode-and-lock.test.js`.
 - **Supersedes:** None
+
+
+---
+
+### DEC-0034 — معماری نفوذ سایبری مزداک نسخه ۲، ایزولاسیون کلاسی، گلیچ پویای دستیاران و درگاه احراز هویت اضطراری
+- **Date:** 2026-10-23
+- **Status:** APPROVED
+- **Context & Rationale:** انتقال سناریوی سینماتیک نفوذ مزداک به چت زنده سامانه با انطباق کامل نیازمندی‌های پرورشی و فنی:
+  ۱) **ایزولاسیون کلاسی دیتابیس:** افزودن فیلد `is_hacked` و `hacked_at` به جدول `sessions` تا هر کلاس مستقل از سایر ۲۴ کلاس هک شود و وضعیت در دیتابیس ماندگار بماند.
+  ۲) **گلیچ کروماتیک چهره دستیاران واقعی:** واکشی دینامیک تصاویر و نام‌های دانش‌آموزان هر کلاس از `session_assistants` و الصاق لایه‌های Screen blend آبی و قرمز، رتیکول بیومتریک و کد خطای باینری به جای نام‌ها و چهره‌های هاردکد شده قبلی.
+  ۳) **سکانس ۱۲۰ ثانیه‌ای:** پس از ۲ دقیقه نبرد سایبری و صعود ترمینال و پیام‌های شخصی‌سازی‌شده مزداک در چت، در ثانیه ۱۲۰ مودال اخطار فوق‌امنیتی تمام‌صفحه باز شده و به دانش‌آموزان اعلام می‌کند برای نجات پرونده باید آدرس `https://razedehkade.ir` را یادداشت کرده و به درگاه احراز هویت اضطراری بروند.
+  ۴) **درگاه احراز هویت اضطراری (`/emergency-auth.html`):** گام ۱ تایید شماره موبایل و کد کلاس، گام ۲ پرسشنامه امنیتی بازیابی پرونده با سوالات کارآگاهی، و گام ۳ دریافت کد رهگیری امنیتی پرونده تا جلسه حضوری بعد.
+  ۵) **کنترل هفتگی ادمین:** دکمه‌های تریگر و آنلاک هک در چت ادمین و بج اخطار نفوذ به همراه بازگشایی تک‌کلیکی در داشبورد ادمین.
+  ۶) **گیت‌کیپینگ ورود:** تلاش برای ورود به کلاس هک‌شده با کد در `/enter-code.html` مسدود شده و با خطای ۴۰۳ و پیام هشدار فوراً به درگاه اضطراری هدایت می‌شود.
+- **Impact:** `src/db/migrations/005_add_session_hack_status.sql`, `src/models/Session.js`, `src/routes/auth.js`, `src/routes/sessions.js`, `src/socket/index.js`, `public/chat.html`, `public/assets/css/cyber-breach-engine.css`, `public/assets/js/cyber-breach-engine.js`, `public/emergency-auth.html`, `public/assets/css/emergency-auth.css`, `public/assets/js/emergency-auth.js`, `public/admin/chat.html`, `public/assets/js/admin-chat.js`, `public/assets/js/admin-dashboard.js`, `tests/mazdak-cyber-breach-v2.test.js`, `MASTER_MAZDAK_CYBER_BREACH_V2.md`, `docs/ai/masters/MASTER_12_MAZDAK_CYBER_BREACH_AND_EMERGENCY_PORTAL.md`.
+- **Supersedes:** None
+
+---
+
+### DEC-0035 — ارتقای سکانس صعود و فرود هیدرولیک ترمینال با FLIP پورتال‌شده، سنتز چندلایه صوتی Web Audio و شوک ویوپورت
+- **Date:** 2026-10-24
+- **Status:** APPROVED
+- **Context & Rationale:** ارتقای عمیق سکانس صعود و فرود ترمینال امنیتی در هک مزداک:
+  ۱) **پورتالینگ FLIP به بدنه (`document.body`):** محاسبه دقیق بردار اولیه با `getBoundingClientRect()` و پورتال مستقیم به `document.body` برای رهایی از Stacking Context و `display: none` تب‌های موبایل، با حرکت نرم `cubic-bezier(0.16, 1, 0.3, 1)` به مرکز و انیمیشن فرود با شتاب جاذبه `cubic-bezier(0.55, 0.085, 0.68, 0.53)`.
+  ۲) **اسلات گوست پایدار:** حفظ گرید ۲×۲ در والد با قرارگیری `#terminal-ghost-slot` و جلوگیری کامل از Layout Shift یا جابجایی گاوصندوق ۳ بعدی.
+  ۳) **سنتز صوتی Web Audio استودیویی:** صدای انباشت فشار و لرزش پیش‌پرواز (ثانیه ۵۶-۵۷)، شلیک پرتاب با سوئیپ نویز باندپس و ساب‌بیس (ثانیه ۵۸)، صدای شمارشگر گایگر و آرک‌های الکتریکی روی براکت‌های هولوگرافیک (ثانیه ۵۹-۷۹)، و کوبش چندتنی فرود هیدرولیک با ساب‌بیس ۳۰Hz و صدای کوبش متالیک FM (ثانیه ۸۰).
+  ۴) **شوک ۳D زلزله ویوپورت:** لرزش چندمحوره پرسپکتیو کل صفحه در لحظه برخورد ترمینال به شاسی اصلی همراه با فلش CRT و جرقه‌های اسلات گوست.
+- **Impact:** `public/chat.html`, `public/assets/css/cyber-breach-engine.css`, `public/assets/js/cyber-breach-engine.js`, `tests/mazdak-cyber-breach-v2.test.js`, `MASTER_TERMINAL_ELEVATION_AND_SLAM_CHOREOGRAPHY.md`, `docs/ai/masters/MASTER_13_TERMINAL_CINEMATIC_ELEVATION_AND_SLAM.md`.
+- **Supersedes:** None

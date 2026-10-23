@@ -1,3 +1,24 @@
+async function unlockHackDashboard(id) {
+  if (!confirm('آیا مایلید وضعیت نفوذ سایبری این جلسه را لغو کرده و دسترسی ورود دانش‌آموزان را بازگشایی کنید؟')) return;
+  try {
+    const res = await fetch(`/api/sessions/${id}/unlock-hack`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + adminToken
+      }
+    });
+    const result = await res.json();
+    if (result && result.success) {
+      await loadSessions();
+    } else {
+      alert((result && result.message) || 'خطا در لغو وضعیت نفوذ');
+    }
+  } catch (err) {
+    alert('خطا در برقراری ارتباط با سرور.');
+  }
+}
+
 /**
  * admin-dashboard.js
  * کنترلر مدرن داشبورد و مرکز مدیریت جلسات راز دهکده
@@ -148,6 +169,10 @@ function initDashboardSocket() {
         }
         notifEl.innerHTML = `🛒 <strong>سفارش تازه!</strong> برای «${escapeHtml(displayName)}» سفارش گل ثبت شد؛ بسته را برای تحویل آماده فرمایید.`;
       }
+      loadSessions();
+    });
+
+    dashboardSocket.on('session_hack_updated', () => {
       loadSessions();
     });
 
@@ -471,6 +496,13 @@ function renderSessions(sessions) {
         <span class="phase-dot-indicator"></span>
         <span class="phase-text" id="live-phase-text-${s.id}">${liveStatusText}</span>
       </div>
+
+      ${s.is_hacked ? `
+        <div class="hacked-status-badge" style="background:rgba(255,0,60,0.15);border:1px solid #ff003c;color:#ff4d6d;font-size:11px;font-weight:800;padding:5px 10px;border-radius:6px;margin:8px 0;display:flex;align-items:center;justify-content:space-between;">
+          <span>🚨 نفوذ سایبری مزداک فعال است</span>
+          <button type="button" onclick="event.preventDefault();unlockHackDashboard(${s.id})" style="background:#10b981;border:none;color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:4px;cursor:pointer;">🔓 بازگشایی</button>
+        </div>
+      ` : ''}
 
       <div class="codes-chips-grid">
         <div class="code-chip">

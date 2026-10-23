@@ -65,6 +65,8 @@ RazeDehkade/
 │       ├── MASTER_04_MEDIA_STREAMING_TELEGRAM_BOT.md
 │       ├── MASTER_05_QUAD_PANEL_AND_3D_VAULT.md
 │       └── MASTER_06_BUTTONS_AND_OUTPUTS_MATRIX.md
+│       ├── MASTER_11_LIVE_AUDIO_BROADCAST_AND_MULTI_ADMIN.md
+│       └── MASTER_12_MAZDAK_CYBER_BREACH_AND_EMERGENCY_PORTAL.md
 ├── server.js                             # نقطه ورود سرور اصلی (Express, Socket.io, HTTP 206)
 ├── package.json                          # اسکریپت‌ها، وابستگی‌ها و دستور اجرای تست‌ها
 ├── src/                                  # سورس‌کد ماژولار بک‌اند
@@ -136,6 +138,11 @@ flowchart TD
 | ۲۳ | `DEC-0023` | استریم آنی HTTP 206 | پخش آنلاین صوت/ویدیو با FastStart و ممنوعیت قفل کش که باعث توقف در ثانیه ۲ می‌شد. |
 | ۲۴ | `DEC-0024` | پنهان‌سازی عناوین بات | عناوین داخلی ادمین (`پیام ۱`، `بعد از ۵ دقیقه`) هرگز نباید به دانش‌آموز نشان داده شوند. |
 | ۲۵ | `DEC-0025` | گاوصندوق ۳D اسلات ۴ | بدنه تمام‌فولادی، سیاست عدم لو دادن سناریو، چرخش ۱۰۸۰ درجه، رمز 0110 و ریست با رفرش. |
+| ۲۶ | `DEC-0026` | ریپلای دوطرفه و ایزولاسیون | ارجاع متقارن کاربر/ادمین مقید به نشست جاری، خنثی‌سازی ارجاع فرامرزی و دابل‌سابمیت ایمن. |
+| ۲۷ | `DEC-0027` | کوت‌باکس حباب و پالس نئونی | نوار عمودی رنگی فرستنده، اسکرول نرم به پیام والد و انیمیشن درخشش پالس نئونی ۱.۸ ثانیه‌ای. |
+| ۲۸ | `DEC-0028` | بنر پیش‌نمایش کامپوزر | اکشن `↩️`، دابل‌کلیک، فوکوس خودکار، لغو با `Escape` و حفظ کامل لایوت موبایل و کیبورد. |
+| ۲۹ | `DEC-0029` | ناوبری سه‌گانه و ویوپورت موبایل | ۳ تب تاکتیکال در موبایل/تبلت، پنهان در دسکتاپ، مهار کیبورد با visualViewport و flex-shrink. |
+| ۳۰ | `DEC-0030` | نشانه‌گذاری کارآگاهی تقویم | تیک، ضربدر و دایره قرمز از ۲۵ مهر تا تاریخ جاری بدون تسری به آینده. |
 
 ---
 
@@ -158,3 +165,8 @@ flowchart TD
 - [MASTER_04: استریم رسانه HTTP 206، آپلود تکه‌ای و ربات تلگرام](file:///c:/xampp/htdocs/RazeDehkade/docs/ai/masters/MASTER_04_MEDIA_STREAMING_TELEGRAM_BOT.md)
 - [MASTER_05: پنل چهارگانه زیر برد شواهد و گاوصندوق ۳D اسلات ۴](file:///c:/xampp/htdocs/RazeDehkade/docs/ai/masters/MASTER_05_QUAD_PANEL_AND_3D_VAULT.md)
 - [MASTER_06: ماتریس جامع دکمه‌ها و رفتارهای کلیکی پلتفرم](file:///c:/xampp/htdocs/RazeDehkade/docs/ai/masters/MASTER_06_BUTTONS_AND_OUTPUTS_MATRIX.md)
+- [MASTER_07: سامانه ریپلای دوطرفه پیام‌ها، کوت‌باکس و پیش‌نمایش کامپوزر](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_07_TWO_WAY_REPLY_AND_QUOTE_ENGINE.md)
+- [MASTER_08: معماری ریسپانسیو سه‌گانه پایانه دانش‌آموز، انطباق ویوپورت و مصون‌سازی کیبورد](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_08_STUDENT_TERMINAL_RESPONSIVE_ENGINE.md)
+- [MASTER_09: سامانه نشانه‌گذاری تاکتیکال تقویم شمسی کارآگاهی](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_09_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md)
+- [MASTER_10: معماری سینمایی نفوذ سایبری مزداک و صعود پایانه N-LOG کلاسه ۱۴](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_09_MAZDAK_CYBER_BREACH_ENGINE.md)
+

@@ -40,7 +40,7 @@ function authenticateToken(req, res, next) {
  */
 function requireAdmin(req, res, next) {
   authenticateToken(req, res, () => {
-    if (req.user && req.user.role === 'admin') {
+    if (req.user && (req.user.role === 'admin' || req.user.role === 'super_admin')) {
       next();
     } else {
       res.status(403).json({ success: false, message: 'دسترسی غیرمجاز. فقط ادمین اجازه دسترسی دارد.' });

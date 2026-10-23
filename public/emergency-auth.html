@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>درگاه احراز هویت امنیتی اضطراری — راز دهکده</title>
+  
+  <link rel="preload" href="/assets/scene/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/css/emergency-auth.css?v=1.0">
+</head>
+<body class="emergency-auth-page">
+
+  <main class="emergency-container" id="emergencyContainer" role="main">
+    
+    <!-- Header -->
+    <header class="emergency-header">
+      <div class="breach-alert-pill">
+        <span class="pulse-dot"></span>
+        <span>پروتکل امنیتی سطح ۵ // نفوذ مزداک</span>
+      </div>
+      <h1 class="emergency-title">درگاه اضطراری بازیابی پرونده</h1>
+      <p class="emergency-subtitle">به دلیل نفوذ سایبری به شبکه دهکده، برای جلوگیری از نابودی مدارک باید احراز هویت کارآگاهی خود را تکمیل کنید.</p>
+    </header>
+
+    <!-- Stepper Indicator -->
+    <nav class="stepper-nav" aria-label="مراحل احراز هویت">
+      <div class="step-item active" id="stepIndicator1">
+        <span class="step-circle">۱</span>
+        <span>شناسایی اولیه</span>
+      </div>
+      <div class="step-separator"></div>
+      <div class="step-item" id="stepIndicator2">
+        <span class="step-circle">۲</span>
+        <span>پرسشنامه امنیتی</span>
+      </div>
+      <div class="step-separator"></div>
+      <div class="step-item" id="stepIndicator3">
+        <span class="step-circle">۳</span>
+        <span>تثبیت و ایمن‌سازی</span>
+      </div>
+    </nav>
+
+    <!-- Status Messages -->
+    <div id="statusAlert" class="status-msg" role="alert"></div>
+
+    <!-- STEP 1: Phone & Code Identification -->
+    <section id="step1Section" class="emergency-step">
+      <div class="emergency-callout">
+        ⚠️ <strong>توجه کارآگاهان:</strong> شماره تماسی که با آن در سامانه وارد شده بودید یا کد کلاس را وارد کنید تا وضعیت پرونده شما اعتبارسنجی شود.
+      </div>
+
+      <form id="authPhoneForm" class="emergency-form" novalidate>
+        <div class="form-group">
+          <label for="emergencyPhone" class="form-label">
+            <span>شماره موبایل ثبت‌شده</span>
+            <span class="form-label-hint">مثال: ۰۹۱۲۳۴۵۶۷۸۹</span>
+          </label>
+          <div class="input-cyber-wrapper">
+            <input 
+              type="tel" 
+              id="emergencyPhone" 
+              class="input-cyber" 
+              placeholder="09xxxxxxxxx" 
+              inputmode="numeric" 
+              autocomplete="tel"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="emergencyClassCode" class="form-label">
+            <span>کد کلاس یا کد پرونده (اختیاری)</span>
+            <span class="form-label-hint">۶ تا ۸ رقمی</span>
+          </label>
+          <div class="input-cyber-wrapper">
+            <input 
+              type="text" 
+              id="emergencyClassCode" 
+              class="input-cyber" 
+              placeholder="مثال: 681352" 
+              inputmode="numeric" 
+              maxlength="8"
+            >
+          </div>
+        </div>
+
+        <button type="submit" id="submitStep1Btn" class="btn-emergency">
+          <span>⚡ تایید هویت و ورود به پرسشنامه امنیتی</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- STEP 2: Security Clearance Questionnaire -->
+    <section id="step2Section" class="emergency-step" style="display: none;">
+      <div class="emergency-callout">
+        🔒 <strong>پرسش‌های امنیتی ضد نفوذ:</strong> این سوالات برای اثبات دسترسی واقعی اعضای تیم کارآگاهی طراحی شده است. به دقت پاسخ دهید.
+      </div>
+
+      <form id="questionnaireForm" class="emergency-form" novalidate>
+        
+        <!-- Question 1 -->
+        <div class="question-block">
+          <div class="question-title">
+            <span class="question-badge">Q-01</span>
+            <span>در بررسی صحنه جرم آسیاب کهنه، کدام نشانه حاکی از حضور مزداک یا دستیار او بود؟</span>
+          </div>
+          <div class="options-list">
+            <label class="option-label">
+              <input type="radio" name="q1" value="footprint" required>
+              <span>ردپای عمیق پوتین سایز ۴۲ با طرح دندانه‌دار</span>
+            </label>
+            <label class="option-label">
+              <input type="radio" name="q1" value="letter">
+              <span>نامه دست‌نویس با جوهر نامرئی در گوشه پنجره</span>
+            </label>
+            <label class="option-label">
+              <input type="radio" name="q1" value="flower">
+              <span>برگ خشکیده گل لیلیوم در کنار کیسه‌های گندم</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="question-block">
+          <div class="question-title">
+            <span class="question-badge">Q-02</span>
+            <span>کد پیگیری حواله محموله گندم کشف‌شده در آسیاب چند بود؟</span>
+          </div>
+          <div class="options-list">
+            <label class="option-label">
+              <input type="radio" name="q2" value="892" required>
+              <span>کد رهگیری ۸۹۲ (محموله انبار مرکزی)</span>
+            </label>
+            <label class="option-label">
+              <input type="radio" name="q2" value="514">
+              <span>کد رهگیری ۵۱۴ (سفارش شخصی)</span>
+            </label>
+            <label class="option-label">
+              <input type="radio" name="q2" value="309">
+              <span>کد رهگیری ۳۰۹ (محموله متفرقه)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Question 3 -->
+        <div class="question-block">
+          <div class="question-title">
+            <span class="question-badge">Q-03</span>
+            <span>تحلیل شما از انگیزه اصلی مزداک برای حمله سایبری به پایگاه دهکده چیست؟</span>
+          </div>
+          <div class="input-cyber-wrapper" style="margin-top: 8px;">
+            <input 
+              type="text" 
+              id="q3Answer" 
+              class="input-cyber" 
+              placeholder="پاسخ کوتاه تحلیلی خود را بنویسید (مثال: جلوگیری از افشای راز آسیاب)" 
+              style="direction: rtl; text-align: right;"
+              required
+            >
+          </div>
+        </div>
+
+        <button type="submit" id="submitStep2Btn" class="btn-emergency cyan">
+          <span>🔒 ثبت نهایی پاسخ‌ها و تثبیت وضعیت امنیتی پرونده</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- STEP 3: Success Screen -->
+    <section id="step3Section" class="emergency-step" style="display: none;">
+      <div class="success-screen">
+        <div class="success-icon" aria-hidden="true">✓</div>
+        <h2 class="success-title">احراز هویت با موفقیت ثبت شد</h2>
+        <div class="tracking-badge" id="trackingIdDisplay">SECURITY REF: SEC-89421</div>
+        <p class="success-desc">
+          پاسخ‌های امنیتی تیم کارآگاهی شما در سرور مرکزی رمزنگاری شد و پرونده از خطر انهدام دائمی نجات یافت.
+          <br><br>
+          <strong>جلسه آینده:</strong> در جلسه حضوری هفته آینده با حضور سرکارآگاه و سایر اعضای تیم، قفل سامانه بازگشایی و ارتباط زنده با مرکز فرماندهی مجدداً برقرار خواهد شد.
+        </p>
+
+        <a href="/" class="btn-emergency cyan" style="text-decoration: none; width: 100%; max-width: 280px;">
+          <span>بازگشت به صفحه اصلی</span>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="emergency-footer">
+    سامانه امنیت سایبری پایگاه کارآگاهی راز دهکده · <a href="/">razedehkade.ir</a>
+  </footer>
+
+  <script src="/assets/js/emergency-auth.js?v=1.0"></script>
+</body>
+</html>

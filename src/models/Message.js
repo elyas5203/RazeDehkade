@@ -17,22 +17,31 @@ class Message {
    * @param {string} [data.message_type='text'] ('text' | 'image' | 'voice' | 'video' | 'file')
    * @param {string} [data.file_url]
    * @param {string} [data.file_name]
+   * @param {number|null} [data.reply_to_id=null]
    */
-  static async create({ session_id, sender_type, sender_id = null, content, message_type = 'text', file_url = null, file_name = null }) {
+  static async create({ session_id, sender_type, sender_id = null, content, message_type = 'text', file_url = null, file_name = null, reply_to_id = null }) {
     const res = await query(
-      `INSERT INTO messages (session_id, sender_type, sender_id, content, message_type, file_url, file_name, is_read)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
-      [session_id, sender_type, sender_id, content, message_type, file_url, file_name]
+      `INSERT INTO messages (session_id, sender_type, sender_id, content, message_type, file_url, file_name, is_read, reply_to_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?)`,
+      [session_id, sender_type, sender_id, content, message_type, file_url, file_name, reply_to_id || null]
     );
 
     // بروزرسانی زمان آخرین فعالیت جلسه
     await Session.updateLastActivity(session_id);
 
-    // دریافت پیام ساخته شده
+    // دریافت پیام ساخته شده به همراه اطلاعات ریپلای و نام ادمین
     const createdMsgRes = await query(
-      `SELECT m.*, a.display_name as admin_sender_name
+      `SELECT m.*, a.display_name as admin_sender_name,
+              rm.content as reply_content,
+              rm.sender_type as reply_sender_type,
+              rm.message_type as reply_message_type,
+              rm.file_url as reply_file_url,
+              rm.file_name as reply_file_name,
+              ra.display_name as reply_admin_name
        FROM messages m
        LEFT JOIN admins a ON m.sender_id = a.id
+       LEFT JOIN messages rm ON m.reply_to_id = rm.id
+       LEFT JOIN admins ra ON rm.sender_id = ra.id
        WHERE m.id = ?`,
       [res.insertId]
     );
@@ -41,15 +50,23 @@ class Message {
   }
 
   /**
-   * دریافت تاریخچه پیام‌های یک جلسه
+   * دریافت تاریخچه پیام‌های یک جلسه با جزئیات کامل ریپلای
    * @param {number} session_id
    * @param {number} [limit=100]
    */
   static async findBySessionId(session_id, limit = 100) {
     const res = await query(
-      `SELECT m.*, a.display_name as admin_sender_name
+      `SELECT m.*, a.display_name as admin_sender_name,
+              rm.content as reply_content,
+              rm.sender_type as reply_sender_type,
+              rm.message_type as reply_message_type,
+              rm.file_url as reply_file_url,
+              rm.file_name as reply_file_name,
+              ra.display_name as reply_admin_name
        FROM messages m
        LEFT JOIN admins a ON m.sender_id = a.id
+       LEFT JOIN messages rm ON m.reply_to_id = rm.id
+       LEFT JOIN admins ra ON rm.sender_id = ra.id
        WHERE m.session_id = ?
        ORDER BY m.id ASC`,
       [session_id]
@@ -58,11 +75,25 @@ class Message {
   }
 
   /**
-   * یافتن پیام با شناسه
+   * یافتن پیام با شناسه به همراه فراداده ریپلای
    * @param {number} id
    */
   static async findById(id) {
-    const res = await query(`SELECT * FROM messages WHERE id = ?`, [id]);
+    const res = await query(
+      `SELECT m.*, a.display_name as admin_sender_name,
+              rm.content as reply_content,
+              rm.sender_type as reply_sender_type,
+              rm.message_type as reply_message_type,
+              rm.file_url as reply_file_url,
+              rm.file_name as reply_file_name,
+              ra.display_name as reply_admin_name
+       FROM messages m
+       LEFT JOIN admins a ON m.sender_id = a.id
+       LEFT JOIN messages rm ON m.reply_to_id = rm.id
+       LEFT JOIN admins ra ON rm.sender_id = ra.id
+       WHERE m.id = ?`,
+      [id]
+    );
     return res.rows[0] || null;
   }
 

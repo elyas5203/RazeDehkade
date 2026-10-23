@@ -15,22 +15,44 @@
   <link rel="preload" href="/assets/vault/real-kraft-back-inside.png?v=10.0" as="image">
   <link rel="preload" href="/assets/vault/mysterious-museum-poster.svg?v=10.0" as="image">
   <link rel="stylesheet" href="/assets/css/investigation.css">
-  <link rel="stylesheet" href="/assets/css/terminal.css?v=6.2">
+  <link rel="stylesheet" href="/assets/css/terminal.css?v=7.0">
   <link rel="stylesheet" href="/assets/css/image-magnifier.css?v=1.2">
   <link rel="stylesheet" href="/assets/css/vault-3d.css?v=10.0">
   <link rel="stylesheet" href="/assets/css/breach.css">
   <link rel="stylesheet" href="/assets/css/voice-player.css">
+  <link rel="stylesheet" href="/assets/css/student-mobile.css?v=1.1">
+  <link rel="stylesheet" href="/assets/css/cyber-breach-engine.css?v=2.0">
   <script src="/socket.io/socket.io.js" defer></script>
+  <script src="/assets/js/cyber-breach-engine.js?v=2.0" defer></script>
   <script src="/assets/js/hack-sequence.js" defer></script>
   <script src="/assets/js/voice-recorder.js" defer></script>
   <script src="/assets/js/image-magnifier.js?v=1.2" defer></script>
   <script src="/assets/js/live-audio-codec.js?v=1.0" defer></script>
-  <script src="/assets/js/user-chat.js?v=6.5" defer></script>
+  <script src="/assets/js/user-chat.js?v=8.0" defer></script>
   <script src="/assets/js/terminal-stream.js?v=4.6" defer></script>
   <script src="/assets/js/terminal.js?v=4.8" defer></script>
   <script src="/assets/js/vault-3d.js?v=10.0" defer></script>
 </head>
 <body class="terminal-page">
+  <!-- نوار تب‌های عملیاتی تاکتیکال مخصوص موبایل و تبلت (روی دسکتاپ به صورت خودکار مخفی است) -->
+  <nav class="student-mobile-nav-tabs" aria-label="ناوبری بخش‌های پایانه کارآگاهی">
+    <button type="button" class="student-tab-btn active" id="tab-btn-chat" onclick="switchStudentMobileTab('chat')">
+      <span class="tab-icon" aria-hidden="true">💬</span>
+      <span class="tab-text">اتاق گفتگو</span>
+      <span class="tab-badge dot" id="chat-tab-badge" hidden></span>
+    </button>
+    <button type="button" class="student-tab-btn" id="tab-btn-evidence" onclick="switchStudentMobileTab('evidence')">
+      <span class="tab-icon" aria-hidden="true">📌</span>
+      <span class="tab-text">میز شواهد</span>
+      <span class="tab-badge count" id="evidence-tab-badge">۰</span>
+    </button>
+    <button type="button" class="student-tab-btn" id="tab-btn-tools" onclick="switchStudentMobileTab('tools')">
+      <span class="tab-icon" aria-hidden="true">🗄️</span>
+      <span class="tab-text">پنل عملیاتی</span>
+      <span class="tab-badge dot" id="tools-tab-badge" hidden></span>
+    </button>
+  </nav>
+
   <!-- فضای اصلی کار تمام‌صفحه (بدون هدر بالا و بدون فوتر پایین جهت حداکثر فضا): چت در سمت راست و ستون چپ دوگانه -->
   <main class="case-workspace">
     
@@ -62,8 +84,18 @@
       <form class="composer" id="message-form">
         <label for="msg-input" class="sr-only">گزارش شما به مرکز</label>
 
-        <!-- پاپ‌آپ انتخابگر ایموجی دانش‌آموز -->
-        <div id="user-emoji-picker" class="emoji-picker-popover" hidden aria-label="انتخاب ایموجی"></div>
+        <!-- بنر شیک و نئونی پیش‌نمایش ریپلای دانش‌آموز -->
+        <div id="user-reply-preview-bar" class="composer-reply-preview" hidden aria-live="polite">
+          <div class="reply-preview-bar-accent" id="user-reply-accent"></div>
+          <div class="reply-preview-body">
+            <div class="reply-preview-sender-row">
+              <span class="reply-preview-icon" aria-hidden="true">↩</span>
+              <strong id="user-reply-preview-title" class="reply-preview-title">پاسخ به مرکز</strong>
+            </div>
+            <div id="user-reply-preview-snippet" class="reply-preview-snippet">متن پیام مرجع...</div>
+          </div>
+          <button type="button" class="reply-preview-cancel-btn" onclick="cancelUserReply()" title="لغو پاسخ (Escape)" aria-label="لغو پاسخ">✕</button>
+        </div>
         
         <div class="composer-controls">
           <input type="file" id="user-file-input" hidden onchange="handleUserFileUpload(event)">
@@ -199,7 +231,12 @@
         </div>
 
         <!-- قسمت ۳: ترمینال کد امنیتی (نسخه کوچک‌تر شده) -->
-        <section class="security-terminal quad-card" aria-labelledby="terminal-title">
+        <section class="security-terminal quad-card" id="security-terminal" aria-labelledby="terminal-title">
+          <!-- هولوگرافیک HUD براکت‌ها برای صعود باشکوه -->
+          <div class="hud-corner-bracket bracket-tl" aria-hidden="true"></div>
+          <div class="hud-corner-bracket bracket-tr" aria-hidden="true"></div>
+          <div class="hud-corner-bracket bracket-bl" aria-hidden="true"></div>
+          <div class="hud-corner-bracket bracket-br" aria-hidden="true"></div>
           <header class="terminal-bar">
             <div class="term-title-box">
               <span class="term-traffic-lights"><i></i><i></i><i></i></span>

@@ -3,7 +3,307 @@
 
 ---
 
-## Current state — 2026-10-18 — استقرار پروتکل جامع معماری مستر و پایه‌ریزی درخت اسناد هوش مصنوعی (UMAC-P) [Antigravity]
+## Current state — 2026-10-23 — نفوذ سایبری مزداک نسخه ۲، ایزولاسیون کلاسی، گلیچ پویای دستیاران و درگاه احراز هویت اضطراری (UMAC-P) [Antigravity]
+- **دستور کارفرما (Mandate):** «کارایی ک میگ رو میخوام خیلی دقیق انجام بدی برام، من میخوام اون پروسه هکی که ساخته شده رو بیاری رویه پروسه هک الان، بعد جریان چشکلیه ممکنه ی کلاس امروز هک بشه ی کلاس سه ساعت دیگ ی کلاس فردا ینی هر کلاس ی روزی پروسه هکش شروع میشه پس باید کاستومایز هر کلاس جدا باشه، مورد بعدی اینکه قراره پک رو ببریم تو خونه ها... هفته پیش گفتیم سایت مورد حمله سایبری دشمن قرار گرفته و ی سیستم احراز هویت کار گذاشتیم که همه رو میندازه بیرون (میخوام بعد از اینک پروسه دو دقیقه هک تموم شد، ی پیام بیاد پاپ اپ طور ک تمام کاربران از بخش چت و... افتادن بیرون، برای دسترسی دوباره باید وارد سایت بشین و سوالات رو جواب بدین تا دسترسی دوباره باز شود برای همین ادرس سایت رو یادداشت بکنین razedehkade.ir بعد باید بزنین رویه دکمه ورود و شماره ای ک باهاش وارد میشدین بزنین و بعد به سوالات جواب بدین... بعد از ی هفته ک بچه ها تو خونه هاشون وارد شدن و این احراز هویته رو کردن، روز جلسه ک همشون دور هم جمع میشن بتونم این قفل رو باز بکنم و دوباره بتونن وارد بشن... نباید استایل الان سایتم خراب بشه... افکت های مخدوش شدن تصویر بچه ها هنوز مسخرست...»
+- **تغییرات کلیدی معماری:**
+  - تدوین اسناد جامع معماری: [MASTER_MAZDAK_CYBER_BREACH_V2.md](file:///E:/projects/RazeDehkade/MASTER_MAZDAK_CYBER_BREACH_V2.md) و نسخه والد [docs/ai/masters/MASTER_12_MAZDAK_CYBER_BREACH_AND_EMERGENCY_PORTAL.md](file:///E:/projects/RazeDehkade/docs/ai/masters/MASTER_12_MAZDAK_CYBER_BREACH_AND_EMERGENCY_PORTAL.md) شامل اجرای کامل پروتکل SUBAGENT_SWARM_50.md v2.0 (۵۰ نقش R01 تا R50) و ۹ دیدگاه مکمل طراحی تعاملی و UX/UI.
+  - پیاده‌سازی مایگریشن شماره ۵ (`src/db/migrations/005_add_session_hack_status.sql`) با فیلدهای `is_hacked` و `hacked_at` در جدول `sessions`؛ ایزولاسیون صددرصدی و ذخیره ماندگار وضعیت هک برای هر کلاس به صورت کاملاً مستقل.
+  - استخراج خودکار و پویای تصاویر و اسامی دانش‌آموزان هر کلاس از `session_assistants` و گلیچ کروماتیک استودیویی واقعی (RGB Split دو کاناله آبی و قرمز با Screen Blend، رتیکول بیومتریک و کد خطای باینری) بدون هاردکد کردن اسامی.
+  - پیاده‌سازی موتور سناریوی ۱۲۰ ثانیه‌ای نفوذ مزداک در چت زنده (`public/assets/js/cyber-breach-engine.js` و `public/assets/css/cyber-breach-engine.css`) شامل ارورهای پورت ۸۰۸۸، بلک‌اوت مدارک، صعود مکانیکی ترمینال به مرکز، تسخیر کانال، پیام‌های شخصی‌سازی‌شده مزداک، و پاپ‌آپ سینماتیک اخطار فوق‌امنیتی سقوط خط در ثانیه ۱۲۰.
+  - پیاده‌سازی درگاه احراز هویت امنیتی اضطراری (`public/emergency-auth.html`، `public/assets/css/emergency-auth.css`، `public/assets/js/emergency-auth.js`) با احراز شماره تماس، پرسشنامه کارآگاهی ضد نفوذ و صدور کد رهگیری تا جلسه حضوری بعد.
+  - گیت‌کیپینگ ورود به کلاس‌های هک‌شده در `/api/auth/user/join` با پاسخ ۴۰۳، پرچم `isHacked: true`، پیام اخطار و ریدایرکت فوری به درگاه اضطراری.
+  - افزودن کنترل‌های تریگر و آنلاک نفوذ در چت ادمین و بج اخطار نفوذ به همراه بازگشایی تک‌کلیکی در داشبورد ادمین.
+  - طراحی و قبولی ۱۰۰٪ آزمون اختصاصی `tests/mazdak-cyber-breach-v2.test.js` و اجرای موفق تمام ۱۹ سوئیت آزمون در `scripts/test-runner.js`.
+  - ثبت تصمیم رسمی `DEC-0034`، نسخه ۱.۱۸.۰ در `CHANGELOG.md` و ثبت در `INDEX.md` و `ROOT_MASTER.md`.
+- **فایل‌های تغییر یافته / ایجاد شده:**
+  - `src/db/migrations/005_add_session_hack_status.sql`
+  - `src/db/migrate.js`
+  - `src/db/pool.js`
+  - `src/models/Session.js`
+  - `src/routes/auth.js`
+  - `src/routes/sessions.js`
+  - `src/socket/index.js`
+  - `public/chat.html`
+  - `public/assets/css/cyber-breach-engine.css`
+  - `public/assets/js/cyber-breach-engine.js`
+  - `public/emergency-auth.html`
+  - `public/assets/css/emergency-auth.css`
+  - `public/assets/js/emergency-auth.js`
+  - `public/assets/js/gateway.js`
+  - `public/assets/js/user-landing.js`
+  - `public/assets/js/user-chat.js`
+  - `public/admin/chat.html`
+  - `public/assets/js/admin-chat.js`
+  - `public/assets/js/admin-dashboard.js`
+  - `tests/mazdak-cyber-breach-v2.test.js`
+  - `MASTER_MAZDAK_CYBER_BREACH_V2.md`
+  - `docs/ai/masters/MASTER_12_MAZDAK_CYBER_BREACH_AND_EMERGENCY_PORTAL.md`
+  - `docs/ai/DECISIONS.md`
+  - `docs/ai/CHANGELOG.md`
+  - `docs/ai/ROOT_MASTER.md`
+  - `docs/ai/INDEX.md`
+  - `docs/ai/PROJECT_STATE.md`
+- **اعتبارسنجی:**
+  - اجرای کامل آزمون‌ها با دستور `node scripts/test-runner.js`: ۱۹ سوئیت آزمون ۱۰۰٪ سبز (19/19 PASS).
+
+---
+
+## Historical State — 2026-10-22 — معماری جامع شنود صوتی پیش‌فرض، برودکست هم‌زمان چند ادمین و تاب‌آوری ۵۰ کاربر همزمان (UMAC-P) [Antigravity]
+- **دستور کارفرما (Mandate):** «میخوام ویس کلاس ها دیفالت شنود بشه ینی وارد بخش چت ک میشن ویسشون استریم بشه، ادمین با زدن ی دکمه ویس براش پلی بشه یا استپ بشه(به صورت ریل تایم) بعد اینک من الان تست کردم اگر یک ادمین داره ویس یک کلاس رو گوش میده ی ادمین دیگ بیاد بزنه گوش بده ویس اون ادمین اول بسته میشه اینطوری نمیخوام باشه میخوام هر تعداد ادمین خواستن بتونن ویس رو گوش بدن بعد این سیستم ویس میخوام خیلی قدرت من تر بشه چون ممکنه هم اینترنت ادمین ضعیف باشه هم اینترنت اون یوزری ک سر کلاسه و جلسست میخوام این خیلی قدرت مند تر بشه برو تو اینترنت دربارش تحقیق بکن و خیلی دقیق اینایی ک گفتم رو درست بکن و تست بکن همچنین سایت باید تحمل اینک همزمان 50 تا یوزر داخلش باشن رو داشته باشه که به مشکل نخوریم این خیلی نکته مهمیه سایت باید توانشو داشته باشه خیلی با دقت اینو درست بکن بهینه بکن قدرت مند بکن تو اینترنت حتما تحقیق بکن برام»
+- **تغییرات کلیدی معماری:**
+  - تدوین سند جامع معماری: [MASTER_LIVE_AUDIO_BROADCAST_AND_MULTI_ADMIN.md](file:///E:/projects/RazeDehkade/MASTER_LIVE_AUDIO_BROADCAST_AND_MULTI_ADMIN.md) و نسخه والد [docs/ai/masters/MASTER_11_LIVE_AUDIO_BROADCAST_AND_MULTI_ADMIN.md](file:///E:/projects/RazeDehkade/docs/ai/masters/MASTER_11_LIVE_AUDIO_BROADCAST_AND_MULTI_ADMIN.md) شامل اجرای کامل پروتکل SUBAGENT_SWARM_50.md v2.0 (۵۰ نقش R01 تا R50) و ۹ دیدگاه مکمل طراحی تعاملی و UX/UI.
+  - پیاده‌سازی شنود صوتی پیش‌فرض: آغاز خودکار استریم سبک ۸ کیلوهرتز IMA ADPCM در کلاینت دانش‌آموز (`public/assets/js/user-chat.js`) با پهنای باند ثابت ۳۲ کیلوبیت بر ثانیه (۴ کیلوبایت در ثانیه) بدون نیاز به دریافت پیام اولیه از ادمین.
+  - پیاده‌سازی رجیستری دوطرفه شنودگران در سرور سوکت (`src/socket/index.js`): `adminListeningSessions` و `sessionAudioListeners` جهت تفکیک کامل و توزیع هم‌زمان بسته‌ها به هر تعداد ادمین متصل بدون نشت و بدون تداخل.
+  - رفع کامل باگ قطع ارتباط ادمین اول با ورود ادمین دوم: هر ادمین به صورت مستقل و بدون تخریب جریان دیگران صدا را دریافت می‌کند؛ همچنین با توقف شنود توسط یک ادمین، تنها لیسنر همان ادمین حذف شده و استریم دانش‌آموز تا زمان خروج آخرین ادمین به فعالیت ادامه می‌دهد.
+  - بازنویسی معماری مالتی‌پیر WebRTC با ساختار `livePeersMap` به ازای هر ادمین و تثبیت فال‌بک سوکت ADPCM به عنوان شریان بلادرنگ همیشه‌فعال.
+  - مقاومت بالا در اینترنت‌های ضعیف و سیم‌کارت: بهره‌گیری از بسته‌های `volatile.emit` در سوکت و سقف بافر ۶۵۰ میلی‌ثانیه‌ای جهت پاکسازی خودکار تأخیرهای انباشته در هنگام لگ شبکه.
+  - اعتبارسنجی تاب‌آوری ۵۰ کاربر فعال هم‌زمان: طراحی و پاس شدن ۱۰۰٪ سبز سوئیت تست اختصاصی `tests/live-audio-multi-admin.test.js` شامل ارسال همزمان پیام و صدا توسط ۵۰ سوکت فعال بدون نشت حافظه و با حفظ مصرف رم پایدار زیر ۵۰ مگابایت.
+  - ثبت تصمیم رسمی `DEC-0033` در `docs/ai/DECISIONS.md`، نسخه ۱.۱۷.۰ در `docs/ai/CHANGELOG.md` و ثبت مستر ۱۱ در `docs/ai/INDEX.md` و `docs/ai/ROOT_MASTER.md`.
+  - پاس شدن ۱۰۰٪ تمام ۱۸ سوئیت آزمون سیستم در اسکریپت `scripts/test-runner.js`.
+- **فایل‌های تغییر یافته / ایجاد شده:**
+  - `src/socket/index.js`
+  - `public/assets/js/user-chat.js`
+  - `public/assets/js/admin-chat.js`
+  - `tests/live-audio-multi-admin.test.js`
+  - `MASTER_LIVE_AUDIO_BROADCAST_AND_MULTI_ADMIN.md`
+  - `docs/ai/masters/MASTER_11_LIVE_AUDIO_BROADCAST_AND_MULTI_ADMIN.md`
+  - `docs/ai/INDEX.md`
+  - `docs/ai/ROOT_MASTER.md`
+  - `docs/ai/DECISIONS.md`
+  - `docs/ai/CHANGELOG.md`
+  - `docs/ai/PROJECT_STATE.md`
+- **اعتبارسنجی:**
+  - اجرای کامل آزمون‌ها با دستور `node scripts/test-runner.js`: ۱۸ سوئیت آزمون ۱۰۰٪ سبز (18/18 PASS).
+
+---
+
+## Historical State — 2026-10-22 — معماری جامع ریسپانسیو موبایل صفحات گل‌فروشی، کاتالوگ، تسویه‌حساب و رهگیری پهپادی (UMAC-P) [Antigravity]
+- **دستور کارفرما (Mandate):** «با توجه به فایل های مستر صفحه گل فروشی هم میخوام برام ریسپانسیو کنی که تو گوشی درست باز بشه فایلای مسترشو دقیق بساز با همون قوانین باید ها و نباید ها خیلی دقیق همه چیزو اماده کن برام خیلی دقیق و با دقت»
+- **تغییرات کلیدی معماری:**
+  - تدوین سند جامع معماری: [MASTER_FLOWER_STORE_MOBILE_RESPONSIVE.md](file:///e:/projects/RazeDehkade/MASTER_FLOWER_STORE_MOBILE_RESPONSIVE.md) و نسخه آینه‌ای [docs/ai/masters/MASTER_10_FLOWER_STORE_MOBILE_RESPONSIVE.md](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_10_FLOWER_STORE_MOBILE_RESPONSIVE.md).
+  - پیاده‌سازی کامل استایل‌شیت واکنش‌گرا `public/golha/assets/css/golha-mobile.css` با ۴ نقطه شکست: ۹۹۲px (تبلت)، ۷۶۸px (فبلت و لنداسکیپ)، ۴۸۰px (گوشی‌های استاندارد)، ۳۶۰px (گوشی‌های باریک).
+  - مهار اسکرول ناخواسته افقی (`max-width: 100vw; overflow-x: hidden;`) روی تمام صفحات گل‌فروشی.
+  - ارتقای هدر و تایپوگرافی هیرو بنر به فونت‌های سیال `clamp()` جهت جلوگیری از سرریز کلمات کشیده («خیـــــلی»).
+  - بازطراحی دراور سبد خرید به حالت تمام‌صفحه در موبایل با دکمه‌های استپر لمسی ۳۶×۳۶ پیکسل، پدینگ ایمن آیفون (`env(safe-area-inset-bottom)`).
+  - ریسپانسیو سازی فرم تسویه‌حساب (`checkout.html`) و ضد زوم در سافاری iOS با فونت ۱۶ پیکسل.
+  - ریسپانسیو سازی رادار و نمایشگر پهپاد FLIR کلاس ۱۷ در `public/assets/css/delivery.css`.
+  - حفظ ۱۰۰٪ انواریانت‌های بیزینس: پول رسمی منحصراً «ریال» (ممنوعیت مطلق کلمه «تومان») و ۵ قلم کالای الزامی بدون باز کردن پورت اضافی روی سرور.
+  - ثبت تصمیم DEC-0032، نسخه CHANGELOG 1.16.0 و رادار INDEX.md.
+  - پاس شدن ۱۰۰٪ سوئیت جدید `tests/golha-mobile-responsive.test.js` (۱۷ سوئیت سبز).
+- **فایل‌های تغییر یافته / ایجاد شده:**
+  - public/golha/assets/css/golha-mobile.css
+  - public/golha/index.html
+  - public/golha/checkout.html
+  - public/golha/order-status.html
+  - public/golha/order_status.html
+  - public/assets/css/delivery.css
+  - tests/golha-mobile-responsive.test.js
+  - MASTER_FLOWER_STORE_MOBILE_RESPONSIVE.md
+  - docs/ai/masters/MASTER_10_FLOWER_STORE_MOBILE_RESPONSIVE.md
+  - docs/ai/DECISIONS.md
+  - docs/ai/CHANGELOG.md
+  - docs/ai/INDEX.md
+  - docs/ai/PROJECT_STATE.md
+- **اعتبارسنجی:**
+  - اجرای کامل آزمون‌ها با دستور node scripts/test-runner.js: ۱۷ سوئیت آزمون ۱۰۰٪ سبز (17/17 PASS).
+
+---
+
+## Historical State — 2026-10-21 — تصادفی‌سازی ارگانیک تیک و ضربدر و روشنایی درخشان روز جلسه (UMAC-P) [Antigravity]
+- **دستور کارفرما (Mandate):** «تیک و ضبدرش میخوام رندوم باشه باحال تر میشه اینطوری بعد الان روز جلسه درسته دورش دایره کشیده ولی خیلی تیرست نمیخوام اینطوری تیره باشه»
+- **تغییرات کلیدی معماری:**
+  - ریشه‌یابی و رفع تیرگی روز جلسه: رفع تداخل کلاس `.is-selected` که رنگ متن را مشکی (`#09121a`) می‌کرد و با پس‌زمینه تیره کادر ترکیب می‌شد؛ اعمال رنگ سفید خالص درخشان (`color: #ffffff !important;`) روی `.cal-day-cell.has-mark-circle` و `.cal-day-num` با هاله نئونی سرخ و افزایش شفافیت و ضخامت خط دایره به مرجانی زنده (`#f87171` و `#fca5a5`) همراه با واش سرخ زنده.
+  - پیاده‌سازی تصادفی‌سازی ارگانیک و پایدار علائم (`getDeterministicPastMark`): استفاده از الگوریتم هش دترمینستیک بر اساس روز، ماه و سال برای توزیع طبیعی، نامتقارن و هیجان‌انگیز تیک‌ها و ضربدرها بدون پرش یا تغییر در رندرهای بعدی.
+  - به‌روزرسانی مستندات UMAC-P شامل MASTER_09 (بخش ۹)، DEC-0030، CHANGELOG (1.15.2) و PROJECT_STATE.
+- **فایل‌های تغییر یافته:**
+  - public/assets/js/user-chat.js
+  - public/assets/css/terminal.css
+  - public/assets/css/student-mobile.css
+  - tests/detective-calendar.test.js
+  - docs/ai/masters/MASTER_09_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md
+  - MASTER_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md
+  - docs/ai/DECISIONS.md
+  - docs/ai/CHANGELOG.md
+  - docs/ai/PROJECT_STATE.md
+- **اعتبارسنجی:**
+  - اجرای کامل آزمون‌ها با دستور node scripts/test-runner.js: ۱۶ سوئیت آزمون ۱۰۰٪ سبز (16/16 PASS).
+
+---
+
+## Historical State — 2026-10-21 — انحصار دایره قرمز تقویم کارآگاهی به روز جاری (UMAC-P) [Antigravity]
+- **دستور کارفرما (Mandate):** «اون دایرهه فقط مال همون روزی باشه ک مال همون روزه ینی مثلا چهارشنبه همون روی دایره باشه پنجشنبه فقیط پنجشنبه دایره باشه اینطوری»
+- **تغییرات کلیدی معماری:**
+  - اصلاح اساسی تابع محاسباتی `getDetectiveCalendarMark` در `public/assets/js/user-chat.js`: نشان دایره قرمز (`circle`) منحصراً و اکیداً فقط به همان روز فعال جاری سیستم (`isToday`) در روزهای سناریو (سه‌شنبه، چهارشنبه، پنج‌شنبه) تعلق می‌گیرد.
+  - جلوگیری از انباشت دایره‌ها: روزهای سپری‌شده گذشته (مانند سه‌شنبه دیروز روی تقویم امروز چهارشنبه) دیگر دایره را نگه نمی‌دارند و تبدیل به ضربدر (`cross`) یا تیک (`check`) می‌شوند.
+  - قانون حفظ حداکثر یک دایره روی تقویم: همواره در هر لحظه حداکثر یک دایره قرمز روی تقویم نمایش داده می‌شود که نشان‌دهنده کانون تمرکز زنده روز جاری است.
+  - به‌روزرسانی مستندات UMAC-P شامل MASTER_09، DEC-0030، CHANGELOG (1.15.1) و PROJECT_STATE.
+- **فایل‌های تغییر یافته:**
+  - public/assets/js/user-chat.js
+  - tests/detective-calendar.test.js
+  - docs/ai/masters/MASTER_09_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md
+  - MASTER_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md
+  - docs/ai/DECISIONS.md
+  - docs/ai/CHANGELOG.md
+  - docs/ai/PROJECT_STATE.md
+- **اعتبارسنجی:**
+  - اجرای کامل آزمون‌ها با دستور node scripts/test-runner.js: ۱۶ سوئیت آزمون ۱۰۰٪ سبز (16/16 PASS).
+
+---
+
+## Historical State — 2026-10-21 — بازطراحی شارپ علائم تقویم کارآگاهی و رفع ماتی تیک و ضربدر (UMAC-P) [Antigravity]
+- **دستور کارفرما (Mandate):** «ببین این تیک و ضبدرش خوب نیست خوب واضح نیست بدردم نمیخوره اینو برو بررسی بکن و درستش کن»
+- **تغییرات کلیدی معماری:**
+  - ریشه‌یابی دقیق ماتی در سلول‌های فشرده تقویم: حذف کاراکترهای یونیکد فونت سیستم و text-shadow بلور ۵ پیکسلی که تمام سلول را ابری می‌کرد.
+  - پیاده‌سازی ضربدر خطی ماژیکی (The Sharpie Slash): دو خط متقاطع CSS خالص به رنگ سرخ #f43f5e با ضخامت ۲px و دوران ۳۴ درجه با دراپ‌شادوی شارپ ۱ پیکسلی بدون بلور.
+  - پیاده‌سازی تیک هندسی شارپ (Crisp Geometric Vector Check): وکتور دوضلعی بوردر با رنگ سبز زمردی زنده #22c55e و زاویه ۴۲ درجه.
+  - اعمال واش تاکتیکال رنگی روی پس‌زمینه و کادر سلول‌ها (rgba(239, 68, 68, 0.16) برای ضربدر و rgba(16, 185, 129, 0.16) برای تیک) جهت تفکیک فوری حتی از دور.
+  - جداسازی و لایه‌بندی ارقام تقویم با تگ مجزای .cal-day-num و سایه دوگانه مشکی (text-shadow: 0 0 2px #000, 0 1px 2px #000) برای خوانایی ۱۰۰٪ عدد روز زیر نشانه‌ها.
+  - تطبیق کامل هندسه با موبایل در student-mobile.css و تضمین سازگاری کامل بدون تغییر لایوت گرید.
+  - به‌روزرسانی مستندات UMAC-P شامل MASTER_09، DEC-0030، CHANGELOG (1.14.1) و PROJECT_STATE.
+- **فایل‌های تغییر یافته:**
+  - public/assets/css/terminal.css
+  - public/assets/css/student-mobile.css
+  - public/assets/js/user-chat.js
+  - docs/ai/masters/MASTER_09_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md
+  - MASTER_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md
+  - docs/ai/DECISIONS.md
+  - docs/ai/CHANGELOG.md
+  - docs/ai/PROJECT_STATE.md
+- **اعتبارسنجی:**
+  - اجرای کامل آزمون‌ها با دستور node scripts/test-runner.js: ۱۶ سوئیت آزمون ۱۰۰٪ سبز (16/16 PASS).
+
+---
+
+## Historical State — 2026-10-21 — استقرار سناریوی سینماتیک AAA نفوذ سایبری مزداک و پایانه N-LOG کلاسه ۱۴ (UMAC-P) [Antigravity]
+- **دستور کارفرما (Mandate):** «افکت ها خیلی مسخرست هنوز میخوام خیلی افکت ها قشنگ و جذاب تر و سایبری تر باشه، خیلی المان ها هست ک میتونی اززشون استفاده بکنی برو تحقیق بکن، بعد مثلا الان اون ترمینالت خیلی مسخره باز میشه این بدرد نمیخوره برو تحقیق بکن اسکیل های مخصوص این بخشو دانلود بکن برام از اسکیل ها کمک بگیر /goal»
+- **تغییرات کلیدی معماری:**
+  - تدوین سند جامع معماری: [MASTER_MAZDAK_CYBER_BREACH.md](file:///e:/projects/RazeDehkade/MASTER_MAZDAK_CYBER_BREACH.md) و نسخه آینه‌ای [docs/ai/masters/MASTER_09_MAZDAK_CYBER_BREACH_ENGINE.md](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_09_MAZDAK_CYBER_BREACH_ENGINE.md).
+  - پیاده‌سازی کامل سامانه ۵۰ نقشی SUBAGENT_SWARM_50.md نسخه ۲.۰ همراه با ۹ دیدگاه مکمل طراحی محصول.
+  - بازطراحی صعود و فرود ترمینال N-LOG بر مبنای تکنیک FLIP: قفل رتیکل هدایت، اسلات گوست در گرید پنل ۴‌گانه، پرواز روان به مرکز ویوپورت، لایه‌های CRT اسکن‌لاین، استریم لاگ‌های ماتریکس و پیشرفت ۰٪ تا ۱۰۰٪، و فرود معکوس با قفل مکانیکی و صدای هپتیک.
+  - مخدوش‌سازی ۳ کاناله RGB چهره‌های واقعی کلاسه ۱۴ (امیرعلی اکبری، یاسین واحدی، محمد انتظامی) با برش‌های افقی و تبدیل نام‌ها به پلاک باینری.
+  - پوچ‌سازی فیزیکی و سوختن دیجیتال اسناد برد شواهد ([سند مفقود شد // DATA PURGED BY MAZDAK]) و قطع شدن خطوط قرمز اتصال.
+  - قفل سایبری کامپوزر پیام دانش‌آموزان با مانع نئونی و تایپ خط‌به‌خط ۴ پیام اختصاصی مزداک در ستون چت با برچسب سرخ‌فام و آکوردهای صوتی دیسونانت.
+  - سنتز صوتی ۱۰۰٪ داخلی با Web Audio API بدون نیاز به دانلود حتی یک مگابایت فایل خارجی.
+  - ثبت تصمیم معماری مصوب DEC-0031 در DECISIONS.md و شاخص در INDEX.md.
+  - استقرار فایل‌های نهایی روی سرور VPS لینوکس (95.217.95.111) و تایید پاسخ ۲۰۰ زنده روی دامنه: https://razedehkade.ir/akbari-hack-preview.html.
+  - پاس شدن ۱۰۰٪ سوئیت جدید tests/akbari-cyber-breach.test.js و ثبت ۱۶ سوئیت آزمون سبز (Pass 16/16).
+- **فایل‌های تغییر یافته / ایجاد شده:**
+  - MASTER_MAZDAK_CYBER_BREACH.md
+  - docs/ai/masters/MASTER_09_MAZDAK_CYBER_BREACH_ENGINE.md
+  - public/akbari-hack-preview.html
+  - public/assets/css/akbari-breach-master.css
+  - public/assets/js/akbari-breach-master.js
+  - tests/akbari-cyber-breach.test.js
+  - docs/ai/DECISIONS.md
+  - docs/ai/INDEX.md
+- **اعتبارسنجی:**
+  - اجرای کامل آزمون‌ها با دستور node scripts/test-runner.js: ۱۶ سوئیت کامل سبز (16/16 PASS).
+  - آزمون سرور لایو: curl -I https://razedehkade.ir/akbari-hack-preview.html -> HTTP 200 OK.
+
+---
+## Historical State — 2026-10-21 — استقرار سامانه نشانه‌گذاری تاکتیکال تقویم شمسی کارآگاهی و تدوین مستر ۰۹ (UMAC-P) [Antigravity]
+- **دستور کارفرما (Mandate):** «دیدی این تقویم های کاراگاه ها ی طوریه انگار بعضی روزا ضبدر زده بعضی روزا تیک میخوره بعضی روزا دورش دایره قرمز کشیده من میخوام اینطوری باشه روز هایی ک گذشته از 25 مهر به اینور برام بعضیاش ضبدر بخوره بعضیاش دایره روز سه شنبه و چهارشنبه و پنجشنبه دایره باشه مثلا فقط بقیه روزا یا ضبدر بخوره یا تیک بخوره(تا تاریخ روز جلوتر نباید بره خیلی مهمه این موضوع برام خیلی بادقت فایلای مسترشو درست بکن و برو جلو ک چیزی خراب نشه همه چیز با دقت»
+- **تغییرات کلیدی معماری:**
+  - تدوین سند فرزند اجرایی جامع: [`MASTER_09_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md`](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_09_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md) و نسخه ریشه [`MASTER_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md`](file:///e:/projects/RazeDehkade/MASTER_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md).
+  - پیاده‌سازی متد محاسباتی `getDetectiveCalendarMark(jy, jm, jd, todayJy, todayJm, todayJd)` در `public/assets/js/user-chat.js` با فیلتر دقیق روزهای گذشته از ۲۵ مهر تا تاریخ جاری.
+  - اعمال قانون خط قرمز عدم تسری به آینده (`date > today` به صورت اکید خروجی `null` برمی‌گرداند).
+  - انتساب دایره قرمز به روزهای سه‌شنبه، چهارشنبه و پنج‌شنبه؛ و انتساب تیک/ضربدر به سایر روزهای گذشته.
+  - طراحی استایل‌های سایبر-نوآر `.has-mark-circle`، `.has-mark-cross`، `.has-mark-check` با `position: relative` بدون تغییر ابعاد گرید.
+  - ثبت تصمیم معماری مصوب `DEC-0030` در [`DECISIONS.md`](file:///e:/projects/RazeDehkade/docs/ai/DECISIONS.md).
+  - ثبت نسخه `1.13.0` در [`CHANGELOG.md`](file:///e:/projects/RazeDehkade/docs/ai/CHANGELOG.md)، ردیف ۳۰ در [`ROOT_MASTER.md`](file:///e:/projects/RazeDehkade/docs/ai/ROOT_MASTER.md) و نگاشت در [`INDEX.md`](file:///e:/projects/RazeDehkade/docs/ai/INDEX.md).
+  - پیاده‌سازی سوئیت آزمون خودکار ۷ گانه در [`tests/detective-calendar.test.js`](file:///e:/projects/RazeDehkade/tests/detective-calendar.test.js) و گذر موفقیت‌آمیز تمامی ۱۵ سوئیت آزمون پروژه.
+- **فایل‌های تغییر یافته:**
+  - `public/assets/js/user-chat.js` (توابع نشانه‌گذاری تقویم و رندر سلول‌ها)
+  - `public/assets/css/terminal.css` (استایل‌های نئونی دایره، تیک و ضربدر)
+  - `public/assets/css/student-mobile.css` (اسکیلینگ نشانه‌ها در صفحات موبایل)
+  - `tests/detective-calendar.test.js` (سوئیت آزمون ۷ گانه ماژول تقویم)
+  - `scripts/test-runner.js` (اجرای ایزوله بدون خطای بافر IPC ویندوز)
+  - `docs/ai/masters/MASTER_09_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md` (سند مستر تسک ۰۹)
+  - `MASTER_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md` (سند مستر ریشه)
+  - `docs/ai/DECISIONS.md` (تصمیم معماری DEC-0030)
+  - `docs/ai/ROOT_MASTER.md` (ردیف ۳۰ جدول و لینک مستر ۰۹)
+  - `docs/ai/CHANGELOG.md` (نسخه 1.13.0)
+  - `docs/ai/INDEX.md` (شاخص نمادها و ماژول‌ها)
+- **اعتبارسنجی:**
+  - اجرای کامل آزمون‌های خودکار با دستور `node scripts/test-runner.js`:
+  - تعداد کل سوئیت‌ها: **۱۵ سوئیت کامل**
+  - نتیجه: **۱۰۰٪ سبز (All 15 test suites passed 100% green)**.
+
+---
+
+## Historical State — 2026-10-20 — استقرار معماری ریسپانسیو سه‌گانه پایانه کارآگاهی دانش‌آموز و تدوین مستر ۰۸ (UMAC-P) [Antigravity]
+- **دستور کارفرما (Mandate):** «فایل مستر رو بساز خیلی دقیق و با احتیاط صفحه کاربر رو ریسپانسیو کن، هیچ بخشی خراب نشه، فایلای مستر با همون قواعد و قوانین باشن /goal»
+- **تغییرات کلیدی معماری:**
+  - تدوین سند فرزند اجرایی جامع: [`MASTER_08_STUDENT_TERMINAL_RESPONSIVE_ENGINE.md`](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_08_STUDENT_TERMINAL_RESPONSIVE_ENGINE.md) و نسخه ریشه [`MASTER_STUDENT_TERMINAL_RESPONSIVE.md`](file:///e:/projects/RazeDehkade/MASTER_STUDENT_TERMINAL_RESPONSIVE.md).
+  - پیاده‌سازی معماری سه‌گانه تب‌های تاکتیکال در [`student-mobile.css`](file:///e:/projects/RazeDehkade/public/assets/css/student-mobile.css) برای نمایشگرهای موبایل و تبلت (`<= 992px`) و تفکیک چت، شواهد و ابزارها.
+  - صیانت صددرصدی از لایوت دسکتاپ (`> 992px`) بدون کمترین جابه‌جایی و پنهان‌سازی تب‌های موبایل با `display: none !important;`.
+  - مهار تغییرات ویوپورت کیبورد مجازی از طریق گوش دادن به `window.visualViewport` و متغیر `--viewport-height`، اعمال `flex-shrink: 0` و پدینگ `safe-area-inset-bottom` روی کامپوزر.
+  - بهینه‌سازی گرید پنل چهارگانه به صورت تک‌ستونه و مرکزیت صفحه کلید رمز گاوصندوق در گوشی‌های باریک‌تر از ۵۸۰ پیکسل.
+  - ثبت تصمیم معماری مصوب `DEC-0029` در [`DECISIONS.md`](file:///e:/projects/RazeDehkade/docs/ai/DECISIONS.md).
+  - ثبت نسخه `1.12.0` در [`CHANGELOG.md`](file:///e:/projects/RazeDehkade/docs/ai/CHANGELOG.md)، ردیف ۲۹ در [`ROOT_MASTER.md`](file:///e:/projects/RazeDehkade/docs/ai/ROOT_MASTER.md) و نگاشت در [`INDEX.md`](file:///e:/projects/RazeDehkade/docs/ai/INDEX.md).
+  - پیاده‌سازی سوئیت آزمون خودکار ۷ گانه در [`tests/student-responsive.test.js`](file:///e:/projects/RazeDehkade/tests/student-responsive.test.js) و گذر موفق ۱۱۶ آزمون بدون خطا.
+- **فایل‌های تغییر یافته:**
+  - `public/assets/css/student-mobile.css` (ایجاد استایل‌های ریسپانسیو، تب‌ها و ویوپورت)
+  - `public/chat.html` (افزودن لینک استایل و نوار تب‌های تاکتیکال با بج‌های وضعیت)
+  - `public/assets/js/user-chat.js` (توابع سوئیچ تب، شنود visualViewport و مدیریت بج‌ها)
+  - `tests/student-responsive.test.js` (سوئیت تست ۷ گانه واکنش‌گرایی)
+  - `docs/ai/masters/MASTER_08_STUDENT_TERMINAL_RESPONSIVE_ENGINE.md` (سند مستر تسک ۰۸)
+  - `MASTER_STUDENT_TERMINAL_RESPONSIVE.md` (سند مستر ریشه)
+  - `docs/ai/DECISIONS.md` (تصمیم معماری DEC-0029)
+  - `docs/ai/ROOT_MASTER.md` (ردیف ۲۹ و لینک رجیستری مستر ۰۸)
+  - `docs/ai/CHANGELOG.md` (نسخه 1.12.0)
+  - `docs/ai/INDEX.md` (نگاشت کنترلرها و ماژول‌ها)
+- **اعتبارسنجی:**
+  - اجرای کامل آزمون‌های خودکار با دستور `node scripts/test-runner.js`:
+  - تعداد کل سوئیت‌ها: ۱۳ سوئیت
+  - تعداد کل تست‌ها: **۱۱۶ تست کاملاً سبز (PASS)، ۰ خطا (FAIL)**
+  - آزمون‌های DOM، اینواریانت دسکتاپ، بریک‌پوینت‌ها، مهار کیبورد و اینواریانت‌های بیزینس همگی تایید شدند.
+
+---
+
+## Historical State — 2026-10-19 — استقرار سامانه ریپلای دوطرفه پیام‌ها و تدوین سند مستر ۰۷ (UMAC-P) [Antigravity]
+- **دستور کارفرما (Mandate):** «اول برو فایل‌های مستر رو بررسی بکن برام، بعد طبق اونا با همون قواعد و قوانین برام فایل مستر اینو بسازی، قابلیت ریپلای زدن رو می‌خوام برام پیاده‌سازی بکنی، دو طرف بتونن ریپلای بزنن، از لحاظ ظاهری باید خوشگل باشه و آسون هم باشه ریپلای زدن، خیلی دقیق باید فایلای مسترشو بسازی و ایجاد بکنی تا بشه راحت ریپلای زد و صفحه چت هم خراب نشه، از اسکیل‌های ui ux استفاده بکن حتما، خیلی با دقت /goal»
+- **تغییرات کلیدی معماری:**
+  - تدوین سند فرزند اجرایی جامع منطبق بر پروتکل UMAC-P: [`MASTER_07_TWO_WAY_REPLY_AND_QUOTE_ENGINE.md`](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_07_TWO_WAY_REPLY_AND_QUOTE_ENGINE.md) و نسخه ریشه [`MASTER_TWO_WAY_CHAT_REPLY.md`](file:///e:/projects/RazeDehkade/MASTER_TWO_WAY_CHAT_REPLY.md).
+  - ایجاد مایگریشن پایگاه داده [`004_add_reply_to_messages.sql`](file:///e:/projects/RazeDehkade/src/db/migrations/004_add_reply_to_messages.sql) و به‌روزرسانی رانر مایگریشن [`migrate.js`](file:///e:/projects/RazeDehkade/src/db/migrate.js) با چک‌های ایندکس و فیلد `reply_to_id INT NULL` همراه با `ON DELETE SET NULL`.
+  - غنی‌سازی مدل پایگاه داده [`Message.js`](file:///e:/projects/RazeDehkade/src/models/Message.js) و شبیه‌ساز تست حافظه [`pool.js`](file:///e:/projects/RazeDehkade/src/db/pool.js) با `LEFT JOIN` جهت واکشی اطلاعات فرستنده والد.
+  - پیاده‌سازی گیت اعتبارسنجی سوکت در [`src/socket/index.js`](file:///e:/projects/RazeDehkade/src/socket/index.js) جهت ممانعت قطعی از نشت و ارجاع فرامرزی میان جلسات کلاس‌ها و تزریق `targetReplyId` در کلید ضداسپم دابل‌سابمیت.
+  - طراحی UI/UX کوت‌باکس حباب پیام شیشه‌ای Liquid Glass در [`terminal.css`](file:///e:/projects/RazeDehkade/public/assets/css/terminal.css) و [`admin.css`](file:///e:/projects/RazeDehkade/public/assets/css/admin.css) با نوار متقارن رنگی نقش فرستنده، اسکرول نرم با `scrollIntoView` و انیمیشن درخشش پالس نئونی ۱.۸ ثانیه‌ای دور حباب والد (`highlight-pulse`).
+  - ایجاد بنر پیش‌نمایش کامپوزر در [`chat.html`](file:///e:/projects/RazeDehkade/public/chat.html) و [`admin/chat.html`](file:///e:/projects/RazeDehkade/public/admin/chat.html) با قابلیت فوکوس خودکار، دکمه لغو `✕` و کلید میانبر `Escape` و رعایت خطوط قرمز مهار ابعاد موبایل و جلوگیری از Layout Shift.
+  - پیاده‌سازی کامل توابع کنترلی کلاینت (`stageUserReply`, `cancelUserReply`, `jumpToMessage`) در [`user-chat.js`](file:///e:/projects/RazeDehkade/public/assets/js/user-chat.js) و (`stageAdminReply`, `cancelAdminReply`, `jumpToAdminMessage`) در [`admin-chat.js`](file:///e:/projects/RazeDehkade/public/assets/js/admin-chat.js) با پشتیبانی از دابل‌کلیک حباب و اکشن اختصاصی `↩️`.
+  - ثبت تصمیمات معماری مصوب `DEC-0026`، `DEC-0027` و `DEC-0028` در [`DECISIONS.md`](file:///e:/projects/RazeDehkade/docs/ai/DECISIONS.md).
+  - ارتقای گاه‌شمار تغییرات به نسخه `1.11.0` در [`CHANGELOG.md`](file:///e:/projects/RazeDehkade/docs/ai/CHANGELOG.md) و نگاشت نمادها در [`INDEX.md`](file:///e:/projects/RazeDehkade/docs/ai/INDEX.md) و دامنه [`REALTIME_CHAT_ENGINE.md`](file:///e:/projects/RazeDehkade/docs/ai/domains/REALTIME_CHAT_ENGINE.md).
+- **فایل‌های تغییر یافته:**
+  - `src/db/migrations/004_add_reply_to_messages.sql` (ایجاد مایگریشن کلید خارجی ریپلای)
+  - `src/db/migrate.js` (رجیستری مایگریشن ۰۰۴)
+  - `src/db/pool.js` (پشتیبانی ماک دیتابیس از ستون و جوین‌های ریپلای)
+  - `src/models/Message.js` (متدهای create، findBySessionId و findById با جوین ریپلای)
+  - `src/socket/index.js` (هندلر send_message با اعتبارسنجی نشست، ضداسپم و برودکست)
+  - `public/chat.html` (افزودن تگ بنر پیش‌نمایش ریپلای کامپوزر دانش‌آموز)
+  - `public/admin/chat.html` (افزودن تگ بنر پیش‌نمایش ریپلای کامپوزر کارآگاه)
+  - `public/assets/css/terminal.css` (استایل‌های کوت‌باکس شیشه‌ای، بنر کامپوزر و پالس نئونی کلاینت)
+  - `public/assets/css/admin.css` (استایل‌های بنر کامپوزر و کوت‌باکس پنل ادمین)
+  - `public/assets/js/user-chat.js` (کنترلر ریپلای دانش‌آموز، کوت پیام، اسکرول نرم، دابل‌کلیک)
+  - `public/assets/js/admin-chat.js` (کنترلر ریپلای ادمین، کوت پیام، اسکرول نرم، دابل‌کلیک)
+  - `docs/ai/masters/MASTER_07_TWO_WAY_REPLY_AND_QUOTE_ENGINE.md` (سند مستر تسک ۰۷)
+  - `MASTER_TWO_WAY_CHAT_REPLY.md` (سند مرجع ریپلای در ریشه)
+  - `docs/ai/domains/REALTIME_CHAT_ENGINE.md` (قانون خط قرمز ۶ و نگاشت کد)
+  - `docs/ai/ROOT_MASTER.md` (ثبت تصمیمات ۲۶ الی ۲۸ و لینک مستر ۰۷)
+  - `docs/ai/DECISIONS.md` (ثبت مصوبات DEC-0026، DEC-0027، DEC-0028)
+  - `docs/ai/CHANGELOG.md` (ثبت نسخه 1.11.0)
+  - `docs/ai/INDEX.md` (نگاشت رویدادها، مدل‌ها و ماژول‌ها)
+  - `tests/chat-reply.test.js` (سوئیت تست جامع ریپلای با ۷ آزمون تخصصی)
+- **اعتبارسنجی:**
+  - اجرای کامل آزمون‌های خودکار با دستور `npm test`:
+  - تعداد کل سوئیت‌ها: ۱۲ سوئیت آزمون
+  - تعداد کل تست‌ها: **۱۰۹ تست سبز (PASS)، ۰ خطا (FAIL)**
+  - آزمون‌های ریپلای مدل، سوکت دانش‌آموز به ادمین، سوکت ادمین به دانش‌آموز، ایزولاسیون فرامرزی، استایل‌های کوت و متدهای کلاینت تماماً تایید شدند.
+- **تسک بعدی پیشنهادی:**
+  - پیگیری آیتم‌های باقیمانده در `docs/ai/BACKLOG.md` شامل پیکربندی استقرار روی سرور لینوکس پروداکشن (Ubuntu VPS) با PM2 و Nginx Reverse Proxy.
+
+---
+
+## Historical State — 2026-10-18 — استقرار پروتکل جامع معماری مستر و پایه‌ریزی درخت اسناد هوش مصنوعی (UMAC-P) [Antigravity]
 - **دستور کارفرما (Mandate):** «با استفاده از فایل UNIVERSAL_AI_MASTER_PROTOCOL.md برام برو فایلای مستر دقیق و جدید و کامل رو بساز و اماده کن»
 - **تغییرات کلیدی معماری:**
   - پایه‌ریزی ساختار درختی رسمی `docs/ai/` منطبق بر استاندارد UMAC-P شامل لایه‌های والد ریشه، حافظه فعال، تاریخچه تغییرات، دفتر تصمیمات قطعی، شاخص میکروسکوپی و نیازمندی‌های آینده.

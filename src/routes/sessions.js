@@ -291,6 +291,115 @@ router.post('/:id/lock', requireAdmin, async (req, res) => {
  * GET /api/sessions/vault-status-all
  * دریافت وضعیت کلی قفل گاوصندوق برای تمامی جلسات (مخصوص ادمین)
  */
+/**
+ * POST /api/sessions/:id/trigger-hack
+ * اجرای سکانس نفوذ سایبری مزداک و قفل کلاس (فقط ادمین)
+ */
+router.post('/:id/trigger-hack', requireAdmin, async (req, res) => {
+  try {
+    const sessionId = parseInt(req.params.id, 10);
+    if (!sessionId || sessionId <= 0) {
+      return res.status(400).json({ success: false, message: 'شناسه جلسه معتبر نیست.' });
+    }
+
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'جلسه پیدا نشد.' });
+    }
+
+    let assistants = [];
+    try {
+      const SessionAssistant = require('../models/SessionAssistant');
+      assistants = await SessionAssistant.findBySessionId(sessionId);
+    } catch (_) {}
+
+    await Session.setHackState(sessionId, true);
+
+    await SessionLog.log(
+      sessionId,
+      'cyber_hack_triggered',
+      `سکانس نفوذ سایبری مزداک توسط ${req.user.display_name || req.user.username} فعال شد.`
+    );
+
+    const io = req.app.get('io');
+    if (io) {
+      const payload = {
+        sessionId,
+        sessionName: session.name,
+        triggeredAt: Date.now(),
+        hackerName: 'مزداک',
+        assistants: assistants.map(a => ({
+          name: a.student_name,
+          photoUrl: a.file_url,
+        })),
+      };
+      io.to(`session_${sessionId}`).emit('hack_sequence_triggered', payload);
+      io.to('admins').emit('session_hack_updated', { sessionId, isHacked: true, sessionName: session.name });
+    }
+
+    return res.json({
+      success: true,
+      message: `سکانس نفوذ سایبری مزداک برای کلاس «${session.name}» با موفقیت فعال گردید.`,
+      isHacked: true,
+      sessionId,
+      data: {
+        sessionId,
+        is_hacked: 1,
+        assistants,
+      },
+    });
+  } catch (error) {
+    console.error('Error triggering cyber hack:', error);
+    return res.status(500).json({ success: false, message: 'خطای سرور هنگام اجرای نفوذ سایبری' });
+  }
+});
+
+/**
+ * POST /api/sessions/:id/unlock-hack
+ * لغو نفوذ و بازگشایی دسترسی عادی کلاس (فقط ادمین)
+ */
+router.post('/:id/unlock-hack', requireAdmin, async (req, res) => {
+  try {
+    const sessionId = parseInt(req.params.id, 10);
+    if (!sessionId || sessionId <= 0) {
+      return res.status(400).json({ success: false, message: 'شناسه جلسه معتبر نیست.' });
+    }
+
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'جلسه پیدا نشد.' });
+    }
+
+    await Session.setHackState(sessionId, false);
+
+    await SessionLog.log(
+      sessionId,
+      'cyber_hack_unlocked',
+      `وضعیت نفوذ سایبری کلاس توسط ${req.user.display_name || req.user.username} لغو و دسترسی آزاد شد.`
+    );
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`session_${sessionId}`).emit('hack_cleared', { sessionId });
+      io.to('admins').emit('session_hack_updated', { sessionId, isHacked: false, sessionName: session.name });
+    }
+
+    return res.json({
+      success: true,
+      message: `وضعیت نفوذ کلاس «${session.name}» لغو گردید و دسترسی عادی برقرار شد.`,
+      isHacked: false,
+      sessionId,
+      data: {
+        sessionId,
+        is_hacked: 0,
+      },
+    });
+  } catch (error) {
+    console.error('Error unlocking cyber hack:', error);
+    return res.status(500).json({ success: false, message: 'خطای سرور هنگام لغو نفوذ سایبری' });
+  }
+});
+
 router.get('/vault-status-all', requireAdmin, async (req, res) => {
   try {
     const status = await Session.getGlobalVaultStatus();

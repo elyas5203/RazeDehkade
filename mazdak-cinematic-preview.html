@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پیش‌نمایش سکانس ۲ دقیقه‌ای ورود مزداک | راز دهکده</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --bg-card: #0d121d;
+      --accent-red: #ff2a4b;
+      --accent-red-glow: rgba(255, 42, 75, 0.45);
+      --accent-green: #00ff66;
+      --accent-green-glow: rgba(0, 255, 102, 0.35);
+      --accent-cyan: #00e5ff;
+      --text-main: #f0f4fc;
+      --text-muted: #8b9bb4;
+      --font-fa: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-fa);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* =========================================================================
+       نوار کنترل کارگردانی (Director Control Bar) - همیشه در بالا
+       ========================================================================= */
+    .director-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 52px;
+      background: rgba(11, 15, 25, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      z-index: 99999;
+      font-size: 13px;
+    }
+
+    .director-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+    }
+
+    .director-badge {
+      background: var(--accent-red);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 4px;
+      letter-spacing: 1px;
+    }
+
+    .director-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .director-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+      font-family: var(--font-fa);
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .director-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .director-btn.primary {
+      background: #e11d48;
+      border-color: #f43f5e;
+      color: #fff;
+      box-shadow: 0 0 15px rgba(225, 29, 72, 0.4);
+    }
+
+    .director-btn.primary:hover {
+      background: #be123c;
+    }
+
+    .director-timer-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+    }
+
+    .director-phase-name {
+      color: #f59e0b;
+      font-weight: 700;
+      font-size: 12px;
+      min-width: 170px;
+      text-align: center;
+    }
+
+    .director-slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 10px;
+    }
+
+    .director-slider {
+      width: 140px;
+      accent-color: var(--accent-red);
+      cursor: pointer;
+    }
+
+    /* =========================================================================
+       محیط شبیه‌ساز چت کارآگاهی اصلی (Normal Detective Terminal Mockup)
+       ========================================================================= */
+    .terminal-viewport {
+      position: absolute;
+      top: 52px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: 360px 1fr 340px;
+      background: #090d16;
+      transition: filter 0.3s ease, transform 0.3s ease;
+    }
+
+    /* ستون راست: چت */
+    .chat-col {
+      background: #0d121d;
+      border-left: 1px solid rgba(255, 255, 255, 0.07);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-header-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #38bdf8;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chat-status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 3px 8px;
+      border-radius: 12px;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .chat-bubble {
+      max-width: 85%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      line-height: 1.7;
+    }
+
+    .chat-bubble.admin {
+      align-self: flex-start;
+      background: rgba(56, 189, 248, 0.09);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: #e0f2fe;
+    }
+
+    .chat-bubble.user {
+      align-self: flex-end;
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #f8fafc;
+    }
+
+    .chat-composer {
+      padding: 14px 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      gap: 10px;
+    }
+
+    .chat-input {
+      flex: 1;
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 13px;
+    }
+
+    /* ستون وسط: تخته مدارک */
+    .board-col {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: #090d16;
+    }
+
+    .board-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .board-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .evidence-card {
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .evidence-tag {
+      font-size: 11px;
+      color: #fbbf24;
+      font-weight: 700;
+    }
+
+    .evidence-text {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.6;
+    }
+
+    /* ستون چپ: پنل چهارتایی */
+    .quad-col {
+      background: #0b0f19;
+      border-right: 1px solid rgba(255, 255, 255, 0.07);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .quad-mini-card {
+      background: #111827;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 12px;
+    }
+
+    .quad-mini-title {
+      font-weight: 700;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    /* =========================================================================
+       سکانس سینمایی هک (THE CINEMATIC SEQUENCE OVERLAY)
+       ========================================================================= */
+    #cinematicOverlay {
+      position: fixed;
+      top: 52px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10000;
+      display: none;
+      pointer-events: all;
+      background: #000;
+      overflow: hidden;
+    }
+
+    /* اسکن‌لاین‌های مانیتور CRT */
+    .crt-scanlines {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0),
+        rgba(255,255,255,0) 2px,
+        rgba(0, 0, 0, 0.45) 3px,
+        rgba(0, 0, 0, 0.45) 4px
+      );
+      pointer-events: none;
+      z-index: 50;
+      opacity: 0.6;
+    }
+
+    /* افکت ویگنت تاریک اطراف کادر */
+    .crt-vignette {
+      position: absolute;
+      inset: 0;
+      box-shadow: inset 0 0 160px rgba(0, 0, 0, 0.95);
+      pointer-events: none;
+      z-index: 51;
+    }
+
+    /* بوم انیمیشن باران کد ماتریکس */
+    #matrixCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 1.5s ease;
+    }
+
+    /* نوار هشدار چشمک‌زن بالای صفحه */
+    .system-alert-banner {
+      position: absolute;
+      top: 24px;
+      left: 5%;
+      right: 5%;
+      background: rgba(225, 29, 72, 0.95);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 0 35px rgba(225, 29, 72, 0.8), inset 0 0 15px rgba(255,255,255,0.4);
+      z-index: 60;
+      transform: translateY(-80px);
+      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .alert-beacon {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 0 12px #fff;
+      animation: beaconBlink 0.6s infinite alternate;
+    }
+
+    @keyframes beaconBlink {
+      0% { opacity: 0.2; transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1.2); }
+    }
+
+    /* =========================================================================
+       کنسول فرمان مرکزی (Center Terminal Frame)
+       ========================================================================= */
+    .cyber-console {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.9);
+      width: 860px;
+      max-width: 92vw;
+      background: rgba(8, 10, 16, 0.94);
+      border: 2px solid var(--accent-red);
+      border-radius: 12px;
+      box-shadow: 0 0 60px rgba(255, 42, 75, 0.4), inset 0 0 30px rgba(255, 42, 75, 0.15);
+      z-index: 55;
+      overflow: hidden;
+      opacity: 0;
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cyber-console.active {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .cyber-console.full-takeover {
+      width: 96vw;
+      max-width: 96vw;
+      height: 82vh;
+      border-color: #ff0033;
+      box-shadow: 0 0 100px rgba(255, 0, 51, 0.6);
+    }
+
+    .console-header {
+      background: rgba(255, 42, 75, 0.15);
+      border-bottom: 1px solid rgba(255, 42, 75, 0.4);
+      padding: 10px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #ff8597;
+    }
+
+    .console-dots {
+      display: flex;
+      gap: 6px;
+    }
+
+    .console-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #47111b;
+      border: 1px solid #7f1d1d;
+    }
+
+    .console-dot:nth-child(1) { background: #ff2a4b; }
+    .console-dot:nth-child(2) { background: #f59e0b; }
+    .console-dot:nth-child(3) { background: #10b981; }
+
+    .console-body {
+      padding: 28px 32px;
+      min-height: 380px;
+      max-height: 70vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* مرحله لاگ‌های نفوذ سریع */
+    .log-stream-box {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      color: #a7f3d0;
+      line-height: 2.1;
+      direction: ltr;
+      text-align: left;
+    }
+
+    .log-line {
+      display: block;
+      opacity: 0;
+      transform: translateX(-15px);
+      transition: all 0.3s ease;
+    }
+
+    .log-line.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .log-line.highlight {
+      color: #f87171;
+      font-weight: 700;
+    }
+
+    .log-line.success {
+      color: #34d399;
+    }
+
+    /* نوار پیشرفت درصد نفوذ */
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      margin-top: 24px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444);
+      box-shadow: 0 0 12px #ef4444;
+      transition: width 0.2s linear;
+    }
+
+    .progress-label {
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+      display: none;
+    }
+
+    /* پیام‌های بزرگ اوج دراماتیک (فاز ۳) */
+    .dramatic-takeover-box {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 22px;
+      z-index: 10;
+    }
+
+    .takeover-main-title {
+      font-size: clamp(26px, 4.2vw, 48px);
+      font-weight: 900;
+      color: #fee2e2;
+      text-shadow: 0 0 25px rgba(239, 68, 68, 0.8);
+      line-height: 1.5;
+      letter-spacing: -0.5px;
+    }
+
+    .takeover-sub-title {
+      font-size: clamp(17px, 2.2vw, 26px);
+      font-weight: 700;
+      color: #f87171;
+      line-height: 1.8;
+      max-width: 800px;
+    }
+
+    .takeover-silhouette {
+      width: 140px;
+      height: 140px;
+      margin: 10px auto;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 40px rgba(239, 68, 68, 0.3);
+      animation: silhouettePulse 3s infinite ease-in-out;
+    }
+
+    @keyframes silhouettePulse {
+      0%, 100% { transform: scale(0.95); opacity: 0.7; }
+      50% { transform: scale(1.08); opacity: 1; filter: drop-shadow(0 0 25px #ff2a4b); }
+    }
+
+    /* کادر معرفی و ورود رسمی مزداک (فاز ۴) */
+    .mazdak-dialog-box {
+      display: none;
+      flex-direction: column;
+      background: rgba(18, 12, 16, 0.96);
+      border: 1.5px solid #ff2a4b;
+      border-radius: 12px;
+      padding: 28px 36px;
+      box-shadow: 0 0 50px rgba(255, 42, 75, 0.35);
+      z-index: 12;
+      width: 100%;
+    }
+
+    .mazdak-tagline {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #ff4d6d;
+      letter-spacing: 3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .mazdak-speech-lines {
+      font-size: clamp(19px, 2.5vw, 28px);
+      font-weight: 700;
+      color: #fff;
+      line-height: 2.1;
+      white-space: pre-line;
+      text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    }
+
+    .typing-cursor {
+      display: inline-block;
+      width: 4px;
+      height: 1.1em;
+      background: #ff2a4b;
+      margin-right: 6px;
+      vertical-align: middle;
+      animation: cursorBlink 0.8s infinite;
+    }
+
+    @keyframes cursorBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* =========================================================================
+       افکت‌های شکستگی و اعوجاج گلیچ
+       ========================================================================= */
+    .glitch-active {
+      animation: screenShake 0.18s infinite ease-in-out alternate;
+    }
+
+    @keyframes screenShake {
+      0% { transform: translate(1px, 2px) skewX(0.5deg); }
+      25% { transform: translate(-2px, -1px) skewY(-0.5deg); }
+      50% { transform: translate(3px, 0px); }
+      75% { transform: translate(-1px, 2px); }
+      100% { transform: translate(2px, -2px) skewX(-0.5deg); }
+    }
+
+    .rgb-split {
+      filter: drop-shadow(3px 0 0 rgba(255,0,0,0.8)) drop-shadow(-3px 0 0 rgba(0,255,255,0.8));
+    }
+
+    /* =========================================================================
+       استایل تم پایدار نهایی (Hacked / Mazdak Mode)
+       ========================================================================= */
+    body.is-mazdak-takeover .terminal-viewport {
+      background: #0d0709 !important;
+    }
+
+    body.is-mazdak-takeover .chat-col {
+      background: #14090c !important;
+      border-left-color: rgba(255, 42, 75, 0.3) !important;
+    }
+
+    body.is-mazdak-takeover .chat-header-title {
+      color: #ff3355 !important;
+    }
+
+    body.is-mazdak-takeover .chat-status-indicator {
+      background: rgba(255, 42, 75, 0.15) !important;
+      border-color: rgba(255, 42, 75, 0.5) !important;
+      color: #ff8597 !important;
+    }
+
+    body.is-mazdak-takeover .status-dot {
+      background: #ff2a4b !important;
+      box-shadow: 0 0 10px #ff2a4b !important;
+    }
+
+    body.is-mazdak-takeover .board-col {
+      background: #080305 !important;
+    }
+
+    body.is-mazdak-takeover .evidence-card {
+      border-color: rgba(255, 42, 75, 0.25) !important;
+      background: #120609 !important;
+    }
+
+    body.is-mazdak-takeover .quad-col {
+      background: #090305 !important;
+      border-right-color: rgba(255, 42, 75, 0.25) !important;
+    }
+
+    /* پاپ‌آپ پایان موفق سکانس */
+    .finish-notice-badge {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(17, 24, 39, 0.95);
+      border: 1px solid #10b981;
+      padding: 12px 20px;
+      border-radius: 10px;
+      color: #34d399;
+      font-size: 13px;
+      font-weight: 700;
+      z-index: 999999;
+      display: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- نوار کنترل کارگردانی (Director Control Deck) -->
+  <header class="director-bar">
+    <div class="director-brand">
+      <span class="director-badge">STUDIO PREVIEW</span>
+      <span>پیش‌نمایش سینمایی ورود مزداک (مدت کل: ۲ دقیقه)</span>
+    </div>
+
+    <div class="director-actions">
+      <!-- تایمر و نام فاز -->
+      <div class="director-timer-box">
+        <span>⏱</span>
+        <span id="directorTimeDisplay">00:00</span>
+        <span style="color:#64748b;">/ 02:00</span>
+      </div>
+
+      <div class="director-phase-name" id="directorPhaseDisplay">
+        آماده شروع سکانس
+      </div>
+
+      <!-- اسلایدر پرش به ثانیه‌ها جهت تست سریع -->
+      <div class="director-slider-wrap">
+        <label for="timeScrubber" style="font-size:11px;color:#94a3b8;">پرش زمان:</label>
+        <input type="range" id="timeScrubber" class="director-slider" min="0" max="120" value="0">
+      </div>
+
+      <!-- دکمه‌های کنترل -->
+      <button type="button" id="startSequenceBtn" class="director-btn primary" onclick="startOrRestartSequence()">
+        ▶ شروع سکانس ۲ دقیقه‌ای
+      </button>
+
+      <button type="button" id="pauseResumeBtn" class="director-btn" onclick="togglePauseResume()">
+        ⏸ توقف
+      </button>
+
+      <button type="button" id="soundToggleBtn" class="director-btn" onclick="toggleSound()">
+        🔊 صدا فعال
+      </button>
+
+      <button type="button" class="director-btn" onclick="resetToInitialState()">
+        ↺ بازنشانی کامل
+      </button>
+    </div>
+  </header>
+
+  <!-- رابط ترمینال شبیه‌سازی‌شده اصلی (نمای عادی پیش از هک) -->
+  <main class="terminal-viewport" id="terminalViewport">
+    
+    <!-- ستون چپ: پنل چهارتایی -->
+    <div class="quad-col">
+      <div class="quad-mini-card">
+        <div class="quad-mini-title">📅 تقویم رسمی عملیات</div>
+        <p style="color:#cbd5e1;font-weight:600;">۲۸ مهر ۱۴۰۵ — جلسه سوم</p>
+      </div>
+
+      <div class="quad-mini-card">
+        <div class="quad-mini-title">👥 پرونده دستیاران کارآگاه</div>
+        <p style="color:#94a3b8;">گروه پژوهشی کلاسه ۶</p>
+        <p style="color:#38bdf8;font-size:11px;margin-top:4px;">۳۲ متربی فعال در جلسه</p>
+      </div>
+
+      <div class="quad-mini-card">
+        <div class="quad-mini-title">🔒 گاوصندوق اسناد محرمانه</div>
+        <p style="color:#ef4444;font-size:11px;">پلمپ امنیتی — هفته پنجم</p>
+      </div>
+
+      <div class="quad-mini-card" style="margin-top:auto;">
+        <div class="quad-mini-title">📡 مرکز مخابراتی</div>
+        <p style="color:#10b981;">کانال ارتباطی AES-256 پایدار</p>
+      </div>
+    </div>
+
+    <!-- ستون وسط: تخته مدارک -->
+    <div class="board-col">
+      <div class="board-title">
+        <span>📌 میز بازرسی اسناد و شواهد پرونده «راز دهکده»</span>
+      </div>
+
+      <div class="board-grid">
+        <div class="evidence-card">
+          <span class="evidence-tag"># مدرک شماره ۱</span>
+          <p class="evidence-text">دست‌نوشته پیدا شده در حوالی آسیاب سنگی روستای حصار با جوهر ارغوانی.</p>
+        </div>
+        <div class="evidence-card">
+          <span class="evidence-tag"># مدرک شماره ۲</span>
+          <p class="evidence-text">نقشه قدیمی آسیاب و مسیر ورود آب با نشانه‌های پنهان در حاشیه شرقی.</p>
+        </div>
+        <div class="evidence-card">
+          <span class="evidence-tag"># مدرک شماره ۳</span>
+          <p class="evidence-text">تصویر ضبط‌شده از سایه فردی ناشناس در ساعت ۲۳:۴۰ روبروی انبار غله.</p>
+        </div>
+        <div class="evidence-card">
+          <span class="evidence-tag"># مدرک شماره ۴</span>
+          <p class="evidence-text">کلید برنجی قدیمی با علامت دو ستاره حک‌شده روی دسته.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ستون راست: چت زنده با مرکز -->
+    <div class="chat-col">
+      <div class="chat-header">
+        <div class="chat-header-title" id="chatHeaderTitle">
+          <span>📡</span>
+          <span id="chatTitleText">مرکز فرماندهی</span>
+        </div>
+        <div class="chat-status-indicator" id="chatStatusBadge">
+          <span class="status-dot"></span>
+          <span id="chatStatusText">خط ارتباطی امن</span>
+        </div>
+      </div>
+
+      <div class="chat-messages" id="chatMessagesBox">
+        <div class="chat-bubble admin">
+          <strong>مرکز فرماندهی:</strong><br>
+          سلام به کارآگاهان جوان. شواهد پرونده آسیاب در دست بررسی است. گزارش‌های خود را بلافاصله مخابره کنید.
+        </div>
+        <div class="chat-bubble user">
+          <strong>دستیاران کارآگاه:</strong><br>
+          مدرک شماره ۲ با کلید برنجی مطابقت داره. داریم قفل دوم رو بررسی می‌کنیم.
+        </div>
+        <div class="chat-bubble admin">
+          <strong>مرکز فرماندهی:</strong><br>
+          عالیه! مراقب اطراف باشید، به نظر می‌رسه گزارش‌های جدیدی در راهه...
+        </div>
+      </div>
+
+      <div class="chat-composer">
+        <input type="text" class="chat-input" id="chatComposerInput" placeholder="پیام خود را برای مرکز بنویسید…" disabled>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- =========================================================================
+       سکانس سینمایی ۲ دقیقه‌ای (THE CINEMATIC SEQUENCE OVERLAY)
+       ========================================================================= -->
+  <div id="cinematicOverlay">
+    <div class="crt-scanlines"></div>
+    <div class="crt-vignette"></div>
+
+    <!-- بوم باران کد ماتریکس با Canvas -->
+    <canvas id="matrixCanvas"></canvas>
+
+    <!-- نوار هشدار چشمک‌زن بالا -->
+    <div class="system-alert-banner" id="systemAlertBanner">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="alert-beacon"></span>
+        <span id="alertBannerText">⚠ SYSTEM ALERT — SPECIAL NARRATIVE SEQUENCE INITIATED</span>
+      </div>
+      <div style="font-size:12px;opacity:0.9;">کد اضطراری: ۷۱۴-NEXUS</div>
+    </div>
+
+    <!-- کنسول سایبری مرکزی -->
+    <div class="cyber-console" id="cyberConsole">
+      <div class="console-header">
+        <div class="console-dots">
+          <span class="console-dot"></span>
+          <span class="console-dot"></span>
+          <span class="console-dot"></span>
+        </div>
+        <div id="consoleHeaderTitle">N-CORE // INTRUSION DIAGNOSTICS</div>
+        <div style="color:#ef4444;" id="consoleTimerTick">SEC: 00</div>
+      </div>
+
+      <div class="console-body">
+        
+        <!-- ۱. جریان لاگ‌های ورود و دور زدن فایروال (فاز ۲) -->
+        <div class="log-stream-box" id="logStreamBox">
+          <!-- لاگ‌ها با انیمیشن اضافه می‌شوند -->
+        </div>
+
+        <div class="progress-track" id="progressTrack">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-label" id="progressLabel">
+          <span>وضعیت انتقال کنترل سیستم:</span>
+          <span id="progressPercent">0%</span>
+        </div>
+
+        <!-- ۲. اوج دراماتیک و تسخیر کامل (فاز ۳) -->
+        <div class="dramatic-takeover-box" id="dramaticTakeoverBox">
+          <div class="takeover-silhouette">
+            <svg viewBox="0 0 24 24" width="70" height="70" fill="none" stroke="#ff2a4b" stroke-width="1.6">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="m4.93 4.93 4.24 4.24m5.66 5.66 4.24 4.24M4.93 19.07l4.24-4.24m5.66-5.66 4.24-4.24"/>
+              <circle cx="12" cy="12" r="3" fill="#ff2a4b"/>
+            </svg>
+          </div>
+          <h2 class="takeover-main-title" id="takeoverMainTitle">سیستم وارد حالت ویژه شد</h2>
+          <p class="takeover-sub-title" id="takeoverSubTitle">ارتباط شما با مرکز فرماندهی به طور کامل متوقف گردید...</p>
+        </div>
+
+        <!-- ۳. ورود رسمی شخصیت مزداک (فاز ۴) -->
+        <div class="mazdak-dialog-box" id="mazdakDialogBox">
+          <div class="mazdak-tagline">
+            <span style="color:#ff2a4b;font-size:16px;">☠</span>
+            <span>TRANSMISSION // SOURCE: MAZDAK</span>
+            <span style="margin-right:auto;font-size:11px;color:#94a3b8;">فرکانس اختصاصی</span>
+          </div>
+          <div class="mazdak-speech-lines" id="mazdakSpeechLines">
+            <!-- متن کلام مزداک تایپ می‌شود -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="finish-notice-badge" id="finishBadge">
+    ✓ سکانس ۲ دقیقه‌ای با موفقیت کامل شد. سیستم در وضعیت کنترل مزداک باقی ماند.
+  </div>
+
+  <!-- =========================================================================
+       موتور منطق و زمان‌بندی دقیق ۱۲۰ ثانیه (Web Audio + Canvas + Choreography)
+       ========================================================================= -->
+  <script>
+    'use strict';
+
+    // تنظیمات کلیدی
+    const TOTAL_DURATION_SECONDS = 120; // دقیقا ۲ دقیقه
+    let currentTime = 0;
+    let isRunning = false;
+    let isPaused = false;
+    let sequenceTimer = null;
+    let soundEnabled = true;
+
+    // عناصر صفحه
+    const overlay = document.getElementById('cinematicOverlay');
+    const viewport = document.getElementById('terminalViewport');
+    const alertBanner = document.getElementById('systemAlertBanner');
+    const alertBannerText = document.getElementById('alertBannerText');
+    const cyberConsole = document.getElementById('cyberConsole');
+    const consoleHeaderTitle = document.getElementById('consoleHeaderTitle');
+    const consoleTimerTick = document.getElementById('consoleTimerTick');
+    const logStreamBox = document.getElementById('logStreamBox');
+    const progressTrack = document.getElementById('progressTrack');
+    const progressFill = document.getElementById('progressFill');
+    const progressLabel = document.getElementById('progressLabel');
+    const progressPercent = document.getElementById('progressPercent');
+    const dramaticBox = document.getElementById('dramaticTakeoverBox');
+    const takeoverMainTitle = document.getElementById('takeoverMainTitle');
+    const takeoverSubTitle = document.getElementById('takeoverSubTitle');
+    const mazdakBox = document.getElementById('mazdakDialogBox');
+    const mazdakSpeechLines = document.getElementById('mazdakSpeechLines');
+    const timeDisplay = document.getElementById('directorTimeDisplay');
+    const phaseDisplay = document.getElementById('directorPhaseDisplay');
+    const timeScrubber = document.getElementById('timeScrubber');
+    const finishBadge = document.getElementById('finishBadge');
+
+    // المان‌های چت شبیه‌ساز
+    const chatHeaderTitle = document.getElementById('chatHeaderTitle');
+    const chatTitleText = document.getElementById('chatTitleText');
+    const chatStatusBadge = document.getElementById('chatStatusBadge');
+    const chatStatusText = document.getElementById('chatStatusText');
+    const chatMessagesBox = document.getElementById('chatMessagesBox');
+    const chatComposerInput = document.getElementById('chatComposerInput');
+
+    /* =========================================================================
+       سیستم صوتی اختصاصی با Web Audio API (بدون وابستگی به فایل خارجی)
+       ========================================================================= */
+    let audioCtx = null;
+
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AudioClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioClass) {
+          audioCtx = new AudioClass();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playTone(freq, duration, type = 'sine', volume = 0.08, endFreq = freq) {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(10, endFreq), ctx.currentTime + duration);
+
+        gain.gain.setValueAtTime(0.001, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(volume, ctx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+      } catch (_) {}
+    }
+
+    function playGlitchBurst() {
+      if (!soundEnabled) return;
+      try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const bufferSize = ctx.sampleRate * 0.15;
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.4));
+        }
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.value = 1200;
+        filter.Q.value = 3;
+        const gain = ctx.createGain();
+        gain.gain.value = 0.12;
+
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(ctx.destination);
+
+        source.start();
+      } catch (_) {}
+    }
+
+    function playKeyTypeSound() {
+      if (!soundEnabled) return;
+      playTone(1800 + Math.random() * 800, 0.03, 'triangle', 0.04, 300);
+    }
+
+    function playAlarmPulse() {
+      if (!soundEnabled) return;
+      playTone(520, 0.25, 'sawtooth', 0.06, 260);
+    }
+
+    function playDeepBassDrop() {
+      if (!soundEnabled) return;
+      playTone(95, 2.8, 'sine', 0.25, 24);
+      playTone(45, 3.5, 'triangle', 0.2, 18);
+    }
+
+    /* =========================================================================
+       بوم انیمیشن باران کد ماتریکس (Canvas Matrix Rain)
+       ========================================================================= */
+    const canvas = document.getElementById('matrixCanvas');
+    const ctx = canvas.getContext('2d');
+    let matrixInterval = null;
+    let drops = [];
+    const matrixChars = 'آابپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی0123456789ABCDEF<>/*+-={}%$#@!';
+
+    function initMatrix() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const fontSize = 16;
+      const columns = Math.floor(canvas.width / fontSize);
+      drops = [];
+      for (let i = 0; i < columns; i++) {
+        drops[i] = Math.floor(Math.random() * -50);
+      }
+    }
+
+    function drawMatrix(color = '#00ff66') {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.08)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = color;
+      ctx.font = '15px JetBrains Mono, Vazirmatn, monospace';
+
+      for (let i = 0; i < drops.length; i++) {
+        const text = matrixChars.charAt(Math.floor(Math.random() * matrixChars.length));
+        ctx.fillText(text, i * 16, drops[i] * 16);
+
+        if (drops[i] * 16 > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    }
+
+    window.addEventListener('resize', initMatrix);
+
+    /* =========================================================================
+       فازهای ۲ دقیقه‌ای (۱۲ مرحله دقیق از ثانیه ۰ تا ۱۲۰)
+       ========================================================================= */
+
+    const MAZDAK_FULL_SPEECH = 
+      "سلام بچه‌ها...\n" +
+      "فکر کردید این پرونده و این سیستم مال شماست؟\n" +
+      "مدت‌ها بود که داشتم پیام‌ها، مدارک و فرضیاتتون رو تماشا می‌کردم.\n" +
+      "از این لحظه به بعد، بازی با قوانین من پیش می‌ره...\n" +
+      "صدای مرکز فرماندهی خاموش شد؛ حالا دیگه فقط من اینجا هستم!";
+
+    const LOGS_LIST = [
+      { text: "> INTRUSION VECTOR DETECTED [PORT 443 -> ROOT]", highlight: true },
+      { text: "> INTERCEPTING TLS ENCRYPTED STREAMS... [OK]", success: true },
+      { text: "> BYPASSING COMMAND GATEWAY 01... [DONE]", success: true },
+      { text: "> ANALYZING LOCAL SESSION SIGNATURES... [COMPROMISED]", highlight: true },
+      { text: "> OVERRIDING SESSION PERMISSIONS (UID: 0)... [GRANTED]", success: true },
+      { text: "> SEVERING COMMAND HEADQUARTERS CONNECTION...", highlight: true },
+      { text: "> TAKING EXCLUSIVE CONTROL OF EVIDENCE TERMINAL...", success: true }
+    ];
+
+    function updateFrame(sec) {
+      currentTime = sec;
+      timeScrubber.value = sec;
+
+      // نمایش زمان
+      const mins = String(Math.floor(sec / 60)).padStart(2, '0');
+      const secs = String(sec % 60).padStart(2, '0');
+      timeDisplay.textContent = `${mins}:${secs}`;
+      consoleTimerTick.textContent = `TICK: ${secs}s`;
+
+      // -------------------------------------------------------------
+      // فاز ۰ (ثانیه ۰ تا ۱۰): وضعیت پایدار و سپس قطع ناگهانی
+      // -------------------------------------------------------------
+      if (sec < 5) {
+        phaseDisplay.textContent = "فاز ۰: ارتباط عادی با مرکز";
+        overlay.style.display = 'none';
+        viewport.classList.remove('glitch-active', 'rgb-split');
+      } 
+      else if (sec >= 5 && sec < 8) {
+        phaseDisplay.textContent = "فاز ۰: لرزش اولیه سیگنال";
+        viewport.classList.add('glitch-active');
+        if (sec === 5) playGlitchBurst();
+      }
+      else if (sec >= 8 && sec < 10) {
+        phaseDisplay.textContent = "فاز ۰: خاموشی ناگهانی (Blackout)";
+        overlay.style.display = 'block';
+        overlay.style.background = '#000';
+        canvas.style.opacity = '0';
+        cyberConsole.classList.remove('active');
+        alertBanner.style.transform = 'translateY(-80px)';
+        viewport.classList.remove('glitch-active');
+      }
+
+      // -------------------------------------------------------------
+      // فاز ۱ (ثانیه ۱۰ تا ۲۸): هشدار سراسری و فروپاشی رابط کاربری
+      // -------------------------------------------------------------
+      else if (sec >= 10 && sec < 28) {
+        phaseDisplay.textContent = "فاز ۱: فروپاشی و هشدار نفوذ";
+        overlay.style.display = 'block';
+        overlay.style.background = 'radial-gradient(circle, #1a0408 0%, #000 85%)';
+        alertBanner.style.transform = 'translateY(0)';
+        alertBannerText.textContent = "⚠ SYSTEM ALERT — SPECIAL NARRATIVE SEQUENCE INITIATED";
+
+        if (sec === 10) {
+          playDeepBassDrop();
+        }
+
+        if (sec % 3 === 0) {
+          playAlarmPulse();
+        }
+
+        // نمایش کنسول در ثانیه ۱۵
+        if (sec >= 15) {
+          cyberConsole.classList.add('active');
+          consoleHeaderTitle.textContent = "CRITICAL BREACH // DECOUPLING SESSIONS";
+          logStreamBox.innerHTML = `
+            <div class="log-line show highlight">⚠ سیگنال ارتباطی با مرکز دچار اختلال شدید شد...</div>
+            <div class="log-line show" style="color:#fbbf24;margin-top:8px;">تلاش برای بازیابی ۱۲ مسیر امن: ناموفق [خطای ارتباط]</div>
+            <div class="log-line show" style="color:#94a3b8;margin-top:8px;">در حال مهار نوسان فرکانسی ناشناس...</div>
+          `;
+        }
+      }
+
+      // -------------------------------------------------------------
+      // فاز ۲ (ثانیه ۲۸ تا ۵۵): باران کد ماتریکس و آنالیز لایه‌ها
+      // -------------------------------------------------------------
+      else if (sec >= 28 && sec < 55) {
+        phaseDisplay.textContent = "فاز ۲: باران کد سینمایی و نفوذ";
+        overlay.style.display = 'block';
+        canvas.style.opacity = '0.45';
+        cyberConsole.classList.add('active');
+        cyberConsole.classList.remove('full-takeover');
+        dramaticBox.style.display = 'none';
+        mazdakBox.style.display = 'none';
+        logStreamBox.style.display = 'block';
+        progressTrack.style.display = 'block';
+        progressLabel.style.display = 'flex';
+
+        consoleHeaderTitle.textContent = "NEXUS CORE // OVERRIDING ACCESS CONTROLS";
+
+        // درصد پر شدن باران کد و نفوذ (۰ تا ۱۰۰ درصد در ۲۷ ثانیه)
+        const progress = Math.min(100, Math.floor(((sec - 28) / (55 - 28)) * 100));
+        progressFill.style.width = `${progress}%`;
+        progressPercent.textContent = `${progress}%`;
+
+        // نمایش خطوط لاگ به ترتیب
+        const logIndex = Math.min(LOGS_LIST.length - 1, Math.floor(((sec - 28) / (55 - 28)) * LOGS_LIST.length));
+        let logsHtml = '';
+        for (let i = 0; i <= logIndex; i++) {
+          const l = LOGS_LIST[i];
+          const cls = l.highlight ? 'highlight' : (l.success ? 'success' : '');
+          logsHtml += `<div class="log-line show ${cls}">${l.text}</div>`;
+        }
+        logStreamBox.innerHTML = logsHtml;
+
+        if (sec % 2 === 0) {
+          playKeyTypeSound();
+        }
+      }
+
+      // -------------------------------------------------------------
+      // فاز ۳ (ثانیه ۵۵ تا ۸۲): اوج دراماتیک و تسخیر کامل سیستم
+      // -------------------------------------------------------------
+      else if (sec >= 55 && sec < 82) {
+        phaseDisplay.textContent = "فاز ۳: اوج دراماتیک و تصاحب سیستم";
+        overlay.style.display = 'block';
+        canvas.style.opacity = '0.3';
+        cyberConsole.classList.add('active', 'full-takeover');
+        logStreamBox.style.display = 'none';
+        progressTrack.style.display = 'none';
+        progressLabel.style.display = 'none';
+        dramaticBox.style.display = 'flex';
+        mazdakBox.style.display = 'none';
+
+        consoleHeaderTitle.textContent = "⚠ CRITICAL WARNING // ROOT CONTROL TRANSFERRED";
+
+        if (sec === 55) {
+          playDeepBassDrop();
+        }
+
+        // متن‌های درشت اوج دراماتیک
+        if (sec < 62) {
+          takeoverMainTitle.textContent = "سیستم وارد حالت ویژه شد";
+          takeoverSubTitle.textContent = "خط ارتباطی با مرکز فرماندهی به طور کامل مسدود گردید...";
+        } else if (sec >= 62 && sec < 70) {
+          takeoverMainTitle.textContent = "کنترل از دست مرکز خارج شد";
+          takeoverSubTitle.textContent = "تمامی دسترسی‌ها به این پایگاه بازنویسی شد...";
+        } else if (sec >= 70 && sec < 77) {
+          takeoverMainTitle.textContent = "شخصیت جدید وارد صحنه شد";
+          takeoverSubTitle.textContent = "یک فرکانس ناشناس کنترل گفتگو را در دست گرفت...";
+        } else {
+          takeoverMainTitle.textContent = "شما دیگر تنها نیستید...";
+          takeoverSubTitle.textContent = "«من اینجام... حالا من کنترل می‌کنم!»";
+        }
+
+        if (sec % 4 === 0) {
+          playGlitchBurst();
+        }
+      }
+
+      // -------------------------------------------------------------
+      // فاز ۴ (ثانیه ۸۲ تا ۱۰۸): معرفی رسمی و کلام شخصیت «مزداک»
+      // -------------------------------------------------------------
+      else if (sec >= 82 && sec < 108) {
+        phaseDisplay.textContent = "فاز ۴: کلام و معرفی شخصیت مزداک";
+        overlay.style.display = 'block';
+        canvas.style.opacity = '0.2';
+        cyberConsole.classList.add('active', 'full-takeover');
+        dramaticBox.style.display = 'none';
+        mazdakBox.style.display = 'flex';
+
+        consoleHeaderTitle.textContent = "DIRECT TRANSMISSION // SENDER: MAZDAK";
+
+        // افکت تایپ متن کلام مزداک
+        const typingDuration = 108 - 82;
+        const charCount = Math.min(
+          MAZDAK_FULL_SPEECH.length,
+          Math.floor(((sec - 82) / typingDuration) * MAZDAK_FULL_SPEECH.length)
+        );
+        const currentTyped = MAZDAK_FULL_SPEECH.substring(0, charCount);
+        mazdakSpeechLines.innerHTML = currentTyped + '<span class="typing-cursor"></span>';
+
+        if (charCount < MAZDAK_FULL_SPEECH.length && sec % 2 === 0) {
+          playKeyTypeSound();
+        }
+      }
+
+      // -------------------------------------------------------------
+      // فاز ۵ (ثانیه ۱۰۸ تا ۱۲۰): تثبیت حالت ویژه و پایان سکانس
+      // -------------------------------------------------------------
+      else if (sec >= 108) {
+        phaseDisplay.textContent = "فاز ۵: تثبیت کنترل مزداک بر ترمینال";
+        overlay.style.display = 'none';
+        document.body.classList.add('is-mazdak-takeover');
+
+        // تغییر هویت چت به مزداک
+        chatTitleText.textContent = "مزداک (MAZDAK)";
+        chatHeaderTitle.style.color = "#ff2a4b";
+        chatStatusText.textContent = "خط ارتباطی ویژه مزداک فعال است";
+        chatComposerInput.placeholder = "پاسخ به مزداک…";
+        chatComposerInput.disabled = false;
+
+        // اضافه کردن پیام مزداک به تاریخچه اگر وجود نداشته باشد
+        if (!document.getElementById('mazdakFirstBubble')) {
+          const bubble = document.createElement('div');
+          bubble.id = 'mazdakFirstBubble';
+          bubble.className = 'chat-bubble admin';
+          bubble.style.background = 'rgba(255, 42, 75, 0.12)';
+          bubble.style.borderColor = '#ff2a4b';
+          bubble.style.color = '#ffe4e6';
+          bubble.innerHTML = `
+            <strong style="color:#ff2a4b;">☠ مزداک:</strong><br>
+            سلام بچه‌ها... فکر کردید این ترمینال مال شماست؟<br>
+            من الان اینجا هستم. از این به بعد با من حرف می‌زنید!
+          `;
+          chatMessagesBox.appendChild(bubble);
+          chatMessagesBox.scrollTop = chatMessagesBox.scrollHeight;
+        }
+
+        finishBadge.style.display = 'block';
+
+        if (sec >= 120) {
+          stopTimer();
+          phaseDisplay.textContent = "پایان سکانس ۲ دقیقه‌ای (موفق)";
+        }
+      }
+    }
+
+    /* =========================================================================
+       کنترل‌های پخش، توقف و تایمر
+       ========================================================================= */
+
+    function tick() {
+      if (!isPaused && currentTime < TOTAL_DURATION_SECONDS) {
+        currentTime++;
+        updateFrame(currentTime);
+      }
+    }
+
+    function startOrRestartSequence() {
+      getAudioContext(); // فعال‌سازی صدا با کلیک کاربر
+      stopTimer();
+      resetToInitialState();
+      isRunning = true;
+      isPaused = false;
+      document.getElementById('pauseResumeBtn').textContent = '⏸ توقف';
+      currentTime = 0;
+      updateFrame(0);
+
+      initMatrix();
+      if (matrixInterval) clearInterval(matrixInterval);
+      matrixInterval = setInterval(() => drawMatrix(currentTime > 55 ? '#ff2a4b' : '#00ff66'), 45);
+
+      sequenceTimer = setInterval(tick, 1000);
+    }
+
+    function stopTimer() {
+      if (sequenceTimer) {
+        clearInterval(sequenceTimer);
+        sequenceTimer = null;
+      }
+      isRunning = false;
+    }
+
+    function togglePauseResume() {
+      if (!isRunning) {
+        startOrRestartSequence();
+        return;
+      }
+      isPaused = !isPaused;
+      document.getElementById('pauseResumeBtn').textContent = isPaused ? '▶ ادامه' : '⏸ توقف';
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const btn = document.getElementById('soundToggleBtn');
+      btn.textContent = soundEnabled ? '🔊 صدا فعال' : '🔇 صدا قطع';
+    }
+
+    function resetToInitialState() {
+      stopTimer();
+      currentTime = 0;
+      timeScrubber.value = 0;
+      timeDisplay.textContent = "00:00";
+      phaseDisplay.textContent = "آماده شروع سکانس";
+      finishBadge.style.display = 'none';
+
+      document.body.classList.remove('is-mazdak-takeover');
+      overlay.style.display = 'none';
+      canvas.style.opacity = '0';
+      cyberConsole.classList.remove('active', 'full-takeover');
+      alertBanner.style.transform = 'translateY(-80px)';
+      dramaticBox.style.display = 'none';
+      mazdakBox.style.display = 'none';
+      logStreamBox.innerHTML = '';
+      progressTrack.style.display = 'none';
+      progressLabel.style.display = 'none';
+
+      chatTitleText.textContent = "مرکز فرماندهی";
+      chatHeaderTitle.style.color = "#38bdf8";
+      chatStatusText.textContent = "خط ارتباطی امن";
+      chatComposerInput.placeholder = "پیام خود را برای مرکز بنویسید…";
+      chatComposerInput.disabled = true;
+
+      const existingMazdak = document.getElementById('mazdakFirstBubble');
+      if (existingMazdak) existingMazdak.remove();
+
+      if (matrixInterval) {
+        clearInterval(matrixInterval);
+        matrixInterval = null;
+      }
+    }
+
+    timeScrubber.addEventListener('input', (e) => {
+      const targetSec = parseInt(e.target.value, 10);
+      currentTime = targetSec;
+      updateFrame(targetSec);
+    });
+
+    // راه‌اندازی اولیه بوم ماتریکس
+    initMatrix();
+  </script>
+</body>
+</html>

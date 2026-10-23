@@ -1,0 +1,550 @@
+/**
+ * ==========================================================================
+ * GOLHA FLOWER STORE MOBILE RESPONSIVE ENGINE (golha-mobile.css)
+ * معماری ریسپانسیو اختصاصی فروشگاه اینترنتی گل و گیاه، سبد خرید، تسویه و دلیوری
+ * منطبق بر استانداردهای UMAC-P، دستورات MASTER_01 و دستور کارفرما
+ * ==========================================================================
+ */
+
+/* --------------------------------------------------------------------------
+   1. GLOBAL VIEWPORT & OVERFLOW GUARDS (مهار سرریز افقی و مقیاس لمسی)
+   -------------------------------------------------------------------------- */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* جلوگیری از زوم ناخواسته در مرورگرهای iOS و تلفن‌های هوشمند هنگام فوکوس روی فیلدها */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. TABLET BREAKPOINT (<= 992px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 992px) {
+  /* تنظیم پدینگ کانتینرهای اصلی */
+  .products-container {
+    max-width: 100%;
+    padding: 0 20px;
+    gap: 24px 20px;
+  }
+
+  .collection-heading {
+    padding: 0 20px;
+    margin-top: 48px;
+  }
+
+  .hero-banner {
+    padding: 48px 5vw;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. MOBILE LANDSCAPE & PHABLET BREAKPOINT (<= 768px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  /* هدر فروشگاه */
+  header.golha-navbar {
+    padding: 14px 16px !important;
+    gap: 10px;
+  }
+
+  .brand-logo {
+    font-size: clamp(16px, 4.5vw, 22px) !important;
+    gap: 8px !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .brand-logo span {
+    display: none !important;
+  }
+
+  .nav-actions {
+    gap: 8px !important;
+    flex-shrink: 0;
+  }
+
+  .account-btn {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    min-height: 40px;
+    min-width: 40px;
+  }
+
+  .cart-btn-trigger {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+    gap: 6px !important;
+    min-height: 40px;
+  }
+
+  /* بنر اصلی هیرو */
+  .hero-banner {
+    height: auto !important;
+    min-height: 380px !important;
+    padding: 40px 16px 32px !important;
+    background-position: center !important;
+    align-items: center !important;
+  }
+
+  .hero-copy {
+    width: 100% !important;
+    max-width: 100% !important;
+    text-align: right !important;
+  }
+
+  .atelier-eyebrow {
+    font-size: 10.5px !important;
+    letter-spacing: 1px !important;
+  }
+
+  .hero-banner h1 {
+    font-size: clamp(22px, 6.2vw, 34px) !important;
+    margin: 14px 0 !important;
+    line-height: 1.45 !important;
+    word-break: break-word;
+  }
+
+  .hero-banner p {
+    font-size: 13.5px !important;
+    line-height: 1.9 !important;
+    max-width: 100% !important;
+  }
+
+  .collection-link {
+    margin-top: 18px !important;
+    padding: 12px 0 8px !important;
+    width: 150px !important;
+    font-size: 13px !important;
+  }
+
+  /* عنوان کاتالوگ */
+  .collection-heading {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+    margin: 36px auto 18px !important;
+    padding: 0 16px !important;
+  }
+
+  .collection-heading h2 {
+    font-size: clamp(19px, 5vw, 24px) !important;
+    margin-top: 6px !important;
+  }
+
+  .collection-heading > span {
+    font-size: 11.5px !important;
+  }
+
+  /* کانتینر محصولات */
+  .products-container {
+    padding: 0 16px !important;
+    margin: 20px auto 60px !important;
+    gap: 20px 16px !important;
+  }
+
+  /* کشوی سبد خرید در ابعاد تبلت و موبایل */
+  .cart-drawer {
+    width: min(420px, 100%) !important;
+    padding: 22px 18px calc(20px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* صفحه تسویه حساب (checkout.html) */
+  .checkout-container {
+    padding: 24px 18px !important;
+    margin: 20px 14px calc(24px + env(safe-area-inset-bottom)) !important;
+    border-radius: 12px !important;
+  }
+
+  .checkout-container h2 {
+    font-size: 20px !important;
+  }
+
+  /* صفحه پیگیری سفارش (order-status.html) */
+  .delivery-brand {
+    padding: 16px 14px !important;
+  }
+
+  .delivery-brand span {
+    font-size: 16px !important;
+  }
+
+  .delivery-brand small {
+    font-size: 11px !important;
+  }
+
+  .delivery-stage {
+    padding: 14px 10px calc(24px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .delivery-card-shell {
+    padding: 28px 18px !important;
+    border-radius: 18px !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. STANDARD SMARTPHONE BREAKPOINT (<= 480px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  /* تنظیم شبکه محصولات: تک ستونه بهینه یا دو ستونه جمع‌وجور */
+  .products-container {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+    padding: 0 14px !important;
+  }
+
+  .product-card {
+    background: rgba(23, 32, 26, 0.95) !important;
+    border: 1px solid rgba(53, 64, 52, 0.8) !important;
+    border-radius: 12px !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .product-img-wrapper,
+  .product-media-wrapper {
+    height: 230px !important;
+    border-radius: 0 !important;
+  }
+
+  .product-info {
+    padding: 16px 14px 14px !important;
+    border-bottom: none !important;
+  }
+
+  .product-title {
+    font-size: 16px !important;
+    line-height: 1.4 !important;
+  }
+
+  .product-desc {
+    font-size: 12.5px !important;
+    line-height: 1.7 !important;
+    margin: 6px 0 16px !important;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .product-footer {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    padding-top: 10px;
+    border-top: 1px solid rgba(53, 64, 52, 0.6);
+  }
+
+  .product-price {
+    font-size: 14.5px !important;
+    font-weight: 800 !important;
+    white-space: nowrap;
+  }
+
+  .add-to-cart-btn {
+    padding: 9px 18px !important;
+    font-size: 12.5px !important;
+    min-height: 40px;
+    border-radius: 20px !important;
+  }
+
+  /* استپر تعداد در کارت محصول با اهداف لمسی استاندارد */
+  .qty-stepper {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    background: #f4efdf !important;
+    border: 1px solid #dcd4be !important;
+    border-radius: 6px !important;
+    padding: 3px !important;
+  }
+
+  .qty-btn {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    font-size: 18px !important;
+    border-radius: 4px !important;
+  }
+
+  .qty-count {
+    min-width: 28px !important;
+    font-size: 15px !important;
+  }
+
+  /* دکمه شناور سبد خرید در پایین صفحه */
+  .floating-cart-btn {
+    bottom: max(16px, env(safe-area-inset-bottom) + 8px) !important;
+    left: 14px !important;
+    padding: 10px 18px !important;
+    font-size: 13px !important;
+    border-radius: 30px !important;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.75) !important;
+  }
+
+  .floating-cart-badge {
+    font-size: 11px !important;
+    padding: 2px 7px !important;
+  }
+
+  /* کشوی سبد خرید: تمام‌عرض در گوشی */
+  .cart-drawer {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    padding: 18px 14px calc(18px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .cart-drawer-header {
+    padding-bottom: 12px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .cart-drawer-header h3 {
+    font-size: 16px !important;
+  }
+
+  .close-drawer-btn {
+    font-size: 1.8rem !important;
+    min-width: 44px;
+    min-height: 44px;
+    display: grid;
+    place-items: center;
+  }
+
+  .cart-items-list {
+    gap: 10px !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cart-item {
+    padding: 12px 10px !important;
+  }
+
+  .cart-item-info h4 {
+    font-size: 14px !important;
+  }
+
+  .cart-item-info span {
+    font-size: 12.5px !important;
+  }
+
+  .checkout-btn {
+    padding: 14px 16px !important;
+    font-size: 14.5px !important;
+    min-height: 48px;
+  }
+
+  /* مودال ورود به حساب مشتری */
+  .login-modal {
+    width: min(380px, 92vw) !important;
+    padding: 24px 18px !important;
+    border-radius: 12px !important;
+    max-height: 85dvh !important;
+    overflow-y: auto !important;
+  }
+
+  .login-modal h3 {
+    font-size: 16.5px !important;
+  }
+
+  .login-modal p {
+    font-size: 12.5px !important;
+    line-height: 1.7 !important;
+    margin-bottom: 16px !important;
+  }
+
+  /* توئست اعلان‌ها */
+  .golha-toast {
+    width: min(360px, 92vw) !important;
+    padding: 10px 16px !important;
+    font-size: 12.5px !important;
+  }
+
+  /* صفحه تسویه (checkout.html) */
+  .checkout-container {
+    padding: 18px 12px !important;
+    margin: 14px 8px calc(20px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .checkout-item-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .checkout-discount-row {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .checkout-discount-row input {
+    width: 100% !important;
+    flex: none !important;
+  }
+
+  .checkout-discount-row button {
+    width: 100% !important;
+    min-height: 44px !important;
+  }
+
+  .submit-order-btn {
+    padding: 14px 16px !important;
+    font-size: 14px !important;
+    min-height: 50px;
+  }
+
+  /* نوار مراحل سفارش (delivery-stepper) در order-status.html */
+  .delivery-stepper {
+    margin-bottom: 20px !important;
+    padding-bottom: 14px !important;
+    gap: 4px;
+  }
+
+  .step-item {
+    font-size: 10px !important;
+    gap: 4px !important;
+  }
+
+  .step-dot {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 11px !important;
+  }
+
+  .step-line {
+    margin: 0 4px 16px !important;
+  }
+
+  .delivery-card-shell {
+    padding: 20px 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .delivery-countdown .delivery-label {
+    font-size: 13px !important;
+  }
+
+  .delivery-time {
+    font-size: clamp(38px, 12vw, 54px) !important;
+  }
+
+  /* مانیتور پهپادی کلاس ۱۷ (زارع و احمدی) در گوشی */
+  body.is-drone-mode .delivery-card-shell {
+    padding: 6px 8px !important;
+    width: 98vw !important;
+  }
+
+  .flir-status-header {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    padding: 6px 8px !important;
+  }
+
+  .flir-mission-badge {
+    font-size: 9.5px !important;
+    order: 3;
+    width: 100%;
+    text-align: center;
+  }
+
+  .flir-optics-tag {
+    font-size: 9px !important;
+  }
+
+  .flir-timer-badge {
+    font-size: 10.5px !important;
+    padding: 2px 6px !important;
+  }
+
+  .flir-corner-countdown {
+    top: 6px !important;
+    right: 6px !important;
+    padding: 6px 8px !important;
+    transform: scale(0.85);
+    transform-origin: top right;
+  }
+
+  .arrival-banner-box {
+    padding: 14px 12px !important;
+    max-width: 94% !important;
+  }
+
+  .arrival-banner-title {
+    font-size: 14px !important;
+  }
+
+  .arrival-banner-street {
+    font-size: 11.5px !important;
+  }
+
+  .arrival-banner-note {
+    font-size: 11px !important;
+    line-height: 1.6 !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. NARROW PHONE BREAKPOINT (<= 360px - e.g. iPhone SE 1st gen / Galaxy Fold outer)
+   -------------------------------------------------------------------------- */
+@media (max-width: 360px) {
+  header.golha-navbar {
+    padding: 10px 12px !important;
+  }
+
+  .brand-logo {
+    font-size: 15px !important;
+  }
+
+  .nav-actions button, .account-btn, .cart-btn-trigger {
+    padding: 6px 10px !important;
+    font-size: 11.5px !important;
+  }
+
+  .hero-banner h1 {
+    font-size: 20px !important;
+  }
+
+  .product-img-wrapper,
+  .product-media-wrapper {
+    height: 190px !important;
+  }
+
+  .product-footer {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .product-footer .add-to-cart-btn,
+  .product-footer .qty-stepper {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .product-price {
+    text-align: center;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   6. SAFE-AREA & ACCESSIBILITY CONTROLS
+   -------------------------------------------------------------------------- */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .cart-drawer-footer {
+    padding-bottom: max(14px, env(safe-area-inset-bottom)) !important;
+  }
+  
+  .delivery-footer {
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  }
+}

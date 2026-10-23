@@ -1,0 +1,871 @@
+/**
+ * CYBER BREACH ENGINE CSS (v2.0 AAA Studio Edition)
+ * Professional Chromatic Aberration, CRT Scanlines, Dynamic Class Isolation & Ejection Modal
+ * Fully compatible with public/chat.html - Zero visual regressions when inactive
+ */
+
+:root {
+  --hack-red: #ff003c;
+  --hack-red-glow: rgba(255, 0, 60, 0.65);
+  --hack-cyan: #00f0ff;
+  --hack-cyan-glow: rgba(0, 240, 255, 0.65);
+  --hack-amber: #f59e0b;
+  --hack-bg-dark: #06090e;
+  --hack-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+}
+
+/* ==========================================================================
+   1. DIMMER BACKDROP (هنگام صعود ترمینال صفحه را مات و تیره می‌کند)
+   ========================================================================== */
+#terminal-backdrop-dimmer {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 5, 8, 0.88);
+  backdrop-filter: blur(14px) brightness(0.4);
+  -webkit-backdrop-filter: blur(14px) brightness(0.4);
+  z-index: 99990;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#terminal-backdrop-dimmer.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ==========================================================================
+   2. CRT SCANLINES & VIGNETTE EFFECT (فعال هنگام نفوذ)
+   ========================================================================== */
+body.cyber-breach-active::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.22) 3px,
+    rgba(0, 0, 0, 0.22) 4px
+  );
+  pointer-events: none;
+  z-index: 99980;
+  animation: crt-scan-roll 12s linear infinite;
+}
+
+@keyframes crt-scan-roll {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100%; }
+}
+
+/* ==========================================================================
+   3. STUDIO-GRADE CHROMATIC ABERRATION & BIOMETRIC RETICLE (پرتره دستیاران)
+   ========================================================================== */
+.assistant-mini-frame.is-corrupted-portrait {
+  position: relative;
+  border-color: var(--hack-red) !important;
+  box-shadow: 0 0 16px var(--hack-red-glow), inset 0 0 12px rgba(255, 0, 60, 0.4) !important;
+  overflow: hidden;
+  animation: frame-jitter 0.25s infinite alternate;
+}
+
+@keyframes frame-jitter {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(-1px, 1px); }
+  100% { transform: translate(1px, -1px); }
+}
+
+/* کروماتیک ابریشن دو کاناله (Cyan + Red Screen Blend) */
+.assistant-mini-frame.is-corrupted-portrait .assistant-mini-photo-box img {
+  filter: contrast(1.4) brightness(0.85) hue-rotate(340deg);
+  position: relative;
+  z-index: 2;
+}
+
+.assistant-mini-frame.is-corrupted-portrait .assistant-mini-photo-box::before,
+.assistant-mini-frame.is-corrupted-portrait .assistant-mini-photo-box::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: inherit;
+  background-size: cover;
+  pointer-events: none;
+  z-index: 3;
+  mix-blend-mode: screen;
+  opacity: 0.65;
+}
+
+.assistant-mini-frame.is-corrupted-portrait .assistant-mini-photo-box::before {
+  background-color: rgba(0, 240, 255, 0.35);
+  transform: translate(-3px, 0);
+  animation: chroma-cyan-shift 0.18s steps(2) infinite alternate;
+}
+
+.assistant-mini-frame.is-corrupted-portrait .assistant-mini-photo-box::after {
+  background-color: rgba(255, 0, 60, 0.45);
+  transform: translate(3px, 0);
+  animation: chroma-red-shift 0.22s steps(2) infinite alternate;
+}
+
+@keyframes chroma-cyan-shift {
+  0% { transform: translate(-2px, 1px); opacity: 0.4; }
+  100% { transform: translate(-4px, -1px); opacity: 0.75; }
+}
+
+@keyframes chroma-red-shift {
+  0% { transform: translate(2px, -1px); opacity: 0.5; }
+  100% { transform: translate(4px, 1px); opacity: 0.85; }
+}
+
+/* رتیکل بیومتریک و HUD تاکتیکال */
+.assistant-mini-frame.is-corrupted-portrait .corrupted-noise-overlay {
+  position: absolute;
+  inset: 0;
+  background: 
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 0, 60, 0.15) 0,
+      rgba(255, 0, 60, 0.15) 2px,
+      transparent 2px,
+      transparent 6px
+    );
+  pointer-events: none;
+  z-index: 4;
+}
+
+.assistant-mini-frame.is-corrupted-portrait .biometric-hud-reticle {
+  position: absolute;
+  inset: 2px;
+  border: 1px dashed var(--hack-red);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 5;
+  box-shadow: 0 0 10px var(--hack-red-glow);
+}
+
+.assistant-mini-frame.is-corrupted-portrait .biometric-hud-reticle::before {
+  content: 'REC [ERR]';
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  font-family: var(--hack-mono);
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--hack-red);
+  background: rgba(0, 0, 0, 0.75);
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+
+.assistant-mini-nameplate.corrupted-nameplate {
+  color: var(--hack-red) !important;
+  font-family: var(--hack-mono) !important;
+  font-size: 9px !important;
+  font-weight: 800;
+  text-shadow: 0 0 8px var(--hack-red);
+  letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   4. EVIDENCE BOARD BLACKOUT & ELECTRIC THREAD ARCS
+   ========================================================================== */
+.evidence-card.card-blackout {
+  filter: grayscale(1) brightness(0.25) contrast(1.8) !important;
+  border-color: rgba(255, 0, 60, 0.4) !important;
+  box-shadow: inset 0 0 20px rgba(255, 0, 60, 0.5) !important;
+  pointer-events: none;
+  transition: all 0.4s ease;
+}
+
+.board-health-compromised {
+  background: rgba(255, 0, 60, 0.2) !important;
+  color: var(--hack-red) !important;
+  border: 1px solid var(--hack-red) !important;
+  box-shadow: 0 0 12px var(--hack-red-glow) !important;
+  animation: pulse-breach 1s infinite alternate;
+}
+
+.thread-main.electric-arc {
+  stroke: var(--hack-red) !important;
+  stroke-dasharray: 6 3;
+  filter: drop-shadow(0 0 8px var(--hack-red)) drop-shadow(0 0 14px var(--hack-cyan));
+  animation: thread-spark 0.35s linear infinite;
+}
+
+@keyframes thread-spark {
+  0% { stroke-dashoffset: 0; stroke: var(--hack-red); }
+  50% { stroke: var(--hack-cyan); }
+  100% { stroke-dashoffset: 18; stroke: var(--hack-red); }
+}
+
+/* ==========================================================================
+   5. MECHANICAL TERMINAL ELEVATION & SEGMENTED PROGRESS (FLIP HUD)
+   ========================================================================== */
+
+/* براکت‌های هولوگرافیک HUD روی گوشه‌های ترمینال */
+.hud-corner-bracket {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  z-index: 15;
+  opacity: 0;
+  transition: opacity 0.4s ease, width 0.4s ease, height 0.4s ease;
+}
+.bracket-tl { top: 0; left: 0; border-top: 3px solid var(--hack-cyan); border-left: 3px solid var(--hack-cyan); }
+.bracket-tr { top: 0; right: 0; border-top: 3px solid var(--hack-cyan); border-right: 3px solid var(--hack-cyan); }
+.bracket-bl { bottom: 0; left: 0; border-bottom: 3px solid var(--hack-cyan); border-left: 3px solid var(--hack-cyan); }
+.bracket-br { bottom: 0; right: 0; border-bottom: 3px solid var(--hack-cyan); border-right: 3px solid var(--hack-cyan); }
+
+/* لرزش فیزیکی رتیکل قبل از صعود (Anticipation) */
+.security-terminal.pre-liftoff-lock,
+.security-terminal.terminal-pneumatic-vibrate {
+  border-color: var(--hack-red) !important;
+  box-shadow: 0 0 35px var(--hack-red-glow), inset 0 0 15px rgba(255, 0, 60, 0.3) !important;
+  animation: chassisPneumaticVibrate 0.07s infinite ease-in-out alternate !important;
+}
+.security-terminal.pre-liftoff-lock .hud-corner-bracket,
+.security-terminal.terminal-pneumatic-vibrate .hud-corner-bracket {
+  opacity: 1;
+  border-color: var(--hack-red);
+}
+
+.security-terminal.terminal-vibrate-critical {
+  animation: chassisVibrateCritical 0.045s infinite steps(2) alternate !important;
+  box-shadow: 
+    0 0 45px var(--hack-red-glow),
+    0 0 80px rgba(255, 0, 60, 0.5),
+    inset 0 0 25px rgba(255, 0, 60, 0.5) !important;
+  border-color: #ff3366 !important;
+}
+
+@keyframes chassisPneumaticVibrate {
+  0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
+  25%  { transform: translate3d(-1.5px, 1.2px, 0) rotate(-0.3deg); }
+  50%  { transform: translate3d(1.8px, -1.5px, 0) rotate(0.35deg); }
+  75%  { transform: translate3d(-1.2px, -1px, 0) rotate(-0.25deg); }
+  100% { transform: translate3d(1.4px, 1.6px, 0) rotate(0.3deg); }
+}
+
+@keyframes chassisVibrateCritical {
+  0%   { transform: translate3d(-2px, 2px, 0) scale(1.01) rotate(-0.5deg); }
+  25%  { transform: translate3d(2.5px, -1.8px, 0) scale(1.02) rotate(0.6deg); }
+  50%  { transform: translate3d(-2.8px, -2px, 0) scale(1.015) rotate(-0.4deg); }
+  75%  { transform: translate3d(2px, 2.4px, 0) scale(1.025) rotate(0.5deg); }
+  100% { transform: translate3d(-1.5px, 1px, 0) scale(1.01) rotate(-0.3deg); }
+}
+
+/* شلیک ایمپالس صعود ترمینال */
+.security-terminal.terminal-launch-recoil {
+  animation: terminalLaunchImpulse 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes terminalLaunchImpulse {
+  0% {
+    box-shadow: 0 0 60px rgba(0, 240, 255, 0.7), inset 0 0 30px rgba(0, 240, 255, 0.5);
+  }
+  20% {
+    box-shadow: 0 0 100px #00f0ff, 0 0 140px var(--hack-red-glow);
+  }
+  100% {
+    box-shadow: 
+      0 0 45px rgba(0, 240, 255, 0.5),
+      0 0 90px rgba(255, 0, 60, 0.45),
+      0 25px 80px rgba(0, 0, 0, 0.95),
+      inset 0 0 30px rgba(0, 240, 255, 0.2);
+  }
+}
+
+/* صعود به مرکز صفحه با پورتالینگ FLIP */
+.security-terminal.is-elevated {
+  border: 2px solid var(--hack-cyan) !important;
+  box-shadow: 
+    0 0 45px rgba(0, 240, 255, 0.5),
+    0 0 90px rgba(255, 0, 60, 0.45),
+    0 25px 80px rgba(0, 0, 0, 0.95),
+    inset 0 0 30px rgba(0, 240, 255, 0.2) !important;
+  border-radius: 12px !important;
+  background: rgba(8, 12, 18, 0.98) !important;
+  z-index: 99999 !important;
+  overflow: hidden;
+}
+
+.security-terminal.is-elevated .hud-corner-bracket {
+  opacity: 1;
+  width: 22px;
+  height: 22px;
+  border-width: 3.5px;
+  filter: drop-shadow(0 0 10px var(--hack-cyan));
+  animation: hudBracketElectricArc 0.18s infinite alternate;
+}
+
+@keyframes hudBracketElectricArc {
+  0% {
+    filter: drop-shadow(0 0 6px var(--hack-cyan)) drop-shadow(0 0 12px rgba(0, 240, 255, 0.7));
+    border-color: var(--hack-cyan);
+  }
+  50% {
+    filter: drop-shadow(0 0 14px var(--hack-red)) drop-shadow(0 0 20px rgba(255, 0, 60, 0.8));
+    border-color: #ff3366;
+  }
+  100% {
+    filter: drop-shadow(0 0 10px #ffffff) drop-shadow(0 0 18px var(--hack-cyan));
+    border-color: #ffffff;
+  }
+}
+
+.security-terminal.hud-bracket-zap .hud-corner-bracket {
+  animation: hudBracketZapBurst 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes hudBracketZapBurst {
+  0% {
+    filter: brightness(3.5) contrast(200%) drop-shadow(0 0 30px #ffffff) drop-shadow(0 0 50px var(--hack-cyan));
+    border-color: #ffffff;
+    transform: scale(1.25);
+  }
+  100% {
+    filter: drop-shadow(0 0 8px var(--hack-cyan));
+    border-color: var(--hack-cyan);
+    transform: scale(1);
+  }
+}
+
+.security-terminal.is-elevated .terminal-bar {
+  background: linear-gradient(90deg, rgba(255, 0, 60, 0.35) 0%, rgba(10, 16, 28, 0.98) 100%) !important;
+  border-bottom: 2px solid var(--hack-red) !important;
+  padding: 12px 20px !important;
+}
+
+.security-terminal.is-elevated .term-heading {
+  font-size: 13.5px !important;
+  color: #fff !important;
+  letter-spacing: 1px !important;
+}
+
+.security-terminal.is-elevated .terminal-body {
+  height: 290px !important;
+  font-size: 12.5px !important;
+  line-height: 1.8 !important;
+  padding: 16px 20px !important;
+  background: #030408 !important;
+}
+
+/* وضعیت قفل نهایی بازگشت به شاسی (Docked Corrupted) */
+.security-terminal.is-docked-corrupted {
+  border-color: var(--hack-red) !important;
+  box-shadow: 0 0 30px rgba(255, 0, 60, 0.75) !important;
+}
+.security-terminal.is-docked-corrupted .terminal-bar {
+  background: rgba(255, 0, 60, 0.3) !important;
+  border-bottom-color: var(--hack-red) !important;
+}
+
+/* زلزله و تکانه ویوپورت هنگام شلیک پرتاب */
+body.screen-quake-launch {
+  animation: bodyQuakeLaunch 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@keyframes bodyQuakeLaunch {
+  0% { transform: translate(0, 0); }
+  15% { transform: translate(-5px, 3px) rotate(-0.4deg); }
+  30% { transform: translate(6px, -4px) rotate(0.5deg); }
+  45% { transform: translate(-4px, 2px) rotate(-0.2deg); }
+  60% { transform: translate(3px, -2px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* زلزله سهمگین فرود و کوبش هیدرولیک (Slam Landing) */
+body.screen-slam-earthquake,
+body.screen-earthquake-slam,
+.under-board-quad-grid.screen-earthquake-slam {
+  animation: screenEarthquake3D 0.68s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+  transform-origin: center center;
+}
+
+@keyframes screenEarthquake3D {
+  0% {
+    transform: perspective(1100px) translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+  6% {
+    transform: perspective(1100px) translate3d(-10px, 15px, -20px) rotateX(2.8deg) rotateY(-2.2deg) rotateZ(-1.4deg);
+    filter: brightness(2) contrast(1.5);
+  }
+  14% {
+    transform: perspective(1100px) translate3d(9px, -12px, 12px) rotateX(-2.4deg) rotateY(1.9deg) rotateZ(1.1deg);
+    filter: brightness(1.5) contrast(1.3);
+  }
+  24% {
+    transform: perspective(1100px) translate3d(-7px, 9px, -9px) rotateX(1.8deg) rotateY(-1.4deg) rotateZ(-0.8deg);
+  }
+  36% {
+    transform: perspective(1100px) translate3d(5px, -6px, 6px) rotateX(-1.2deg) rotateY(1.0deg) rotateZ(0.5deg);
+  }
+  50% {
+    transform: perspective(1100px) translate3d(-3px, 4px, -3px) rotateX(0.7deg) rotateY(-0.6deg) rotateZ(-0.3deg);
+  }
+  66% {
+    transform: perspective(1100px) translate3d(2px, -2px, 0px) rotateX(-0.4deg) rotateY(0.3deg) rotateZ(0.15deg);
+  }
+  82% {
+    transform: perspective(1100px) translate3d(-1px, 1px, 0px) rotateX(0.2deg) rotateY(-0.15deg) rotateZ(-0.08deg);
+  }
+  100% {
+    transform: perspective(1100px) translate3d(0, 0, 0) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+    filter: none;
+  }
+}
+
+/* فلش CRT در لحظه کوبش فرود */
+.crt-slam-flash {
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.45);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 100000;
+  animation: crtFlashFade 0.35s ease-out forwards;
+}
+@keyframes crtFlashFade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* اسلات گوست جایگزین */
+.terminal-slot-ghost {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed rgba(255, 0, 60, 0.5) !important;
+  background: rgba(10, 14, 22, 0.8) !important;
+  min-height: 200px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: inset 0 0 25px rgba(255, 0, 60, 0.15);
+  animation: ghostPulse 2s infinite ease-in-out;
+}
+.terminal-slot-ghost.is-active {
+  display: flex !important;
+}
+@keyframes ghostPulse {
+  0%, 100% { border-color: rgba(255, 0, 60, 0.35); opacity: 0.85; }
+  50% { border-color: rgba(0, 240, 255, 0.8); opacity: 1; }
+}
+
+.terminal-slot-ghost.ghost-impact-spark {
+  animation: ghostSlotImpactFlash 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+@keyframes ghostSlotImpactFlash {
+  0% {
+    border-color: rgba(255, 0, 60, 0.5);
+    background: rgba(255, 0, 60, 0.04);
+    box-shadow: none;
+  }
+  6% {
+    border-color: #ffffff !important;
+    background: rgba(0, 240, 255, 0.6) !important;
+    box-shadow: 
+      0 0 100px #00f0ff,
+      0 0 160px rgba(255, 0, 60, 0.95),
+      inset 0 0 80px #ffffff !important;
+    filter: brightness(4.0) contrast(200%);
+  }
+  18% {
+    border-color: var(--hack-cyan) !important;
+    background: rgba(255, 0, 60, 0.4) !important;
+    box-shadow: 
+      0 0 70px #ff003c,
+      0 0 110px #00f0ff,
+      inset 0 0 50px var(--hack-cyan) !important;
+    filter: brightness(2.5);
+  }
+  35% {
+    border-color: var(--hack-red) !important;
+    background: rgba(0, 240, 255, 0.2) !important;
+    box-shadow: 
+      0 0 45px #00f0ff,
+      inset 0 0 30px #ff003c !important;
+    filter: brightness(1.7);
+  }
+  60% {
+    border-color: rgba(255, 0, 60, 0.85) !important;
+    background: rgba(255, 0, 60, 0.1) !important;
+    box-shadow: 0 0 25px rgba(255, 0, 60, 0.6) !important;
+    filter: brightness(1.2);
+  }
+  100% {
+    border-color: rgba(255, 0, 60, 0.5) !important;
+    background: rgba(255, 0, 60, 0.04) !important;
+    box-shadow: none !important;
+    filter: brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.screen-quake-launch,
+  body.screen-slam-earthquake,
+  body.screen-earthquake-slam,
+  .under-board-quad-grid.screen-earthquake-slam,
+  .security-terminal.pre-liftoff-lock,
+  .security-terminal.terminal-pneumatic-vibrate,
+  .security-terminal.terminal-vibrate-critical {
+    animation: none !important;
+  }
+}
+
+/* Segmented Override Progress Box */
+.terminal-override-progress-box {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 0, 60, 0.4);
+  border-radius: 6px;
+  padding: 12px 14px;
+  margin: 12px 14px;
+}
+
+.override-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-family: var(--hack-mono);
+  font-size: 11px;
+}
+
+.override-label {
+  color: #fca5a5;
+  font-weight: 800;
+}
+
+.override-percent {
+  color: var(--hack-cyan);
+  font-weight: 900;
+  font-size: 13px;
+  text-shadow: 0 0 8px var(--hack-cyan);
+}
+
+.override-segmented-bar {
+  display: flex;
+  gap: 3px;
+  height: 12px;
+  background: rgba(15, 23, 42, 0.8);
+  padding: 2px;
+  border-radius: 4px;
+}
+
+.seg-led {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  transition: background 0.15s ease;
+}
+
+.seg-led.active {
+  background: var(--hack-cyan);
+  box-shadow: 0 0 6px var(--hack-cyan);
+}
+
+.seg-led.active.danger {
+  background: var(--hack-red);
+  box-shadow: 0 0 8px var(--hack-red);
+}
+
+.override-vector-status {
+  font-family: var(--hack-mono);
+  font-size: 9.5px;
+  color: #94a3b8;
+  margin-top: 6px;
+  direction: ltr;
+  text-align: left;
+}
+
+/* Breach Terminal Lines */
+.term-breach-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--hack-mono);
+  font-size: 11px;
+  color: #ff6584;
+  padding: 3px 0;
+  border-bottom: 1px dashed rgba(255, 0, 60, 0.2);
+  direction: ltr;
+  text-align: left;
+}
+
+.term-tag-warn {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.term-tag-crit {
+  background: rgba(255, 0, 60, 0.3);
+  color: #ff003c;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 800;
+  box-shadow: 0 0 6px rgba(255, 0, 60, 0.5);
+}
+
+/* ==========================================================================
+   6. 3D VAULT TAMPER LOCKDOWN
+   ========================================================================== */
+.quad-vault-card.vault-tamper-lockdown {
+  border-color: var(--hack-red) !important;
+  box-shadow: 0 0 20px var(--hack-red-glow) !important;
+}
+
+.quad-vault-card.vault-tamper-lockdown .vault-status-dot {
+  background: var(--hack-red) !important;
+  box-shadow: 0 0 8px var(--hack-red) !important;
+}
+
+.quad-vault-card.vault-tamper-lockdown .vault-status-text {
+  color: var(--hack-red) !important;
+}
+
+/* ==========================================================================
+   7. LIVE CHAT TAKEOVER & MAZDAK MESSAGE STYLES
+   ========================================================================== */
+.field-chat.is-channel-hijacked {
+  border-color: var(--hack-red) !important;
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.35) !important;
+}
+
+.field-chat.is-channel-hijacked #neon-digital-clock {
+  color: var(--hack-red) !important;
+  text-shadow: 0 0 8px var(--hack-red) !important;
+}
+
+.composer.input-locked-cyber {
+  opacity: 0.65;
+  pointer-events: none;
+  background: rgba(255, 0, 60, 0.05) !important;
+  border-color: var(--hack-red) !important;
+}
+
+.message-bubble.hacker.mazdak-chat-msg {
+  background: linear-gradient(135deg, rgba(30, 8, 14, 0.95) 0%, rgba(18, 5, 8, 0.98) 100%) !important;
+  border: 1px solid var(--hack-red) !important;
+  box-shadow: 0 0 16px rgba(255, 0, 60, 0.35), inset 0 0 12px rgba(255, 0, 60, 0.15) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  margin: 10px 0 !important;
+  position: relative;
+  overflow: hidden;
+  animation: mazdak-msg-arrive 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes mazdak-msg-arrive {
+  0% { transform: translateY(12px) scale(0.96); opacity: 0; filter: blur(4px); }
+  100% { transform: translateY(0) scale(1); opacity: 1; filter: none; }
+}
+
+.mazdak-badge {
+  background: var(--hack-red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 8px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px var(--hack-red);
+  margin-left: 6px;
+}
+
+.mazdak-typing-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ff6584;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 12px;
+  background: rgba(255, 0, 60, 0.08);
+  border-radius: 6px;
+  margin: 6px 0;
+}
+
+.mazdak-pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--hack-red);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--hack-red);
+  animation: pulse-breach 0.8s infinite alternate;
+}
+
+/* ==========================================================================
+   8. EMERGENCY CINEMATIC EJECTION MODAL (فاز پایانی ۱۲۰ ثانیه)
+   ========================================================================== */
+.emergency-ejection-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(4, 6, 10, 0.94);
+  backdrop-filter: blur(24px) brightness(0.3);
+  -webkit-backdrop-filter: blur(24px) brightness(0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.emergency-ejection-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.emergency-ejection-modal {
+  width: 100%;
+  max-width: 620px;
+  background: rgba(14, 18, 26, 0.96);
+  border: 2px solid var(--hack-red);
+  border-radius: 14px;
+  box-shadow: 
+    0 0 50px var(--hack-red-glow),
+    0 30px 90px rgba(0, 0, 0, 0.95);
+  padding: 32px 28px;
+  position: relative;
+  text-align: center;
+  direction: rtl;
+  font-family: var(--font-persian), sans-serif;
+  transform: scale(0.92);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.emergency-ejection-overlay.active .emergency-ejection-modal {
+  transform: scale(1);
+}
+
+/* Hazard diagonal stripes */
+.hazard-stripe-bar {
+  height: 8px;
+  width: 100%;
+  background: repeating-linear-gradient(
+    -45deg,
+    #ff003c 0,
+    #ff003c 15px,
+    #111827 15px,
+    #111827 30px
+  );
+  border-radius: 4px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 10px rgba(255, 0, 60, 0.5);
+}
+
+.ejection-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 0, 60, 0.2);
+  border: 1px solid var(--hack-red);
+  color: #ff4d6d;
+  font-size: 11.5px;
+  font-weight: 900;
+  padding: 4px 14px;
+  border-radius: 20px;
+  margin-bottom: 14px;
+  box-shadow: 0 0 16px rgba(255, 0, 60, 0.4);
+}
+
+.ejection-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 12px;
+  text-shadow: 0 0 20px rgba(255, 0, 60, 0.6);
+}
+
+.ejection-body-text {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.ejection-callout-box {
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px dashed var(--hack-cyan);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.ejection-url-label {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 6px;
+}
+
+.ejection-url-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.ejection-url-code {
+  font-family: var(--hack-mono);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--hack-cyan);
+  direction: ltr;
+  text-shadow: 0 0 12px var(--hack-cyan);
+}
+
+.ejection-copy-btn {
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid var(--hack-cyan);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ejection-copy-btn:hover {
+  background: var(--hack-cyan);
+  color: #06090e;
+}
+
+.ejection-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ejection-primary-btn {
+  background: linear-gradient(135deg, #ff003c 0%, #b3002b 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 20px;
+  font-family: var(--font-persian), sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 0 24px var(--hack-red-glow);
+  transition: all 0.2s;
+}
+
+.ejection-primary-btn:hover {
+  background: linear-gradient(135deg, #e60036 0%, #80001f 100%);
+  box-shadow: 0 0 32px var(--hack-red);
+  transform: translateY(-1px);
+}
+
+.ejection-countdown-bar {
+  font-size: 11.5px;
+  color: #cbd5e1;
+  margin-top: 10px;
+}

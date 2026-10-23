@@ -91,6 +91,11 @@ if (!userToken || !sessionData.id) {
   window.location.href = '/enter-code.html';
 }
 
+// اگر کلاس تحت نفوذ مزداک باشد، هدایت به درگاه احراز هویت اضطراری
+if (sessionData && sessionData.is_hacked) {
+  window.location.href = '/emergency-auth.html';
+}
+
 const userMessagesMap = new Map();
 let activeEditMessageId = null;
 let activeDeleteMessageId = null;
@@ -150,6 +155,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (msgInput) {
     msgInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (activeUserReplyId) {
+          cancelUserReply();
+          e.preventDefault();
+          return;
+        }
+      }
       if (e.key === 'Enter') {
         if (!e.shiftKey) {
           e.preventDefault();
@@ -172,8 +184,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function initUserMicrophone() {
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-    console.log('🎙️ دسترسی میکروفون لپ‌تاپ کاربر با موفقیت تایید شد.');
+    const stream = await ensureLocalAudioStream();
+    if (stream) {
+      console.log('🎙️ دسترسی میکروفون کاربر با موفقیت تایید شد. آغاز استریم پیش‌فرض...');
+      await startPcmAudioStream();
+    }
   } catch (err) {
     console.warn('⚠️ عدم دسترسی به میکروفون یا رد شدن پرمیشن:', err);
   }
@@ -326,6 +341,10 @@ function initSocket() {
 
   socket.on('new_message', (msg) => {
     renderMessage(msg);
+    if (typeof window !== 'undefined' && window.innerWidth <= 992 && currentStudentMobileTab !== 'chat') {
+      const badge = document.getElementById('chat-tab-badge');
+      if (badge) badge.hidden = false;
+    }
   });
 
   socket.on('chat_lock_updated', (data) => {
@@ -377,6 +396,10 @@ function initSocket() {
         const countEl = document.getElementById('evidence-count');
         if (countEl) {
           countEl.textContent = `${remainingCards.length.toLocaleString('fa-IR')} مدرک`;
+        }
+        const badgeEl = document.getElementById('evidence-tab-badge');
+        if (badgeEl) {
+          badgeEl.textContent = remainingCards.length.toLocaleString('fa-IR');
         }
         if (remainingCards.length === 0 && !grid.querySelector('.empty-evidence')) {
           const emptyP = document.createElement('p');
@@ -457,8 +480,18 @@ function initSocket() {
   socket.on('hack_sequence_triggered', (data) => {
     if (!data || Number(data.sessionId) !== Number(sessionData.id)) return;
     console.log('🚨 رویداد سکانس هک مزداک دریافت شد:', data);
-    if (typeof hackEngine !== 'undefined') {
-      hackEngine.start();
+    if (window.cyberBreachEngine) {
+      window.cyberBreachEngine.start(data);
+    } else if (typeof hackEngine !== 'undefined') {
+      hackEngine.start(data);
+    }
+  });
+
+  socket.on('hack_cleared', (data) => {
+    if (!data || Number(data.sessionId) !== Number(sessionData.id)) return;
+    console.log('🔓 نفوذ لغو شد و چت بازگشایی گردید:', data);
+    if (window.cyberBreachEngine) {
+      window.cyberBreachEngine.reset();
     }
   });
 
@@ -466,33 +499,50 @@ function initSocket() {
   socket.on('audio_stream_started', async (data) => {
     if (!data || Number(data.sessionId) !== Number(sessionData.id)) return;
     console.log('🎙️ ادمین درخواست شنود صدای میکروفون را ارسال کرد:', data);
-    liveAdminSocketId = data.adminSocketId;
-    await startPcmAudioStream();
-    await startLivePeer(data.adminSocketId);
+    if (pcmAudioContext && pcmAudioContext.state === 'suspended') {
+      try { await pcmAudioContext.resume(); } catch (_) {}
+    }
+    if (!isPcmStreaming) {
+      await startPcmAudioStream();
+    }
+    if (data.adminSocketId) {
+      await startLivePeer(data.adminSocketId);
+    }
   });
 
   socket.on('audio_stream_stopped', (data) => {
     if (data && Number(data.sessionId) !== Number(sessionData.id)) return;
-    console.log('🛑 استریم صدای میکروفون توسط ادمین قطع گردید.');
-    stopPcmAudioStream();
-    closeLivePeer();
+    console.log('🛑 استریم صدای ادمین‌ها متوقف شد.');
+    closeAllLivePeers();
   });
 
   socket.on('webrtc_answer', async (data) => {
     if (data && Number(data.sessionId) !== Number(sessionData.id)) return;
-    if (peerConnection && data.senderSocketId === liveAdminSocketId) {
+    const senderId = data.senderSocketId;
+    const pc = livePeersMap.get(senderId);
+    if (pc && data.answer) {
       try {
-        await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-        for (const candidate of pendingLiveCandidates.splice(0)) await peerConnection.addIceCandidate(candidate);
+        await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
+        const pending = pendingLiveCandidatesMap.get(senderId) || [];
+        for (const candidate of pending.splice(0)) {
+          await pc.addIceCandidate(candidate);
+        }
       } catch (err) { console.warn('WebRTC answer:', err); }
     }
   });
 
   socket.on('webrtc_ice_candidate', async (data) => {
-    if (peerConnection && data.candidate && data.senderSocketId === liveAdminSocketId) {
+    if (data && Number(data.sessionId) !== Number(sessionData.id)) return;
+    const senderId = data.senderSocketId;
+    const pc = livePeersMap.get(senderId);
+    if (pc && data.candidate) {
       try {
-        if (peerConnection.remoteDescription) await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-        else pendingLiveCandidates.push(new RTCIceCandidate(data.candidate));
+        if (pc.remoteDescription) {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        } else {
+          if (!pendingLiveCandidatesMap.has(senderId)) pendingLiveCandidatesMap.set(senderId, []);
+          pendingLiveCandidatesMap.get(senderId).push(new RTCIceCandidate(data.candidate));
+        }
       } catch (e) {
         console.error('Error adding ICE candidate:', e);
       }
@@ -612,19 +662,62 @@ function renderMessage(msg, options = {}) {
     bodyContent = escapeHtml(fixMojibakeText(msg.content));
   }
 
+  let replyQuoteMarkup = '';
+  if (msg.reply_to_id) {
+    let replySender = 'کارآگاه';
+    if (msg.reply_sender_type === 'user') {
+      replySender = (Number(msg.reply_to_id) === Number(msgId)) ? 'شما' : 'دستیاران کارآگاه';
+    } else if (msg.reply_sender_type === 'admin') {
+      replySender = msg.reply_admin_name || 'مرکز فرماندهی';
+    } else if (msg.reply_sender_type === 'hacker') {
+      replySender = 'مزداک';
+    } else if (msg.reply_sender_type === 'system') {
+      replySender = 'پیام سیستم';
+    }
+
+    let replySnippet = msg.reply_content || '';
+    if (msg.reply_message_type === 'image') replySnippet = `📷 تصویر ${msg.reply_file_name || ''}`.trim();
+    else if (msg.reply_message_type === 'voice' || msg.reply_message_type === 'user_voice') replySnippet = '🎙️ پیام صوتی';
+    else if (msg.reply_message_type === 'video') replySnippet = '🎬 ویدیوی ارسالی';
+    else if (msg.reply_message_type === 'file') replySnippet = `📎 فایل ${msg.reply_file_name || ''}`.trim();
+    if (!replySnippet) replySnippet = 'پیام مرجع';
+    replySnippet = fixMojibakeText(replySnippet);
+    if (replySnippet.length > 70) replySnippet = replySnippet.slice(0, 67) + '…';
+
+    const safeReplyType = escapeHtml(msg.reply_sender_type || 'admin');
+    replyQuoteMarkup = `
+      <div class="message-reply-quote" onclick="jumpToMessage(${Number(msg.reply_to_id)})" role="button" tabindex="0" title="پرش به پیام اصلی">
+        <div class="reply-quote-bar ${safeReplyType}"></div>
+        <div class="reply-quote-inner">
+          <div class="reply-quote-author">
+            <span class="reply-icon" aria-hidden="true">↩</span>
+            <span class="reply-name">${escapeHtml(replySender)}</span>
+          </div>
+          <div class="reply-quote-snippet">${escapeHtml(replySnippet)}</div>
+        </div>
+      </div>
+    `;
+  }
+
   const senderMarkup = !isUser && msg.sender_type !== 'system'
     ? `<div class="message-sender"><span>${escapeHtml(senderTitle)}</span></div>`
     : '';
 
   const canEditText = isUser && (!msg.message_type || msg.message_type === 'text');
-  const userActionsMarkup = isUser
-    ? `<div class="user-msg-actions">
-        ${canEditText ? `<button type="button" class="user-msg-action-btn edit" onclick="openUserEditModal(${msgId})" title="ویرایش پیام" aria-label="ویرایش پیام">✏️ <span>ویرایش</span></button>` : ''}
-        <button type="button" class="user-msg-action-btn delete" onclick="openUserDeleteModal(${msgId})" title="حذف پیام" aria-label="حذف پیام">🗑️ <span>حذف</span></button>
-      </div>`
-    : '';
+  const userActionsMarkup = `
+    <div class="user-msg-actions">
+      <button type="button" class="user-msg-action-btn reply" onclick="stageUserReply(${msgId})" title="پاسخ به این پیام (یا دوبار کلیک)" aria-label="پاسخ به این پیام">↩️ <span>پاسخ</span></button>
+      ${isUser && canEditText ? `<button type="button" class="user-msg-action-btn edit" onclick="openUserEditModal(${msgId})" title="ویرایش پیام" aria-label="ویرایش پیام">✏️ <span>ویرایش</span></button>` : ''}
+      ${isUser ? `<button type="button" class="user-msg-action-btn delete" onclick="openUserDeleteModal(${msgId})" title="حذف پیام" aria-label="حذف پیام">🗑️ <span>حذف</span></button>` : ''}
+    </div>
+  `;
 
-  div.innerHTML = `${senderMarkup}<div id="user-msg-content-${msgId}" class="message-content">${bodyContent}</div><div class="message-footer-row">${userActionsMarkup}<span class="message-time">${timeFormatted}</span></div>`;
+  div.innerHTML = `${senderMarkup}${replyQuoteMarkup}<div id="user-msg-content-${msgId}" class="message-content">${bodyContent}</div><div class="message-footer-row">${userActionsMarkup}<span class="message-time">${timeFormatted}</span></div>`;
+
+  div.addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    stageUserReply(msgId);
+  });
 
   const laterMessage = [...box.children].find(child => Number(child.dataset.messageId) > msgId);
   box.insertBefore(div, laterMessage || null);
@@ -632,6 +725,129 @@ function renderMessage(msg, options = {}) {
     box.scrollTop = box.scrollHeight;
   }
 }
+
+let activeUserReplyId = null;
+
+/**
+ * فعال‌سازی حالت ریپلای برای یک پیام در ترمینال دانش‌آموز
+ */
+function stageUserReply(messageId) {
+  const numId = Number(messageId);
+  if (!numId) return;
+  const msg = userMessagesMap.get(numId);
+  activeUserReplyId = numId;
+
+  const bar = document.getElementById('user-reply-preview-bar');
+  const titleEl = document.getElementById('user-reply-preview-title');
+  const snippetEl = document.getElementById('user-reply-preview-snippet');
+  const accentEl = document.getElementById('user-reply-accent');
+  const input = document.getElementById('msg-input');
+
+  let authorName = 'مرکز فرماندهی';
+  let snippet = '';
+  let senderClass = 'admin';
+
+  if (msg) {
+    senderClass = msg.sender_type || 'admin';
+    if (msg.sender_type === 'user') {
+      authorName = 'شما (دستیاران کارآگاه)';
+    } else if (msg.sender_type === 'admin') {
+      authorName = msg.admin_sender_name || 'مرکز فرماندهی (کارآگاه)';
+    } else if (msg.sender_type === 'hacker') {
+      authorName = 'مزداک';
+    } else if (msg.sender_type === 'system') {
+      authorName = 'پیام سیستم';
+    }
+
+    if (msg.message_type === 'image') {
+      snippet = `📷 تصویر ${msg.file_name || ''}`.trim();
+    } else if (msg.message_type === 'voice' || msg.message_type === 'user_voice') {
+      snippet = '🎙️ پیام صوتی';
+    } else if (msg.message_type === 'video') {
+      snippet = '🎬 ویدیوی ارسالی';
+    } else if (msg.message_type === 'file') {
+      snippet = `📎 فایل ${msg.file_name || ''}`.trim();
+    } else {
+      snippet = msg.content || '';
+    }
+  } else {
+    // بازخوانی هوشمند از عنصر DOM اگر در کش موجود نبود
+    const bubble = document.querySelector(`[data-message-id="${numId}"]`);
+    if (bubble) {
+      if (bubble.classList.contains('user')) {
+        authorName = 'شما';
+        senderClass = 'user';
+      } else if (bubble.classList.contains('admin')) {
+        authorName = 'مرکز فرماندهی';
+        senderClass = 'admin';
+      } else if (bubble.classList.contains('hacker')) {
+        authorName = 'مزداک';
+        senderClass = 'hacker';
+      }
+      const textEl = bubble.querySelector('.message-content');
+      snippet = textEl ? textEl.textContent.trim() : '';
+    }
+  }
+
+  snippet = fixMojibakeText(snippet || 'پیام انتخاب شده');
+  if (snippet.length > 70) snippet = snippet.slice(0, 67) + '…';
+
+  if (titleEl) titleEl.textContent = `پاسخ به ${authorName}`;
+  if (snippetEl) snippetEl.textContent = snippet;
+  if (accentEl) {
+    accentEl.className = 'reply-preview-bar-accent ' + senderClass;
+  }
+
+  if (bar) {
+    bar.hidden = false;
+    bar.style.display = 'flex';
+  }
+
+  if (input) {
+    input.focus();
+  }
+}
+window.stageUserReply = stageUserReply;
+
+/**
+ * لغو حالت ریپلای و بستن کادر پیش‌نمایش در کامپوزر دانش‌آموز
+ */
+function cancelUserReply() {
+  activeUserReplyId = null;
+  const bar = document.getElementById('user-reply-preview-bar');
+  if (bar) {
+    bar.hidden = true;
+    bar.style.display = 'none';
+  }
+}
+window.cancelUserReply = cancelUserReply;
+
+/**
+ * پیمایش نرم و هایلایت نئونی پیام هنگام کلیک روی کوت‌باکس ریپلای
+ */
+function jumpToMessage(replyId) {
+  const numId = Number(replyId);
+  if (!numId) return;
+  const targetEl = document.querySelector(`[data-message-id="${numId}"]`);
+  if (targetEl) {
+    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    targetEl.classList.remove('highlight-pulse');
+    void targetEl.offsetWidth; // اعمال مجدد انیمیشن
+    targetEl.classList.add('highlight-pulse');
+    setTimeout(() => {
+      targetEl.classList.remove('highlight-pulse');
+    }, 1800);
+  } else {
+    const feedback = document.getElementById('chat-feedback');
+    if (feedback) {
+      feedback.textContent = 'پیام مرجع در تاریخچه بالاتر قرار دارد.';
+      setTimeout(() => {
+        if (feedback.textContent.includes('تاریخچه بالاتر')) feedback.textContent = '';
+      }, 3500);
+    }
+  }
+}
+window.jumpToMessage = jumpToMessage;
 
 function openUserMediaById(messageId) {
   const msg = userMessagesMap.get(Number(messageId));
@@ -825,7 +1041,11 @@ function renderEvidence(msg, options = {}) {
   card.addEventListener('mouseleave', () => requestAnimationFrame(updateEvidenceThreads));
   const later = [...grid.children].find(child => Number(child.dataset.evidenceId) > Number(msg.id));
   grid.insertBefore(card, later || null);
-  document.getElementById('evidence-count').textContent = `${grid.querySelectorAll('.evidence-card').length.toLocaleString('fa-IR')} مدرک`;
+  const totalCards = grid.querySelectorAll('.evidence-card').length;
+  const countEl = document.getElementById('evidence-count');
+  if (countEl) countEl.textContent = `${totalCards.toLocaleString('fa-IR')} مدرک`;
+  const badgeEl = document.getElementById('evidence-tab-badge');
+  if (badgeEl) badgeEl.textContent = totalCards.toLocaleString('fa-IR');
 
   if (typeof applyEvidenceFilter === 'function') applyEvidenceFilter();
   if (!options.skipThreads) {
@@ -1204,10 +1424,14 @@ function sendMessage() {
   input.value = '';
   input.style.height = 'auto';
 
+  const replyToId = activeUserReplyId;
+  cancelUserReply();
+
   socket.timeout(5000).emit('send_message', {
     sessionId: sessionData.id,
     content: content,
     messageType: 'text',
+    replyToId: replyToId || null,
   }, (error, result) => {
     isSendingMessage = false;
     if (submit) submit.disabled = false;
@@ -1215,6 +1439,7 @@ function sendMessage() {
       document.getElementById('chat-feedback').textContent = 'ارسال تأیید نشد؛ اتصال را بررسی کنید.';
       // برگرداندن متن در صورت نرسیدن پیام به سرور
       input.value = content;
+      if (replyToId) stageUserReply(replyToId);
       return;
     }
     renderMessage(result.message);
@@ -1246,26 +1471,51 @@ let pcmAudioContext = null;
 let pcmMicSource = null;
 let pcmProcessorNode = null;
 let isPcmStreaming = false;
+const livePeersMap = new Map(); // adminSocketId -> RTCPeerConnection
+const pendingLiveCandidatesMap = new Map(); // adminSocketId -> Array<RTCIceCandidate>
+let livePeerRetryTimers = new Map(); // adminSocketId -> timer
 let liveAdminSocketId = null;
-let pendingLiveCandidates = [];
-let livePeerRetryTimer = null;
 
-function closeLivePeer() {
-  if (livePeerRetryTimer) clearTimeout(livePeerRetryTimer);
-  livePeerRetryTimer = null;
-  pendingLiveCandidates = [];
-  if (peerConnection) { try { peerConnection.close(); } catch (_) {} peerConnection = null; }
+function closeLivePeer(adminSocketId) {
+  if (adminSocketId) {
+    if (livePeerRetryTimers.has(adminSocketId)) {
+      clearTimeout(livePeerRetryTimers.get(adminSocketId));
+      livePeerRetryTimers.delete(adminSocketId);
+    }
+    pendingLiveCandidatesMap.delete(adminSocketId);
+    const pc = livePeersMap.get(adminSocketId);
+    if (pc) {
+      try { pc.close(); } catch (_) {}
+      livePeersMap.delete(adminSocketId);
+    }
+  } else {
+    closeAllLivePeers();
+  }
+}
+
+function closeAllLivePeers() {
+  for (const timer of livePeerRetryTimers.values()) {
+    clearTimeout(timer);
+  }
+  livePeerRetryTimers.clear();
+  pendingLiveCandidatesMap.clear();
+  for (const pc of livePeersMap.values()) {
+    try { pc.close(); } catch (_) {}
+  }
+  livePeersMap.clear();
+  peerConnection = null;
 }
 
 async function startLivePeer(adminSocketId) {
   if (!adminSocketId || !window.RTCPeerConnection || !socket || !socket.connected) return;
   const stream = await ensureLocalAudioStream();
   if (!stream || !socket.connected) return;
-  closeLivePeer();
-  liveAdminSocketId = adminSocketId;
+  closeLivePeer(adminSocketId);
   try {
     const pc = new RTCPeerConnection(rtcConfig);
-    peerConnection = pc;
+    livePeersMap.set(adminSocketId, pc);
+    peerConnection = pc; // backwards-compatible alias
+    liveAdminSocketId = adminSocketId;
     const sender = pc.addTrack(stream.getAudioTracks()[0], stream);
     const parameters = sender.getParameters();
     parameters.encodings = [{ maxBitrate: 24000 }];
@@ -1276,14 +1526,18 @@ async function startLivePeer(adminSocketId) {
       });
     };
     pc.onconnectionstatechange = () => {
-      if (peerConnection !== pc) return;
-      if (pc.connectionState === 'connected') stopPcmAudioStream(false);
-      else if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
-        startPcmAudioStream();
-        if (!livePeerRetryTimer) livePeerRetryTimer = setTimeout(() => {
-          livePeerRetryTimer = null;
-          if (peerConnection === pc && socket && socket.connected) startLivePeer(adminSocketId);
-        }, 3000);
+      if (livePeersMap.get(adminSocketId) !== pc) return;
+      // نکته کلیدی: هرگز استریم صوتی سوکت ADPCM متوقف نمی‌شود تا سایر ادمین‌ها بدون اختلال بشنوند
+      if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+        if (!livePeerRetryTimers.has(adminSocketId)) {
+          const timer = setTimeout(() => {
+            livePeerRetryTimers.delete(adminSocketId);
+            if (livePeersMap.get(adminSocketId) === pc && socket && socket.connected) {
+              startLivePeer(adminSocketId);
+            }
+          }, 3000);
+          livePeerRetryTimers.set(adminSocketId, timer);
+        }
       }
     };
     const offer = await pc.createOffer();
@@ -1291,7 +1545,7 @@ async function startLivePeer(adminSocketId) {
     socket.emit('webrtc_offer', { sessionId: sessionData.id, offer: pc.localDescription, targetSocketId: adminSocketId });
   } catch (err) {
     console.warn('WebRTC unavailable; using low bandwidth relay:', err);
-    closeLivePeer();
+    closeLivePeer(adminSocketId);
   }
 }
 
@@ -1342,13 +1596,27 @@ function warmUpUserAudioContext() {
 }
 
 if (typeof window !== 'undefined') {
+  function ensureUserAudioActive() {
+    warmUpUserAudioContext();
+    if (pcmAudioContext && pcmAudioContext.state === 'suspended') {
+      pcmAudioContext.resume().catch(() => {});
+    }
+    if (!isPcmStreaming) {
+      startPcmAudioStream().catch(() => {});
+    }
+  }
   ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(evt => {
-    window.addEventListener(evt, warmUpUserAudioContext, { capture: true, once: true });
+    window.addEventListener(evt, ensureUserAudioActive, { capture: true, passive: true });
   });
 }
 
 async function startPcmAudioStream() {
-  if (isPcmStreaming) return;
+  if (isPcmStreaming) {
+    if (pcmAudioContext && pcmAudioContext.state === 'suspended') {
+      try { await pcmAudioContext.resume(); } catch (_) {}
+    }
+    return;
+  }
   const stream = await ensureLocalAudioStream();
   if (!stream) return;
 
@@ -1360,7 +1628,14 @@ async function startPcmAudioStream() {
       try { await pcmAudioContext.close(); } catch (_) {}
     }
 
-    pcmAudioContext = new AudioCtx({ sampleRate: 16000 });
+    try {
+      pcmAudioContext = new AudioCtx({ sampleRate: 16000 });
+    } catch (_) {
+      pcmAudioContext = new AudioCtx();
+    }
+    if (pcmAudioContext.state === 'suspended') {
+      try { await pcmAudioContext.resume(); } catch (_) {}
+    }
     pcmMicSource = pcmAudioContext.createMediaStreamSource(stream);
 
     pcmProcessorNode = pcmAudioContext.createScriptProcessor(2048, 1, 1);
@@ -1379,10 +1654,12 @@ async function startPcmAudioStream() {
       }
       const packet = LiveAudioCodec.encode(pcm16);
       if (!packet) return;
-      socket.volatile.emit('audio_stream_adpcm', {
-        sessionId: sessionData.id,
-        packet,
-      });
+      if (socket && socket.connected) {
+        socket.emit('audio_stream_adpcm', {
+          sessionId: sessionData.id,
+          packet,
+        });
+      }
     };
 
     // جهت جلوگیری از بازپخش صدای میکروفون در بلندگوی کاربر (Mute Gain Node)
@@ -1826,12 +2103,16 @@ async function handleUserFileUpload(event) {
     const { fileUrl, fileName, messageType } = finalResult.data;
     const cleanName = fixMojibakeText(fileName || cleanOriginalName);
 
+    const replyToId = activeUserReplyId;
+    cancelUserReply();
+
     socket.emit('send_message', {
       sessionId: sessionData.id,
       content: cleanName,
       messageType: messageType,
       fileUrl: fileUrl,
       fileName: cleanName,
+      replyToId: replyToId || null,
     }, (ack) => {
       if (activeUserUpload === uploadState) {
         activeUserUpload = null;
@@ -2029,6 +2310,47 @@ function getJalaliWeekdayIndex(jy, jm, jd) {
   return (jsDay + 1) % 7;
 }
 
+/**
+ * محاسبه نشانه‌گذاری کارآگاهی روزهای تقویم (MASTER-09 / DEC-0030)
+ * - از ۲۵ مهر ۱۴۰۵ به بعد فعال می‌شود
+ * - اکیداً از تاریخ روز جاری جلوتر نمی‌رود (قانون خط قرمز)
+ * - روزهای سه‌شنبه (3)، چهارشنبه (4) و پنج‌شنبه (5) دایره قرمز هستند
+ * - سایر روزها ضربدر یا تیک هستند
+ */
+/**
+ * تابع تولید نشانه‌های شبه‌تصادفی پایدار برای روزهای گذشته تقویم کارآگاهی
+ * (توزیع جذاب و طبیعی تیک یا ضربدر بدون تکرار یکنواخت و پایدار در هر رفرش)
+ */
+function getDeterministicPastMark(jy, jm, jd) {
+  const h = Math.imul(jy * 372 + jm * 31 + jd, 1103515245) + 12345;
+  const hash = ((h ^ (h >> 16)) >>> 0);
+  return (hash % 2 === 0) ? 'check' : 'cross';
+}
+
+function getDetectiveCalendarMark(jy, jm, jd, todayJy, todayJm, todayJd) {
+  // اگر قبل از ۲۵ مهر ۱۴۰۵ باشد، علامتی ندارد
+  if (jy < 1405 || (jy === 1405 && (jm < 7 || (jm === 7 && jd < 25)))) {
+    return null;
+  }
+  // اگر بعد از تاریخ روز باشد، اکیداً هیچ علامتی نباید بخورد (قانون خط قرمز)
+  if (jy > todayJy || (jy === todayJy && (jm > todayJm || (jm === todayJm && jd > todayJd)))) {
+    return null;
+  }
+
+  const isToday = (jy === todayJy && jm === todayJm && jd === todayJd);
+  const weekday = getJalaliWeekdayIndex(jy, jm, jd);
+
+  // دایره قرمز کارآگاهی فقط و فقط متعلق به «همان روز جاری» است (در روزهای کلاس: سه‌شنبه، چهارشنبه و پنج‌شنبه)
+  // روزهای گذشته دایره را نگه نمی‌دارند و تبدیل به تیک یا ضربدر می‌شوند (دستور مستقیم کارفرما)
+  if (isToday && (weekday === 3 || weekday === 4 || weekday === 5)) {
+    return 'circle';
+  }
+
+  // سایر روزهای گذشته: طبق دستور کارفرما به صورت رندوم و ارگانیک تیک یا ضربدر می‌خورند
+  // از هش پایدار تاریخ استفاده می‌شود تا رندوم جذاب و طبیعی باشد و در رندرها نپرد
+  return getDeterministicPastMark(jy, jm, jd);
+}
+
 let shamsiState = {
   todayJy: 1405,
   todayJm: 7,
@@ -2140,7 +2462,7 @@ function renderShamsiCalendar() {
   for (let i = firstDayOffset - 1; i >= 0; i--) {
     const d = prevMonthDays - i;
     cells.push(
-      `<button type="button" class="cal-day-cell is-outside" onclick="selectShamsiDay(${prevJy}, ${prevJm}, ${d})" title="${toPersianDigits(d)} ${SHAMSI_MONTH_NAMES[prevJm - 1]}">${toPersianDigits(d)}</button>`
+      `<button type="button" class="cal-day-cell is-outside" onclick="selectShamsiDay(${prevJy}, ${prevJm}, ${d})" title="${toPersianDigits(d)} ${SHAMSI_MONTH_NAMES[prevJm - 1]}"><span class="cal-day-num">${toPersianDigits(d)}</span></button>`
     );
   }
 
@@ -2150,16 +2472,23 @@ function renderShamsiCalendar() {
     const isFriday = colIdx === 6;
     const isToday = (viewJy === todayJy && viewJm === todayJm && d === todayJd);
     const isSelected = (viewJy === selectedJy && viewJm === selectedJm && d === selectedJd);
+    const mark = getDetectiveCalendarMark(viewJy, viewJm, d, todayJy, todayJm, todayJd);
     const classes = [
       'cal-day-cell',
       isFriday ? 'is-friday' : '',
       isToday ? 'is-today' : '',
       isSelected ? 'is-selected' : '',
+      mark ? `has-mark has-mark-${mark}` : '',
     ].filter(Boolean).join(' ');
+
+    let markTitleNote = '';
+    if (mark === 'circle') markTitleNote = ' (سرنخ حساس پرونده - دایره قرمز)';
+    else if (mark === 'check') markTitleNote = ' (اقدام تأییدشده ✓)';
+    else if (mark === 'cross') markTitleNote = ' (رد پیگیری ✕)';
 
     const weekdayName = SHAMSI_WEEKDAY_NAMES[colIdx];
     cells.push(
-      `<button type="button" class="${classes}" data-day="${d}" onclick="selectShamsiDay(${viewJy}, ${viewJm}, ${d})" title="${weekdayName} ${toPersianDigits(d)} ${monthName} ${toPersianDigits(viewJy)}">${toPersianDigits(d)}</button>`
+      `<button type="button" class="${classes}" data-day="${d}" ${mark ? `data-mark="${mark}"` : ''} onclick="selectShamsiDay(${viewJy}, ${viewJm}, ${d})" title="${weekdayName} ${toPersianDigits(d)} ${monthName} ${toPersianDigits(viewJy)}${markTitleNote}"><span class="cal-day-num">${toPersianDigits(d)}</span></button>`
     );
   }
 
@@ -2170,7 +2499,7 @@ function renderShamsiCalendar() {
   const remaining = totalSlots - cells.length;
   for (let d = 1; d <= remaining; d++) {
     cells.push(
-      `<button type="button" class="cal-day-cell is-outside" onclick="selectShamsiDay(${nextJy}, ${nextJm}, ${d})" title="${toPersianDigits(d)} ${SHAMSI_MONTH_NAMES[nextJm - 1]}">${toPersianDigits(d)}</button>`
+      `<button type="button" class="cal-day-cell is-outside" onclick="selectShamsiDay(${nextJy}, ${nextJm}, ${d})" title="${toPersianDigits(d)} ${SHAMSI_MONTH_NAMES[nextJm - 1]}"><span class="cal-day-num">${toPersianDigits(d)}</span></button>`
     );
   }
 
@@ -2810,3 +3139,84 @@ function confirmUserDeleteMessage() {
 // Master matrix global aliases
 window.sendUserMessage = sendMessage;
 window.saveUserEditMessage = submitUserEditMessage;
+
+/* ==========================================================================
+   ناوبری تب‌های ریسپانسیو و مدیریت کیبورد مجازی موبایل (MASTER-08)
+   ========================================================================== */
+let currentStudentMobileTab = 'chat';
+
+function switchStudentMobileTab(tabName) {
+  if (!tabName) return;
+  currentStudentMobileTab = tabName;
+  document.body.classList.remove('student-tab-chat', 'student-tab-evidence', 'student-tab-tools');
+  document.body.classList.add(`student-tab-${tabName}`);
+
+  // به‌روزرسانی استایل دکمه‌های ناوبری
+  document.querySelectorAll('.student-tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.id === `tab-btn-${tabName}`);
+  });
+
+  if (tabName === 'chat') {
+    const badge = document.getElementById('chat-tab-badge');
+    if (badge) badge.hidden = true;
+    const box = document.getElementById('messages-box');
+    if (box) box.scrollTop = box.scrollHeight;
+  } else if (tabName === 'evidence') {
+    requestAnimationFrame(() => {
+      if (typeof updateEvidenceThreads === 'function') updateEvidenceThreads();
+    });
+  }
+}
+
+function initStudentMobileViewport() {
+  if (typeof window === 'undefined') return;
+
+  if (window.visualViewport) {
+    const updateViewportHeight = () => {
+      document.documentElement.style.setProperty('--viewport-height', `${window.visualViewport.height}px`);
+    };
+    window.visualViewport.addEventListener('resize', updateViewportHeight);
+    window.visualViewport.addEventListener('scroll', updateViewportHeight);
+    updateViewportHeight();
+  }
+
+  // انتخاب تب اولیه بر اساس اندازه صفحه
+  if (window.innerWidth <= 992) {
+    switchStudentMobileTab('chat');
+  }
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth <= 992) {
+      if (!document.body.classList.contains('student-tab-chat') &&
+          !document.body.classList.contains('student-tab-evidence') &&
+          !document.body.classList.contains('student-tab-tools')) {
+        switchStudentMobileTab(currentStudentMobileTab || 'chat');
+      }
+    } else {
+      document.body.classList.remove('student-tab-chat', 'student-tab-evidence', 'student-tab-tools');
+    }
+  });
+}
+
+// مقداردهی در هنگام لود صفحه
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initStudentMobileViewport);
+} else {
+  initStudentMobileViewport();
+}
+
+window.switchStudentMobileTab = switchStudentMobileTab;
+window.initStudentMobileViewport = initStudentMobileViewport;
+window.getDetectiveCalendarMark = getDetectiveCalendarMark;
+window.getDeterministicPastMark = getDeterministicPastMark;
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    getDetectiveCalendarMark,
+    getDeterministicPastMark,
+    gregorianToJalali,
+    jalaliToGregorian,
+    getJalaliWeekdayIndex,
+    getJalaliMonthLength,
+  };
+}

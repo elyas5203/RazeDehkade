@@ -443,6 +443,95 @@ body.command-page::after {
   width: 100%;
 }
 
+/* بنر پیش‌نمایش ریپلای ادمین */
+.admin-reply-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(21, 27, 30, 0.95);
+  border: 1px solid rgba(231, 170, 69, 0.35);
+  border-radius: 8px;
+  padding: 5px 10px;
+  margin-bottom: 2px;
+  animation: adminReplySlideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  z-index: 5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes adminReplySlideDown {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.admin-reply-preview .reply-preview-bar-accent {
+  width: 3.5px;
+  height: 26px;
+  border-radius: 3px;
+  background: var(--command-amber, #f59e0b);
+  flex-shrink: 0;
+}
+
+.admin-reply-preview .reply-preview-bar-accent.user {
+  background: #10b981;
+}
+
+.admin-reply-preview .reply-preview-bar-accent.admin {
+  background: var(--command-amber, #f59e0b);
+}
+
+.admin-reply-preview .reply-preview-bar-accent.hacker {
+  background: var(--command-red, #ef4444);
+}
+
+.admin-reply-preview .reply-preview-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  text-align: right;
+}
+
+.admin-reply-preview .reply-preview-sender-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--command-amber, #f59e0b);
+}
+
+.admin-reply-preview .reply-preview-title {
+  font-weight: 700;
+}
+
+.admin-reply-preview .reply-preview-snippet {
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  margin-top: 1px;
+}
+
+.admin-reply-preview .reply-preview-cancel-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.admin-reply-preview .reply-preview-cancel-btn:hover {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
+}
+
 .composer-textarea-row {
   width: 100%;
   display: flex;
@@ -749,6 +838,108 @@ body.command-page::after {
   padding: 1px 3px;
   font-size: 11px;
   line-height: 1;
+}
+
+/* کوت‌باکس شیک و شیشه‌ای ریپلای در چت ادمین */
+.command-page .message-reply-quote {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 4px 8px 5px 6px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.16s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.command-page .message-reply-quote:hover {
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(231, 170, 69, 0.4);
+  transform: translateY(-1px);
+}
+
+.command-page .message-reply-quote .reply-quote-bar {
+  width: 3.5px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: var(--command-amber, #f59e0b);
+}
+
+.command-page .message-reply-quote .reply-quote-bar.user {
+  background: #10b981;
+}
+
+.command-page .message-reply-quote .reply-quote-bar.admin {
+  background: var(--command-amber, #f59e0b);
+}
+
+.command-page .message-reply-quote .reply-quote-bar.hacker {
+  background: var(--command-red, #ef4444);
+}
+
+.command-page .message-reply-quote .reply-quote-bar.system {
+  background: #a855f7;
+}
+
+.command-page .message-reply-quote .reply-quote-inner {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.command-page .message-reply-quote .reply-quote-author {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--command-amber, #f59e0b);
+  line-height: 1.3;
+}
+
+.command-page .message-reply-quote .reply-quote-bar.user ~ .reply-quote-inner .reply-quote-author {
+  color: #6ee7b7;
+}
+
+.command-page .message-reply-quote .reply-quote-bar.hacker ~ .reply-quote-inner .reply-quote-author {
+  color: #fca5a5;
+}
+
+.command-page .message-reply-quote .reply-quote-snippet {
+  font-size: 11px;
+  color: rgba(226, 232, 240, 0.78);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  line-height: 1.35;
+  margin-top: 1px;
+}
+
+.command-page .message-bubble.highlight-pulse {
+  animation: replyHighlightPulse 1.8s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  z-index: 10;
+}
+
+@keyframes replyHighlightPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(231, 170, 69, 0.8), 0 0 24px rgba(231, 170, 69, 0.6);
+    filter: brightness(1.25);
+  }
+  40% {
+    box-shadow: 0 0 0 4px rgba(231, 170, 69, 0.9), 0 0 36px rgba(231, 170, 69, 0.75);
+    filter: brightness(1.35);
+  }
+  100% {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.28);
+    filter: brightness(1);
+  }
 }
 
 /* محتوای متن */

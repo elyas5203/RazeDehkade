@@ -27,14 +27,21 @@ async function runMigrations() {
       console.log(`📦 دیتابیس '${dbName}' بررسی/ایجاد گردید.`);
     }
 
-    const migrationFiles = ['001_initial_schema.sql', '002_features_update.sql', '003_vault_unlock_support.sql'];
+    const migrationFiles = ['001_initial_schema.sql', '002_features_update.sql', '003_vault_unlock_support.sql', '004_add_reply_to_messages.sql', '005_add_session_hack_status.sql'];
     for (const fileName of migrationFiles) {
       const filePath = path.join(__dirname, 'migrations', fileName);
       if (fs.existsSync(filePath)) {
         const sql = fs.readFileSync(filePath, 'utf8');
         const stmts = sql.split(';').map(s => s.trim()).filter(s => s.length > 0);
         for (const stmt of stmts) {
-          await query(stmt);
+          try {
+            await query(stmt);
+          } catch (mErr) {
+            // چشم‌پوشی در صورت وجود ستون یا کلید از قبل
+            if (!mErr.message.includes('Duplicate column') && !mErr.message.includes('already exists')) {
+              console.warn(`Migration statement note (${fileName}):`, mErr.message);
+            }
+          }
         }
       }
     }
@@ -61,6 +68,19 @@ async function runMigrations() {
       await ensureColumn('teacher_phone', 'teacher_phone VARCHAR(20) NULL AFTER is_chat_locked');
       await ensureColumn('is_vault_unlocked', 'is_vault_unlocked TINYINT(1) DEFAULT 0 AFTER teacher_phone');
       await ensureColumn('vault_target_week', 'vault_target_week TINYINT DEFAULT 5 AFTER is_vault_unlocked');
+      await ensureColumn('is_hacked', 'is_hacked TINYINT(1) DEFAULT 0 AFTER vault_target_week');
+      await ensureColumn('hacked_at', 'hacked_at DATETIME NULL AFTER is_hacked');
+
+      // تضمین وجود ستون reply_to_id در جدول messages
+      const existingReplyCol = await query(`SHOW COLUMNS FROM messages LIKE 'reply_to_id'`);
+      if (existingReplyCol.rows.length === 0) {
+        try {
+          await query(`ALTER TABLE messages ADD COLUMN reply_to_id INT NULL DEFAULT NULL AFTER sender_id`);
+          await query(`ALTER TABLE messages ADD CONSTRAINT fk_messages_reply_to FOREIGN KEY (reply_to_id) REFERENCES messages(id) ON DELETE SET NULL`);
+        } catch (colErr) {
+          console.warn('Note ensuring reply_to_id column:', colErr.message);
+        }
+      }
     }
 
     // ساخت جدول ذخیره وضعیت بات تلگرام در دیتابیس و پاکسازی موارد تست قبلی

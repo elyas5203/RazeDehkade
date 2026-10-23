@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>فروشگاه گل و گیاه «گلها» | سفارش آنلاین گل و هدیه</title>
+  <title>فروشگاه اینترنتی گل و گیاه | ارسال خیـــــلی خیـــــلی خیـــــلی سریع</title>
   <link rel="stylesheet" href="/golha/assets/css/golha.css">
   <link rel="stylesheet" href="/golha/assets/css/atelier.css">
+  <link rel="stylesheet" href="/golha/assets/css/golha-mobile.css?v=1.0">
+  <link rel="preload" as="image" href="/golha/assets/images/floral-editorial.webp" type="image/webp">
   <style>
     .floating-cart-btn {
       position: fixed;
@@ -90,14 +92,83 @@
       border-color: #d5c7a3;
       color: #fff;
     }
+    .golha-toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-35px);
+      background: #201114;
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 700;
+      padding: 12px 24px;
+      border-radius: 8px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.75);
+      z-index: 99999;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      direction: rtl;
+    }
+    .golha-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .stock-badge-oos {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #f87171;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+    .cart-item.is-oos-item {
+      border: 1px solid rgba(239, 68, 68, 0.55) !important;
+      background: rgba(127, 29, 29, 0.18) !important;
+      border-radius: 8px;
+      padding: 10px !important;
+    }
+    .cart-item-oos-tag {
+      margin-top: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.16);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      padding: 4px 8px;
+      border-radius: 5px;
+      line-height: 1.5;
+    }
+    .cart-oos-banner {
+      margin-bottom: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: rgba(127, 29, 29, 0.28);
+      border: 1px solid rgba(239, 68, 68, 0.55);
+      color: #fecaca;
+      font-size: 12.5px;
+      font-weight: 700;
+      line-height: 1.65;
+    }
   </style>
 </head>
 <body>
+  <!-- اعلان‌های پیام خطا و عدم موجودی انبار -->
+  <div id="golhaToast" class="golha-toast" role="alert"></div>
 
   <!-- هدر و ناوبری فروشگاه -->
   <header class="golha-navbar">
-    <a href="/" class="brand-logo">
-      گلها <span>FLORAL ATELIER</span>
+    <a href="/golha/index.html" class="brand-logo" style="letter-spacing: 0;">
+      فروشگاه اینترنتی گل و گیاه
     </a>
     <div class="nav-actions" style="display:flex;align-items:center;gap:12px;">
       <button type="button" class="account-btn" onclick="openLoginModal()">
@@ -113,19 +184,19 @@
   <!-- بنر اصلی -->
   <section class="hero-banner">
     <div class="hero-copy">
-      <span class="atelier-eyebrow">گل‌آرایی با حوصله، برای شما</span>
-      <h1>گاهی یک گل،<br>همه‌چیز را می‌گوید.</h1>
-      <p>گل‌های تازه، ترکیب‌های دست‌چین و هدیه‌ای که به یاد می‌ماند.</p>
-      <a class="collection-link" href="#productsGrid">مشاهده گل‌ها <span>↓</span></a>
+      <span class="atelier-eyebrow">فروشگاه تخصصی گل و گیاه طبیعی و ملزومات</span>
+      <h1 class="hero-title">ارسال خیـــــلی خیـــــلی خیـــــلی سریع</h1>
+      <p>گل‌های تازه، گیاهان آپارتمانی شاداب و ملزومات باغبانی با بسته‌بندی ویژه و تحویل فوری درب منزل.</p>
+      <a class="collection-link" href="#productsGrid">مشاهده محصولات <span>↓</span></a>
     </div>
   </section>
 
   <div class="collection-heading">
     <div>
-      <span class="atelier-eyebrow">انتخاب‌های گلها</span>
-      <h2>برای یک لحظهٔ ماندگار</h2>
+      <span class="atelier-eyebrow">محصولات برگزیده</span>
+      <h2>ارسال خیـــــلی خیـــــلی خیـــــلی سریع</h2>
     </div>
-    <span>گل و گیاه طبیعی · آمادهٔ ارسال</span>
+    <span>گل و گیاه طبیعی · آمادهٔ تحویل فوری</span>
   </div>
 
   <!-- شبکه نمایش محصولات -->
@@ -150,9 +221,10 @@
       <!-- آیتم‌های سبد خرید -->
     </div>
     <div class="cart-drawer-footer">
+      <div id="cartDrawerOosNotice"></div>
       <div class="cart-total">
         <span>مجموع کل:</span>
-        <span id="cartTotalPrice">۰ تومان</span>
+        <span id="cartTotalPrice">۰ ریال</span>
       </div>
       <a href="/golha/checkout.html" class="checkout-btn" id="checkoutLink">تکمیل سفارش و تسویه</a>
     </div>
@@ -189,8 +261,46 @@
   </div>
 
   <script>
-    let cart = JSON.parse(localStorage.getItem('golha_cart') || '[]');
-    let rawProducts = [];
+    const ALLOWED_PRODUCT_IDS = ['1', '2', '3', '4', '5'];
+    let cart = JSON.parse(localStorage.getItem('golha_cart') || '[]').map(item => ({
+      ...item,
+      quantity: Math.max(1, Number(item.quantity || item.qty || 1)),
+    }));
+
+    // لیست فال‌بک آنی ۱۵ محصول رسمی جهت نمایش فوری و بدون تاخیر (Instant 0ms Fallback)
+    const DEFAULT_PRODUCTS = [
+      { id: 6, name: 'دسته‌گل رز هلندی سرخ', price: 12000000, image: '/golha/assets/images/red_roses_bouquet.webp', imageUrl: '/golha/assets/images/red_roses_bouquet.webp', description: 'رزهای سرخ ممتاز با تزیین برگ‌های اکالیپتوس و بسته‌بندی لوکس' },
+      { id: 1, name: 'بیلچه', price: 1500000, image: '/golha/assets/images/garden_trowel.webp', imageUrl: '/golha/assets/images/garden_trowel.webp', description: 'بیلچه باغبانی دسته‌چوبی مقاوم و سبک مناسب کاشت و تعویض گلدان' },
+      { id: 10, name: 'گلدان زامیفولیا بلک', price: 9500000, image: '/golha/assets/images/black_zz_plant.webp', imageUrl: '/golha/assets/images/black_zz_plant.webp', description: 'گیاه فوق‌العاده مقاوم و کم‌توقع با برگ‌های براق و تیره' },
+      { id: 2, name: 'سانسوریا پاکوتاه', price: 10500000, image: '/golha/assets/images/dwarf_sansevieria.webp', imageUrl: '/golha/assets/images/dwarf_sansevieria.webp', description: 'گیاه آپارتمانی مقاوم و تصفیه‌کننده هوا در گلدان سرامیکی' },
+      { id: 9, name: 'باکس گل لوکس شب‌بو', price: 14000000, image: '/golha/assets/images/luxury_flower_box.webp', imageUrl: '/golha/assets/images/luxury_flower_box.webp', description: 'ترکیب رز، آلسترومریا و داوودی در باکس گرد هدیه' },
+      { id: 14, name: 'اسپری آبپاش و غبارپاش شیشه‌ای', price: 2200000, image: '/golha/assets/images/glass_water_spray.webp', imageUrl: '/golha/assets/images/glass_water_spray.webp', description: 'آبپاش مه‌پاش طرح آنتیک با نازل برنجی جهت حفظ رطوبت برگ‌ها' },
+      { id: 3, name: 'لیلیوم صورتی', price: 8000000, image: '/golha/assets/images/pink_lily.webp', imageUrl: '/golha/assets/images/pink_lily.webp', description: 'شاخه گل لیلیوم اورینتال با عطر دلنشین و شکوفه‌های درشت' },
+      { id: 7, name: 'ارکیده فالانوپسیس بنفش', price: 15500000, image: '/golha/assets/images/purple_orchid.webp', imageUrl: '/golha/assets/images/purple_orchid.webp', description: 'دو شاخه ارکیده با گل‌های مخملی در گلدان سرامیکی روشن' },
+      { id: 13, name: 'خاک پرلیت و پیت‌ماس مخصوص (۵ لیتری)', price: 1800000, image: '/golha/assets/images/potting_soil_bag.webp', imageUrl: '/golha/assets/images/potting_soil_bag.webp', description: 'بستر کشت غنی‌شده با زهکشی عالی مناسب انواع گیاهان آپارتمانی' },
+      { id: 4, name: 'کاکتوس ساکولنت', price: 7000000, image: '/golha/assets/images/succulent_cactus.webp', imageUrl: '/golha/assets/images/succulent_cactus.webp', description: 'مجموعه ساکولنت شاداب در گلدان سفالی دکوراتیو' },
+      { id: 8, name: 'بنسای جنسینگ مینیاتوری', price: 18000000, image: '/golha/assets/images/ginseng_bonsai.webp', imageUrl: '/golha/assets/images/ginseng_bonsai.webp', description: 'درختچه بنسای ریشه‌دار مقاوم و شاداب در گلدان دست‌ساز' },
+      { id: 15, name: 'اسپری تقویت رشد ریشه', price: 3500000, image: '/golha/assets/images/root_booster_fertilizer.webp', imageUrl: '/golha/assets/images/root_booster_fertilizer.webp', description: 'کود مایع کامل حاوی ریزمغذی‌ها و اسید هیومیک برای رشد برگ و ساقه' },
+      { id: 5, name: 'کود تراریم پروتکت', price: 3000000, image: '/golha/assets/images/terrarium_fertilizer.webp', imageUrl: '/golha/assets/images/terrarium_fertilizer.webp', description: 'محلول تخصصی تقویت ریشه و محافظت از رطوبت بستر تراریوم' },
+      { id: 11, name: 'دسته‌گل آلسترومریا رنگارنگ', price: 6500000, image: '/golha/assets/images/alstroemeria_bouquet.webp', imageUrl: '/golha/assets/images/alstroemeria_bouquet.webp', description: 'دسته گل شاداب با تنوع رنگی بالا و ماندگاری طولانی' },
+      { id: 12, name: 'گلدان فیکوس لیراتا', price: 11000000, image: '/golha/assets/images/ficus_lyrata.webp', imageUrl: '/golha/assets/images/ficus_lyrata.webp', description: 'گیاه برگ ویولنی جذاب و دکوراتیو مناسب فضاهای روشن' },
+    ];
+    let rawProducts = [...DEFAULT_PRODUCTS];
+
+    let toastTimer = null;
+    function showToast(message, isError = true) {
+      const toast = document.getElementById('golhaToast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.style.borderColor = isError ? '#ef4444' : '#22c55e';
+      toast.style.color = isError ? '#fca5a5' : '#86efac';
+      toast.style.background = isError ? '#201114' : '#0e2317';
+      toast.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
 
     function cleanDigits(val) {
       return String(val || '')
@@ -273,128 +383,124 @@
       renderProductsGrid();
     }
 
+    function getCartOosMessages() {
+      const unavailableNames = [];
+      const excessNames = [];
+      cart.forEach(item => {
+        const isAllowed = ALLOWED_PRODUCT_IDS.includes(String(item.id));
+        if (!isAllowed) {
+          unavailableNames.push(item.name);
+        } else if (Number(item.quantity || 1) > 1) {
+          excessNames.push(item.name);
+        }
+      });
+      const messages = [];
+      if (unavailableNames.length > 0) {
+        messages.push(`محصول «${unavailableNames.join('، ')}» در انبار موجود نیست (عدم موجودی). لطفاً آن را از سبد خرید کم کنید.`);
+      }
+      if (excessNames.length > 0) {
+        messages.push(`از محصول «${excessNames.join('، ')}» فقط ۱ عدد در انبار موجود است. لطفاً تعداد اضافی را کم کنید.`);
+      }
+      return messages;
+    }
+
     function updateCartUI() {
       const cartCountEl = document.getElementById('cartCount');
       const floatingCartCountEl = document.getElementById('floatingCartCount');
       const cartItemsListEl = document.getElementById('cartItemsList');
       const cartTotalPriceEl = document.getElementById('cartTotalPrice');
+      const oosNoticeEl = document.getElementById('cartDrawerOosNotice');
 
       const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
       if (cartCountEl) cartCountEl.textContent = totalCount;
       if (floatingCartCountEl) floatingCartCountEl.textContent = totalCount;
 
-      let totalPrice = 0;
       if (cart.length === 0) {
-        cartItemsListEl.innerHTML = '<p class="empty-cart-msg">سبد خرید شما خالی است.</p>';
-      } else {
-        cartItemsListEl.innerHTML = cart.map(item => {
-          totalPrice += item.price * item.quantity;
-          return `
-            <div class="cart-item">
-              <div class="cart-item-info">
-                <h4>${item.name}</h4>
-                <p>${item.price.toLocaleString('fa-IR')} تومان</p>
-              </div>
-              <div class="cart-item-controls">
-                <div class="qty-stepper">
-                  <button type="button" class="qty-btn" onclick="updateItemQuantity(${item.id}, -1)">−</button>
-                  <span class="qty-count">${item.quantity}</span>
-                  <button type="button" class="qty-btn" onclick="updateItemQuantity(${item.id}, 1)">+</button>
-                </div>
-                <button type="button" class="remove-item-btn" onclick="removeItemFromCart(${item.id})" title="حذف" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px;">&times;</button>
-              </div>
-            </div>
-          `;
-        }).join('');
+        cartItemsListEl.innerHTML = '<p style="text-align: center; color: var(--text-muted); margin-top: 2rem;">سبد خرید شما خالی است.</p>';
+        cartTotalPriceEl.textContent = '۰ ریال';
+        if (oosNoticeEl) oosNoticeEl.innerHTML = '';
+        document.getElementById('checkoutLink').style.pointerEvents = 'none';
+        document.getElementById('checkoutLink').style.opacity = '0.5';
+        return;
       }
 
-      cartTotalPriceEl.textContent = totalPrice.toLocaleString('fa-IR') + ' تومان';
+      document.getElementById('checkoutLink').style.pointerEvents = 'auto';
+      document.getElementById('checkoutLink').style.opacity = '1';
+
+      let total = 0;
+      cartItemsListEl.innerHTML = cart.map((item, index) => {
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        const isAllowed = ALLOWED_PRODUCT_IDS.includes(String(item.id));
+        const isExcess = isAllowed && Number(item.quantity || 1) > 1;
+        const hasItemOos = !isAllowed || isExcess;
+
+        let itemOosHtml = '';
+        if (!isAllowed) {
+          itemOosHtml = `<div class="cart-item-oos-tag">❌ عدم موجودی: «${item.name}» در انبار موجود نیست — لطفاً با دکمه - یا 🗑️ کم کنید</div>`;
+        } else if (isExcess) {
+          itemOosHtml = `<div class="cart-item-oos-tag">⚠️ عدم موجودی: از «${item.name}» فقط ۱ عدد موجود است — لطفاً تعداد را کم کنید</div>`;
+        }
+
+        return `
+          <div class="cart-item ${hasItemOos ? 'is-oos-item' : ''}">
+            <div class="cart-item-info" style="flex:1;">
+              <h4>${item.name}</h4>
+              <span>${item.price.toLocaleString('fa-IR')} ریال</span>
+              ${itemOosHtml}
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="qty-stepper">
+                <button type="button" class="qty-btn" onclick="decreaseItemById('${item.id}')">-</button>
+                <span class="qty-count">${item.quantity}</span>
+                <button type="button" class="qty-btn" onclick="increaseItemById('${item.id}')">+</button>
+              </div>
+              <button class="remove-item-btn" onclick="removeFromCart(${index})" title="حذف کامل">🗑️</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const oosMessages = getCartOosMessages();
+      if (oosNoticeEl) {
+        if (oosMessages.length > 0) {
+          oosNoticeEl.innerHTML = `<div class="cart-oos-banner">⚠️ ${oosMessages.join('<br>⚠️ ')}</div>`;
+        } else {
+          oosNoticeEl.innerHTML = '';
+        }
+      }
+
+      cartTotalPriceEl.textContent = `${total.toLocaleString('fa-IR')} ریال`;
     }
 
-    function updateItemQuantity(id, change) {
-      const idx = cart.findIndex(item => item.id === id);
-      if (idx !== -1) {
-        cart[idx].quantity += change;
-        if (cart[idx].quantity <= 0) {
-          cart.splice(idx, 1);
+    function increaseItemById(productId) {
+      const p = rawProducts.find(x => String(x.id) === String(productId));
+      const existing = cart.find(item => String(item.id) === String(productId));
+      if (existing) {
+        existing.quantity += 1;
+        showToast(`تعداد «${existing.name}» در سبد خرید افزایش یافت.`, false);
+      } else if (p) {
+        cart.push({ ...p, quantity: 1 });
+        showToast(`«${p.name}» به سبد خرید افزوده شد.`, false);
+      }
+      saveCart();
+    }
+
+    function decreaseItemById(productId) {
+      const existingIndex = cart.findIndex(item => String(item.id) === String(productId));
+      if (existingIndex > -1) {
+        if (cart[existingIndex].quantity > 1) {
+          cart[existingIndex].quantity -= 1;
+        } else {
+          cart.splice(existingIndex, 1);
         }
         saveCart();
       }
     }
 
-    function removeItemFromCart(id) {
-      cart = cart.filter(item => item.id !== id);
+    function removeFromCart(index) {
+      cart.splice(index, 1);
       saveCart();
-    }
-
-    function addToCart(productId) {
-      const prod = rawProducts.find(p => p.id === productId);
-      if (!prod) return;
-
-      const existing = cart.find(p => p.id === productId);
-      if (existing) {
-        existing.quantity += 1;
-      } else {
-        cart.push({
-          id: prod.id,
-          name: prod.name,
-          price: prod.price,
-          quantity: 1
-        });
-      }
-      saveCart();
-      openCartDrawer();
-    }
-
-    function renderProductsGrid() {
-      const grid = document.getElementById('productsGrid');
-      if (!grid) return;
-
-      grid.innerHTML = rawProducts.map(p => {
-        const inCart = cart.find(item => item.id === p.id);
-        const qty = inCart ? inCart.quantity : 0;
-
-        return `
-          <article class="product-card" id="product-${p.id}">
-            <div class="product-img-wrapper">
-              <img src="${p.image || p.imageUrl || '/golha/assets/images/rose.png'}" alt="${p.name}" class="product-image" loading="lazy">
-            </div>
-            <div class="product-info">
-              <h3 class="product-title">${p.name}</h3>
-              <p class="product-desc">${p.description}</p>
-              <div class="product-footer">
-                <span class="product-price">${p.price.toLocaleString('fa-IR')} <small>تومان</small></span>
-                <div class="product-action-zone">
-                  ${qty > 0 ? `
-                    <div class="qty-stepper">
-                      <button type="button" class="qty-btn" onclick="updateItemQuantity(${p.id}, -1)">−</button>
-                      <span class="qty-count">${qty}</span>
-                      <button type="button" class="qty-btn" onclick="updateItemQuantity(${p.id}, 1)">+</button>
-                    </div>
-                  ` : `
-                    <button type="button" class="add-to-cart-btn" onclick="addToCart(${p.id})">
-                      + افزودن به سبد
-                    </button>
-                  `}
-                </div>
-              </div>
-            </div>
-          </article>
-        `;
-      }).join('');
-    }
-
-    async function loadProducts() {
-      try {
-        const res = await fetch('/api/store/products');
-        const data = await res.json();
-        if (data.success && data.data) {
-          rawProducts = data.data;
-          renderProductsGrid();
-        }
-      } catch (e) {
-        console.error('Failed to load products:', e);
-      }
     }
 
     function openCartDrawer() {
@@ -421,8 +527,128 @@
     document.getElementById('closeCartBtn').addEventListener('click', closeCartDrawer);
     document.getElementById('cartOverlay').addEventListener('click', closeCartDrawer);
 
-    loadProducts();
+    function handleProductImgLoad(img) {
+      if (!img) return;
+      img.classList.add('is-loaded');
+      if (img.parentElement) {
+        img.parentElement.classList.add('is-loaded');
+      }
+    }
+
+    function handleProductImgError(img, title) {
+      if (!img) return;
+      img.onerror = null;
+      const parent = img.parentElement;
+      if (!parent) return;
+
+      const currentSrc = img.getAttribute('src') || '';
+      // اگر فرمت webp با خطا مواجه شد، یک‌بار نسخه پشتیبان jpg را امتحان کن
+      if (currentSrc.endsWith('.webp')) {
+        img.onerror = () => showBotanicalFallback(parent, title);
+        img.src = currentSrc.replace('.webp', '.jpg');
+        return;
+      }
+
+      showBotanicalFallback(parent, title);
+    }
+
+    function showBotanicalFallback(parent, title) {
+      if (!parent) return;
+      parent.classList.add('is-loaded');
+      parent.innerHTML = `
+        <div class="img-fallback-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22c5.523 0 10-4.477 10-10a9.96 9.96 0 0 0-2.31-6.383c-.396-.464-1.127-.27-1.28.324a6.5 6.5 0 0 1-5.41 4.776V22z"/>
+            <path d="M12 22C6.477 22 2 17.523 2 12c0-2.486.91-4.76 2.417-6.507.382-.442 1.096-.24 1.25.335a6.5 6.5 0 0 1 5.333 4.89V22z"/>
+          </svg>
+          <span>گلها · ${title || 'محصول دست‌چین'}</span>
+        </div>
+      `;
+    }
+
+    function renderProductsGrid() {
+      const grid = document.getElementById('productsGrid');
+      if (!grid || !rawProducts.length) return;
+
+      grid.innerHTML = rawProducts.map((p, idx) => {
+        const cartItem = cart.find(item => String(item.id) === String(p.id));
+        const qty = cartItem ? cartItem.quantity : 0;
+
+        // ۴ محصول اول صفحه با بالاترین اولویت لود شوند، بقیه به شکل Lazy لود شوند
+        const isHighPriority = idx < 4;
+        const loadingAttr = isHighPriority ? 'eager' : 'lazy';
+        const fetchPriorityAttr = isHighPriority ? 'fetchpriority="high"' : 'fetchpriority="low"';
+
+        const safeTitle = (p.name || '').replace(/'/g, "\\'");
+
+        let actionHtml = '';
+        if (qty === 0) {
+          actionHtml = `<button class="add-to-cart-btn" type="button" onclick="increaseItemById('${p.id}')">+ افزودن به سبد</button>`;
+        } else {
+          actionHtml = `
+            <div class="qty-stepper">
+              <button type="button" class="qty-btn" onclick="decreaseItemById('${p.id}')">-</button>
+              <span class="qty-count">${qty}</span>
+              <button type="button" class="qty-btn" onclick="increaseItemById('${p.id}')">+</button>
+            </div>
+          `;
+        }
+
+        const imgSrc = p.image || p.imageUrl || '/golha/assets/images/rose.webp';
+
+        return `
+          <div class="product-card" id="product-${p.id}">
+            <div class="product-img-wrapper" id="img-wrap-${p.id}">
+              <img src="${imgSrc}" 
+                   alt="${p.name}" 
+                   loading="${loadingAttr}" 
+                   ${fetchPriorityAttr}
+                   decoding="async" 
+                   width="600" 
+                   height="600"
+                   onload="handleProductImgLoad(this)"
+                   onerror="handleProductImgError(this, '${safeTitle}')">
+            </div>
+            <div class="product-info">
+              <h3 class="product-title">${p.name}</h3>
+              <p class="product-desc">${p.description}</p>
+              <div class="product-footer">
+                <span class="product-price">${p.price.toLocaleString('fa-IR')} ریال</span>
+                ${actionHtml}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // بررسی وضعیت عکس‌هایی که ممکن است بلافاصله از کش لود شده باشند
+      grid.querySelectorAll('img').forEach(img => {
+        if (img.complete && img.naturalWidth > 0) {
+          handleProductImgLoad(img);
+        }
+      });
+    }
+
+    async function loadProducts() {
+      try {
+        const res = await fetch('/api/store/products');
+        const data = await res.json();
+        if (data.success) {
+          rawProducts = data.data;
+          renderProductsGrid();
+        }
+      } catch (err) {
+        console.error('خطا در دریافت محصولات:', err);
+      }
+    }
+
+    // رندر آنی محصولات پیش‌فرض (بدون معطلی برای شبکه)
+    renderProductsGrid();
     updateCartUI();
+
+    // همگام‌سازی بی‌صدا در پس‌زمینه با سرور
+    loadProducts();
   </script>
+  <script src="/assets/js/audio-unlock.js"></script>
 </body>
 </html>

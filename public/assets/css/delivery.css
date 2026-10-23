@@ -2610,6 +2610,38 @@ body:not(.is-blackout) .blackout-radar-beacon,
   }
 }
 
+@media (max-width: 768px) {
+  .cyber-cockpit-container {
+    padding-top: 24px !important;
+    padding-bottom: 24px !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    gap: 12px !important;
+  }
+  .radar-screen-wrap {
+    width: 100% !important;
+    max-width: 380px !important;
+    height: auto !important;
+    aspect-ratio: 1 / 1 !important;
+  }
+  .threat-log-wrap {
+    max-height: 260px !important;
+  }
+  .hud-cockpit-header {
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .radar-screen-wrap {
+    max-width: 320px !important;
+  }
+  .cyber-side-panel {
+    max-width: 100% !important;
+  }
+}
+
 /* ==========================================================================
    SHOCK TRANSITION: EXPLOSIVE STROBE & WARP GLITCH
    ========================================================================== */

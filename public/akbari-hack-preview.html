@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پیش‌نمایش سینمایی AAA نفوذ سایبری مزداک — کلاسه ۱۴ (اکبری، واحدی و انتظامی)</title>
+  
+  <link rel="preload" href="/assets/scene/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/vault/real-vault-door-body.jpg?v=10.0" as="image">
+  <link rel="preload" href="/assets/vault/real-vault-bolts-strip.png?v=10.0" as="image">
+  <link rel="preload" href="/assets/vault/real-chrome-handle.png?v=10.0" as="image">
+  
+  <link rel="stylesheet" href="/assets/css/investigation.css">
+  <link rel="stylesheet" href="/assets/css/terminal.css?v=7.0">
+  <link rel="stylesheet" href="/assets/css/vault-3d.css?v=10.0">
+  <link rel="stylesheet" href="/assets/css/akbari-breach-master.css?v=4.0">
+
+  <style>
+    /* DIRECTOR HUD & TIMELINE CONTROLS */
+    #director-hud {
+      position: sticky;
+      top: 0;
+      z-index: 999999;
+      background: rgba(6, 9, 14, 0.98);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 2px solid #ff003c;
+      padding: 10px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 0, 60, 0.25);
+      font-family: var(--font-persian), sans-serif;
+    }
+    .hud-title-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .hud-badge {
+      background: #ff003c;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 3px 9px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 12px rgba(255, 0, 60, 0.6);
+    }
+    .hud-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .hud-timeline-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      max-width: 500px;
+    }
+    .hud-play-btn {
+      background: #ff003c;
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 5px;
+      font-size: 12.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 10px rgba(255, 0, 60, 0.4);
+    }
+    .hud-play-btn:hover {
+      background: #e10035;
+      box-shadow: 0 0 16px rgba(255, 0, 60, 0.7);
+    }
+    .hud-scrubber {
+      flex: 1;
+      cursor: pointer;
+      accent-color: #ff003c;
+      height: 6px;
+    }
+    .hud-time-display {
+      font-family: var(--hack-mono), monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: #cbd5e1;
+      min-width: 86px;
+      text-align: center;
+    }
+    .hud-phase-buttons {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .hud-pill {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #cbd5e1;
+      padding: 4px 9px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .hud-pill:hover, .hud-pill.active {
+      background: rgba(255, 0, 60, 0.25);
+      border-color: #ff003c;
+      color: #fff;
+      box-shadow: 0 0 10px rgba(255, 0, 60, 0.4);
+    }
+    .hud-side-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .hud-btn-sub {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #e2e8f0;
+      padding: 5px 11px;
+      border-radius: 5px;
+      font-size: 11.5px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .hud-btn-sub:hover {
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+    }
+  </style>
+</head>
+<body class="terminal-page">
+
+  <!-- ==========================================================================
+       DIMMER BACKDROP (هنگام صعود ترمینال صفحه زیرین را مات و تیره می‌کند)
+       ========================================================================== -->
+  <div id="terminal-backdrop-dimmer" aria-hidden="true"></div>
+
+  <!-- ==========================================================================
+       DIRECTOR CONTROLLER HUD (نوار هدایت کارگردان)
+       ========================================================================== -->
+  <header id="director-hud">
+    <div class="hud-title-box">
+      <span class="hud-badge">سناریوی سینماتیک AAA نفوذ مزداک</span>
+      <span class="hud-title">کلاس اکبری و واحدی و انتظامی (کلاسه ۱۴)</span>
+    </div>
+
+    <div class="hud-timeline-group">
+      <button type="button" class="hud-play-btn" id="hud-play-toggle">
+        <span id="hud-play-icon">▶</span>
+        <span id="hud-play-label">پخش خودکار</span>
+      </button>
+      <input type="range" class="hud-scrubber" id="hud-scrubber" min="0" max="120" value="0" step="1">
+      <span class="hud-time-display" id="hud-time-display">00:00 / 02:00</span>
+    </div>
+
+    <div class="hud-phase-buttons">
+      <button type="button" class="hud-pill active" onclick="window.masterBreach.seek(0)">۰:۰۰ عادی</button>
+      <button type="button" class="hud-pill" onclick="window.masterBreach.seek(18)">۰:۱۸ ارورهای ترمینال</button>
+      <button type="button" class="hud-pill" onclick="window.masterBreach.seek(38)">۰:۳۸ تخریب شواهد و چهره‌ها</button>
+      <button type="button" class="hud-pill" onclick="window.masterBreach.seek(54)">۰:۵۴ قفل رتیکل</button>
+      <button type="button" class="hud-pill" onclick="window.masterBreach.seek(58)">۰:۵۸ صعود ترمینال به مرکز</button>
+      <button type="button" class="hud-pill" onclick="window.masterBreach.seek(80)">۱:۲۰ بازگشت مکانیکی</button>
+      <button type="button" class="hud-pill" onclick="window.masterBreach.seek(84)">۱:۲۴ تسخیر زنده چت</button>
+    </div>
+
+    <div class="hud-side-actions">
+      <button type="button" class="hud-btn-sub" id="hud-sound-toggle">🔊 صدا: فعال</button>
+      <button type="button" class="hud-btn-sub" onclick="window.masterBreach.reset()">⟲ بازنشانی</button>
+    </div>
+  </header>
+
+  <!-- ==========================================================================
+       MAIN CASE WORKSPACE (صفحه واقعی چت و پنل‌های کلاس اکبری)
+       ========================================================================== -->
+  <main class="case-workspace" id="case-workspace">
+    
+    <!-- ستون راست: چت تعاملی کارآگاهان (طراحی دقیقاً ۱:۱ مطابق با چت زنده سامانه chat.html) -->
+    <section class="field-chat" id="field-chat-section" aria-labelledby="chat-title">
+      <header id="chat-header">
+        <span class="radio-icon" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M12 13v7m-4 0h8M5 5a10 10 0 0 0 0 12M19 5a10 10 0 0 1 0 12M8 8a6 6 0 0 0 0 6m8-6a6 6 0 0 1 0 6"/><circle cx="12" cy="11" r="2"/></svg>
+        </span>
+        <div>
+          <span class="eyebrow" id="chat-eyebrow">خط ارتباطی پایگاه · <span id="session-title">کلاس اکبری و واحدی و انتظامی (کلاسه ۱۴)</span></span>
+          <h2 id="chat-title">مرکز فرماندهی</h2>
+        </div>
+        <div class="chat-header-meta">
+          <span class="chat-badge-code" id="chat-code-badge" style="margin-left: 12px; font-size: 11px; padding: 2px 8px; border-radius: 4px; background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b; font-family: var(--hack-mono);">کد: ۶۸۱۳۵۲</span>
+          <time id="neon-digital-clock" class="neon-digital-clock" aria-label="ساعت دقیق">--:--:--</time>
+        </div>
+      </header>
+
+      <div class="channel-notice" id="channel-notice">
+        <span class="status-dot"></span> <span id="channel-notice-text">گزارش‌ها، کشفیات و گفتگوهای زنده تیم کارآگاهی</span>
+      </div>
+
+      <div class="messages-list" id="messages-box" role="log" aria-live="polite" aria-label="پیام‌ها">
+        <!-- پیام اول کارآگاه (ورودی / سمت چپ) -->
+        <div class="message-bubble admin" data-message-id="101">
+          <div class="message-sender"><span>مرکز فرماندهی (سرکارآگاه رضوی)</span></div>
+          <div class="message-content">تیم کارآگاهی اکبری، واحدی و انتظامی؛ مدارک جدیدی از آسیاب کهنه به دست ما رسیده. برد شواهد و اسناد را مجدداً با دقت ارزیابی کنید.</div>
+          <div class="message-footer-row">
+            <div class="user-msg-actions">
+              <button type="button" class="user-msg-action-btn reply" data-action="reply" data-id="101" data-sender="مرکز فرماندهی (سرکارآگاه رضوی)" data-type="admin" title="پاسخ به این پیام (یا دوبار کلیک)" aria-label="پاسخ به این پیام">↩️ <span>پاسخ</span></button>
+            </div>
+            <span class="message-time">۱۰:۱۵</span>
+          </div>
+        </div>
+
+        <!-- پیام دوم: کارت هشدار شکیل پین شدن مدرک در برد شواهد -->
+        <div class="message-bubble evidence-alert-card" data-message-id="102" title="کلیک برای مشاهده مدرک">
+          <div class="evidence-alert-inner">
+            <span class="evidence-alert-icon" aria-hidden="true">📌</span>
+            <div class="evidence-alert-texts">
+              <strong>کارآگاه مدرک جدیدی به برد اسناد اضافه کرد</strong>
+              <small>سند حواله گندم و یادداشت مرموز آسیاب — در برد شواهد پین شد</small>
+            </div>
+            <span class="evidence-alert-cta">مشاهده ↗</span>
+          </div>
+        </div>
+
+        <!-- پیام سوم ارسالی تیم کلاسه ۱۴ به صورت ریپلای روی پیام کارآگاه (خروجی / سمت راست) -->
+        <div class="message-bubble user" data-message-id="103">
+          <div class="message-reply-quote" data-target-id="101" role="button" tabindex="0" title="پرش به پیام اصلی">
+            <div class="reply-quote-bar admin"></div>
+            <div class="reply-quote-inner">
+              <div class="reply-quote-author">
+                <span class="reply-icon" aria-hidden="true">↩</span>
+                <span class="reply-name">مرکز فرماندهی (سرکارآگاه رضوی)</span>
+              </div>
+              <div class="reply-quote-snippet">تیم کارآگاهی اکبری، واحدی و انتظامی؛ مدارک جدیدی از آسیاب کهنه به دست ما رسیده...</div>
+            </div>
+          </div>
+          <div class="message-content">جناب سرکارآگاه، ما اثر انگشت روی حواله محموله را با کفش سایز ۴۲ تطبیق دادیم. به نظر می‌رسد فرد ناشناس هنوز در اطراف دهکده حضور دارد.</div>
+          <div class="message-footer-row">
+            <div class="user-msg-actions">
+              <button type="button" class="user-msg-action-btn reply" data-action="reply" data-id="103" data-sender="امیرعلی اکبری" data-type="user" title="پاسخ به این پیام" aria-label="پاسخ به این پیام">↩️ <span>پاسخ</span></button>
+              <button type="button" class="user-msg-action-btn edit" data-action="edit" data-id="103" title="ویرایش پیام" aria-label="ویرایش پیام">✏️ <span>ویرایش</span></button>
+              <button type="button" class="user-msg-action-btn delete" data-action="delete" data-id="103" title="حذف پیام" aria-label="حذف پیام">🗑️ <span>حذف</span></button>
+            </div>
+            <span class="message-time">۱۰:۱۸</span>
+          </div>
+        </div>
+
+        <!-- پیام چهارم: عکس ارسالی دانش‌آموز در چت با ساختار دقیق user-chat-media-box -->
+        <div class="message-bubble user has-user-media" data-message-id="104">
+          <div class="user-chat-media-box" title="کلیک برای بزرگ‌نمایی تصویر">
+            <img src="/assets/scene/stranger.jpg" alt="ردپای فرد ناشناس در آسیاب" class="user-chat-image" loading="lazy">
+          </div>
+          <div class="user-chat-caption">مدرک ارسالی امیرعلی اکبری: تصویر سایه فرد مشکوک پشت درختان آسیاب کهنه</div>
+          <div class="message-footer-row">
+            <div class="user-msg-actions">
+              <button type="button" class="user-msg-action-btn reply" data-action="reply" data-id="104" data-sender="امیرعلی اکبری" data-type="user" title="پاسخ به این پیام" aria-label="پاسخ به این پیام">↩️ <span>پاسخ</span></button>
+              <button type="button" class="user-msg-action-btn delete" data-action="delete" data-id="104" title="حذف پیام" aria-label="حذف پیام">🗑️ <span>حذف</span></button>
+            </div>
+            <span class="message-time">۱۰:۱۹</span>
+          </div>
+        </div>
+
+        <!-- کانتینر پیام‌های ارسالی نفوذ مزداک (فاز ۵) -->
+        <div id="mazdak-stream-target" class="mazdak-stream-target"></div>
+      </div>
+
+      <div id="typing-indicator" class="typing-line" aria-live="polite"></div>
+      <div id="chat-feedback" role="status" class="chat-feedback"></div>
+
+      <!-- کادر ارسال پیام کامپوزر کاملاً مطابق با چت زنده سامانه chat.html -->
+      <form class="composer" id="message-form" autocomplete="off">
+        <label for="msg-input" class="sr-only">گزارش شما به مرکز</label>
+
+        <!-- بنر شیک و نئونی پیش‌نمایش ریپلای دانش‌آموز -->
+        <div id="user-reply-preview-bar" class="composer-reply-preview" hidden aria-live="polite">
+          <div class="reply-preview-bar-accent" id="user-reply-accent"></div>
+          <div class="reply-preview-body">
+            <div class="reply-preview-sender-row">
+              <span class="reply-preview-icon" aria-hidden="true">↩</span>
+              <strong id="user-reply-preview-title" class="reply-preview-title">پاسخ به مرکز</strong>
+            </div>
+            <div id="user-reply-preview-snippet" class="reply-preview-snippet">متن پیام مرجع...</div>
+          </div>
+          <button type="button" class="reply-preview-cancel-btn" id="cancel-reply-btn" title="لغو پاسخ (Escape)" aria-label="لغو پاسخ">✕</button>
+        </div>
+        
+        <div class="composer-controls">
+          <input type="file" id="user-file-input" hidden accept="image/*">
+          
+          <button type="button" class="attach-button" id="user-attach-btn" title="پیوست مدرک" aria-label="پیوست مدرک">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 12 6-6a3 3 0 0 1 4 4l-8 8a5 5 0 0 1-7-7l9-9m-6 12 8-8"/></svg>
+          </button>
+
+          <button type="button" id="user-emoji-btn" class="emoji-button" title="افزودن ایموجی" aria-label="افزودن ایموجی">
+            <span aria-hidden="true">😊</span>
+          </button>
+          
+          <textarea 
+            id="msg-input" 
+            rows="1"
+            autocomplete="off" 
+            placeholder="گزارش یا سرنخ خود را به مرکز فرماندهی مخابره کنید…" 
+            maxlength="10000"
+          ></textarea>
+
+          <button type="submit" class="send-button" id="user-send-btn" aria-label="ارسال گزارش">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m20 4-6 16-4-6-6-4 16-6ZM10 14 20 4"/></svg>
+          </button>
+        </div>
+
+        <span class="composer-hint" id="composer-hint">
+          <span>Enter برای ارسال · Shift+Enter خط جدید</span>
+          <span>😊 درج ایموجی · 📎 پیوست مدرک · کلاس اکبری (۱۴)</span>
+        </span>
+      </form>
+    </section>
+
+    <!-- ستون چپ: نیمه بالا برد مدارک، نیمه پایین چهار کارت عملیاتی -->
+    <div class="left-operations-column" id="left-operations-column">
+      
+      <!-- نیمه بالا: میز بررسی شواهد پرونده (Evidence Wall) -->
+      <section class="evidence-board" id="evidence-board" aria-labelledby="evidence-title">
+        <header>
+          <div>
+            <span class="eyebrow">میز بررسی / شواهد پرونده</span>
+            <h1 id="evidence-title">تکه‌های یک حقیقت — راز دهکده</h1>
+          </div>
+          <span id="evidence-count" aria-live="polite">۴ مدرک کشف‌شده</span>
+        </header>
+
+        <div class="board-toolbar">
+          <div class="board-stream-indicator">
+            <span class="status-dot"></span>
+            <span id="board-stream-text">اتصال یکپارچه شواهد با نخ‌های قرمز بررسی</span>
+          </div>
+          <span class="technical" id="evidence-stream-badge">EVIDENCE STREAM</span>
+        </div>
+
+        <!-- گرید کارت‌های مدارک به همراه شبکه نخ‌های پیوند -->
+        <div class="evidence-grid" id="evidence-grid" style="position: relative; height: 260px; overflow: hidden;">
+          
+          <!-- SVG نخ‌های قرمز پیوند بین اسناد -->
+          <svg class="evidence-threads-svg" id="evidence-threads-svg" viewBox="0 0 600 260" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="electric-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#ff003c"/>
+                <stop offset="50%" stop-color="#00f0ff"/>
+                <stop offset="100%" stop-color="#ff003c"/>
+              </linearGradient>
+            </defs>
+            <path id="thread-1-2" class="thread-main" d="M 80 80 Q 180 50 240 80" />
+            <path id="thread-2-3" class="thread-main" d="M 240 80 Q 320 140 400 90" />
+            <path id="thread-3-4" class="thread-main" d="M 400 90 Q 480 70 540 100" />
+            <path id="thread-1-4" class="thread-main" d="M 80 80 Q 300 210 540 100" />
+          </svg>
+
+          <!-- ۴ کارت مدارک واقعی کلاس -->
+          <button type="button" class="evidence-card" id="card-1" style="z-index: 3;">
+            <div class="evidence-photo-box" style="height: 85px; background: #1e293b; border-radius: 4px; overflow: hidden; margin-bottom: 6px;">
+              <img src="/assets/scene/mill.jpg" id="img-evidence-1" style="width: 100%; height: 100%; object-fit: cover;" alt="آسیاب متروکه">
+              <div class="card-glitch-overlay"></div>
+            </div>
+            <h3 style="font-size: 12px; margin: 0 0 4px 0; color: #f8fafc;">آسیاب کهنه دهکده</h3>
+            <small style="font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between;">
+              <span>مدرک ۰۱</span>
+              <span>کشف اولیه</span>
+            </small>
+          </button>
+
+          <button type="button" class="evidence-card" id="card-2" style="z-index: 3;">
+            <div class="evidence-photo-box" style="height: 85px; background: #1e293b; border-radius: 4px; overflow: hidden; margin-bottom: 6px;">
+              <img src="/assets/scene/document.jpg" id="img-evidence-2" style="width: 100%; height: 100%; object-fit: cover;" alt="سند خاک خورده">
+              <div class="card-glitch-overlay"></div>
+            </div>
+            <h3 style="font-size: 12px; margin: 0 0 4px 0; color: #f8fafc;">نامه دست‌نویس با جوهر نامرئی</h3>
+            <small style="font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between;">
+              <span>مدرک ۰۲</span>
+              <span>رمزگشایی‌شده</span>
+            </small>
+          </button>
+
+          <button type="button" class="evidence-card" id="card-3" style="z-index: 3;">
+            <div class="evidence-photo-box" style="height: 85px; background: #1e293b; border-radius: 4px; overflow: hidden; margin-bottom: 6px;">
+              <img src="/assets/scene/stranger.jpg" id="img-evidence-3" style="width: 100%; height: 100%; object-fit: cover;" alt="ردپای فرد ناشناس">
+              <div class="card-glitch-overlay"></div>
+            </div>
+            <h3 style="font-size: 12px; margin: 0 0 4px 0; color: #f8fafc;">ردپای کفش‌فروشی قدیمی</h3>
+            <small style="font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between;">
+              <span>مدرک ۰۳</span>
+              <span>تطبیق سایز ۴۲</span>
+            </small>
+          </button>
+
+          <button type="button" class="evidence-card" id="card-4" style="z-index: 3;">
+            <div class="evidence-photo-box" style="height: 85px; background: #1e293b; border-radius: 4px; overflow: hidden; margin-bottom: 6px;">
+              <img src="/assets/scene/paper.jpg" id="img-evidence-4" style="width: 100%; height: 100%; object-fit: cover;" alt="رسید سفارش">
+              <div class="card-glitch-overlay"></div>
+            </div>
+            <h3 style="font-size: 12px; margin: 0 0 4px 0; color: #f8fafc;">حواله ارسال محموله لیلیوم</h3>
+            <small style="font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between;">
+              <span>مدرک ۰۴</span>
+              <span>کد پیگیری ۸۹۲</span>
+            </small>
+          </button>
+        </div>
+
+        <footer class="board-footer">
+          <span><svg class="icon" viewBox="0 0 24 24" width="14" height="14"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg> وضعیت میز: پیوسته و پایدار</span>
+          <span class="technical" id="board-health-tag">INTEGRITY 100%</span>
+        </footer>
+      </section>
+
+      <!-- نیمه پایین: چهار پنل عملیاتی زیر برد -->
+      <div class="under-board-quad-grid" id="under-board-quad-grid" aria-label="پنل چهارگانه عملیاتی">
+        
+        <!-- ۱. تقویم شمسی -->
+        <section class="quad-card quad-calendar-card" id="quad-calendar-card">
+          <header class="quad-card-header calendar-sheet-header">
+            <h3 style="margin: 0; font-size: 13px;">مهر / آبان ۱۴۰۵</h3>
+            <span class="calendar-sheet-badge">هفته پنجم</span>
+          </header>
+          <div style="padding: 10px; font-size: 11px; color: #94a3b8; line-height: 1.8;">
+            <div>📅 روز بیست و هشتم عملیات پایگاه</div>
+            <div>⏱ زمان همگام‌سازی: <b>زنده</b></div>
+            <div style="color: #10b981;" id="calendar-server-status">● وضعیت سرور: نرمال</div>
+          </div>
+        </section>
+
+        <!-- ۲. پرتره ۳ دستیار کلاس اکبری -->
+        <div class="quad-card quad-assistants-card" id="assistants-card-container">
+          <div class="assistants-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="assistants-live-dot" id="assistants-live-dot" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block;"></span>
+              <strong style="font-size: 12px; color: #f1f5f9;">دستیاران کلاس اکبری</strong>
+            </div>
+            <span style="font-size: 11px; color: #f59e0b;" id="assistants-count-sub">۱۲ دستیار ↗</span>
+          </div>
+
+          <div class="assistants-trio-stage" id="assistants-trio-stage" style="display: flex; gap: 8px;">
+            <!-- پرتره ۱ -->
+            <div class="assistant-mini-frame" id="ast-frame-1" style="flex: 1; border-radius: 6px; padding: 4px; position: relative;">
+              <div class="corrupted-noise-overlay"></div>
+              <div class="biometric-hud-reticle"></div>
+              <div class="assistant-mini-photo-box" style="height: 68px; border-radius: 4px; overflow: hidden; position: relative;">
+                <img src="/uploads/assistants/session_10/assistant_10_1791745435544_36915.webp" id="ast-img-1" style="width: 100%; height: 100%; object-fit: cover;" alt="امیرعلی اکبری">
+              </div>
+              <div class="assistant-mini-nameplate" id="ast-name-1" style="font-size: 10px; text-align: center; margin-top: 4px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                امیرعلی اکبری
+              </div>
+            </div>
+
+            <!-- پرتره ۲ -->
+            <div class="assistant-mini-frame" id="ast-frame-2" style="flex: 1; border-radius: 6px; padding: 4px; position: relative;">
+              <div class="corrupted-noise-overlay"></div>
+              <div class="biometric-hud-reticle"></div>
+              <div class="assistant-mini-photo-box" style="height: 68px; border-radius: 4px; overflow: hidden; position: relative;">
+                <img src="/uploads/assistants/session_10/assistant_10_1791745542623_o756a.webp" id="ast-img-2" style="width: 100%; height: 100%; object-fit: cover;" alt="یاسین واحدی">
+              </div>
+              <div class="assistant-mini-nameplate" id="ast-name-2" style="font-size: 10px; text-align: center; margin-top: 4px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                یاسین واحدی
+              </div>
+            </div>
+
+            <!-- پرتره ۳ -->
+            <div class="assistant-mini-frame" id="ast-frame-3" style="flex: 1; border-radius: 6px; padding: 4px; position: relative;">
+              <div class="corrupted-noise-overlay"></div>
+              <div class="biometric-hud-reticle"></div>
+              <div class="assistant-mini-photo-box" style="height: 68px; border-radius: 4px; overflow: hidden; position: relative;">
+                <img src="/uploads/assistants/session_10/assistant_10_1791749294744_52lhv.webp" id="ast-img-3" style="width: 100%; height: 100%; object-fit: cover;" alt="محمد انتظامی">
+              </div>
+              <div class="assistant-mini-nameplate" id="ast-name-3" style="font-size: 10px; text-align: center; margin-top: 4px; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                محمد انتظامی
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ۳. ترمینال زنده سیستم که ارور می‌دهد و بلند می‌شود به وسط صفحه می‌آید -->
+        <section class="security-terminal quad-card" id="security-terminal">
+          <!-- هولوگرافیک HUD براکت‌ها برای صعود باشکوه -->
+          <div class="hud-corner-bracket bracket-tl" aria-hidden="true"></div>
+          <div class="hud-corner-bracket bracket-tr" aria-hidden="true"></div>
+          <div class="hud-corner-bracket bracket-bl" aria-hidden="true"></div>
+          <div class="hud-corner-bracket bracket-br" aria-hidden="true"></div>
+
+          <header class="terminal-bar">
+            <div class="term-title-box">
+              <span class="term-traffic-lights"><i></i><i></i><i></i></span>
+              <span id="terminal-title" class="term-heading">N-LOG // SECURE TERMINAL</span>
+            </div>
+            <div class="term-meta">
+              <span class="status-indicator online" id="terminal-status-indicator">
+                <span class="status-dot"></span> <span id="terminal-status-text">LIVE</span>
+              </span>
+              <span id="terminal-log-counter" class="terminal-counter technical">NODE_14</span>
+            </div>
+          </header>
+
+          <div class="terminal-body" id="live-terminal-content">
+            <div>> [SYS_INIT] NODE_14: AKBARI_SESSION_READY</div>
+            <div>> [AUTH_PASS] CHAT_CODE: 681352 VERIFIED</div>
+            <div>> [MONITOR] EVIDENCE_STREAM: 4 NODES SYNCED</div>
+            <div>> [INFO] ENCRYPTION_LAYER: AES-256 ACTIVE</div>
+          </div>
+
+          <!-- جعبه پیشرفت چندبخشی تصاحب سایبری (در حالت صعود نمایان می‌شود) -->
+          <div class="terminal-override-progress-box" id="terminal-override-box" style="display: none;">
+            <div class="override-progress-header">
+              <span class="override-label">⚡ OVERRIDE PROGRESSION // تسخیر هسته کلاسه ۱۴</span>
+              <span class="override-percent" id="override-percent-num">0%</span>
+            </div>
+            <div class="override-segmented-bar" id="override-segmented-bar">
+              <!-- 20 سگمنت LED نئونی -->
+            </div>
+            <div class="override-vector-status" id="override-vector-status">
+              TARGET: NODE_14 [AKBARI / VAHIDI / ENTEZAMI] // INJECTING PAYLOAD
+            </div>
+          </div>
+
+          <footer class="terminal-controls-bar">
+            <span class="technical" id="terminal-subline">STREAM: ACTIVE</span>
+            <span class="term-blink-cursor" id="term-cursor">■ RUNNING</span>
+          </footer>
+        </section>
+
+        <!-- اسلات گوست جایگزین هنگام صعود ترمینال (Ghost Slot) -->
+        <div class="terminal-slot-ghost quad-card" id="terminal-ghost-slot">
+          <div style="font-size: 22px; margin-bottom: 6px;">⚡</div>
+          <div style="font-weight: 800; color: #ff3366; letter-spacing: 1px;">[SLOT_03: N-LOG TERMINAL]</div>
+          <div style="color: #94a3b8; font-size: 10px; margin-top: 4px;">STATUS: PHYSICAL_EJECTION // TARGET IN VIEWPORT CENTER</div>
+          <div style="color: #00f0ff; font-size: 9.5px; margin-top: 4px;">TELEMETRY: DOCK_CHANNEL_READY</div>
+        </div>
+
+        <!-- ۴. گاوصندوق ۳ بعدی فولادی واقعی اسناد محرمانه -->
+        <section class="quad-card quad-vault-card" id="quad-vault-card" aria-label="گاوصندوق اسناد محرمانه">
+          <button type="button" class="vault-3d-trigger-btn" id="vault-3d-trigger-btn" aria-label="گاوصندوق اسناد محرمانه">
+            <div class="vault-3d-chassis" aria-hidden="true">
+
+              <!-- محفظه داخلی گاوصندوق -->
+              <div class="vault-interior-chamber" id="vault-interior-chamber">
+                <div class="vault-interior-photo"></div>
+                <div class="vault-interior-dossier-box">
+                  <div class="vault-dossier-folder">
+                    <span class="vault-dossier-tab">CLASSIFIED // ARCHIVE</span>
+                    <span class="vault-dossier-stamp">محرمانه</span>
+                    <span class="vault-dossier-seal">🔒</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- لولاهای استوانه‌ای فولادی قطور روی چهارچوب بیرونی -->
+              <div class="vault-real-barrel-hinges">
+                <div class="vault-barrel-hinge top">
+                  <span class="hinge-cap top"></span>
+                  <span class="hinge-body"></span>
+                  <span class="hinge-pin"></span>
+                  <span class="hinge-cap bottom"></span>
+                </div>
+                <div class="vault-barrel-hinge bottom">
+                  <span class="hinge-cap top"></span>
+                  <span class="hinge-body"></span>
+                  <span class="hinge-pin"></span>
+                  <span class="hinge-cap bottom"></span>
+                </div>
+              </div>
+
+              <!-- چهارچوب سنگین فولادی با پرچ‌های صنعتی -->
+              <div class="vault-outer-bezel">
+                <span class="vault-frame-rivet r-tl"></span>
+                <span class="vault-frame-rivet r-tr"></span>
+                <span class="vault-frame-rivet r-bl"></span>
+                <span class="vault-frame-rivet r-br"></span>
+              </div>
+
+              <!-- درب سه‌بعدی زرهی تمام‌قد گاوصندوق واقعی اسناد محرمانه -->
+              <div class="vault-3d-door" id="vault-3d-door">
+                <span class="vault-door-edge-thickness"></span>
+
+                <!-- بدنه و قطعات درب فولادی واقعی گاوصندوق -->
+                <div class="vault-real-door-plate">
+                  <div class="vault-door-photo-bg"></div>
+
+                  <!-- ۵ زبانه استوانه‌ای فولادی سمت راست درب -->
+                  <div class="vault-card-bolts-channel" aria-hidden="true">
+                    <div class="vault-card-bolts-strip"></div>
+                  </div>
+
+                  <!-- زبانه‌های استوانه‌ای کروم در لبه‌های قفل درب -->
+                  <div class="vault-locking-bolts">
+                    <span class="vault-piston left"><i></i></span>
+                    <span class="vault-piston right"><i></i></span>
+                    <span class="vault-piston top"><i></i></span>
+                    <span class="vault-piston bottom"><i></i></span>
+                  </div>
+
+                  <!-- گردونه مرکزی قفل مکانیکی -->
+                  <div class="vault-dial-knurled-knob" id="vault-inner-gear" aria-hidden="true"></div>
+
+                  <!-- دستگیره سه‌شاخه سنگین کروم آینه‌ای واقعی و چرخان -->
+                  <div class="vault-real-spoke-handle" id="vault-3d-handle">
+                    <div class="vault-handle-photo"></div>
+                  </div>
+
+                  <!-- نوار وضعیت امنیتی گاوصندوق در پایین درب -->
+                  <div class="vault-status-indicator-bar" id="vault-status-tag">
+                    <span class="vault-status-dot"></span>
+                    <span class="vault-status-text" id="vault-status-label">قفل هیدرولیک امن</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </button>
+        </section>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- بارگذاری موتور سناریوی سینماتیک AAA نفوذ -->
+  <script src="/assets/js/akbari-breach-master.js?v=4.0"></script>
+</body>
+</html>

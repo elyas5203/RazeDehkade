@@ -360,4 +360,34 @@ class Session {
   }
 }
 
+/**
+ * تغییر وضعیت نفوذ سایبری مزداک برای یک جلسه (کلاس)
+ * @param {number} sessionId
+ * @param {boolean} isHacked
+ */
+Session.setHackState = async function(sessionId, isHacked) {
+  const hackVal = isHacked ? 1 : 0;
+  const hackedAt = isHacked ? new Date() : null;
+  await query(
+    `UPDATE sessions
+     SET is_hacked = ?, hacked_at = ?, updated_at = CURRENT_TIMESTAMP
+     WHERE id = ?`,
+    [hackVal, hackedAt, sessionId]
+  );
+  return await Session.findById(sessionId);
+};
+
+/**
+ * بررسی وضعیت نفوذ سایبری جلسه
+ * @param {number} sessionId
+ */
+Session.isHacked = async function(sessionId) {
+  const res = await query(
+    `SELECT is_hacked, hacked_at FROM sessions WHERE id = ?`,
+    [sessionId]
+  );
+  if (!res.rows[0]) return false;
+  return Boolean(res.rows[0].is_hacked);
+};
+
 module.exports = Session;
