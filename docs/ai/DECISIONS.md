@@ -255,3 +255,18 @@
   ۴) **شوک ۳D زلزله ویوپورت:** لرزش چندمحوره پرسپکتیو کل صفحه در لحظه برخورد ترمینال به شاسی اصلی همراه با فلش CRT و جرقه‌های اسلات گوست.
 - **Impact:** `public/chat.html`, `public/assets/css/cyber-breach-engine.css`, `public/assets/js/cyber-breach-engine.js`, `tests/mazdak-cyber-breach-v2.test.js`, `MASTER_TERMINAL_ELEVATION_AND_SLAM_CHOREOGRAPHY.md`, `docs/ai/masters/MASTER_13_TERMINAL_CINEMATIC_ELEVATION_AND_SLAM.md`.
 - **Supersedes:** None
+
+---
+
+### DEC-0036 — وحدت بصری ۱۰۰٪ درگاه احراز هویت اضطراری و مودال خروج سایبری با تم Warm Noir و شیشه مایع سایت اصلی
+- **Date:** 2026-10-24
+- **Status:** APPROVED
+- **Context & Rationale:** طبق دستور مستقیم کارفرما مبنی بر هماهنگ‌سازی ظاهر بخش‌های ایجادشده با تم و ظاهر سایت اصلی:
+  ۱) **یکپارچه‌سازی کامل ظاهر درگاه اضطراری (`/emergency-auth.html`):** جایگزینی استایل‌های نئون قرمز منسوخ با توکن‌های طراحی اصیل پایگاه راز دهکده (`gateway.css`) شامل پس‌زمینه Warm Noir (`#070a0e`)، شبکه سایبری با ماسک ملایم (`.gateway-grid-bg`) و هاله نورانی معلق محیطی (`.ambient-glow-ring`).
+  ۲) **هدر و برندینگ مشترک:** استفاده از کامپوننت استاندارد `.gateway-header` با نشان طلایی `RD` و عنوان «مرکز عملیات راز دهکده» و بج پروتکل امنیتی با LED تپنده کهربایی.
+  ۳) **کارت مایع شیشه‌ای (Liquid Glass):** ساختار محوری کارت با `backdrop-filter: blur(28px)`، حاشیه طلایی-کهربایی (`rgba(245, 158, 11, 0.22)`)، گوشه‌های ۲۴ پیکسلی و آیکون شیلد طلایی در بالای کارت.
+  ۴) **فرم‌ها و پرسشنامه امنیتی:** کارت‌های گزینه‌های رادیویی با طراحی مدرن شیشه‌ای، بازخورد رنگی طلایی هنگام انتخاب، فیلدهای ورودی تیره هماهنگ با ورودی کد درگاه اصلی، و دکمه‌های اکشن طلایی درخشان با تایپوگرافی فارسی اصیل وزیرمتن.
+  ۵) **مودال خروج اضطراری ۱۲۰ ثانیه‌ای:** بازطراحی `.emergency-ejection-modal` در `cyber-breach-engine.css` با استایل شیشه مایع تیره، حاشیه طلایی-کهربایی، نوار هشدار طلایی/مشکی با زاویه ۴۵ درجه، کادر آدرس سایت با سایه داخلی و دکمه هدایت طلایی.
+  ۶) **عدم تغییر در منطق و قراردادها:** حفظ تمام شناسه‌ها (`emergencyPhone`، `questionnaireForm`، `step3Section` و...) بدون کوچک‌ترین شکستگی در ۱۹ مجموعه آزمون سیستم.
+- **Impact:** `public/emergency-auth.html`, `public/assets/css/emergency-auth.css`, `public/assets/css/cyber-breach-engine.css`, `tests/mazdak-cyber-breach-v2.test.js`, `MASTER_THEME_UNIFICATION_AND_EMERGENCY_PORTAL.md`, `docs/ai/masters/MASTER_14_VISUAL_THEME_UNIFICATION_AND_PORTAL_POLISH.md`.
+- **Supersedes:** None
