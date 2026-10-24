@@ -352,7 +352,8 @@ function handleSearch(query) {
     const nameMatch = String(s.name || '').toLowerCase().includes(q);
     const orderMatch = String(s.order_code || '').includes(q);
     const chatMatch = String(s.chat_code || s.code || '').includes(q);
-    return nameMatch || orderMatch || chatMatch;
+    const phoneMatch = String(s.teacher_phone || '').includes(q);
+    return nameMatch || orderMatch || chatMatch || phoneMatch;
   });
   renderSessions(filtered);
 }
@@ -528,6 +529,26 @@ function renderSessions(sessions) {
         </div>
       </div>
 
+      <!-- فیلد شماره همراه ثبت‌شده برای ورود خودکار -->
+      <div class="session-phone-chip" id="phone-chip-${s.id}">
+        <div class="phone-chip-header">
+          <span class="phone-chip-icon">📱</span>
+          <span class="phone-chip-title">شماره همراه ورود (ورود خودکار به چت):</span>
+        </div>
+        <div class="phone-chip-body">
+          <div class="phone-chip-val-wrap">
+            ${s.teacher_phone ? `
+              <strong class="phone-chip-number" dir="ltr">${escapeHtml(s.teacher_phone)}</strong>
+            ` : `
+              <span class="phone-chip-empty">ثبت نشده</span>
+            `}
+          </div>
+          <button type="button" class="phone-action-btn" onclick="openQuickPhoneDialog(${s.id})" title="مشاهده یا تغییر شماره همراه">
+            ✏️ ${s.teacher_phone ? 'تغییر شماره' : 'ثبت شماره'}
+          </button>
+        </div>
+      </div>
+
       <div class="session-cases-block">
         <div class="cases-block-header">
           <span class="cases-block-title">📁 پرونده‌ها:</span>
@@ -559,6 +580,8 @@ function openEditSessionDialog(id) {
   if (!s) return;
   document.getElementById('edit-session-id').value = s.id;
   document.getElementById('edit-session-name').value = s.name;
+  const phoneInput = document.getElementById('edit-session-phone');
+  if (phoneInput) phoneInput.value = s.teacher_phone || '';
   document.getElementById('edit-session-status').value = s.status || 'waiting';
   document.getElementById('edit-session-error').textContent = '';
   document.getElementById('edit-session-dialog').showModal();
@@ -573,6 +596,8 @@ async function saveEditSession(event) {
   const id = document.getElementById('edit-session-id').value;
   const name = document.getElementById('edit-session-name').value.trim();
   const status = document.getElementById('edit-session-status').value;
+  const phoneInput = document.getElementById('edit-session-phone');
+  const teacher_phone = phoneInput ? phoneInput.value.trim() : undefined;
   const error = document.getElementById('edit-session-error');
   if (!name) { error.textContent = 'نام جلسه را وارد کنید.'; return; }
   try {
@@ -582,7 +607,7 @@ async function saveEditSession(event) {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + adminToken
       },
-      body: JSON.stringify({ name, status })
+      body: JSON.stringify({ name, status, teacher_phone })
     });
     const result = await res.json();
     if (!res.ok || !result.success) { 
@@ -595,6 +620,93 @@ async function saveEditSession(event) {
     error.textContent = 'خطا در ارتباط با سرور.'; 
   }
 }
+
+function openQuickPhoneDialog(id) {
+  const s = loadedSessionsMap[id];
+  if (!s) return;
+  document.getElementById('quick-phone-session-id').value = s.id;
+  const titleEl = document.getElementById('quick-phone-title');
+  if (titleEl) titleEl.textContent = `شماره همراه: ${getCleanClassTitle(s)}`;
+  const input = document.getElementById('quick-phone-input');
+  input.value = s.teacher_phone || '';
+  document.getElementById('quick-phone-error').textContent = '';
+  const clearBtn = document.getElementById('quick-phone-clear-btn');
+  if (clearBtn) {
+    clearBtn.style.display = s.teacher_phone ? 'inline-block' : 'none';
+  }
+  document.getElementById('quick-phone-dialog').showModal();
+  setTimeout(() => input.focus(), 60);
+}
+
+function closeQuickPhoneDialog() {
+  const diag = document.getElementById('quick-phone-dialog');
+  if (diag && diag.open) diag.close();
+}
+
+async function saveQuickPhone(event) {
+  event.preventDefault();
+  const id = document.getElementById('quick-phone-session-id').value;
+  const phone = document.getElementById('quick-phone-input').value.trim();
+  const error = document.getElementById('quick-phone-error');
+  const submitBtn = document.getElementById('quick-phone-submit-btn');
+
+  error.textContent = '';
+  if (submitBtn) submitBtn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/sessions/${id}/phone`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + adminToken
+      },
+      body: JSON.stringify({ phone })
+    });
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      error.textContent = result.message || 'خطا در ثبت شماره همراه.';
+      return;
+    }
+    closeQuickPhoneDialog();
+    await loadSessions();
+  } catch (err) {
+    console.error('Error saving phone:', err);
+    error.textContent = 'خطا در برقراری ارتباط با سرور.';
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
+}
+
+async function clearSessionPhone() {
+  const id = document.getElementById('quick-phone-session-id').value;
+  if (!confirm('آیا از حذف شماره همراه این جلسه اطمینان دارید؟')) return;
+  const error = document.getElementById('quick-phone-error');
+  try {
+    const res = await fetch(`/api/sessions/${id}/phone`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + adminToken
+      },
+      body: JSON.stringify({ phone: '' })
+    });
+    const result = await res.json();
+    if (!res.ok || !result.success) {
+      error.textContent = result.message || 'خطا در حذف شماره همراه.';
+      return;
+    }
+    closeQuickPhoneDialog();
+    await loadSessions();
+  } catch (err) {
+    console.error('Error clearing phone:', err);
+    error.textContent = 'خطا در برقراری ارتباط با سرور.';
+  }
+}
+
+window.openQuickPhoneDialog = openQuickPhoneDialog;
+window.closeQuickPhoneDialog = closeQuickPhoneDialog;
+window.saveQuickPhone = saveQuickPhone;
+window.clearSessionPhone = clearSessionPhone;
 
 async function deleteSession(id, name) {
   if (!confirm(`آیا از حذف کامل جلسه «${name}» اطمینان دارید؟ تمام پیام‌ها و اطلاعات جلسه حذف خواهد شد.`)) return;
