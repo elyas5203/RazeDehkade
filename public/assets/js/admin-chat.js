@@ -42,6 +42,65 @@ function setAdminSendFeedback(message) {
 let adminPeerConnection = null;
 let isAudioListening = false;
 let audioKeepAliveTimer = null;
+let lastAudioPacketAt = 0;
+let forceAudioRelay = false;
+let lastRelayRequestAt = 0;
+let audioStatsTimer = null;
+let lastInboundBytes = null;
+let lastInboundProgressAt = 0;
+let lastInboundAudioEnergy = null;
+let lastInboundSamplesDuration = null;
+let currentAudioUserSocketId = null;
+let relayPacketTiming = null;
+
+function resetRelayPacketTiming() {
+  relayPacketTiming = {
+    senderSocketId: null, lastSequence: -1, baseline: null,
+    lastSentAt: null, lastArrivalAt: null, recoverySince: null,
+  };
+}
+
+function shouldPlayRelayPacket(data, arrivalAt = performance.now()) {
+  // Older clients have no timing fields and continue to use the bounded playback queue.
+  if (!Number.isSafeInteger(data?.sequence) || !Number.isFinite(data?.sentAt)) return true;
+  if (!relayPacketTiming) resetRelayPacketTiming();
+  if (data.senderSocketId && data.senderSocketId !== relayPacketTiming.senderSocketId) {
+    resetRelayPacketTiming();
+    relayPacketTiming.senderSocketId = data.senderSocketId;
+  }
+  if (data.sequence <= relayPacketTiming.lastSequence) return false;
+
+  const previousSentAt = relayPacketTiming.lastSentAt;
+  const previousArrivalAt = relayPacketTiming.lastArrivalAt;
+  relayPacketTiming.lastSequence = data.sequence;
+  relayPacketTiming.lastSentAt = data.sentAt;
+  relayPacketTiming.lastArrivalAt = arrivalAt;
+  const transit = arrivalAt - data.sentAt;
+  if (relayPacketTiming.baseline === null || transit < relayPacketTiming.baseline) {
+    relayPacketTiming.baseline = transit;
+  }
+  if (transit - relayPacketTiming.baseline <= 400) {
+    relayPacketTiming.recoverySince = null;
+    return true;
+  }
+
+  // A burst of old TCP/WebSocket frames has short arrival gaps. A sustained route change
+  // has normal frame pacing and is accepted after a short recovery window.
+  const sentGap = data.sentAt - previousSentAt;
+  const arrivalGap = arrivalAt - previousArrivalAt;
+  const steady = previousSentAt !== null && previousArrivalAt !== null &&
+    sentGap >= 20 && sentGap <= 200 && arrivalGap >= 20 && arrivalGap <= 200 &&
+    Math.abs(sentGap - arrivalGap) <= 80;
+  if (!steady) relayPacketTiming.recoverySince = null;
+  else if (relayPacketTiming.recoverySince === null) relayPacketTiming.recoverySince = arrivalAt;
+  else if (arrivalAt - relayPacketTiming.recoverySince >= 800) {
+    relayPacketTiming.baseline = transit;
+    relayPacketTiming.recoverySince = null;
+    return true;
+  }
+  return false;
+}
+
 const onlineSessionsSet = new Set();
 const rtcConfig = {
   iceServers: [
@@ -107,6 +166,8 @@ function handleAdminComposerInput(el) {
 function initAdminSocket() {
   socket = io({
     auth: { token: adminToken },
+    transports: ['websocket', 'polling'],
+    tryAllTransports: true,
   });
 
   const statusEl = document.getElementById('admin-socket-status');
@@ -118,15 +179,16 @@ function initAdminSocket() {
       socket.emit('join_session', { sessionId: activeSessionId });
       if (historyLoadedFor !== activeSessionId) switchSession(activeSessionId);
     }
-    if (isAudioListening && activeSessionId) socket.emit('start_audio_stream', { sessionId: activeSessionId });
+    if (isAudioListening && activeSessionId) requestAdminAudioStream();
+  });
+
+  socket.on('audio_ice_servers', (data) => {
+    if (data && Array.isArray(data.iceServers)) rtcConfig.iceServers = [...rtcConfig.iceServers.filter(s => !String(s.urls).startsWith('turn')), ...data.iceServers];
   });
 
   socket.io.on('reconnect', () => {
     statusEl.className = 'status-indicator online';
     statusEl.innerHTML = '<span class="status-dot"></span> اتصال مجدد برقرار شد';
-    if (activeSessionId) {
-      socket.emit('join_session', { sessionId: activeSessionId });
-    }
   });
 
   socket.on('disconnect', () => {
@@ -214,22 +276,46 @@ function initAdminSocket() {
     renderSessionsSidebar(Object.values(sessionsMap));
     if (Number(activeSessionId) === sId) {
       updateActiveHeader();
+      if (isAudioListening) {
+        if (data.isOnline) { updateAudioUI('connecting'); requestAdminAudioStream(); }
+        else updateAudioUI('waiting_for_student');
+      }
+    }
+  });
+
+  socket.on('admin_audio_stream_started_ack', (data) => {
+    if (isAudioListening && Number(data?.sessionId) === Number(activeSessionId) && !data.isStudentOnline) {
+      updateAudioUI('waiting_for_student');
     }
   });
 
   // دریافت استریم فوق‌سبک صوتی باینری PCM کاربر از طریق سوکت (پایدار، بدون کدک و بدون قطعی)
   socket.on('admin_audio_stream_pcm', (data) => {
     if (!isAudioListening || !data || Number(data.sessionId) !== Number(activeSessionId)) return;
+    if (adminPeerConnection && adminPeerConnection.connectionState === 'connected' && !forceAudioRelay) return;
+    lastAudioPacketAt = Date.now();
     handleAdminPcmChunk(data.pcm, data.sessionId);
   });
 
   socket.on('admin_audio_stream_adpcm', (data) => {
     if (!isAudioListening || !data || Number(data.sessionId) !== Number(activeSessionId)) return;
+    if (adminPeerConnection && adminPeerConnection.connectionState === 'connected' && !forceAudioRelay) return;
+    if (currentAudioUserSocketId && data.senderSocketId && data.senderSocketId !== currentAudioUserSocketId) return;
+    if (!shouldPlayRelayPacket(data)) return;
     if (!window.LiveAudioCodec) return;
     try {
       const samples = LiveAudioCodec.decode(data.packet);
-      if (samples) playAdminLiveSamples(samples, LiveAudioCodec.sampleRate);
+      if (samples) {
+        lastAudioPacketAt = Date.now();
+        playAdminLiveSamples(samples, data.sampleRate === 16000 ? 16000 : 8000);
+      }
     } catch (err) { console.warn('Invalid live audio packet:', err); }
+  });
+
+  socket.on('admin_audio_stream_status', (data) => {
+    if (!isAudioListening || !data || Number(data.sessionId) !== Number(activeSessionId)) return;
+    if (data.status === 'microphone_unavailable') updateAudioUI('mic-error');
+    if (data.status === 'microphone_recovered') updateAudioUI('connecting');
   });
 
   // دریافت چانک‌های صوتی استریم کاربر از طریق سوکت (فال‌بک کمکی)
@@ -246,32 +332,23 @@ function initAdminSocket() {
   });
 
   socket.on('webrtc_ice_candidate', async (data) => {
-    if (adminPeerConnection && data.candidate && isAudioListening && Number(data.sessionId) === Number(activeSessionId)) {
+    if (data?.candidate && data.senderSocketId && isAudioListening &&
+        Number(data.sessionId) === Number(activeSessionId)) {
       try {
-        if (adminPeerConnection.remoteDescription) await adminPeerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
-        else pendingAdminCandidates.push(new RTCIceCandidate(data.candidate));
+        const candidate = new RTCIceCandidate(data.candidate);
+        const pc = adminPeerConnection;
+        if (pc && data.senderSocketId === currentAudioUserSocketId && pc.remoteDescription) {
+          await pc.addIceCandidate(candidate);
+        } else {
+          const queued = pendingAdminCandidatesMap.get(data.senderSocketId) || [];
+          if (queued.length < 64) queued.push(candidate);
+          pendingAdminCandidatesMap.set(data.senderSocketId, queued);
+          if (pendingAdminCandidatesMap.size > 4) {
+            pendingAdminCandidatesMap.delete(pendingAdminCandidatesMap.keys().next().value);
+          }
+        }
       } catch (e) {
         console.error('Error adding ICE candidate on admin:', e);
-      }
-    }
-  });
-
-  socket.on('admin_audio_stream_started_ack', (data) => {
-    if (data && Number(data.sessionId) === Number(activeSessionId) && isAudioListening) {
-      console.log('🎙️ تایید دریافت شنود جلسه توسط سرور:', data);
-      if (typeof data.isStudentOnline !== 'undefined' && !data.isStudentOnline) {
-        updateAudioUI('waiting_for_student');
-      }
-    }
-  });
-
-  socket.on('session_presence_changed', (data) => {
-    if (data && Number(data.sessionId) === Number(activeSessionId) && isAudioListening) {
-      if (data.isOnline) {
-        updateAudioUI('connecting');
-        socket.emit('start_audio_stream', { sessionId: activeSessionId });
-      } else {
-        updateAudioUI('waiting_for_student');
       }
     }
   });
@@ -1272,20 +1349,62 @@ async function promptNewCanned() {
 }
 
 let adminAudioCtx = null;
+let adminPlaybackGainNode = null;
+let adminMediaElementSource = null;
+let adminListeningGain = 1;
 let nextPcmPlayTime = 0;
 let audioWatchdogTimer = null;
-let pendingAdminCandidates = [];
+const pendingAdminCandidatesMap = new Map();
+const scheduledAudioSources = new Set();
+
+function clearScheduledAudio() {
+  for (const source of scheduledAudioSources) {
+    try { source.stop(); } catch (_) {}
+  }
+  scheduledAudioSources.clear();
+  nextPcmPlayTime = adminAudioCtx ? adminAudioCtx.currentTime : 0;
+}
 
 function initAdminAudioContext() {
   const AudioCtx = window.AudioContext || window.webkitAudioContext;
   if (!AudioCtx) return null;
   if (!adminAudioCtx || adminAudioCtx.state === 'closed') {
-    adminAudioCtx = new AudioCtx({ sampleRate: 16000 });
+    // Output uses the device's native rate; 16 kHz is only the relay packet rate.
+    adminAudioCtx = new AudioCtx();
+    adminPlaybackGainNode = adminAudioCtx.createGain();
+    adminPlaybackGainNode.gain.value = adminListeningGain;
+    const limiter = adminAudioCtx.createDynamicsCompressor?.();
+    if (limiter) {
+      limiter.threshold.value = -3;
+      limiter.knee.value = 0;
+      limiter.ratio.value = 12;
+      limiter.attack.value = 0.003;
+      limiter.release.value = 0.2;
+      adminPlaybackGainNode.connect(limiter);
+      limiter.connect(adminAudioCtx.destination);
+    } else {
+      adminPlaybackGainNode.connect(adminAudioCtx.destination);
+    }
   }
   if (adminAudioCtx.state === 'suspended') {
-    adminAudioCtx.resume();
+    adminAudioCtx.resume().catch(() => {});
   }
   return adminAudioCtx;
+}
+
+function setAdminListeningGain(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return;
+  adminListeningGain = Math.max(1, Math.min(3, numeric));
+  if (adminPlaybackGainNode && adminAudioCtx) {
+    adminPlaybackGainNode.gain.setTargetAtTime(adminListeningGain, adminAudioCtx.currentTime, 0.03);
+  }
+  for (const prefix of ['', 'mobile-']) {
+    const input = document.getElementById(`${prefix}admin-audio-gain`);
+    const output = document.getElementById(`${prefix}admin-audio-gain-value`);
+    if (input) input.value = String(adminListeningGain);
+    if (output) output.textContent = `${adminListeningGain.toLocaleString('fa-IR')}×`;
+  }
 }
 
 function handleAdminPcmChunk(pcmBuffer, sessionId) {
@@ -1296,16 +1415,19 @@ function handleAdminPcmChunk(pcmBuffer, sessionId) {
   try {
     const pcm16 = new Int16Array(pcmBuffer);
     const float32 = new Float32Array(pcm16.length);
+    let signalEnergy = 0;
     for (let i = 0; i < pcm16.length; i++) {
       float32[i] = pcm16[i] / 32768.0;
+      signalEnergy += float32[i] * float32[i];
     }
+    if (float32.length) renderAudioSignalLevel(Math.sqrt(signalEnergy / float32.length));
 
     const audioBuffer = ctx.createBuffer(1, float32.length, 16000);
     audioBuffer.getChannelData(0).set(float32);
 
     const source = ctx.createBufferSource();
     source.buffer = audioBuffer;
-    source.connect(ctx.destination);
+    source.connect(adminPlaybackGainNode || ctx.destination);
 
     const now = ctx.currentTime;
     if (nextPcmPlayTime < now) {
@@ -1331,18 +1453,22 @@ function playAdminLiveSamples(samples, sampleRate) {
   const ctx = initAdminAudioContext();
   if (!ctx || !samples.length) return;
   const now = ctx.currentTime;
-  // مدیریت بافر جیتر بدون پرش‌های ناگهانی سکوت ۱۲۰ میلی‌ثانیه‌ای (حذف کامل لکنت و قطعی صدا)
-  if (nextPcmPlayTime > now + 0.35) {
-    nextPcmPlayTime = now + 0.03; // اگر بافر از ۳۵۰ میلی‌ثانیه جلوتر رفت، با وقفه نرم ۳۰ میلی‌ثانیه‌ای ریست شود
-  } else if (nextPcmPlayTime < now) {
-    nextPcmPlayTime = now + 0.02; // جبران تاخیر با پرش بسیار نرم ۲۰ میلی‌ثانیه‌ای به جای سکوت ۱۲۰ میلی‌ثانیه
-  }
+  if (nextPcmPlayTime > now + 0.45) clearScheduledAudio();
+  if (nextPcmPlayTime < now + 0.06) nextPcmPlayTime = now + 0.10;
   const buffer = ctx.createBuffer(1, samples.length, sampleRate);
   const channel = buffer.getChannelData(0);
-  for (let i = 0; i < samples.length; i++) channel[i] = samples[i] / 32768;
+  let signalEnergy = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const value = samples[i] / 32768;
+    signalEnergy += value * value;
+    channel[i] = Math.tanh(value * 1.8) / Math.tanh(1.8);
+  }
+  renderAudioSignalLevel(Math.sqrt(signalEnergy / samples.length));
   const source = ctx.createBufferSource();
   source.buffer = buffer;
-  source.connect(ctx.destination);
+  source.connect(adminPlaybackGainNode || ctx.destination);
+  scheduledAudioSources.add(source);
+  source.onended = () => scheduledAudioSources.delete(source);
   source.start(nextPcmPlayTime);
   nextPcmPlayTime += buffer.duration;
   updateAudioUI('live');
@@ -1361,6 +1487,9 @@ let isAudioPlaying = false;
 
 function playSocketAudioChunk(chunkData, mimeType) {
   audioQueue.push({ chunkData, mimeType });
+  // Older open student pages may still send MediaRecorder chunks after a deployment.
+  // Keep only the newest chunks so temporary congestion cannot turn live listening into delayed playback.
+  if (audioQueue.length > 2) audioQueue.splice(0, audioQueue.length - 2);
   processAudioQueue();
 }
 
@@ -1394,6 +1523,36 @@ function processAudioQueue() {
   }
 }
 
+function resetAudioSignalMeter() {
+  for (const prefix of ['', 'mobile-']) {
+    const meter = document.getElementById(`${prefix}audio-signal-meter`);
+    const fill = document.getElementById(`${prefix}audio-signal-fill`);
+    if (meter) {
+      meter.setAttribute('aria-valuenow', '0');
+      meter.title = 'سطح سیگنال هنوز اندازه‌گیری نشده است';
+    }
+    if (fill) fill.style.width = '0%';
+  }
+}
+
+function renderAudioSignalLevel(level) {
+  if (!isAudioListening || !Number.isFinite(level)) return;
+  const dbfs = level > 0 ? 20 * Math.log10(Math.min(1, level)) : -Infinity;
+  // The bar maps -60..0 dBFS to 0..100. It describes the received signal, not speaker volume.
+  const value = Math.max(0, Math.min(100, Math.round((dbfs + 60) / 60 * 100)));
+  for (const prefix of ['', 'mobile-']) {
+    const meter = document.getElementById(`${prefix}audio-signal-meter`);
+    const fill = document.getElementById(`${prefix}audio-signal-fill`);
+    if (meter) {
+      meter.setAttribute('aria-valuenow', String(value));
+      meter.title = level > 0
+        ? `سطح سیگنال دریافتی: ${Math.round(dbfs)} dBFS`
+        : 'سیگنال دریافتی ساکت است';
+    }
+    if (fill) fill.style.width = `${value}%`;
+  }
+}
+
 function updateAudioUI(status) {
   const btn = document.getElementById('admin-audio-toggle-btn');
   const mobileBtn = document.getElementById('mobile-admin-audio-toggle-btn');
@@ -1401,6 +1560,10 @@ function updateAudioUI(status) {
   const badgeText = document.getElementById('audio-listening-status-text');
   const mobileBadge = document.getElementById('mobile-audio-listening-indicator');
   const mobileBadgeText = document.getElementById('mobile-audio-listening-status-text');
+  for (const id of ['audio-signal-meter', 'mobile-audio-signal-meter']) {
+    const meter = document.getElementById(id);
+    if (meter) meter.style.display = status === 'live' ? 'inline-block' : 'none';
+  }
 
   if (status === 'off') {
     if (btn) {
@@ -1497,6 +1660,16 @@ function updateAudioUI(status) {
       mobileBadge.style.background = 'rgba(249,115,22,0.15)';
     }
     if (mobileBadgeText) mobileBadgeText.innerText = '⚠️ قطع موقت - در حال بازیابی اتصال…';
+  } else if (status === 'mic-error') {
+    if (badge) badge.style.display = 'inline-flex';
+    if (mobileBadge) mobileBadge.style.display = 'inline-flex';
+    if (badgeText) badgeText.innerText = '⚠️ میکروفون طرف مقابل در دسترس نیست';
+    if (mobileBadgeText) mobileBadgeText.innerText = '⚠️ میکروفون طرف مقابل در دسترس نیست';
+  } else if (status === 'waiting_for_student') {
+    if (badge) badge.style.display = 'inline-flex';
+    if (mobileBadge) mobileBadge.style.display = 'inline-flex';
+    if (badgeText) badgeText.innerText = '⏳ در انتظار ورود کاربر به چت';
+    if (mobileBadgeText) mobileBadgeText.innerText = '⏳ در انتظار ورود کاربر به چت';
   }
 }
 
@@ -1513,38 +1686,139 @@ function toggleAdminAudioStream() {
   }
 }
 
+function requestAdminAudioStream() {
+  if (socket && socket.connected && activeSessionId) {
+    socket.emit('start_audio_stream', { sessionId: activeSessionId, audioCodecVersion: 2 });
+  }
+}
+
+function requestAudioRelay(userSocketId) {
+  if (!socket || !socket.connected || !activeSessionId || !userSocketId) return;
+  if (forceAudioRelay && Date.now() - lastRelayRequestAt < 2000) return;
+  forceAudioRelay = true;
+  lastRelayRequestAt = Date.now();
+  socket.emit('audio_relay_required', { sessionId: activeSessionId, targetSocketId: userSocketId });
+}
+
+function releaseAudioRelay(userSocketId) {
+  if (!isAudioListening || !socket?.connected || !activeSessionId || !userSocketId) return;
+  forceAudioRelay = false;
+  lastRelayRequestAt = 0;
+  clearScheduledAudio();
+  socket.emit('audio_relay_mode', {
+    sessionId: activeSessionId, targetSocketId: userSocketId, enabled: false,
+  });
+}
+
+function reportWebRtcStall() {
+  requestAudioRelay(currentAudioUserSocketId);
+  if (!lastAudioPacketAt || Date.now() - lastAudioPacketAt > 3000) updateAudioUI('reconnecting');
+}
+
+async function inspectWebRtcAudio() {
+  const pc = adminPeerConnection;
+  if (!isAudioListening || !pc || pc.connectionState !== 'connected' || !currentAudioUserSocketId) return;
+  try {
+    const stats = await pc.getStats();
+    if (pc !== adminPeerConnection) return;
+    let bytes = null;
+    let inboundAudio = null;
+    stats.forEach(report => {
+      if (report.type === 'inbound-rtp' && !report.isRemote &&
+          (report.kind === 'audio' || report.mediaType === 'audio')) {
+        bytes = Number(report.bytesReceived);
+        inboundAudio = report;
+      }
+    });
+    if (!Number.isFinite(bytes)) {
+      if (Date.now() - lastInboundProgressAt > 5000) {
+        reportWebRtcStall();
+      }
+      return;
+    }
+    const energy = Number(inboundAudio.totalAudioEnergy);
+    const duration = Number(inboundAudio.totalSamplesDuration);
+    let level = Number(inboundAudio.audioLevel);
+    if (Number.isFinite(energy) && Number.isFinite(duration)) {
+      if (lastInboundAudioEnergy !== null && lastInboundSamplesDuration !== null &&
+          energy >= lastInboundAudioEnergy && duration > lastInboundSamplesDuration) {
+        level = Math.sqrt(Math.max(0, (energy - lastInboundAudioEnergy) /
+          (duration - lastInboundSamplesDuration)));
+      }
+      lastInboundAudioEnergy = energy;
+      lastInboundSamplesDuration = duration;
+    }
+    if (bytes > (lastInboundBytes ?? -1) && !forceAudioRelay) renderAudioSignalLevel(level);
+    if (bytes > (lastInboundBytes ?? 0)) {
+      lastInboundProgressAt = Date.now();
+      const player = document.getElementById('remote-audio-player');
+      const track = player?.srcObject?.getAudioTracks?.()[0];
+      if (forceAudioRelay && player && !player.paused && !player.muted && track && !track.muted &&
+          (!adminMediaElementSource || adminAudioCtx?.state === 'running')) {
+        releaseAudioRelay(currentAudioUserSocketId);
+      }
+      if (!forceAudioRelay) updateAudioUI('live');
+    } else if (Date.now() - lastInboundProgressAt > 5000) {
+      reportWebRtcStall();
+    }
+    lastInboundBytes = bytes;
+  } catch (_) {
+    if (pc === adminPeerConnection && Date.now() - lastInboundProgressAt > 5000) reportWebRtcStall();
+  }
+}
+
 function startAdminAudioListening() {
   isAudioListening = true;
+  resetRelayPacketTiming();
+  resetAudioSignalMeter();
+  forceAudioRelay = false;
+  lastRelayRequestAt = 0;
+  lastAudioPacketAt = 0;
+  lastInboundBytes = null;
+  lastInboundAudioEnergy = null;
+  lastInboundSamplesDuration = null;
+  lastInboundProgressAt = Date.now();
   initAdminAudioContext(); // فعال‌سازی فوری در تعامل کلیک کاربر جهت رفع محدودیت Autoplay مرورگر
   nextPcmPlayTime = adminAudioCtx ? adminAudioCtx.currentTime : 0;
   updateAudioUI('connecting');
 
-  if (socket && activeSessionId) {
-    socket.emit('start_audio_stream', { sessionId: activeSessionId });
-  }
+  requestAdminAudioStream();
 
   // Retry the request if no media arrived, including after Socket.IO reconnects.
   if (audioKeepAliveTimer) clearInterval(audioKeepAliveTimer);
   audioKeepAliveTimer = setInterval(() => {
     if (!isAudioListening || !activeSessionId) return;
     if (socket && socket.connected) {
-      if (adminAudioCtx && (adminAudioCtx.currentTime - nextPcmPlayTime > 8) &&
-          (!adminPeerConnection || adminPeerConnection.connectionState !== 'connected')) {
-        socket.emit('start_audio_stream', { sessionId: activeSessionId });
+      if ((!adminPeerConnection || adminPeerConnection.connectionState !== 'connected') &&
+          (!lastAudioPacketAt || Date.now() - lastAudioPacketAt > 4000)) {
+        requestAdminAudioStream();
       }
     }
   }, 10000);
+  if (audioStatsTimer) clearInterval(audioStatsTimer);
+  audioStatsTimer = setInterval(inspectWebRtcAudio, 2000);
 }
 
 function stopAdminAudioListening() {
   audioQueue = [];
   isAudioPlaying = false;
+  clearScheduledAudio();
 
   if (!isAudioListening && !adminPeerConnection && !audioKeepAliveTimer) {
     return;
   }
 
   isAudioListening = false;
+  resetRelayPacketTiming();
+  resetAudioSignalMeter();
+  forceAudioRelay = false;
+  lastRelayRequestAt = 0;
+  lastAudioPacketAt = 0;
+  currentAudioUserSocketId = null;
+  lastInboundBytes = null;
+  lastInboundAudioEnergy = null;
+  lastInboundSamplesDuration = null;
+  if (audioStatsTimer) { clearInterval(audioStatsTimer); audioStatsTimer = null; }
   if (audioKeepAliveTimer) {
     clearInterval(audioKeepAliveTimer);
     audioKeepAliveTimer = null;
@@ -1562,7 +1836,7 @@ function stopAdminAudioListening() {
     try { adminAudioCtx.suspend(); } catch (_) {}
   }
   nextPcmPlayTime = 0;
-  pendingAdminCandidates = [];
+  pendingAdminCandidatesMap.clear();
 
   if (adminPeerConnection) {
     try { adminPeerConnection.close(); } catch (_) {}
@@ -1578,31 +1852,47 @@ function stopAdminAudioListening() {
 }
 
 async function handleUserOffer(offer, userSocketId) {
+  currentAudioUserSocketId = userSocketId;
+  resetRelayPacketTiming();
+  resetAudioSignalMeter();
+  lastInboundBytes = null;
+  lastRelayRequestAt = 0;
+  lastInboundAudioEnergy = null;
+  lastInboundSamplesDuration = null;
+  lastInboundProgressAt = Date.now();
+  requestAudioRelay(userSocketId);
   if (adminPeerConnection) {
     try { adminPeerConnection.close(); } catch (_) {}
   }
 
-  adminPeerConnection = new RTCPeerConnection(rtcConfig);
-  pendingAdminCandidates = [];
+  const pc = new RTCPeerConnection(rtcConfig);
+  adminPeerConnection = pc;
 
   // پایش وضعیت اتصال و وصل مجدد خودکار در صورت قطعی
   adminPeerConnection.onconnectionstatechange = () => {
-    if (!adminPeerConnection) return;
-    const state = adminPeerConnection.connectionState;
+    if (adminPeerConnection !== pc) return;
+    const state = pc.connectionState;
     console.log('WebRTC Connection state:', state);
     if (state === 'connected') {
-      nextPcmPlayTime = adminAudioCtx ? adminAudioCtx.currentTime : 0;
-      updateAudioUI('live');
+      inspectWebRtcAudio();
     } else if (state === 'disconnected' || state === 'failed') {
-      console.log('WebRTC peer state changed:', state, '(ADPCM socket stream remains primary)');
+      if (isAudioListening) {
+        requestAudioRelay(userSocketId);
+        updateAudioUI('reconnecting');
+        setTimeout(() => {
+          if (isAudioListening && socket && activeSessionId) {
+            requestAdminAudioStream();
+          }
+        }, 1500);
+      }
     }
   };
 
   adminPeerConnection.oniceconnectionstatechange = () => {
-    if (!adminPeerConnection) return;
-    const ice = adminPeerConnection.iceConnectionState;
+    if (adminPeerConnection !== pc) return;
+    const ice = pc.iceConnectionState;
     if (ice === 'connected' || ice === 'completed') {
-      updateAudioUI('live');
+      inspectWebRtcAudio();
     }
   };
 
@@ -1610,9 +1900,30 @@ async function handleUserOffer(offer, userSocketId) {
   adminPeerConnection.ontrack = (event) => {
     const audioPlayer = document.getElementById('remote-audio-player');
     if (audioPlayer && event.streams && event.streams[0]) {
+      const ctx = initAdminAudioContext();
+      if (ctx && adminPlaybackGainNode && !adminMediaElementSource) {
+        try {
+          adminMediaElementSource = ctx.createMediaElementSource(audioPlayer);
+          adminMediaElementSource.connect(adminPlaybackGainNode);
+        } catch (error) {
+          console.warn('Could not attach listening gain to WebRTC playback:', error);
+        }
+      }
       audioPlayer.srcObject = event.streams[0];
-      audioPlayer.muted = true; // استریم پایدار ADPCM از طریق AudioContext بدون اکو و قطعی پخش می‌شود
-      updateAudioUI('live');
+      audioPlayer.muted = false;
+      audioPlayer.volume = 1;
+      event.track.onmute = () => requestAudioRelay(userSocketId);
+      event.track.onunmute = () => {
+        if (adminPeerConnection === pc && pc.connectionState === 'connected') inspectWebRtcAudio();
+      };
+      audioPlayer.play().then(() => {
+        if (event.track.muted) requestAudioRelay(userSocketId);
+        else if (pc.connectionState === 'connected') inspectWebRtcAudio();
+      }).catch(e => {
+        console.log('Audio autoplay policy note:', e);
+        requestAudioRelay(userSocketId);
+        updateAudioUI('reconnecting');
+      });
     }
   };
 
@@ -1627,10 +1938,17 @@ async function handleUserOffer(offer, userSocketId) {
   };
 
   try {
-    await adminPeerConnection.setRemoteDescription(new RTCSessionDescription(offer));
-    for (const candidate of pendingAdminCandidates.splice(0)) await adminPeerConnection.addIceCandidate(candidate);
-    const answer = await adminPeerConnection.createAnswer();
-    await adminPeerConnection.setLocalDescription(answer);
+    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+    if (pc !== adminPeerConnection || !isAudioListening) return;
+    const queuedCandidates = pendingAdminCandidatesMap.get(userSocketId) || [];
+    pendingAdminCandidatesMap.delete(userSocketId);
+    for (const candidate of queuedCandidates) {
+      try { await pc.addIceCandidate(candidate); } catch (_) {}
+    }
+    const answer = await pc.createAnswer();
+    if (pc !== adminPeerConnection || !isAudioListening) return;
+    await pc.setLocalDescription(answer);
+    if (pc !== adminPeerConnection || !isAudioListening) return;
 
     if (socket && activeSessionId) {
       socket.emit('webrtc_answer', {
@@ -1641,7 +1959,7 @@ async function handleUserOffer(offer, userSocketId) {
     }
   } catch (err) {
     console.error('Error handling WebRTC offer on admin:', err);
-    if (isAudioListening) {
+    if (isAudioListening && pc === adminPeerConnection) {
       updateAudioUI('reconnecting');
     }
   }

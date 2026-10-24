@@ -1525,3 +1525,46 @@ body.command-page::after {
     font-size: 12.5px !important;
   }
 }
+
+.audio-signal-meter {
+  display: none;
+  width: 34px;
+  height: 7px;
+  flex: 0 0 34px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.audio-signal-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: #86efac;
+  transition: width 160ms ease-out;
+}
+
+.audio-gain-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #d7dde0;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.audio-gain-control input {
+  width: 75px;
+  accent-color: #86efac;
+}
+
+.audio-gain-control output {
+  min-width: 22px;
+  text-align: center;
+}
+
+.mobile-tools-actions .audio-gain-control {
+  justify-content: center;
+  padding: 4px 0;
+}

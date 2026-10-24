@@ -10,6 +10,7 @@ const Message = require('../models/Message');
 const Session = require('../models/Session');
 const SessionLog = require('../models/SessionLog');
 const uploadRoutes = require('../routes/upload');
+const { createTurnIceServer } = require('../utils/turnCredentials');
 
 /**
  * راه‌اندازی و تعاریف Socket.io
@@ -21,38 +22,48 @@ function setupSocketIO(io) {
   const recentMessagesMap = new Map();
   // نگاشت بلادرنگ کاربران آنلاین بر اساس شناسه جلسه (sessionId -> Set of socket.ids)
   const sessionOnlineUsers = new Map();
-  // نگاشت بلادرنگ شنودگران صوتی چند ادمین (ایزولاسیون کامل و پخش همزمان)
-  const adminListeningSessions = new Map(); // admin socket ID -> session ID (Number)
-  const sessionAudioListeners = new Map();  // session ID (Number) -> Set<adminSocketId>
-  const liveAudioListeners = adminListeningSessions; // Backwards-compatibility alias
+  const liveAudioListeners = new Map(); // admin socket ID -> session ID
+  const liveAudioVersions = new Map();
+  const audioRelaySubscribers = new Set(); // admin socket IDs currently needing fallback
+  const sessionAudioListeners = new Map(); // session ID -> Set of admin socket IDs
 
-  function addLiveAudioListener(adminSocketId, sessionId) {
-    const sId = Number(sessionId);
-    adminListeningSessions.set(adminSocketId, sId);
-    if (!sessionAudioListeners.has(sId)) {
-      sessionAudioListeners.set(sId, new Set());
-    }
-    const listeners = sessionAudioListeners.get(sId);
-    const wasEmpty = listeners.size === 0;
-    listeners.add(adminSocketId);
-    return { wasEmpty, count: listeners.size };
-  }
-
-  function removeLiveAudioListener(adminSocketId) {
-    const sId = adminListeningSessions.get(adminSocketId);
-    if (sId === undefined) return null;
-    adminListeningSessions.delete(adminSocketId);
-    const listeners = sessionAudioListeners.get(sId);
+  function removeLiveAudioListener(adminId) {
+    const sessionId = liveAudioListeners.get(adminId);
+    if (!sessionId) return null;
+    liveAudioListeners.delete(adminId);
+    liveAudioVersions.delete(adminId);
+    audioRelaySubscribers.delete(adminId);
+    const listeners = sessionAudioListeners.get(sessionId);
     if (listeners) {
-      listeners.delete(adminSocketId);
-      const isEmpty = listeners.size === 0;
-      if (isEmpty) {
-        sessionAudioListeners.delete(sId);
-      }
-      return { sessionId: sId, isEmpty, remainingCount: listeners.size };
+      listeners.delete(adminId);
+      if (!listeners.size) sessionAudioListeners.delete(sessionId);
     }
-    return { sessionId: sId, isEmpty: true, remainingCount: 0 };
+    return { sessionId, remainingCount: listeners ? listeners.size : 0 };
   }
+
+  function addLiveAudioListener(adminId, sessionId, codecVersion) {
+    if (liveAudioListeners.get(adminId) !== sessionId) removeLiveAudioListener(adminId);
+    liveAudioListeners.set(adminId, sessionId);
+    liveAudioVersions.set(adminId, codecVersion);
+    audioRelaySubscribers.add(adminId);
+    if (!sessionAudioListeners.has(sessionId)) sessionAudioListeners.set(sessionId, new Set());
+    sessionAudioListeners.get(sessionId).add(adminId);
+    return sessionAudioListeners.get(sessionId).size;
+  }
+
+  function effectiveCodecVersion(sessionId) {
+    for (const adminId of sessionAudioListeners.get(sessionId) || []) {
+      if (liveAudioVersions.get(adminId) !== 2) return 1;
+    }
+    return 2;
+  }
+  const turnConfig = {
+    urls: process.env.TURN_URLS,
+    sharedSecret: process.env.TURN_SHARED_SECRET,
+    ttlSeconds: process.env.TURN_TTL_SECONDS,
+    username: process.env.TURN_USERNAME,
+    credential: process.env.TURN_CREDENTIAL,
+  };
   // رهگیری زنده چرخه حیات کلاس‌ها (سفارش گل، شمارش معکوس، فاز ۱ و ۲ بلک‌اوت، اسکن و ورود)
   const sessionLifecyclePhases = new Map();
 
@@ -166,6 +177,8 @@ function setupSocketIO(io) {
 
   io.on('connection', (socket) => {
     const user = socket.user;
+    const turnServer = createTurnIceServer(turnConfig, `${user.role}-${user.id || user.sessionId || socket.id}`);
+    if (turnServer) socket.emit('audio_ice_servers', { iceServers: [turnServer] });
     if (user.role === 'admin') {
       socket.join('admins');
       const onlineList = [];
@@ -213,11 +226,13 @@ function setupSocketIO(io) {
       if (user.role !== 'user') return;
       const sessionId = authorizedSessionId(user, data && data.sessionId);
       if (!sessionId || !data || !data.chunk) return;
-      io.to('admins').emit('admin_audio_stream_chunk', {
-        sessionId: Number(sessionId),
-        chunk: data.chunk,
-        mimeType: data.mimeType || 'audio/webm',
-      });
+      for (const adminId of sessionAudioListeners.get(sessionId) || []) {
+        if (audioRelaySubscribers.has(adminId) && io.sockets.sockets.has(adminId)) {
+          io.to(adminId).emit('admin_audio_stream_chunk', {
+            sessionId, chunk: data.chunk, mimeType: data.mimeType || 'audio/webm',
+          });
+        }
+      }
     });
 
     // استریم فوق‌سبک و پایدار صوتی باینری PCM (حداقل مصرف منابع، بدون قطعی، بدون نیاز به کدک و بدون هدر WebM)
@@ -225,10 +240,11 @@ function setupSocketIO(io) {
       if (user.role !== 'user') return;
       const sessionId = authorizedSessionId(user, data && data.sessionId);
       if (!sessionId || !data || !data.pcm) return;
-      io.to('admins').emit('admin_audio_stream_pcm', {
-        sessionId: Number(sessionId),
-        pcm: data.pcm,
-      });
+      for (const adminId of sessionAudioListeners.get(sessionId) || []) {
+        if (audioRelaySubscribers.has(adminId) && io.sockets.sockets.has(adminId)) {
+          io.to(adminId).emit('admin_audio_stream_pcm', { sessionId, pcm: data.pcm });
+        }
+      }
     });
 
     // Loss-tolerant 8 kHz ADPCM fallback. Volatile packets cannot build a delayed queue.
@@ -239,13 +255,24 @@ function setupSocketIO(io) {
       const packet = data.packet;
       const length = packet.byteLength || packet.length;
       if (!length || length < 5 || length > 2052) return;
-      const listeners = sessionAudioListeners.get(Number(sessionId));
-      if (listeners && listeners.size > 0) {
-        for (const adminId of listeners) {
-          if (io.sockets.sockets.has(adminId)) {
-            io.to(adminId).emit('admin_audio_stream_adpcm', { sessionId: Number(sessionId), packet });
-          }
+      const sampleRate = data.sampleRate === 16000 ? 16000 : 8000;
+      const sequence = Number.isSafeInteger(data.sequence) && data.sequence >= 0 ? data.sequence : null;
+      const sentAt = Number.isFinite(data.sentAt) ? data.sentAt : null;
+      for (const adminId of sessionAudioListeners.get(sessionId) || []) {
+        if (audioRelaySubscribers.has(adminId) && io.sockets.sockets.has(adminId)) {
+          io.to(adminId).volatile.emit('admin_audio_stream_adpcm', {
+            sessionId, packet, sampleRate, sequence, sentAt, senderSocketId: socket.id,
+          });
         }
+      }
+    });
+
+    socket.on('audio_stream_status', (data) => {
+      if (user.role !== 'user' || !data) return;
+      const sessionId = authorizedSessionId(user, data && data.sessionId);
+      if (!sessionId || !['microphone_unavailable', 'microphone_recovered', 'relay_active'].includes(data.status)) return;
+      for (const adminId of sessionAudioListeners.get(sessionId) || []) {
+        io.to(adminId).emit('admin_audio_stream_status', { sessionId, status: data.status });
       }
     });
 
@@ -276,6 +303,17 @@ function setupSocketIO(io) {
           room: roomName,
           message: `با موفقیت وارد روم ${roomName} شدید.`,
         });
+
+        if (user.role === 'user') {
+          for (const adminId of sessionAudioListeners.get(sessionId) || []) {
+            if (io.sockets.sockets.has(adminId)) {
+              socket.emit('audio_stream_started', {
+                sessionId, adminSocketId: adminId,
+                audioCodecVersion: effectiveCodecVersion(sessionId),
+              });
+            }
+          }
+        }
 
         // اطلاع‌رسانی تایپ یا تغییرات در صورت نیاز
         io.to(roomName).emit('user_joined_room', {
@@ -632,25 +670,21 @@ function setupSocketIO(io) {
     /**
      * سیستم کامل Signaling استریم صدای WebRTC کم‌تأخیر (میکروفون کاربر → ادمین)
      */
-    socket.on('start_audio_stream', (data) => {
+    socket.on('start_audio_stream', (data = {}) => {
       if (user.role !== 'admin') return;
       const sessionId = authorizedSessionId(user, data && data.sessionId);
       if (!sessionId) return;
-      const sId = Number(sessionId);
-      const { wasEmpty, count } = addLiveAudioListener(socket.id, sId);
-      const roomName = `session_${sId}`;
-      const userSockets = sessionOnlineUsers.get(sId);
-      const isStudentOnline = Boolean(userSockets && userSockets.size > 0);
-      io.to(roomName).emit('audio_stream_started', {
-        sessionId: sId,
+      const count = addLiveAudioListener(socket.id, sessionId, data.audioCodecVersion === 2 ? 2 : 1);
+      const roomName = `session_${sessionId}`;
+      socket.to(roomName).emit('audio_stream_started', {
+        sessionId,
         adminSocketId: socket.id,
+        audioCodecVersion: effectiveCodecVersion(sessionId),
         listenerCount: count,
       });
       socket.emit('admin_audio_stream_started_ack', {
-        sessionId: sId,
-        listenerCount: count,
-        isStudentOnline,
-        onlineCount: userSockets ? userSockets.size : 0,
+        sessionId, listenerCount: count,
+        isStudentOnline: Boolean(sessionOnlineUsers.get(sessionId)?.size),
       });
     });
 
@@ -658,20 +692,41 @@ function setupSocketIO(io) {
       if (user.role !== 'admin') return;
       const sessionId = authorizedSessionId(user, data && data.sessionId);
       if (!sessionId) return;
-      const sId = Number(sessionId);
+      if (liveAudioListeners.get(socket.id) !== sessionId) return;
       const result = removeLiveAudioListener(socket.id);
-      socket.emit('admin_audio_stream_stopped_ack', {
-        sessionId: sId,
-        remainingCount: result ? result.remainingCount : 0,
-      });
-      // تنها در صورتی که هیچ ادمین دیگری برای این کلاس در حال شنود نباشد سیگنال توقف به کلاینت‌ها ارسال می‌شود
-      if (result && result.isEmpty) {
-        const roomName = `session_${sId}`;
-        io.to(roomName).emit('audio_stream_stopped', {
-          sessionId: sId,
-          listenerCount: 0,
-        });
+      const roomName = `session_${sessionId}`;
+      socket.to(roomName).emit('audio_peer_stopped', { sessionId, adminSocketId: socket.id });
+      if (result && !result.remainingCount) {
+        io.to(roomName).emit('audio_stream_stopped', { sessionId, listenerCount: 0 });
       }
+      socket.emit('admin_audio_stream_stopped_ack', {
+        sessionId,
+        remainingCount: result ? result.remainingCount : 0
+      });
+    });
+
+    socket.on('audio_relay_required', (data) => {
+      if (user.role !== 'admin') return;
+      const sessionId = authorizedSessionId(user, data && data.sessionId);
+      if (!sessionId || liveAudioListeners.get(socket.id) !== sessionId) return;
+      const target = io.sockets.sockets.get(data.targetSocketId);
+      if (!target || target.user.role !== 'user' || Number(target.user.sessionId) !== sessionId) return;
+      audioRelaySubscribers.add(socket.id);
+      io.to(target.id).emit('audio_relay_required', { sessionId, adminSocketId: socket.id });
+    });
+
+    socket.on('audio_relay_mode', (data = {}) => {
+      if (user.role !== 'admin') return;
+      const sessionId = authorizedSessionId(user, data.sessionId);
+      if (!sessionId || liveAudioListeners.get(socket.id) !== sessionId ||
+          typeof data.enabled !== 'boolean') return;
+      const target = io.sockets.sockets.get(data.targetSocketId);
+      if (!target || target.user.role !== 'user' || Number(target.user.sessionId) !== sessionId) return;
+      if (data.enabled) audioRelaySubscribers.add(socket.id);
+      else audioRelaySubscribers.delete(socket.id);
+      io.to(target.id).emit('audio_relay_mode', {
+        sessionId, adminSocketId: socket.id, enabled: data.enabled,
+      });
     });
 
     // تبادل Offer از سمت Peer
@@ -994,13 +1049,11 @@ function setupSocketIO(io) {
     });
 
     socket.on('disconnect', () => {
-      const result = removeLiveAudioListener(socket.id);
-      if (result && result.isEmpty) {
-        const roomName = `session_${result.sessionId}`;
-        io.to(roomName).emit('audio_stream_stopped', {
-          sessionId: Number(result.sessionId),
-          listenerCount: 0,
-        });
+      const stoppedAudio = removeLiveAudioListener(socket.id);
+      if (stoppedAudio) {
+        const roomName = `session_${stoppedAudio.sessionId}`;
+        socket.to(roomName).emit('audio_peer_stopped', { sessionId: stoppedAudio.sessionId, adminSocketId: socket.id });
+        if (!stoppedAudio.remainingCount) socket.to(roomName).emit('audio_stream_stopped', { sessionId: stoppedAudio.sessionId, listenerCount: 0 });
       }
       if (user.role === 'user' && user.sessionId) {
         trackUserOffline(user.sessionId, socket.id);

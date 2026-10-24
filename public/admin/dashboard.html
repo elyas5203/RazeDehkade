@@ -107,6 +107,8 @@
       <input type="hidden" id="edit-session-id">
       <label for="edit-session-name">نام جلسه یا گروه:</label>
       <input id="edit-session-name" name="name" required maxlength="120" autocomplete="off">
+      <label for="edit-session-phone" style="margin-top:14px;">📱 شماره همراه ورود (مدرس / ورود با شماره):</label>
+      <input id="edit-session-phone" name="teacher_phone" type="tel" dir="ltr" placeholder="مثلاً: 09151234567" maxlength="20" autocomplete="off">
       <label for="edit-session-status" style="margin-top:14px;">وضعیت فعلی جلسه:</label>
       <select id="edit-session-status">
         <option value="waiting">در انتظار ورود (waiting)</option>
@@ -118,6 +120,27 @@
       <div class="dialog-actions">
         <button type="submit" class="dashboard-button primary">ذخیره تغییرات</button>
         <button type="button" class="dashboard-button" onclick="closeEditSessionDialog()">انصراف</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- دیالوگ تغییر سریع شماره همراه ورود -->
+  <dialog id="quick-phone-dialog" class="session-dialog">
+    <form id="quick-phone-form" onsubmit="saveQuickPhone(event)">
+      <button type="button" class="dialog-x" onclick="closeQuickPhoneDialog()" aria-label="بستن">×</button>
+      <span style="color:var(--gold);font-size:11px;font-weight:700;display:block;">📱 شماره همراه ورود</span>
+      <h2 id="quick-phone-title">تغییر شماره همراه</h2>
+      <input type="hidden" id="quick-phone-session-id">
+      <label for="quick-phone-input">شماره موبایل جهت استعلام و ورود خودکار به چت:</label>
+      <input id="quick-phone-input" name="phone" type="tel" dir="ltr" placeholder="مثلاً: 09151234567" maxlength="20" autocomplete="off">
+      <p style="font-size:11.5px;color:var(--text-muted);margin:8px 0 0;line-height:1.6;">
+        💡 با این شماره، مخاطب در صفحه ورود شماره خود را وارد کرده و پس از استعلام، مستقیماً با کد این جلسه وارد می‌شود.
+      </p>
+      <p id="quick-phone-error" role="alert" style="color:var(--danger);font-size:12px;margin-top:8px;min-height:18px;"></p>
+      <div class="dialog-actions">
+        <button type="submit" class="dashboard-button primary" id="quick-phone-submit-btn">ذخیره شماره</button>
+        <button type="button" class="dashboard-button danger" onclick="clearSessionPhone()" id="quick-phone-clear-btn" style="display:none;">حذف شماره</button>
+        <button type="button" class="dashboard-button" onclick="closeQuickPhoneDialog()">انصراف</button>
       </div>
     </form>
   </dialog>

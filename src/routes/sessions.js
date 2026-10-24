@@ -178,30 +178,101 @@ router.put('/:id/cases', requireAdmin, async (req, res) => {
 router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const sessionId = parseInt(req.params.id, 10);
-    const { name, status, active_case } = req.body;
+    const { name, status, active_case, teacher_phone } = req.body;
     if (!sessionId) {
       return res.status(400).json({ success: false, message: 'شناسه جلسه معتبر نیست.' });
     }
 
-    const updatedSession = await Session.update(sessionId, { name, status, active_case });
+    const updatedSession = await Session.update(sessionId, { name, status, active_case, teacher_phone });
     if (!updatedSession) {
       return res.status(404).json({ success: false, message: 'جلسه پیدا نشد.' });
     }
 
+    if (teacher_phone !== undefined) {
+      const cleanPhone = teacher_phone ? String(teacher_phone).trim().replace(/[^0-9]/g, '') : null;
+      await Session.bindTeacherPhone(sessionId, cleanPhone);
+      if (cleanPhone) {
+        const Teacher = require('../models/Teacher');
+        await Teacher.registerOrUpdate({
+          phone: cleanPhone,
+          full_name: updatedSession.name,
+          session_id: sessionId,
+        });
+      }
+    }
+
+    const finalSession = await Session.findById(sessionId);
+
     const io = req.app.get('io');
     if (io) {
-      io.to('admins').emit('session_updated', { sessionId, session: updatedSession });
-      io.to(`session_${sessionId}`).emit('session_details_updated', { sessionId, session: updatedSession });
+      io.to('admins').emit('session_updated', { sessionId, session: finalSession });
+      io.to(`session_${sessionId}`).emit('session_details_updated', { sessionId, session: finalSession });
     }
 
     return res.json({
       success: true,
       message: 'جلسه با موفقیت ویرایش شد.',
-      data: updatedSession,
+      data: finalSession,
     });
   } catch (error) {
     console.error('Error updating session:', error);
     return res.status(500).json({ success: false, message: 'خطای سرور هنگام ویرایش جلسه' });
+  }
+});
+
+/**
+ * PUT /api/sessions/:id/phone
+ * ثبت یا تغییر مستقیم شماره تماس ورود مدرس/کلاس
+ */
+router.put('/:id/phone', requireAdmin, async (req, res) => {
+  try {
+    const sessionId = parseInt(req.params.id, 10);
+    if (!sessionId) {
+      return res.status(400).json({ success: false, message: 'شناسه جلسه معتبر نیست.' });
+    }
+
+    const { phone } = req.body;
+    const cleanPhone = phone ? String(phone).trim().replace(/[^0-9]/g, '') : null;
+
+    if (cleanPhone && cleanPhone.length < 10) {
+      return res.status(400).json({
+        success: false,
+        message: 'فرمت شماره همراه واردشده صحیح نیست (حداقل ۱۰ رقم).'
+      });
+    }
+
+    await Session.bindTeacherPhone(sessionId, cleanPhone);
+    const session = await Session.findById(sessionId);
+    if (!session) {
+      return res.status(404).json({ success: false, message: 'جلسه پیدا نشد.' });
+    }
+
+    if (cleanPhone) {
+      const Teacher = require('../models/Teacher');
+      await Teacher.registerOrUpdate({
+        phone: cleanPhone,
+        full_name: session.name,
+        session_id: sessionId,
+      });
+    }
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to('admins').emit('session_updated', { sessionId, session });
+    }
+
+    return res.json({
+      success: true,
+      message: cleanPhone ? `شماره همراه ${cleanPhone} با موفقیت ثبت شد.` : 'شماره همراه با موفقیت حذف شد.',
+      data: {
+        sessionId,
+        teacher_phone: cleanPhone,
+        session,
+      },
+    });
+  } catch (error) {
+    console.error('Error updating session phone:', error);
+    return res.status(500).json({ success: false, message: 'خطای سرور هنگام ویرایش شماره همراه' });
   }
 });
 

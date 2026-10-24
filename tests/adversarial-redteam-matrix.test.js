@@ -584,8 +584,8 @@ describe('Adversarial Red-Team Stress Matrix', () => {
 
       // Check src/socket/index.js lines 185 & 197
       // In contrast to ADPCM (which iterates liveAudioListeners), PCM is emitted to io.to('admins')
-      const pcmBroadcastRegex = /io\.to\('admins'\)\.emit\('admin_audio_stream_pcm'/;
-      const chunkBroadcastRegex = /io\.to\('admins'\)\.emit\('admin_audio_stream_chunk'/;
+      const pcmBroadcastRegex = /io\.to\((?:'admins'|adminId)\)\.emit\('admin_audio_stream_pcm'/;
+      const chunkBroadcastRegex = /io\.to\((?:'admins'|adminId)\)\.emit\('admin_audio_stream_chunk'/;
 
       const hasPcmBroadcast = pcmBroadcastRegex.test(socketJs);
       const hasChunkBroadcast = chunkBroadcastRegex.test(socketJs);
