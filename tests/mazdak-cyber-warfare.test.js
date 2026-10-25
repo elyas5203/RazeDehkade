@@ -1,0 +1,155 @@
+/**
+ * tests/mazdak-cyber-warfare.test.js
+ * Comprehensive Test Suite for Mazdak Cyber Warfare, Tamper Lockdown,
+ * Media Stamps, Fake Chat Battle, 5-Minute Eviction, and Single-Field Emergency Auth.
+ * 
+ * Corresponds to MASTER_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md (MASTER-15)
+ */
+
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('fs');
+const path = require('path');
+
+const ROOT_DIR = path.resolve(__dirname, '..');
+
+test('Mazdak Cyber Warfare, Tamper Lockdown & Emergency Recovery (MASTER-15)', async (t) => {
+
+  await t.test('1. Architecture & Master Plan: MASTER-15 exists and specifies full swarm & UI/UX requirements', () => {
+    const masterPath = path.join(ROOT_DIR, 'MASTER_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md');
+    const mirrorMasterPath = path.join(ROOT_DIR, 'docs', 'ai', 'masters', 'MASTER_15_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md');
+
+    assert.ok(fs.existsSync(masterPath), 'Root MASTER_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md must exist');
+    assert.ok(fs.existsSync(mirrorMasterPath), 'Mirror MASTER_15 in docs/ai/masters must exist');
+
+    const content = fs.readFileSync(masterPath, 'utf8');
+    assert.ok(content.includes('R01'), 'Master must include R01 swarm role');
+    assert.ok(content.includes('R50'), 'Master must include R50 swarm role');
+    assert.ok(content.includes('لیلیوم'), 'Master must reference Lilium plot element');
+    assert.ok(content.includes('۳۰۰') || content.includes('300') || content.includes('۵ دقیقه'), 'Master must reference 5-minute / 300-second countdown');
+  });
+
+  await t.test('2. Tamper Lockdown & Corrupted breakdown CSS: Toolbars, Slots 2 & 4 lock with glitch visuals', () => {
+    const cssPath = path.join(ROOT_DIR, 'public', 'assets', 'css', 'cyber-breach-engine.css');
+    assert.ok(fs.existsSync(cssPath), 'cyber-breach-engine.css must exist');
+    const css = fs.readFileSync(cssPath, 'utf8');
+
+    // Slot 2 / 4 corrupted breakdown
+    assert.ok(css.includes('.slot-corrupted-breakdown'), 'Must define .slot-corrupted-breakdown');
+    assert.ok(css.includes('.vault-corrupted-breakdown'), 'Must define .vault-corrupted-breakdown');
+    assert.ok(css.includes('.calendar-locked-breakdown'), 'Must define .calendar-locked-breakdown');
+    assert.ok(css.includes('.is-locked-cyber-breach'), 'Must define .is-locked-cyber-breach for toolbars');
+
+    // Intense earthquake & quake animations
+    assert.ok(css.includes('screen-intense-quake'), 'Must define screen-intense-quake for elevated shaking');
+    assert.ok(css.includes('screen-cyber-tremor'), 'Must define screen-cyber-tremor');
+
+    // Bilingual high-contrast terminal lines
+    assert.ok(css.includes('.term-breach-bilingual-line'), 'Must define .term-breach-bilingual-line');
+    assert.ok(css.includes('.term-breach-en-text'), 'Must define .term-breach-en-text');
+    assert.ok(css.includes('.term-breach-fa-text'), 'Must define .term-breach-fa-text');
+
+    // Media stamp overlay
+    assert.ok(css.includes('.mazdak-media-stamp'), 'Must define .mazdak-media-stamp');
+    assert.ok(css.includes('.mazdak-stamp-badge'), 'Must define .mazdak-stamp-badge');
+
+    // Fake battle styles
+    assert.ok(css.includes('.fake-battle-msg'), 'Must define .fake-battle-msg');
+    assert.ok(css.includes('.fake-battle-msg.kids-impersonated-msg'), 'Must define .fake-battle-msg.kids-impersonated-msg');
+  });
+
+  await t.test('3. Media Protection & Mazdak Stamp: mazdak.jpg served and media overlay logic in place', () => {
+    const rootMazdak = path.join(ROOT_DIR, 'mazdak.jpg');
+    const publicMazdak = path.join(ROOT_DIR, 'public', 'mazdak.jpg');
+
+    assert.ok(fs.existsSync(rootMazdak), 'Root mazdak.jpg must exist');
+    assert.ok(fs.existsSync(publicMazdak), 'public/mazdak.jpg must exist');
+
+    const serverJs = fs.readFileSync(path.join(ROOT_DIR, 'server.js'), 'utf8');
+    assert.ok(serverJs.includes('/mazdak.jpg'), 'server.js must expose route for /mazdak.jpg');
+
+    const engineJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'cyber-breach-engine.js'), 'utf8');
+    assert.ok(engineJs.includes('applyMazdakMediaStamps'), 'cyber-breach-engine.js must have applyMazdakMediaStamps method');
+    assert.ok(engineJs.includes('removeMazdakMediaStamps'), 'cyber-breach-engine.js must have removeMazdakMediaStamps method');
+
+    const css = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'css', 'cyber-breach-engine.css'), 'utf8');
+    assert.ok(css.includes('.mazdak-media-stamp') && css.includes('pointer-events'), 'CSS must define pointer-events behavior on media stamp');
+  });
+
+  await t.test('4. Interactive Guards during Hack: Slots 2, 4, photos and media blocked when breach is active', () => {
+    const vaultJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'vault-3d.js'), 'utf8');
+    assert.ok(
+      vaultJs.includes('if (window.cyberBreachEngine && window.cyberBreachEngine.isPlaying) return;'),
+      'vault-3d.js must guard openVaultInteraction and openVaultPasswordModal against breach'
+    );
+
+    const userChatJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'user-chat.js'), 'utf8');
+    assert.ok(
+      userChatJs.includes('if (window.cyberBreachEngine && window.cyberBreachEngine.isPlaying)'),
+      'user-chat.js must guard openEvidence and openAssistantsPhotoPopup against breach'
+    );
+  });
+
+  await t.test('5. Terminal & Chat: Stable append-only, Detective auto-messages, Mazdak threats, and Fake Battle', () => {
+    const engineJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'cyber-breach-engine.js'), 'utf8');
+
+    // Set tracking for stable non-flicker append
+    assert.ok(engineJs.includes('deliveredBattleMessages = new Set()'), 'Must track deliveredBattleMessages with Set');
+    assert.ok(engineJs.includes('deliveredTerminalErrors = new Set()'), 'Must track deliveredTerminalErrors with Set');
+    assert.ok(engineJs.includes('deliveredTerminalThreats = new Set()'), 'Must track deliveredTerminalThreats with Set');
+    assert.ok(engineJs.includes('appendTerminalBilingualLine'), 'Must have appendTerminalBilingualLine method');
+    assert.ok(engineJs.includes('appendChatMessage'), 'Must have appendChatMessage method');
+
+    // Detective auto-messages
+    assert.ok(engineJs.includes('پیام من رو دریافت می‌کنید؟'), 'Must contain Detective panic auto-message 1');
+    assert.ok(engineJs.includes('دارن به سایت'), 'Must contain Detective panic auto-message 2');
+    assert.ok(engineJs.includes('پیامم میاددددد؟'), 'Must contain Detective panic auto-message 3');
+    assert.ok(engineJs.includes('نگران'), 'Must contain Detective panic auto-message 4');
+
+    // Mazdak terminal threats
+    assert.ok(engineJs.includes('تمام اطلاعات و کدهای شما رو گرفتم'), 'Must contain Mazdak terminal threat 1');
+    assert.ok(engineJs.includes('نمی‌ذارم این پرونده رو حل کنید'), 'Must contain Mazdak terminal threat 2');
+
+    // Fake battle in chat post-landing
+    assert.ok(engineJs.includes('battle-kids-1'), 'Must contain fake spoofed student message 1');
+    assert.ok(engineJs.includes('battle-kids-2'), 'Must contain fake spoofed student message 2');
+    assert.ok(engineJs.includes('لیلیوم'), 'Detective final message must mention Lilium clue');
+    assert.ok(engineJs.includes('احراز هویت'), 'Detective final message must instruct to use emergency authentication');
+
+    // Student input locked
+    assert.ok(engineJs.includes('msgInput.disabled = true'), 'Must lock student composer input');
+  });
+
+  await t.test('6. Emergency Authentication Portal: Single-input (Mobile only, NO Class Code)', () => {
+    const htmlPath = path.join(ROOT_DIR, 'public', 'emergency-auth.html');
+    assert.ok(fs.existsSync(htmlPath), 'emergency-auth.html must exist');
+    const html = fs.readFileSync(htmlPath, 'utf8');
+
+    // NO class code field
+    assert.strictEqual(html.includes('emergencyClassCode'), false, 'emergency-auth.html must NOT contain emergencyClassCode');
+    assert.strictEqual(html.includes('کد کلاس'), false, 'emergency-auth.html must NOT contain "کد کلاس" text');
+
+    // Contains mobile input
+    assert.ok(html.includes('id="emergencyPhone"'), 'Must have emergencyPhone input');
+    assert.ok(html.includes('شماره موبایل'), 'Must have Persian label for mobile');
+
+    // JS validation
+    const jsPath = path.join(ROOT_DIR, 'public', 'assets', 'js', 'emergency-auth.js');
+    assert.ok(fs.existsSync(jsPath), 'emergency-auth.js must exist');
+    const js = fs.readFileSync(jsPath, 'utf8');
+
+    assert.strictEqual(js.includes('emergencyClassCode'), false, 'emergency-auth.js must NOT reference emergencyClassCode');
+    assert.ok(js.includes('emergencyPhone'), 'emergency-auth.js must reference emergencyPhone');
+  });
+
+  await t.test('7. Emergency Eviction Modal: 5-Minute (300 Seconds) Countdown Timer', () => {
+    const engineJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'cyber-breach-engine.js'), 'utf8');
+
+    assert.ok(engineJs.includes('countdownSec = 300'), 'Eviction countdown timer must be initialized to 300 seconds');
+    assert.ok(engineJs.includes('razedehkade.ir'), 'Modal must prominently display the site address for students to note');
+    assert.ok(engineJs.includes('۵ دقیقه') || engineJs.includes('۵:۰۰'), 'Persian copy must state 5 minutes duration');
+  });
+
+});

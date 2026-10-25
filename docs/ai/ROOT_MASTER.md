@@ -169,4 +169,8 @@ flowchart TD
 - [MASTER_08: معماری ریسپانسیو سه‌گانه پایانه دانش‌آموز، انطباق ویوپورت و مصون‌سازی کیبورد](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_08_STUDENT_TERMINAL_RESPONSIVE_ENGINE.md)
 - [MASTER_09: سامانه نشانه‌گذاری تاکتیکال تقویم شمسی کارآگاهی](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_09_DETECTIVE_CALENDAR_TACTICAL_MARKINGS.md)
 - [MASTER_10: معماری سینمایی نفوذ سایبری مزداک و صعود پایانه N-LOG کلاسه ۱۴](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_09_MAZDAK_CYBER_BREACH_ENGINE.md)
-
+- [MASTER_11: سامانه استریم شنود صوتی پیش‌فرض و برودکست هم‌زمان چند ادمین](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_11_LIVE_AUDIO_BROADCAST_AND_MULTI_ADMIN.md)
+- [MASTER_12: نفوذ سایبری مزداک نسخه ۲، ایزولاسیون کلاسی، درگاه اضطراری و اخراج ۱۲۰ ثانیه‌ای](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_12_MAZDAK_CYBER_BREACH_AND_EMERGENCY_PORTAL.md)
+- [MASTER_13: ارتقای سکانس صعود و فرود هیدرولیک ترمینال با FLIP پورتال‌شده و سنتز صوتی Web Audio](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_13_TERMINAL_CINEMATIC_ELEVATION_AND_SLAM.md)
+- [MASTER_14: یکپارچه‌سازی و وحدت بصری ۱۰۰٪ درگاه احراز هویت اضطراری با تم Warm Noir](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_14_VISUAL_THEME_UNIFICATION_AND_PORTAL_POLISH.md)
+- [MASTER_15: نبرد سایبری مزداک، قفل تامپر ابزارها، استامپ رسانه‌ها، رفع پرش لاگ‌ها، نبرد فیک چت، تمدید مودال خروج به ۵ دقیقه و فرم تک‌فیلدی اضطراری](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_15_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md)

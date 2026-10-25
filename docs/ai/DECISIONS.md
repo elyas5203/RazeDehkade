@@ -270,3 +270,22 @@
   ۶) **عدم تغییر در منطق و قراردادها:** حفظ تمام شناسه‌ها (`emergencyPhone`، `questionnaireForm`، `step3Section` و...) بدون کوچک‌ترین شکستگی در ۱۹ مجموعه آزمون سیستم.
 - **Impact:** `public/emergency-auth.html`, `public/assets/css/emergency-auth.css`, `public/assets/css/cyber-breach-engine.css`, `tests/mazdak-cyber-breach-v2.test.js`, `MASTER_THEME_UNIFICATION_AND_EMERGENCY_PORTAL.md`, `docs/ai/masters/MASTER_14_VISUAL_THEME_UNIFICATION_AND_PORTAL_POLISH.md`.
 - **Supersedes:** None
+
+---
+
+### DEC-0037 — نبرد سایبری مزداک: قفل تامپر اسلات‌ها، استامپ رسانه‌ها، رفع پرش لاگ‌ها، نبرد فیک چت، تمدید مودال خروج به ۵ دقیقه و فرم تک‌فیلدی احراز هویت
+- **Date:** 2026-10-25
+- **Status:** APPROVED
+- **Context & Rationale:** ارتقای جامع و سینمایی فاز نفوذ سایبری مزداک، ایزولاسیون کامل تعاملات و هدایت ایمن به درگاه بازیابی اضطراری بر اساس نیازمندی‌های قطعی کارفرما:
+  ۱) **قفل کامل ابزارهای ۴ اسلات (Tamper Lockdown):** اعمال قفل سخت‌افزاری بر تقویم کارآگاه، نوار ابزار شواهد، دکمه‌های کنترلی کامپوزر و اموجی‌ها با کلاس‌های `.calendar-locked-breakdown` و `.is-locked-cyber-breach`.
+  ۲) **قفل و تخریب ظاهری اسلات ۲ و ۴ (Corrupted Glitch State):** مسدودسازی بزرگ‌نمایی و باز شدن پروفایل بچه‌ها (اسلات ۲) و گاوصندوق ۳ بعدی (اسلات ۴) با افکت‌های گلیچ خرابی `.slot-corrupted-breakdown` و `.vault-corrupted-breakdown` و گارد بازدارنده در توابع تعاملی `openVaultInteraction`, `openVaultPasswordModal`, `openEvidence`, `openAssistantsPhotoPopup`.
+  ۳) **استامپ سراسری نشان مزداک روی رسانه‌ها:** استقرار `mazdak.jpg` در ریشه و پوشه `public` و تزریق ماسک توقیف `.mazdak-media-stamp` روی تمام عکس‌ها، صوت‌ها و ویدیوها با غیرفعال‌سازی رویدادهای ماوس (`pointer-events: none`).
+  ۴) **رفع باگ پرش و لرزش چشمک‌زن لاگ‌ها:** حذف بازنویسی مخرب `innerHTML` و جایگزینی با متدهای پایدار Append-only (`appendTerminalBilingualLine` و `appendChatMessage`) به همراه ردگیری شناسه‌ها در ساختار داده `Set`.
+  ۵) **پیام‌های خودکار مضطرب کارآگاه در آغاز حمله:** ارسال زنجیره پیام‌های کارآگاه در ثانیه‌های نخست («پیام من میاد؟ دارن به سایت حمله می‌کنن...»).
+  ۶) **پیام‌های ارعاب‌آمیز مزداک در ترمینال:** نمایش لاگ‌های دوزبانه درشت با فونت بزرگ، کنتراست بالا و کارت‌های تهدید مستقیم مزداک در داخل بدنه ترمینال صعودیافته.
+  ۷) **نبرد فیک در چت پس از فرود ترمینال:** قفل کامل ورودی چت برای دانش‌آموزان، ارسال پیام‌های مزداک با هویت جعلی بچه‌ها (`kids-impersonated-msg`)، فریب اولیه کارآگاه، کشف نفوذ و نهایتاً پیام اخطاردهنده کارآگاه پیرامون سرنخ «لیلیوم» و فعال‌سازی احراز هویت اضطراری.
+  ۸) **تمدید زمان مودال خروج به ۵ دقیقه (۳۰۰ ثانیه):** افزایش زمان شمارش معکوس به `۰۵:۰۰` دقیقه در `.emergency-ejection-modal` جهت فرصت کافی دانش‌آموزان برای یادداشت آدرس سایت `https://razedehkade.ir`.
+  ۹) **فرم تک‌فیلدی درگاه احراز هویت (`emergency-auth.html`):** حذف کامل فیلد کد کلاس و اتکای فرم گام ۱ منحصراً به شماره موبایل بدون وابستگی‌های اضافی.
+- **Impact:** `public/assets/css/cyber-breach-engine.css`, `public/assets/js/cyber-breach-engine.js`, `public/assets/js/emergency-auth.js`, `public/emergency-auth.html`, `public/assets/js/vault-3d.js`, `public/assets/js/user-chat.js`, `server.js`, `mazdak.jpg`, `public/mazdak.jpg`, `tests/mazdak-cyber-warfare.test.js`, `MASTER_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md`, `docs/ai/masters/MASTER_15_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md`.
+- **Supersedes:** None
+

@@ -877,7 +877,336 @@ body.screen-earthquake-slam,
 }
 
 .ejection-countdown-bar {
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: 13px;
+  color: #fbbf24;
   margin-top: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+/* ==========================================================================
+   MASTER-15: CYBER WARFARE LOCKDOWN & TAMPER BREAKDOWN STYLES
+   ========================================================================== */
+
+/* قفل عمومی ابزارهای کنار چهار اسلات و کنترل‌های محیطی */
+body.cyber-breach-active .is-locked-cyber-breach,
+body.cyber-breach-active .cal-nav-btn,
+body.cyber-breach-active #shamsi-today-badge,
+body.cyber-breach-active .shamsi-days-grid,
+body.cyber-breach-active .board-toolbar,
+body.cyber-breach-active .board-footer,
+body.cyber-breach-active .composer-controls .attach-button,
+body.cyber-breach-active .composer-controls .emoji-button,
+body.cyber-breach-active .reply-preview-cancel-btn {
+  pointer-events: none !important;
+  opacity: 0.42 !important;
+  filter: grayscale(0.8) contrast(1.1) !important;
+  cursor: not-allowed !important;
+}
+
+/* خرابی و از کار افتادگی تقویم شمسی */
+.quad-calendar-card.calendar-locked-breakdown {
+  position: relative;
+  border-color: rgba(255, 0, 60, 0.4) !important;
+}
+.quad-calendar-card.calendar-locked-breakdown::after {
+  content: '⚠️ تقویم مسدود شد // DRIFT ERROR';
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 14, 20, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff3366;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(4px);
+  z-index: 10;
+  border-radius: 8px;
+  pointer-events: all;
+  cursor: not-allowed;
+}
+
+/* خرابی و قفل شدن پروفایل بچه‌ها (اسلات ۲) */
+.quad-assistants-card.slot-corrupted-breakdown {
+  position: relative;
+  pointer-events: none !important;
+  border-color: #ff003c !important;
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.35) !important;
+}
+.quad-assistants-card.slot-corrupted-breakdown::after {
+  content: '🔒 پروفایل‌ها مخدوش شد // CORRUPTED';
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 10, 16, 0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ff003c;
+  font-size: 13px;
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(255, 0, 60, 0.7);
+  backdrop-filter: blur(5px);
+  z-index: 25;
+  border-radius: 8px;
+  cursor: not-allowed;
+  pointer-events: all;
+}
+
+/* خرابی و قفل تامپر گاوصندوق ۳ بعدی (اسلات ۴) */
+.quad-vault-card.vault-corrupted-breakdown {
+  position: relative;
+  pointer-events: none !important;
+  border-color: #ff003c !important;
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.4) !important;
+}
+.quad-vault-card.vault-corrupted-breakdown::after {
+  content: '⚠️ قفل هیدرولیک مسدود // TAMPER LOCK';
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 8, 12, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff4d6d;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(5px);
+  z-index: 25;
+  border-radius: 8px;
+  cursor: not-allowed;
+  pointer-events: all;
+}
+
+/* استامپ نشان مزداک (mazdak.jpg) روی تمام عکس‌ها، صوت‌ها و ویدیوها */
+.mazdak-media-stamp {
+  position: absolute;
+  inset: 0;
+  background: rgba(7, 10, 15, 0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 30;
+  border-radius: 8px;
+  pointer-events: all !important;
+  cursor: not-allowed !important;
+  border: 1.5px dashed rgba(255, 0, 60, 0.75);
+  box-shadow: inset 0 0 20px rgba(255, 0, 60, 0.4);
+}
+.mazdak-stamp-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(20, 10, 14, 0.92);
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1.5px solid #ff003c;
+  box-shadow: 0 0 15px rgba(255, 0, 60, 0.5);
+}
+.mazdak-stamp-img {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 2px solid #ff003c;
+  box-shadow: 0 0 10px #ff003c;
+}
+.mazdak-stamp-text {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ff3366;
+  text-shadow: 0 0 8px rgba(255, 0, 60, 0.6);
+  direction: rtl;
+}
+
+/* غیرفعال‌سازی باز شدن و استایل مسدود روی تمام مدیاها در زمان هک */
+body.cyber-breach-active .evidence-card,
+body.cyber-breach-active .has-user-media,
+body.cyber-breach-active .has-user-voice,
+body.cyber-breach-active .has-voice-message,
+body.cyber-breach-active .briefing-photo,
+body.cyber-breach-active .evidence-photo {
+  position: relative !important;
+  cursor: not-allowed !important;
+}
+
+/* ارورهای بسیار مشهود، بزرگ و دوزبانه در ترمینال */
+.term-breach-bilingual-line {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  margin: 6px 0;
+  background: rgba(255, 0, 60, 0.12);
+  border-right: 4px solid var(--hack-red);
+  border-left: 1px solid rgba(255, 0, 60, 0.25);
+  border-radius: 6px;
+  animation: frame-jitter 0.25s ease-out;
+}
+.term-breach-bilingual-line.warn {
+  border-right-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.12);
+}
+.term-breach-fa-text {
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.5;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+}
+.term-breach-en-text {
+  font-family: var(--hack-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: #ff3366;
+  letter-spacing: 0.8px;
+  direction: ltr;
+  text-align: right;
+}
+.term-breach-bilingual-line.warn .term-breach-en-text {
+  color: #fbbf24;
+}
+
+/* کارت‌های پیام و تهدید مزداک در داخل ترمینال صعودیافته */
+.mazdak-terminal-threat-card {
+  margin: 10px 0;
+  padding: 14px 16px;
+  background: rgba(18, 8, 14, 0.95);
+  border: 1.5px solid #ff003c;
+  border-radius: 10px;
+  box-shadow: 0 0 24px rgba(255, 0, 60, 0.4), inset 0 0 12px rgba(255, 0, 60, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: mazdak-msg-arrive 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.mazdak-threat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 0, 60, 0.35);
+  padding-bottom: 6px;
+}
+.mazdak-threat-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ff003c;
+  font-size: 13px;
+  font-weight: 900;
+  text-shadow: 0 0 10px #ff003c;
+}
+.mazdak-threat-time {
+  font-family: var(--hack-mono);
+  font-size: 11px;
+  color: #94a3b8;
+}
+.mazdak-threat-body-fa {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.6;
+  text-shadow: 0 0 6px rgba(255, 0, 60, 0.3);
+}
+.mazdak-threat-sub-en {
+  font-family: var(--hack-mono);
+  font-size: 11px;
+  color: #ff4d6d;
+  direction: ltr;
+  text-align: right;
+  letter-spacing: 0.5px;
+}
+
+/* زلزله و لرزش شدیدتر و ممتد هنگام صعود ترمینال */
+body.screen-intense-quake {
+  animation: intenseViewportQuake 0.85s cubic-bezier(0.36, 0.07, 0.19, 0.97) both infinite;
+}
+@keyframes intenseViewportQuake {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  10% { transform: translate(-8px, 6px) rotate(-0.6deg); }
+  20% { transform: translate(8px, -7px) rotate(0.7deg); }
+  30% { transform: translate(-7px, 5px) rotate(-0.4deg); }
+  40% { transform: translate(7px, -6px) rotate(0.5deg); }
+  50% { transform: translate(-5px, 4px) rotate(-0.3deg); }
+  60% { transform: translate(6px, -4px) rotate(0.4deg); }
+  70% { transform: translate(-4px, 3px) rotate(-0.2deg); }
+  80% { transform: translate(4px, -3px) rotate(0.2deg); }
+  90% { transform: translate(-2px, 2px) rotate(-0.1deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+/* لرزش پیوسته و هراس‌انگیز هنگام صعود در مرکز صفحه */
+body.screen-cyber-tremor {
+  animation: subtleCyberTremor 0.12s infinite alternate;
+}
+@keyframes subtleCyberTremor {
+  0% { transform: translate(-1.5px, 1px); }
+  100% { transform: translate(1.5px, -1px); }
+}
+
+/* پیام‌های نبرد فیک میان کارآگاه و مزداک در چت */
+.fake-battle-msg {
+  position: relative;
+  animation: battleMsgArrive 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  margin-bottom: 14px;
+}
+@keyframes battleMsgArrive {
+  0% { opacity: 0; transform: translateY(12px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* پیام‌های خودکار کارآگاه در شروع و حین بحران */
+.fake-battle-msg.detective-msg {
+  background: #111b27 !important;
+  border-right: 4px solid #f59e0b !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px rgba(245, 158, 11, 0.15) !important;
+}
+.fake-battle-msg.detective-msg .message-sender {
+  color: #fbbf24 !important;
+  font-weight: 800 !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+/* پیام فیک مزداک به نام بچه‌ها با تگ دستیاران کارآگاه */
+.fake-battle-msg.kids-impersonated-msg {
+  background: #0f1c24 !important;
+  border-right: 4px solid #00f0ff !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 240, 255, 0.15) !important;
+}
+.fake-battle-msg.kids-impersonated-msg .message-sender {
+  color: #38bdf8 !important;
+  font-weight: 800 !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+/* پیام آشکار مزداک با هویت واقعی */
+.fake-battle-msg.mazdak-unmasked-msg {
+  background: #1b0a12 !important;
+  border-right: 4px solid #ff003c !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 4px 20px rgba(255, 0, 60, 0.25) !important;
+}
+.fake-battle-msg.mazdak-unmasked-msg .message-sender {
+  color: #ff3366 !important;
+  font-weight: 800 !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
 }

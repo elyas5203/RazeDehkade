@@ -22,19 +22,11 @@
   const statusAlert = document.getElementById('statusAlert');
   const authPhoneForm = document.getElementById('authPhoneForm');
   const emergencyPhone = document.getElementById('emergencyPhone');
-  const emergencyClassCode = document.getElementById('emergencyClassCode');
   const submitStep1Btn = document.getElementById('submitStep1Btn');
 
   const questionnaireForm = document.getElementById('questionnaireForm');
   const submitStep2Btn = document.getElementById('submitStep2Btn');
   const trackingIdDisplay = document.getElementById('trackingIdDisplay');
-
-  // Pre-fill class code if passed in URL query
-  const urlParams = new URLSearchParams(window.location.search);
-  const codeParam = urlParams.get('code');
-  if (codeParam && emergencyClassCode) {
-    emergencyClassCode.value = normalizeDigits(codeParam);
-  }
 
   function showAlert(msg, type = 'error') {
     if (!statusAlert) return;
@@ -66,8 +58,7 @@
       event.preventDefault();
       clearAlert();
 
-      const phone = normalizeDigits(emergencyPhone.value);
-      const code = normalizeDigits(emergencyClassCode.value);
+      const phone = normalizeDigits(emergencyPhone ? emergencyPhone.value : '');
 
       if (!phone || phone.length < 10) {
         showAlert('لطفاً شماره موبایل معتبر (حداقل ۱۰ رقم) وارد نمایید.');
@@ -80,7 +71,6 @@
       try {
         // Save phone in sessionStorage for recovery reference
         sessionStorage.setItem('emergency_user_phone', phone);
-        if (code) sessionStorage.setItem('emergency_class_code', code);
 
         // Simulation delay for cyber scanning effect
         await new Promise(r => setTimeout(r, 1200));

@@ -102,5 +102,5 @@
 | `MIG-005` | [`src/db/migrations/005_add_session_hack_status.sql`](file:///e:/projects/RazeDehkade/src/db/migrations/005_add_session_hack_status.sql) | `MASTER_12` | افزودن ستون‌های `is_hacked` و `hacked_at` به جدول `sessions` جهت ایزولاسیون کامل کلاس‌ها |
 | `MSTR-13` | [`docs/ai/masters/MASTER_12_MAZDAK_CYBER_BREACH_AND_EMERGENCY_PORTAL.md`](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_12_MAZDAK_CYBER_BREACH_AND_EMERGENCY_PORTAL.md) | `ROOT_MASTER` | سند جامع نفوذ سایبری مزداک نسخه ۲، ایزولاسیون کلاسی، گلیچ پویای دستیاران، درگاه اضطراری و اخراج ۱۲۰ ثانیه‌ای |
 | `MSTR-14` | [`docs/ai/masters/MASTER_13_TERMINAL_CINEMATIC_ELEVATION_AND_SLAM.md`](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_13_TERMINAL_CINEMATIC_ELEVATION_AND_SLAM.md) | `ROOT_MASTER` | سند معماری ارتقای سکانس صعود و فرود هیدرولیک ترمینال با FLIP پورتال‌شده، سنتز چندلایه صوتی Web Audio و شوک ویوپورت |
-
-
+| `MSTR-15` | [`docs/ai/masters/MASTER_14_VISUAL_THEME_UNIFICATION_AND_PORTAL_POLISH.md`](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_14_VISUAL_THEME_UNIFICATION_AND_PORTAL_POLISH.md) | `ROOT_MASTER` | سند جامع وحدت بصری درگاه احراز هویت اضطراری و مودال خروج سایبری با تم Warm Noir |
+| `MSTR-16` | [`docs/ai/masters/MASTER_15_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md`](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_15_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md) | `ROOT_MASTER` | سند جامع نبرد سایبری مزداک، قفل تامپر ابزارها، استامپ رسانه‌ها، رفع پرش لاگ‌ها، نبرد فیک چت، تمدید مودال خروج به ۵ دقیقه و فرم تک‌فیلدی احراز هویت |

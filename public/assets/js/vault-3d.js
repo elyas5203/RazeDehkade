@@ -193,6 +193,7 @@
 
   function openVaultInteraction() {
     if (isUnlockAnimationRunning) return;
+    if (window.cyberBreachEngine && window.cyberBreachEngine.isPlaying) return;
 
     if (activeRewardFlag) {
       openVaultRewardModal(activeRewardFlag, 0);
@@ -204,6 +205,7 @@
 
   function openVaultPasswordModal() {
     if (isUnlockAnimationRunning) return;
+    if (window.cyberBreachEngine && window.cyberBreachEngine.isPlaying) return;
 
     const rewardDialog = document.getElementById('vault-reward-dialog');
     if (rewardDialog && rewardDialog.open) {

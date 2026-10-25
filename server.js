@@ -115,6 +115,16 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 app.get('/favicon.ico', (req, res) => res.status(204).end());
 
+// سرو پایدار تصویر آرم مزداک از ریشه یا پوشه public
+const fs = require('fs');
+app.get('/mazdak.jpg', (req, res) => {
+  const publicFile = path.join(__dirname, 'public', 'mazdak.jpg');
+  const rootFile = path.join(__dirname, 'mazdak.jpg');
+  if (fs.existsSync(publicFile)) return res.sendFile(publicFile);
+  if (fs.existsSync(rootFile)) return res.sendFile(rootFile);
+  res.status(404).end();
+});
+
 // مسیرهای مستقیم و میانبر برای صفحات مدیریت و پنل ادمین
 app.get(['/admin', '/admin/', '/admin/dashboard', '/admin/dashboard/'], (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin', 'dashboard.html'));

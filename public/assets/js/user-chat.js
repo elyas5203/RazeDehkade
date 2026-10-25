@@ -1432,6 +1432,9 @@ function initEvidenceMediaPlayer(msg) {
 }
 
 function openEvidence(msg) {
+  if (window.cyberBreachEngine && window.cyberBreachEngine.isPlaying) {
+    return;
+  }
   const dialog = document.getElementById('evidence-dialog');
   if (dialog && msg) {
     dialog.dataset.currentEvidenceId = String(msg.id);
@@ -3135,6 +3138,9 @@ function updateAssistantLightboxContent() {
 }
 
 async function openAssistantsPhotoPopup() {
+  if (window.cyberBreachEngine && window.cyberBreachEngine.isPlaying) {
+    return;
+  }
   const dlg = document.getElementById('assistants-photo-dialog');
   closeAssistantLightbox();
   if (dlg) dlg.showModal();
