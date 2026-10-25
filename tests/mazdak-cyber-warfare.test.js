@@ -208,4 +208,40 @@ test('Mazdak Cyber Warfare, Tamper Lockdown & Emergency Recovery (MASTER-15)', a
     assert.strictEqual(engineJs.includes('جعل فرکانس'), false, 'Chat bubbles must not contain "جعل فرکانس" tag');
   });
 
+  await t.test('13. Zero False-Positive Errors in Pre-Hack Terminal Stream (Clean Operational Telemetry)', () => {
+    const streamJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'terminal-stream.js'), 'utf8');
+    const forbiddenPatterns = ['SQLi', 'XSS', 'APT-44', 'SYN flood', 'BLOCKED', 'هشدار امنیتی', 'تلاش برای نفوذ', 'ZERO-DAY', 'INTRUSION'];
+    forbiddenPatterns.forEach(pattern => {
+      assert.strictEqual(streamJs.includes(pattern), false, 'Routine terminal stream must not contain alarmist pattern: ' + pattern);
+    });
+
+    const termCss = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'css', 'terminal.css'), 'utf8');
+    assert.ok(termCss.includes('.term-sec .term-badge') && termCss.includes('#38bdf8'), 'terminal.css must style term-sec badge with calm cyan color (#38bdf8)');
+  });
+
+  await t.test('14. Silent Chat Messages, Headquarters Badge, Pure Persian Threats & Hack Persistence on Refresh', () => {
+    const engineJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'cyber-breach-engine.js'), 'utf8');
+    // 1. Silent chat messages (no clicks)
+    assert.strictEqual(engineJs.includes("this.playAudioFile('click')"), false, 'appendChatMessage must NOT play click audio');
+    // 2. Headquarters badge
+    assert.ok(engineJs.includes('🎙️ مرکز فرماندهی'), 'Detective messages must be labeled as Headquarters (مرکز فرماندهی)');
+    // 3. Mazdak in-terminal threats: purely Persian (no English translation sublines and no tick SFX)
+    assert.strictEqual(engineJs.includes("this.playAudioFile('tick')"), false, 'Mazdak in-terminal threat lines must not play tick sound');
+    assert.strictEqual(engineJs.includes('term-mazdak-sub-en'), false, 'appendTerminalMazdakThreat must not render English sub-en translation line');
+    // 4. Zero white noise / static buffers (no Math.random() audio generators)
+    assert.strictEqual(engineJs.includes('Math.random() * 2 - 1'), false, 'cyber-breach-engine must not generate scratchy white noise buffers');
+
+    // 5. Hack persistence across browser refresh
+    const routesJs = fs.readFileSync(path.join(ROOT_DIR, 'src', 'routes', 'sessions.js'), 'utf8');
+    assert.ok(routesJs.includes('is_hacked: Boolean(session && session.is_hacked)'), 'GET /api/sessions/:id/messages must return is_hacked in session object');
+    const userChatJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'user-chat.js'), 'utf8');
+    assert.ok(userChatJs.includes('session_hacked_'), 'user-chat.js must check and persist session_hacked flag in storage');
+    assert.ok(userChatJs.includes('/emergency-auth.html'), 'user-chat.js must redirect to emergency-auth upon detecting hacked state');
+
+    // 6. Permanent Mazdak cover in CSS for evidence cards
+    const breachCss = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'css', 'cyber-breach-engine.css'), 'utf8');
+    assert.ok(breachCss.includes('body.cyber-breach-active .evidence-board .evidence-card::after'), 'CSS must enforce ::after cover on evidence cards');
+    assert.ok(breachCss.includes('/mazdak.jpg'), 'Evidence card ::after must load mazdak.jpg');
+  });
+
 });

@@ -1121,17 +1121,18 @@ body.cyber-breach-active .evidence-photo {
   color: #fbbf24;
 }
 
-/* خطوط پیام مزداک در ترمینال: کاملاً راست‌چین، شیک، فونت خوانا بدون کادر مسخره */
+/* خطوط پیام مزداک در ترمینال: کاملاً راست‌چین، شیک، منحصراً فارسی با فونت شفاف و استاندارد */
 .term-mazdak-stream-line,
 .mazdak-terminal-threat-card {
-  margin: 8px 0;
-  padding: 8px 12px;
-  background: rgba(255, 0, 60, 0.06);
-  border-right: 3.5px solid #ff003c;
-  border-radius: 4px;
+  margin: 10px 0;
+  padding: 10px 14px;
+  background: rgba(255, 0, 60, 0.08);
+  border: 1px solid rgba(255, 0, 60, 0.25);
+  border-right: 4px solid #ff003c;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   direction: rtl;
   text-align: right;
   animation: mazdak-msg-arrive 0.35s ease-out both;
@@ -1147,37 +1148,37 @@ body.cyber-breach-active .evidence-photo {
 
 .term-mazdak-prompt,
 .mazdak-threat-badge {
-  font-family: var(--hack-mono);
-  font-size: 12px;
+  font-family: 'Vazirmatn', 'IranSans', var(--hack-mono), monospace;
+  font-size: 13px;
   font-weight: 900;
   color: #ff003c;
-  text-shadow: 0 0 8px #ff003c;
+  text-shadow: 0 0 8px rgba(255, 0, 60, 0.6);
   letter-spacing: 0.5px;
 }
 
 .term-mazdak-time,
 .mazdak-threat-time {
-  font-family: var(--hack-mono);
-  font-size: 10px;
+  font-family: var(--hack-mono), monospace;
+  font-size: 11px;
   color: #94a3b8;
 }
 
 .term-mazdak-body-fa,
 .mazdak-threat-body-fa {
-  font-size: 15px;
-  font-weight: 800;
-  color: #fff;
-  line-height: 1.7;
-  text-shadow: 0 0 6px rgba(255, 0, 60, 0.25);
-  direction: rtl;
-  text-align: right;
+  font-family: 'Vazirmatn', 'IranSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  line-height: 1.8 !important;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+  direction: rtl !important;
+  text-align: right !important;
 }
 
 .term-mazdak-sub-en,
 .mazdak-threat-sub-en {
-  font-family: var(--hack-mono);
-  font-size: 11px;
-  color: #ff4d6d;
+  display: none !important;
+}
   direction: ltr;
   text-align: right;
   letter-spacing: 0.4px;
@@ -1268,6 +1269,46 @@ body.screen-cyber-tremor { animation: none !important; }
   margin-bottom: 6px;
 }
 
-#security-terminal.is-elevated {
+#security-terminal.is-elevated,
+.security-terminal.is-elevated {
   animation: none !important;
+  font-family: 'Vazirmatn', 'IranSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+#security-terminal.is-elevated .terminal-body,
+.security-terminal.is-elevated .terminal-body {
+  font-family: 'Vazirmatn', 'IranSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  direction: rtl !important;
+  text-align: right !important;
+  line-height: 1.85 !important;
+  font-size: 14.5px !important;
+}
+
+/* تثبیت غیرقابل حذف و دائمی تصویر مزداک روی کلیه اسناد و فایل‌های میز بررسی/برد شواهد */
+body.cyber-breach-active .evidence-board .evidence-card,
+body.cyber-breach-active #evidence-grid .evidence-card,
+body.cyber-breach-active .evidence-card,
+body.cyber-breach-active .briefing-photo {
+  position: relative !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+body.cyber-breach-active .evidence-board .evidence-card::after,
+body.cyber-breach-active #evidence-grid .evidence-card::after,
+body.cyber-breach-active .evidence-card::after,
+body.cyber-breach-active .briefing-photo::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  background-color: #050811 !important;
+  background-image: url('/mazdak.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+  display: block !important;
+  opacity: 1 !important;
 }

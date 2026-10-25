@@ -95,8 +95,9 @@ if (!userToken || !sessionData.id) {
 }
 
 // اگر کلاس تحت نفوذ مزداک باشد، هدایت به درگاه احراز هویت اضطراری
-if (sessionData && sessionData.is_hacked) {
-  window.location.href = '/emergency-auth.html';
+const localHackFlag = sessionData && sessionData.id ? localStorage.getItem(`session_hacked_${sessionData.id}`) : null;
+if ((sessionData && sessionData.is_hacked) || localHackFlag === '1') {
+  window.location.replace('/emergency-auth.html');
 }
 
 const userMessagesMap = new Map();
@@ -299,6 +300,16 @@ async function loadHistory() {
       try {
         sessionStorage.setItem(`cached_msgs_${sessionData.id}`, JSON.stringify(data.data));
       } catch (_) {}
+
+      if (data.session && data.session.is_hacked) {
+        sessionData.is_hacked = 1;
+        try {
+          sessionStorage.setItem('userSession', JSON.stringify(sessionData));
+          localStorage.setItem(`session_hacked_${sessionData.id}`, '1');
+        } catch (_) {}
+        window.location.replace('/emergency-auth.html');
+        return;
+      }
 
       if (data.session && typeof data.session.is_chat_locked !== 'undefined') {
         applyChatLock(Boolean(data.session.is_chat_locked));
@@ -521,6 +532,11 @@ function initSocket() {
   socket.on('hack_sequence_triggered', (data) => {
     if (!data || Number(data.sessionId) !== Number(sessionData.id)) return;
     console.log('🚨 رویداد سکانس هک مزداک دریافت شد:', data);
+    sessionData.is_hacked = 1;
+    try {
+      sessionStorage.setItem('userSession', JSON.stringify(sessionData));
+      localStorage.setItem(`session_hacked_${sessionData.id}`, '1');
+    } catch (_) {}
     if (window.cyberBreachEngine) {
       window.cyberBreachEngine.start(data);
     } else if (typeof hackEngine !== 'undefined') {
@@ -531,6 +547,13 @@ function initSocket() {
   socket.on('hack_cleared', (data) => {
     if (!data || Number(data.sessionId) !== Number(sessionData.id)) return;
     console.log('🔓 نفوذ لغو شد و چت بازگشایی گردید:', data);
+    try {
+      if (sessionData && sessionData.id) {
+        localStorage.removeItem(`session_hacked_${sessionData.id}`);
+        sessionData.is_hacked = 0;
+        sessionStorage.setItem('userSession', JSON.stringify(sessionData));
+      }
+    } catch (_) {}
     if (window.cyberBreachEngine) {
       window.cyberBreachEngine.reset();
     }

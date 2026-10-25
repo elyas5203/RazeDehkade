@@ -2351,9 +2351,9 @@
 }
 
 .term-sec .term-badge {
-  background: rgba(239, 68, 68, 0.18);
-  color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.32);
+  background: rgba(14, 165, 233, 0.18);
+  color: #38bdf8;
+  border: 1px solid rgba(14, 165, 233, 0.32);
 }
 
 .term-det .term-badge {

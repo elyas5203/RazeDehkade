@@ -96,6 +96,7 @@ router.get('/:id/messages', authenticateToken, async (req, res) => {
         is_chat_locked: Boolean(session && session.is_chat_locked),
         is_vault_unlocked: Boolean(session && session.is_vault_unlocked),
         vault_target_week: (session && session.vault_target_week) || 5,
+        is_hacked: Boolean(session && session.is_hacked),
       },
     });
   } catch (error) {
