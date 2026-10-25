@@ -118,6 +118,20 @@
       this.containerEl.addEventListener('mouseleave', () => { this.isPaused = false; });
     }
 
+    stop() {
+      if (this.timerId) {
+        clearTimeout(this.timerId);
+        this.timerId = null;
+      }
+      this.isPaused = true;
+    }
+
+    start() {
+      if (this.timerId) return;
+      this.isPaused = false;
+      this.scheduleNextLog();
+    }
+
     scheduleNextLog() {
       // تاخیر تصادفی بین 500 تا 1500 میلی‌ثانیه (۰.۵ تا ۱.۵ ثانیه) طبق خواسته کارفرما
       const delay = Math.floor(Math.random() * 1000) + 500;

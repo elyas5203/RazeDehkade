@@ -152,4 +152,36 @@ test('Mazdak Cyber Warfare, Tamper Lockdown & Emergency Recovery (MASTER-15)', a
     assert.ok(engineJs.includes('۵ دقیقه') || engineJs.includes('۵:۰۰'), 'Persian copy must state 5 minutes duration');
   });
 
+  await t.test('8. Terminal Routine Stream Stop & Shaking Removal (Polish Requirements)', () => {
+    const streamJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'terminal-stream.js'), 'utf8');
+    assert.ok(streamJs.includes('stop()'), 'LiveTerminal must implement stop() to kill background routine logs');
+    assert.ok(streamJs.includes('start()'), 'LiveTerminal must implement start() to resume logs');
+
+    const engineJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'cyber-breach-engine.js'), 'utf8');
+    assert.ok(engineJs.includes('liveTerminal.stop()'), 'cyber-breach-engine must invoke liveTerminal.stop() on breach start');
+    assert.ok(engineJs.includes("terminalLogs.innerHTML = ''"), 'cyber-breach-engine must clear routine logs so breach stream takes over');
+
+    const css = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'css', 'cyber-breach-engine.css'), 'utf8');
+    assert.ok(css.includes('#security-terminal.is-elevated') && css.includes('animation: none !important'), 'Elevated terminal must have animation disabled to eliminate text shaking');
+  });
+
+  await t.test('9. Evidence Photos Stay Visible with Corrupted Filter & Disabled Click', () => {
+    const css = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'css', 'cyber-breach-engine.css'), 'utf8');
+    assert.ok(css.includes('body.cyber-breach-active .evidence-card img') && css.includes('filter:'), 'Evidence photos must have visual corruption filter without being removed');
+    assert.ok(css.includes('pointer-events: none !important'), 'Evidence cards must have pointer-events none to disable opening');
+
+    const engineJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'cyber-breach-engine.js'), 'utf8');
+    assert.ok(engineJs.includes("classList.add('media-corrupted')"), 'applyMazdakMediaStamps must add media-corrupted class');
+  });
+
+  await t.test('10. Multi-Turn Realistic Chat Battle with Detective Impostor Realization', () => {
+    const engineJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'cyber-breach-engine.js'), 'utf8');
+    assert.ok(engineJs.includes('battle-kids-1'), 'Must have first kids impersonation turn');
+    assert.ok(engineJs.includes('battle-kids-2'), 'Must have second kids impersonation asking for codes');
+    assert.ok(engineJs.includes('battle-kids-3'), 'Must have third kids impersonation pressuring detective');
+    assert.ok(engineJs.includes('کاسه‌ای زیر نیم‌کاسه‌ست') || engineJs.includes('کاسه'), 'Detective must realize impostor with idiom phrase');
+    assert.ok(engineJs.includes('battle-mazdak-1'), 'Mazdak unmasks after realization');
+    assert.ok(engineJs.includes('battle-det-4'), 'Detective broadcasts final evacuation');
+  });
+
 });

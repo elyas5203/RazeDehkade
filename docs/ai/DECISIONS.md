@@ -289,3 +289,18 @@
 - **Impact:** `public/assets/css/cyber-breach-engine.css`, `public/assets/js/cyber-breach-engine.js`, `public/assets/js/emergency-auth.js`, `public/emergency-auth.html`, `public/assets/js/vault-3d.js`, `public/assets/js/user-chat.js`, `server.js`, `mazdak.jpg`, `public/mazdak.jpg`, `tests/mazdak-cyber-warfare.test.js`, `MASTER_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md`, `docs/ai/masters/MASTER_15_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md`.
 - **Supersedes:** None
 
+---
+
+### DEC-0038 — پولیش بصری و سناریویی هک مزداک: حفظ دیده شدن عکس‌های شواهد با فیلتر گلیچ، توقف حلقه روتین لاگ‌ها، حذف لرزش ترمینال صعودیافته، استریم راست‌چین هکری و بسط نبرد فیک چت
+- **Date:** 2026-10-25
+- **Status:** APPROVED
+- **Context & Rationale:** پیرو بازخورد تصویری و اصلاحات مستقیم کارفرما بر روی اسکرین‌شات‌های لایو هک مزداک:
+  ۱) **حفظ دیده‌شدن عکس‌ها و تغییر حالت خراب‌شده (`.media-corrupted`):** حذف پوشش تیره کامل و نوشته‌های عمودی کج؛ اعمال فیلتر گلیچ `grayscale(40%) contrast(140%) brightness(0.7) sepia(20%) hue-rotate(320deg)`، بج افقی ظریف بدون پوشش تصویر و غیرفعال‌سازی باز شدن و بزرگ‌نمایی عکس‌ها با `pointer-events: none`.
+  ۲) **توقف استریم روتین ترمینال در زمان هک (`LiveTerminal.stop()`):** پیاده‌سازی متدهای کنترل چرخه عمر در `terminal-stream.js` و توقف قطعی تایمر روتین در آغاز هک و پاک‌سازی بافر برای جلوگیری از آلودگی لاگ‌های نفوذ.
+  ۳) **حذف لرزش و ویبره ترمینال صعودیافته:** لغو انیمیشن‌های لرزش روی `#security-terminal.is-elevated` با `animation: none !important` جهت ثبات کامل بصری و خوانایی بی‌نقص متون.
+  ۴) **استریم خطوط دوزبانه و پیام‌های راست‌چین مزداک:** حذف کادرهای بزرگ شبیه بنر و جایگزینی با ساختار استریم هکری `.term-mazdak-stream-line` با پرامپت `⚡ [مــزداک] »` به صورت راست‌چین و های‌کنتراست.
+  ۵) **سناریوی دیالوگ طبیعی و چندمرحله‌ای نبرد در چت:** گسترش سناریو به مکالمه ۸ مرحله‌ای باورپذیر شامل احوالپرسی جعلی بچه‌ها، درخواست مشکوک رمز گاوصندوق/فایل‌ها، شک کارآگاه با اصطلاح عامیانه «کاسه‌ای زیر نیم‌کاسه‌ست!»، نقاب‌برداری مزداک و پیام نهایی کارآگاه جهت خروج اضطراری و تاکید بر سرنخ «لیلیوم».
+- **Impact:** `public/assets/css/cyber-breach-engine.css`, `public/assets/js/cyber-breach-engine.js`, `public/assets/js/terminal-stream.js`, `tests/mazdak-cyber-warfare.test.js`, `MASTER_MAZDAK_CYBER_WARFARE_POLISH.md`, `docs/ai/masters/MASTER_16_MAZDAK_CYBER_WARFARE_POLISH.md`.
+- **Supersedes:** None
+
+

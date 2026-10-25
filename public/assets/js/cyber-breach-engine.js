@@ -265,6 +265,14 @@ class CyberBreachEngine {
     this.deliveredTerminalErrors.clear();
     this.deliveredTerminalThreats.clear();
 
+    // Stop routine background terminal logs and clear them so breach stream takes over
+    if (window.liveTerminal && typeof window.liveTerminal.stop === 'function') {
+      window.liveTerminal.stop();
+    }
+    if (this.dom.terminalLogs) {
+      this.dom.terminalLogs.innerHTML = '';
+    }
+
     // Load Assistants from payload or window.sessionAssistantsList
     if (payload.assistants && Array.isArray(payload.assistants) && payload.assistants.length > 0) {
       this.assistants = payload.assistants;
@@ -323,8 +331,14 @@ class CyberBreachEngine {
     document.body.classList.remove('cyber-breach-active', 'screen-quake-launch', 'screen-slam-earthquake', 'screen-intense-quake', 'screen-cyber-tremor');
     this.dockTerminal(true);
 
-    // Remove Mazdak media stamps
+    // Remove Mazdak media stamps and corruption
     this.removeMazdakMediaStamps();
+    document.querySelectorAll('.media-corrupted').forEach(el => el.classList.remove('media-corrupted'));
+
+    // Resume routine live terminal logs
+    if (window.liveTerminal && typeof window.liveTerminal.start === 'function') {
+      window.liveTerminal.start();
+    }
 
     // Remove slot lockdowns
     const calCard = document.querySelector('.quad-calendar-card');
@@ -391,6 +405,14 @@ class CyberBreachEngine {
     this.deliveredBattleMessages.clear();
     this.deliveredTerminalErrors.clear();
     this.deliveredTerminalThreats.clear();
+
+    // Stop routine background terminal logs and clear them so breach stream takes over
+    if (window.liveTerminal && typeof window.liveTerminal.stop === 'function') {
+      window.liveTerminal.stop();
+    }
+    if (this.dom.terminalLogs) {
+      this.dom.terminalLogs.innerHTML = '';
+    }
 
     this.stopAmbientDrone();
     console.log('[CyberBreachEngine] 🔓 Breach state reset to normal.');
@@ -466,6 +488,7 @@ class CyberBreachEngine {
     ];
 
     document.querySelectorAll(mediaSelectors.join(', ')).forEach(el => {
+      el.classList.add('media-corrupted');
       if (el.querySelector('.mazdak-media-stamp')) return;
       const stamp = document.createElement('div');
       stamp.className = 'mazdak-media-stamp';
@@ -535,17 +558,17 @@ class CyberBreachEngine {
     const logs = this.dom.terminalLogs;
     if (!logs) return;
 
-    const card = document.createElement('div');
-    card.className = 'mazdak-terminal-threat-card';
-    card.innerHTML = `
-      <div class="mazdak-threat-header">
-        <div class="mazdak-threat-badge">⚡ مــزداک // تسخیر هسته پردازش</div>
-        <span class="mazdak-threat-time">INTRUSION ACTIVE</span>
+    const line = document.createElement('div');
+    line.className = 'term-mazdak-stream-line mazdak-terminal-threat-card';
+    line.innerHTML = `
+      <div class="term-mazdak-stream-header mazdak-threat-header">
+        <span class="term-mazdak-prompt mazdak-threat-badge">⚡ [مــزداک] »</span>
+        <span class="term-mazdak-time mazdak-threat-time">INTRUSION ACTIVE</span>
       </div>
-      <div class="mazdak-threat-body-fa">«${faText}»</div>
-      <div class="mazdak-threat-sub-en">// ${enText}</div>
+      <div class="term-mazdak-body-fa mazdak-threat-body-fa">${faText}</div>
+      <div class="term-mazdak-sub-en mazdak-threat-sub-en">// ${enText}</div>
     `;
-    logs.appendChild(card);
+    logs.appendChild(line);
     logs.scrollTop = logs.scrollHeight;
     this.playAudioFile('tick');
   }
@@ -1097,7 +1120,7 @@ class CyberBreachEngine {
       if (!this.isElevated) {
         this.elevateTerminal();
         this.playHydraulicLaunchSFX();
-        document.body.classList.add('screen-intense-quake', 'screen-cyber-tremor');
+        // Shaking removed to ensure 100% stable reading
       }
       if (window.liveTerminal) window.liveTerminal.isPaused = true;
 
@@ -1219,7 +1242,7 @@ class CyberBreachEngine {
           extraClass: 'kids-impersonated-msg',
           senderBadge: '👥 دستیاران کارآگاه',
           senderSub: 'ارتباط میدانی',
-          content: 'کارآگاه نگران نباشید ما اینجاییم! ارتباط یه لحظه قطع شد ولی الان کنترل دست خودمونه...'
+          content: 'سلام سرکارآگاه! نگران نباشید ما اینجاییم، ارتباط کلاسمون یه لحظه به خاطر نوسان قطع شد ولی الان کنترل دست خودمونه و داریم مدارک پرونده رو یکی‌یکی بررسی می‌کنیم!'
         });
       }
 
@@ -1231,11 +1254,11 @@ class CyberBreachEngine {
           extraClass: 'detective-msg',
           senderBadge: '🔍 سرکارآگاه (مرکز فرماندهی)',
           senderSub: 'پاسخ مستقیم',
-          content: 'خدا رو شکر پیامتون اومد! بچه‌ها سریع گزارش بدید اونجا چه خبره؟ پیام‌های خطای نفوذ از کجا دارن تزریق می‌شن؟'
+          content: 'خدا رو شکر که پیامتون اومد بچه‌ها، داشتم نگران می‌شدم! مانیتور من چند تا رخنه و نوسان شدید نشون داد... اوضاع شواهد چطوره؟ تونستید مدارک جدید و رمز رو بررسی کنید؟'
         });
       }
 
-      // 3. Mazdak drops disguise from kids side (Sec 77)
+      // 3. Mazdak (as kids) asking suspiciously for codes (Sec 77)
       if (sec >= 77) {
         this.appendChatMessage({
           id: 'battle-kids-2',
@@ -1243,43 +1266,67 @@ class CyberBreachEngine {
           extraClass: 'kids-impersonated-msg',
           senderBadge: '👥 دستیاران کارآگاه',
           senderSub: 'جعل فرکانس',
-          content: 'هاهاها... دلت به چی خوشه کارآگاه؟ بچه‌ها کین؟! اطلاعاتشون کامل دست منه و حتی نمی‌تونن یک کلمه تایپ کنن!'
+          content: 'بله مدارک جلومونه... فقط سیستم یه پیغام عجیب داده و رمز گاوصندوق قبلی رو قبول نمی‌کنه! میشه رمز اصلی پرونده و کدهای بازنشانی رو سریع اینجا برامون بفرستید تا وارد کنیم؟'
         });
       }
 
-      // 4. Detective shock and realization (Sec 84)
+      // 4. Detective growing suspicious (Sec 84)
       if (sec >= 84) {
         this.appendChatMessage({
           id: 'battle-det-2',
           senderType: 'admin',
           extraClass: 'detective-msg',
           senderBadge: '🔍 سرکارآگاه (مرکز فرماندهی)',
-          senderSub: 'کشف فریب',
-          content: 'صبر کن... شما بچه‌ها نیستید! این لحن کثیف... مزداک؟! چطور تونستی فرکانس بچه‌ها رو جعل کنی؟!'
+          senderSub: 'تردید کارآگاه',
+          content: 'رمز پرونده؟! بچه‌ها شما که خودتون رمز رو دیشب یادداشت کرده بودید و طبق دستورالعمل نباید هیچ کدی داخل کانال فرستاده بشه... چرا دارید اصرار می‌کنید؟ لحن پیامتون هم شبیه همیشه نیست!'
         });
       }
 
-      // 5. Mazdak unmasked with Mazdak badge (Sec 91)
+      // 5. Mazdak pressuring urgently (Sec 91)
       if (sec >= 91) {
+        this.appendChatMessage({
+          id: 'battle-kids-3',
+          senderType: 'user',
+          extraClass: 'kids-impersonated-msg',
+          senderBadge: '👥 دستیاران کارآگاه',
+          senderSub: 'جعل فرکانس',
+          content: 'سرکارآگاه وقت کمه، بچه‌ها دارن هول میشن! شما فقط اون کد و فایل‌های دسترسی مرحله بعد رو بفرستید تا پرونده بسته بشه، کارآگاه معطل چی هستید؟! زود باشید!'
+        });
+      }
+
+      // 6. Detective realizes impostor — کاسه‌ای زیر نیم‌کاسه هست (Sec 97)
+      if (sec >= 97) {
+        this.appendChatMessage({
+          id: 'battle-det-3',
+          senderType: 'admin',
+          extraClass: 'detective-msg',
+          senderBadge: '🔍 سرکارآگاه (مرکز فرماندهی)',
+          senderSub: 'کشف فریب',
+          content: 'صبر کنید ببینم... شما بچه‌ها نیستید! دستیاران من هرگز اینطوری عجله نمی‌کردن و تقاضای کلید اصلی رو نمی‌دادن! این فرکانس هک شده... کاسه‌ای زیر نیم‌کاسه‌ست! کی پشت خطه؟!'
+        });
+      }
+
+      // 7. Mazdak unmasked with taunt (Sec 103)
+      if (sec >= 103) {
         this.appendChatMessage({
           id: 'battle-mazdak-1',
           senderType: 'hacker',
           extraClass: 'mazdak-unmasked-msg',
           senderBadge: '⚡ مــزداک // نفوذ مرکزی',
           senderSub: 'سیطره کامل',
-          content: 'خیلی دیر فهمیدی سرکارآگاه! این پایگاه و تمام پرونده‌های دهکده حالا متعلق به منه. هیچ راه نجاتی برای تیمت نذاشتم!'
+          content: 'هاهاها... آفرین سرکارآگاه تیزبین، بالاخره فهمیدی؟! ولی دیگه خیلی دیر به شک افتادی! بچه‌هات حتی نمی‌تونن یک کلمه تایپ کنن و مانیتورشون قفل شده. این پایگاه و تمام پرونده‌های دهکده رسماً به تسخیر من دراومد!'
         });
       }
 
-      // 6. Detective final emergency broadcast (Sec 98)
-      if (sec >= 98) {
+      // 8. Detective final evacuation broadcast (Sec 109)
+      if (sec >= 109) {
         this.appendChatMessage({
-          id: 'battle-det-3',
+          id: 'battle-det-4',
           senderType: 'admin',
           extraClass: 'detective-msg',
           senderBadge: '🔍 سرکارآگاه (مرکز فرماندهی)',
           senderSub: 'پروتکل اضطراری',
-          content: 'من الان سیستم احراز هویت امنیتی رو فعال می‌کنم و همه از سایت می‌افتید بیرون! بچه‌ها خیلی حواستون به لیلیوم باشه و سرنخ‌هایی که داده بودم برای برگشتن به راه ارتباطی امن رو دنبال کنین... ارتباط داره قطع میشه!'
+          content: 'من الان سیستم احراز هویت امنیتی رو فعال می‌کنم و اتصال همه از سایت قطع میشه! بچه‌ها هرجا صدای من رو می‌شنوید، خیلی حواستون به سرنخ لیلیوم باشه و مسیرهای امنی که گفتم رو دنبال کنین... ارتباط داره قطع میشه!'
         });
       }
 
@@ -1299,10 +1346,10 @@ class CyberBreachEngine {
     }
 
     // ------------------------------------------------------------------
-    // Phase 6: Ejection Modal (Second 108 / End of Hack)
+    // Phase 6: Ejection Modal (Second 116 / End of Hack)
     // ------------------------------------------------------------------
-    if (sec >= 108) {
-      if (sec === 108 && sec !== this.lastSecond) {
+    if (sec >= 116) {
+      if (sec === 116 && sec !== this.lastSecond) {
         this.playAudioFile('alarm');
         this.triggerEmergencyEjectionModal();
       }

@@ -981,47 +981,67 @@ body.cyber-breach-active .reply-preview-cancel-btn {
   pointer-events: all;
 }
 
-/* استامپ نشان مزداک (mazdak.jpg) روی تمام عکس‌ها، صوت‌ها و ویدیوها */
+/* وضعیت تغییر حالت و خرابی عکس‌ها بدون حذف شدن تصویر (حفظ دیده‌شدن عکس) */
+body.cyber-breach-active .evidence-card img,
+body.cyber-breach-active .chat-media-image,
+body.cyber-breach-active .has-user-media .msg-image-thumb,
+body.cyber-breach-active .briefing-photo,
+body.cyber-breach-active .evidence-photo {
+  filter: grayscale(40%) contrast(140%) brightness(0.7) sepia(20%) hue-rotate(320deg) !important;
+  transition: filter 0.4s ease;
+}
+
+body.cyber-breach-active .evidence-card {
+  position: relative !important;
+  border-color: rgba(255, 0, 60, 0.6) !important;
+  box-shadow: 0 0 14px rgba(255, 0, 60, 0.45), inset 0 0 10px rgba(255, 0, 60, 0.25) !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+}
+
+/* استامپ سبک، ظریف و بدون مسدودسازی کامل تصویر */
 .mazdak-media-stamp {
   position: absolute;
   inset: 0;
-  background: rgba(7, 10, 15, 0.85);
+  background: rgba(15, 0, 8, 0.38); /* نیمه‌شفاف - عکس زیرین کاملاً دیده می‌شود */
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  z-index: 30;
-  border-radius: 8px;
+  z-index: 20;
+  border-radius: 4px;
   pointer-events: all !important;
   cursor: not-allowed !important;
-  border: 1.5px dashed rgba(255, 0, 60, 0.75);
-  box-shadow: inset 0 0 20px rgba(255, 0, 60, 0.4);
+  backdrop-filter: blur(0.5px);
 }
+
 .mazdak-stamp-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(20, 10, 14, 0.92);
-  padding: 6px 12px;
-  border-radius: 20px;
-  border: 1.5px solid #ff003c;
-  box-shadow: 0 0 15px rgba(255, 0, 60, 0.5);
+  gap: 6px;
+  background: rgba(14, 4, 8, 0.88);
+  padding: 4px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 0, 60, 0.8);
+  box-shadow: 0 0 10px rgba(255, 0, 60, 0.5);
+  white-space: nowrap;
 }
+
 .mazdak-stamp-img {
-  width: 36px;
-  height: 36px;
+  width: 22px;
+  height: 22px;
   object-fit: cover;
   border-radius: 50%;
-  border: 2px solid #ff003c;
-  box-shadow: 0 0 10px #ff003c;
+  border: 1px solid #ff003c;
+  flex-shrink: 0;
 }
+
 .mazdak-stamp-text {
   font-size: 11px;
   font-weight: 800;
   color: #ff3366;
-  text-shadow: 0 0 8px rgba(255, 0, 60, 0.6);
+  white-space: nowrap;
   direction: rtl;
+  letter-spacing: 0.3px;
 }
 
 /* غیرفعال‌سازی باز شدن و استایل مسدود روی تمام مدیاها در زمان هک */
@@ -1033,99 +1053,115 @@ body.cyber-breach-active .briefing-photo,
 body.cyber-breach-active .evidence-photo {
   position: relative !important;
   cursor: not-allowed !important;
+  pointer-events: none !important;
 }
 
-/* ارورهای بسیار مشهود، بزرگ و دوزبانه در ترمینال */
+/* خطوط ارور ترمینال: راست‌چین، بسیار واضح، شفاف و دوزبانه */
 .term-breach-bilingual-line {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 10px 14px;
+  gap: 3px;
+  padding: 8px 12px;
   margin: 6px 0;
-  background: rgba(255, 0, 60, 0.12);
-  border-right: 4px solid var(--hack-red);
-  border-left: 1px solid rgba(255, 0, 60, 0.25);
-  border-radius: 6px;
+  background: rgba(255, 0, 60, 0.08);
+  border-right: 3.5px solid var(--hack-red);
+  border-radius: 4px;
+  direction: rtl;
+  text-align: right;
   animation: frame-jitter 0.25s ease-out;
 }
+
 .term-breach-bilingual-line.warn {
   border-right-color: #f59e0b;
-  background: rgba(245, 158, 11, 0.12);
+  background: rgba(245, 158, 11, 0.08);
 }
+
 .term-breach-fa-text {
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 800;
   color: #ffffff;
-  line-height: 1.5;
-  text-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+  line-height: 1.6;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
 }
+
 .term-breach-en-text {
   font-family: var(--hack-mono);
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: #ff3366;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.6px;
   direction: ltr;
   text-align: right;
 }
+
 .term-breach-bilingual-line.warn .term-breach-en-text {
   color: #fbbf24;
 }
 
-/* کارت‌های پیام و تهدید مزداک در داخل ترمینال صعودیافته */
+/* خطوط پیام مزداک در ترمینال: کاملاً راست‌چین، شیک، فونت خوانا بدون کادر مسخره */
+.term-mazdak-stream-line,
 .mazdak-terminal-threat-card {
-  margin: 10px 0;
-  padding: 14px 16px;
-  background: rgba(18, 8, 14, 0.95);
-  border: 1.5px solid #ff003c;
-  border-radius: 10px;
-  box-shadow: 0 0 24px rgba(255, 0, 60, 0.4), inset 0 0 12px rgba(255, 0, 60, 0.2);
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: rgba(255, 0, 60, 0.06);
+  border-right: 3.5px solid #ff003c;
+  border-radius: 4px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  animation: mazdak-msg-arrive 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  gap: 4px;
+  direction: rtl;
+  text-align: right;
+  animation: mazdak-msg-arrive 0.35s ease-out both;
 }
+
+.term-mazdak-stream-header,
 .mazdak-threat-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 0, 60, 0.35);
-  padding-bottom: 6px;
+  gap: 8px;
 }
+
+.term-mazdak-prompt,
 .mazdak-threat-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #ff003c;
-  font-size: 13px;
+  font-family: var(--hack-mono);
+  font-size: 12px;
   font-weight: 900;
-  text-shadow: 0 0 10px #ff003c;
+  color: #ff003c;
+  text-shadow: 0 0 8px #ff003c;
+  letter-spacing: 0.5px;
 }
+
+.term-mazdak-time,
 .mazdak-threat-time {
   font-family: var(--hack-mono);
-  font-size: 11px;
+  font-size: 10px;
   color: #94a3b8;
 }
+
+.term-mazdak-body-fa,
 .mazdak-threat-body-fa {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   color: #fff;
-  line-height: 1.6;
-  text-shadow: 0 0 6px rgba(255, 0, 60, 0.3);
+  line-height: 1.7;
+  text-shadow: 0 0 6px rgba(255, 0, 60, 0.25);
+  direction: rtl;
+  text-align: right;
 }
+
+.term-mazdak-sub-en,
 .mazdak-threat-sub-en {
   font-family: var(--hack-mono);
   font-size: 11px;
   color: #ff4d6d;
   direction: ltr;
   text-align: right;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
 }
 
 /* زلزله و لرزش شدیدتر و ممتد هنگام صعود ترمینال */
-body.screen-intense-quake {
-  animation: intenseViewportQuake 0.85s cubic-bezier(0.36, 0.07, 0.19, 0.97) both infinite;
-}
+body.screen-intense-quake { animation: none !important; }
 @keyframes intenseViewportQuake {
   0% { transform: translate(0, 0) rotate(0deg); }
   10% { transform: translate(-8px, 6px) rotate(-0.6deg); }
@@ -1141,9 +1177,7 @@ body.screen-intense-quake {
 }
 
 /* لرزش پیوسته و هراس‌انگیز هنگام صعود در مرکز صفحه */
-body.screen-cyber-tremor {
-  animation: subtleCyberTremor 0.12s infinite alternate;
-}
+body.screen-cyber-tremor { animation: none !important; }
 @keyframes subtleCyberTremor {
   0% { transform: translate(-1.5px, 1px); }
   100% { transform: translate(1.5px, -1px); }
@@ -1209,4 +1243,8 @@ body.screen-cyber-tremor {
   align-items: center;
   gap: 8px;
   margin-bottom: 6px;
+}
+
+#security-terminal.is-elevated {
+  animation: none !important;
 }

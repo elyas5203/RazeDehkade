@@ -174,3 +174,4 @@ flowchart TD
 - [MASTER_13: ارتقای سکانس صعود و فرود هیدرولیک ترمینال با FLIP پورتال‌شده و سنتز صوتی Web Audio](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_13_TERMINAL_CINEMATIC_ELEVATION_AND_SLAM.md)
 - [MASTER_14: یکپارچه‌سازی و وحدت بصری ۱۰۰٪ درگاه احراز هویت اضطراری با تم Warm Noir](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_14_VISUAL_THEME_UNIFICATION_AND_PORTAL_POLISH.md)
 - [MASTER_15: نبرد سایبری مزداک، قفل تامپر ابزارها، استامپ رسانه‌ها، رفع پرش لاگ‌ها، نبرد فیک چت، تمدید مودال خروج به ۵ دقیقه و فرم تک‌فیلدی اضطراری](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_15_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md)
+- [MASTER_16: پولیش نبرد سایبری مزداک، اصلاح استامپ رسانه‌ها، رفع لرزش و توقف استریم روتین ترمینال، و سناریوی دیالوگ طبیعی جعل هویت](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_16_MAZDAK_CYBER_WARFARE_POLISH.md)
