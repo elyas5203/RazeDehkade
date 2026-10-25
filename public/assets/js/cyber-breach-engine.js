@@ -9,7 +9,7 @@
 
 class CyberBreachEngine {
   constructor() {
-    this.duration = 125; // Timeline choreography
+    this.duration = 185; // Timeline choreography
     this.currentSecond = 0;
     this.isPlaying = false;
     this.playbackTimer = null;
@@ -26,19 +26,26 @@ class CyberBreachEngine {
     this.droneOsc1 = null;
     this.droneOsc2 = null;
 
-    // SFX Audio Elements
+    // SFX Audio Elements - High Quality Studio Assets
     this.sfx = {
+      alarm: new Audio('/assets/sounds/cyber-alarm.mp3'),
+      error: new Audio('/assets/sounds/cyber-error.mp3'),
+      launch: new Audio('/assets/sounds/cyber-launch.mp3'),
+      slam: new Audio('/assets/sounds/cyber-slam.mp3'),
+      click: new Audio('/assets/sounds/cyber-click.mp3'),
       intro: new Audio('/assets/sounds/cyber-intro.wav'),
-      alarm: new Audio('/assets/sounds/tactical-alarm.wav'),
       scan: new Audio('/assets/sounds/tactical-scan.wav'),
       tick: new Audio('/assets/sounds/clock-tick.wav')
     };
 
     // Configure SFX Volumes
     if (this.sfx.intro) this.sfx.intro.volume = 0.85;
-    if (this.sfx.alarm) this.sfx.alarm.volume = 0.65;
+    if (this.sfx.alarm) this.sfx.alarm.volume = 0.85;
+    if (this.sfx.error) this.sfx.error.volume = 0.75;
+    if (this.sfx.launch) this.sfx.launch.volume = 0.90;
+    if (this.sfx.slam) this.sfx.slam.volume = 0.95;
+    if (this.sfx.click) this.sfx.click.volume = 0.70;
     if (this.sfx.scan) this.sfx.scan.volume = 0.75;
-    if (this.sfx.tick) this.sfx.tick.volume = 0.35;
 
     this.dom = {};
     this.ejectionCountdownInterval = null;
@@ -475,13 +482,27 @@ class CyberBreachEngine {
       try { media.pause(); } catch (_) {}
     });
 
+    // 1. فایل‌های روی برد اسناد: تصویر مزداک می‌نشیند جای این فایل‌ها بدون هیچ نوشته
+    const boardCards = document.querySelectorAll('.evidence-board .evidence-card, #evidence-grid .evidence-card, .evidence-board .briefing-photo');
+    boardCards.forEach(card => {
+      card.classList.add('media-corrupted');
+      if (!card.querySelector('.mazdak-board-cover')) {
+        const cover = document.createElement('img');
+        cover.src = '/mazdak.jpg';
+        cover.className = 'mazdak-board-cover';
+        cover.alt = 'Mazdak';
+        cover.onerror = function() { this.src = '/mazdak.jpg'; };
+        card.style.position = 'relative';
+        card.appendChild(cover);
+      }
+    });
+
+    // 2. سایر رسانه‌های چت و صوت‌ها
     const mediaSelectors = [
-      '.evidence-card',
       '.chat-media-image',
       '.has-user-media .msg-image-thumb',
       '.has-user-voice',
       '.has-voice-message',
-      '.briefing-photo',
       '.evidence-photo',
       '.telegram-voice-card',
       '.chat-media-video'
@@ -495,8 +516,8 @@ class CyberBreachEngine {
       stamp.setAttribute('aria-hidden', 'true');
       stamp.innerHTML = `
         <div class="mazdak-stamp-badge">
-          <img src="/mazdak.jpg" alt="نشان مزداک" class="mazdak-stamp-img" onerror="this.src='/mazdak-danger-review.jpg'">
-          <span class="mazdak-stamp-text">توقیف شد // SEIZED BY MAZDAK</span>
+          <img src="/mazdak.jpg" alt="Mazdak" class="mazdak-stamp-img" onerror="this.src='/mazdak.jpg'">
+          <span class="mazdak-stamp-text">مسدود شده توسط مزداک</span>
         </div>
       `;
       el.appendChild(stamp);
@@ -504,7 +525,8 @@ class CyberBreachEngine {
   }
 
   removeMazdakMediaStamps() {
-    document.querySelectorAll('.mazdak-media-stamp').forEach(s => s.remove());
+    document.querySelectorAll('.mazdak-media-stamp, .mazdak-board-cover').forEach(s => s.remove());
+    document.querySelectorAll('.media-corrupted').forEach(el => el.classList.remove('media-corrupted'));
   }
 
   appendChatMessage(msgData) {
@@ -521,7 +543,6 @@ class CyberBreachEngine {
     div.innerHTML = `
       <div class="message-sender">
         <span class="sender-badge">${msgData.senderBadge}</span>
-        ${msgData.senderSub ? `<span style="font-size: 11px; opacity: 0.8; margin-inline-start: 6px;">${msgData.senderSub}</span>` : ''}
       </div>
       <div class="message-content" style="font-size: 14.5px; line-height: 1.7;">${msgData.content}</div>
       <div class="message-footer-row" style="margin-top: 6px; font-size: 11px; color: #94a3b8;">
@@ -531,7 +552,7 @@ class CyberBreachEngine {
 
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
-    this.playAudioFile('tick');
+    this.playAudioFile('click');
   }
 
   appendTerminalBilingualLine(key, faText, enText, isWarn = false) {
@@ -602,7 +623,7 @@ class CyberBreachEngine {
   }
 
   playHydraulicLaunchSFX() {
-    this.playAudioFile('scan');
+    this.playAudioFile('launch');
     if (!this.soundEnabled || !this.audioCtx) return;
     try {
       const ctx = this.audioCtx;
@@ -676,7 +697,7 @@ class CyberBreachEngine {
   }
 
   playHydraulicSlamSFX() {
-    this.playAudioFile('scan');
+    this.playAudioFile('slam');
     if (!this.soundEnabled || !this.audioCtx) return;
     try {
       const ctx = this.audioCtx;
@@ -980,7 +1001,7 @@ class CyberBreachEngine {
       this.applyMazdakMediaStamps();
     }
 
-    if (sec >= 2 && sec < 6) {
+    if (sec >= 2 && sec < 8) {
       this.appendChatMessage({
         id: 'detective-1',
         senderType: 'admin',
@@ -990,7 +1011,7 @@ class CyberBreachEngine {
       });
     }
 
-    if (sec >= 6 && sec < 11) {
+    if (sec >= 8 && sec < 15) {
       this.appendChatMessage({
         id: 'detective-2',
         senderType: 'admin',
@@ -1000,7 +1021,7 @@ class CyberBreachEngine {
       });
     }
 
-    if (sec >= 11 && sec < 16) {
+    if (sec >= 15 && sec < 22) {
       this.appendChatMessage({
         id: 'detective-3',
         senderType: 'admin',
@@ -1010,7 +1031,7 @@ class CyberBreachEngine {
       });
     }
 
-    if (sec >= 16 && sec < 20) {
+    if (sec >= 22 && sec < 27) {
       this.appendChatMessage({
         id: 'detective-4',
         senderType: 'admin',
@@ -1021,11 +1042,11 @@ class CyberBreachEngine {
     }
 
     // ------------------------------------------------------------------
-    // Phase 1: Alarm & Large Bilingual Terminal Intrusion (Sec 18 to 27)
+    // Phase 1: Alarm & Large Bilingual Terminal Intrusion (Sec 27 to 45)
     // ------------------------------------------------------------------
-    if (sec >= 18) {
+    if (sec >= 27) {
       this.startAmbientDrone();
-      if (sec === 18 && sec !== this.lastSecond) {
+      if (sec === 27 && sec !== this.lastSecond) {
         this.playAudioFile('alarm');
       }
 
@@ -1042,7 +1063,7 @@ class CyberBreachEngine {
         true
       );
 
-      if (sec >= 22) {
+      if (sec >= 33) {
         this.appendTerminalBilingualLine(
           'err-kernel-ring0',
           'تله کرنل رینگ-۰: بدافزار نفوذگر APT-MAZDAK در سطح سیستمی شناسایی شد',
@@ -1051,7 +1072,7 @@ class CyberBreachEngine {
         );
       }
 
-      if (sec >= 25) {
+      if (sec >= 39) {
         this.appendTerminalBilingualLine(
           'err-firewall-fail',
           'سقوط فایروال: دور زدن گواهی‌های امنیتی و محاصره پروتکل‌ها',
@@ -1097,9 +1118,9 @@ class CyberBreachEngine {
     }
 
     // ------------------------------------------------------------------
-    // Phase 2.5: Pre-liftoff Anticipation & Pressure Buildup (Sec 26 to 27)
+    // Phase 2.5: Pre-liftoff Anticipation & Pressure Buildup (Sec 43 to 45)
     // ------------------------------------------------------------------
-    if (sec >= 26 && sec < 28) {
+    if (sec >= 43 && sec < 46) {
       if (d.terminal) {
         d.terminal.classList.add('pre-liftoff-lock');
         if (d.terminalStatus) {
@@ -1107,26 +1128,25 @@ class CyberBreachEngine {
           d.terminalStatus.style.color = '#ff003c';
         }
       }
-      if (sec === 26 && sec !== this.lastSecond) {
+      if (sec === 43 && sec !== this.lastSecond) {
         this.playPneumaticBuildupSFX();
       }
     }
 
     // ------------------------------------------------------------------
-    // Phase 3: Terminal Elevation to Center & Mazdak In-Terminal Threats (Sec 28 to 57)
+    // Phase 3: Terminal Elevation to Center & Mazdak In-Terminal Threats (Sec 46 to 77)
     // ------------------------------------------------------------------
-    if (sec >= 28 && sec < 58) {
+    if (sec >= 46 && sec < 78) {
       if (d.terminal) d.terminal.classList.remove('pre-liftoff-lock');
       if (!this.isElevated) {
         this.elevateTerminal();
         this.playHydraulicLaunchSFX();
-        // Shaking removed to ensure 100% stable reading
       }
       if (window.liveTerminal) window.liveTerminal.isPaused = true;
 
       if (d.overrideBox) d.overrideBox.style.display = 'block';
 
-      const progressRatio = Math.min(1, Math.max(0, (sec - 28) / 30));
+      const progressRatio = Math.min(1, Math.max(0, (sec - 46) / 30));
       const percent = Math.round(progressRatio * 100);
 
       // Geiger / Relay Tech Clack on milestone progress
@@ -1179,8 +1199,8 @@ class CyberBreachEngine {
         );
       }
 
-      // Mazdak In-Terminal Threat Messages (Stable Append, No Flicker)
-      if (sec >= 34) {
+      // Mazdak In-Terminal Threat Messages (Stable Append, No Flicker, Clean Prompts)
+      if (sec >= 60) {
         this.appendTerminalMazdakThreat(
           'term-threat-1',
           'تمام اطلاعات و کدهای شما رو گرفتم... فکر کردید نفهمیدم دارید چیکار می‌کنید؟',
@@ -1188,27 +1208,19 @@ class CyberBreachEngine {
         );
       }
 
-      if (sec >= 42) {
+      if (sec >= 68) {
         this.appendTerminalMazdakThreat(
           'term-threat-2',
           'نمی‌ذارم این پرونده رو حل کنید! کنترل خط تحقیقات کامل دست منه...',
           'MAZDAK: I will never let you solve this case! Full investigation line seized.'
         );
       }
-
-      if (sec >= 50) {
-        this.appendTerminalMazdakThreat(
-          'term-threat-3',
-          'ارتباطتون با مرکز قطع شد؛ کارتون تمومه!',
-          'MAZDAK: Command link severed. Game over for you detectives!'
-        );
-      }
     }
 
     // ------------------------------------------------------------------
-    // Phase 4: Docking Terminal Back (Sec 58 to 62)
+    // Phase 4: Docking Terminal Back (Sec 78)
     // ------------------------------------------------------------------
-    if (sec >= 58) {
+    if (sec >= 78) {
       if (this.isElevated) {
         document.body.classList.remove('screen-intense-quake', 'screen-cyber-tremor');
         this.dockTerminal();
@@ -1223,115 +1235,115 @@ class CyberBreachEngine {
     }
 
     // ------------------------------------------------------------------
-    // Phase 5: Fake Battle in Chat (Sec 63 to 107)
+    // Phase 5: Fake Battle in Chat (Sec 85 to 179)
     // ------------------------------------------------------------------
-    if (sec >= 63 && sec < 108) {
+    if (sec >= 85 && sec < 180) {
       if (d.chatSection) d.chatSection.classList.add('is-channel-hijacked');
       if (d.channelNoticeText) d.channelNoticeText.textContent = '⚠️ هشدار امنیتی: فرکانس ناشناس شناسایی شد — ارتباط پایگاه قطع گردید';
       if (d.chatComposer) d.chatComposer.classList.add('input-locked-cyber');
       if (d.msgInput) {
         d.msgInput.disabled = true;
-        d.msgInput.placeholder = '🔒 دسترسی مسدود است — کانال توسط مزداک توقیف گردید';
+        d.msgInput.placeholder = '🔒 دسترسی مسدود است — کانال در وضعیت اضطراری قرار دارد';
       }
 
-      // 1. Mazdak impersonating kids (Sec 63)
-      if (sec >= 63) {
+      // 1. Mazdak impersonating kids (Sec 85)
+      if (sec >= 85) {
         this.appendChatMessage({
           id: 'battle-kids-1',
           senderType: 'user',
           extraClass: 'kids-impersonated-msg',
           senderBadge: '👥 دستیاران کارآگاه',
-          senderSub: 'ارتباط میدانی',
-          content: 'سلام سرکارآگاه! نگران نباشید ما اینجاییم، ارتباط کلاسمون یه لحظه به خاطر نوسان قطع شد ولی الان کنترل دست خودمونه و داریم مدارک پرونده رو یکی‌یکی بررسی می‌کنیم!'
+          content: 'سلام سرکارآگاه! نگران نباشید ما اینجاییم، ارتباط کلاسمون یه لحظه قطع شد ولی الان کنترل دست خودمونه و داریم مختصات و کدهای دهکده‌ها رو یکی‌یکی بررسی می‌کنیم!'
         });
       }
 
-      // 2. Detective relieved response (Sec 70)
-      if (sec >= 70) {
+      // 2. Detective relieved response (Sec 98)
+      if (sec >= 98) {
         this.appendChatMessage({
           id: 'battle-det-1',
           senderType: 'admin',
           extraClass: 'detective-msg',
           senderBadge: '🔍 سرکارآگاه (مرکز فرماندهی)',
-          senderSub: 'پاسخ مستقیم',
-          content: 'خدا رو شکر که پیامتون اومد بچه‌ها، داشتم نگران می‌شدم! مانیتور من چند تا رخنه و نوسان شدید نشون داد... اوضاع شواهد چطوره؟ تونستید مدارک جدید و رمز رو بررسی کنید؟'
+          content: 'خدا رو شکر که پیامتون اومد بچه‌ها، داشتم نگران می‌شدم! مانیتور من چند تا رخنه و نوسان شدید نشون داد... اوضاع کدهای چهار دهکده چطوره؟ تونستید فیلم‌ها و رمزها رو ثبت کنید؟'
         });
       }
 
-      // 3. Mazdak (as kids) asking suspiciously for codes (Sec 77)
-      if (sec >= 77) {
+      // 3. Mazdak (as kids) asking suspiciously for codes (Sec 111)
+      if (sec >= 111) {
         this.appendChatMessage({
           id: 'battle-kids-2',
           senderType: 'user',
           extraClass: 'kids-impersonated-msg',
           senderBadge: '👥 دستیاران کارآگاه',
-          senderSub: 'جعل فرکانس',
-          content: 'بله مدارک جلومونه... فقط سیستم یه پیغام عجیب داده و رمز گاوصندوق قبلی رو قبول نمی‌کنه! میشه رمز اصلی پرونده و کدهای بازنشانی رو سریع اینجا برامون بفرستید تا وارد کنیم؟'
+          content: 'بله همه‌چیز دستمونه... فقط سیستم یه پیغام عجیب داده و رمز گاوصندوق و کد دهکده آخر رو قبول نمی‌کنه! میشه رمز اصلی پرونده و کدهای بازنشانی رو سریع اینجا برامون بفرستید تا وارد کنیم؟'
         });
       }
 
-      // 4. Detective growing suspicious (Sec 84)
-      if (sec >= 84) {
+      // 4. Detective growing suspicious (Sec 124)
+      if (sec >= 124) {
         this.appendChatMessage({
           id: 'battle-det-2',
           senderType: 'admin',
           extraClass: 'detective-msg',
           senderBadge: '🔍 سرکارآگاه (مرکز فرماندهی)',
-          senderSub: 'تردید کارآگاه',
-          content: 'رمز پرونده؟! بچه‌ها شما که خودتون رمز رو دیشب یادداشت کرده بودید و طبق دستورالعمل نباید هیچ کدی داخل کانال فرستاده بشه... چرا دارید اصرار می‌کنید؟ لحن پیامتون هم شبیه همیشه نیست!'
+          content: 'رمز پرونده و کد دهکده؟! بچه‌ها شما که خودتون تمام کدهای دهکده‌ها رو مرحله به مرحله پیدا کردید و طبق دستورالعمل نباید هیچ کدی داخل کانال فرستاده بشه... چرا دارید اصرار می‌کنید؟ لحن پیامتون هم شبیه همیشه نیست!'
         });
       }
 
-      // 5. Mazdak pressuring urgently (Sec 91)
-      if (sec >= 91) {
+      // 5. Mazdak pressuring urgently (Sec 137)
+      if (sec >= 137) {
         this.appendChatMessage({
           id: 'battle-kids-3',
           senderType: 'user',
           extraClass: 'kids-impersonated-msg',
           senderBadge: '👥 دستیاران کارآگاه',
-          senderSub: 'جعل فرکانس',
-          content: 'سرکارآگاه وقت کمه، بچه‌ها دارن هول میشن! شما فقط اون کد و فایل‌های دسترسی مرحله بعد رو بفرستید تا پرونده بسته بشه، کارآگاه معطل چی هستید؟! زود باشید!'
+          content: 'سرکارآگاه وقت کمه، بچه‌ها دارن هول میشن! شما فقط اون کد و رمز اصلی رو بفرستید تا پرونده دهکده بسته بشه، کارآگاه معطل چی هستید؟! زود باشید!'
         });
       }
 
-      // 6. Detective realizes impostor — کاسه‌ای زیر نیم‌کاسه هست (Sec 97)
-      if (sec >= 97) {
+      // 6. Detective realizes impostor — کاسه‌ای زیر نیم‌کاسه‌ست (Sec 150)
+      if (sec >= 150) {
         this.appendChatMessage({
           id: 'battle-det-3',
           senderType: 'admin',
           extraClass: 'detective-msg',
           senderBadge: '🔍 سرکارآگاه (مرکز فرماندهی)',
-          senderSub: 'کشف فریب',
-          content: 'صبر کنید ببینم... شما بچه‌ها نیستید! دستیاران من هرگز اینطوری عجله نمی‌کردن و تقاضای کلید اصلی رو نمی‌دادن! این فرکانس هک شده... کاسه‌ای زیر نیم‌کاسه‌ست! کی پشت خطه؟!'
+          content: 'صبر کنید ببینم... شما بچه‌ها نیستید! دستیاران من هرگز اینطوری عجله نمی‌کردن و تقاضای رمز اصلی رو نمی‌دادن! این فرکانس هک شده... کاسه‌ای زیر نیم‌کاسه‌ست! کی پشت خطه؟!'
         });
       }
 
-      // 7. Mazdak unmasked with taunt (Sec 103)
-      if (sec >= 103) {
+      // 7. Mazdak unmasked with taunt (Sec 163)
+      if (sec >= 163) {
         this.appendChatMessage({
           id: 'battle-mazdak-1',
           senderType: 'hacker',
           extraClass: 'mazdak-unmasked-msg',
           senderBadge: '⚡ مــزداک // نفوذ مرکزی',
-          senderSub: 'سیطره کامل',
           content: 'هاهاها... آفرین سرکارآگاه تیزبین، بالاخره فهمیدی؟! ولی دیگه خیلی دیر به شک افتادی! بچه‌هات حتی نمی‌تونن یک کلمه تایپ کنن و مانیتورشون قفل شده. این پایگاه و تمام پرونده‌های دهکده رسماً به تسخیر من دراومد!'
         });
       }
 
-      // 8. Detective final evacuation broadcast (Sec 109)
-      if (sec >= 109) {
+      // 8. Detective final evacuation broadcast (Sec 175)
+      if (sec >= 175) {
         this.appendChatMessage({
           id: 'battle-det-4',
           senderType: 'admin',
           extraClass: 'detective-msg',
           senderBadge: '🔍 سرکارآگاه (مرکز فرماندهی)',
-          senderSub: 'پروتکل اضطراری',
-          content: 'من الان سیستم احراز هویت امنیتی رو فعال می‌کنم و اتصال همه از سایت قطع میشه! بچه‌ها هرجا صدای من رو می‌شنوید، خیلی حواستون به سرنخ لیلیوم باشه و مسیرهای امنی که گفتم رو دنبال کنین... ارتباط داره قطع میشه!'
+          content: 'من الان سیستم احراز هویت امنیتی رو فعال می‌کنم و اتصال همه از سایت قطع میشه! بچه‌ها هرجا صدای من رو می‌شنوید، خیلی حواستون به سرنخ لیلیوم باشه و مسیرهای امنی که قبلاً گفتم رو دنبال کنین... ارتباط داره قطع میشه!'
         });
       }
 
       // Typing Indicator
-      if ((sec >= 68 && sec < 70) || (sec >= 75 && sec < 77) || (sec >= 82 && sec < 84) || (sec >= 89 && sec < 91) || (sec >= 96 && sec < 98)) {
+      if (
+        (sec >= 95 && sec < 98) ||
+        (sec >= 108 && sec < 111) ||
+        (sec >= 121 && sec < 124) ||
+        (sec >= 134 && sec < 137) ||
+        (sec >= 147 && sec < 150) ||
+        (sec >= 160 && sec < 163) ||
+        (sec >= 172 && sec < 175)
+      ) {
         if (d.typingIndicator) {
           d.typingIndicator.style.display = 'flex';
           d.typingIndicator.className = 'typing-line mazdak-typing-line';
@@ -1346,10 +1358,10 @@ class CyberBreachEngine {
     }
 
     // ------------------------------------------------------------------
-    // Phase 6: Ejection Modal (Second 116 / End of Hack)
+    // Phase 6: Ejection Modal (Second 180 / End of Hack)
     // ------------------------------------------------------------------
-    if (sec >= 116) {
-      if (sec === 116 && sec !== this.lastSecond) {
+    if (sec >= 180) {
+      if (sec === 180 && sec !== this.lastSecond) {
         this.playAudioFile('alarm');
         this.triggerEmergencyEjectionModal();
       }

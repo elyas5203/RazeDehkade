@@ -184,4 +184,28 @@ test('Mazdak Cyber Warfare, Tamper Lockdown & Emergency Recovery (MASTER-15)', a
     assert.ok(engineJs.includes('battle-det-4'), 'Detective broadcasts final evacuation');
   });
 
+  await t.test('11. Cinematic Audio Assets, Textless Board Cover, and No "توقیف" wording', () => {
+    const soundsDir = path.join(ROOT_DIR, 'public', 'assets', 'sounds');
+    const audioFiles = ['cyber-alarm.mp3', 'cyber-error.mp3', 'cyber-launch.mp3', 'cyber-slam.mp3', 'cyber-click.mp3'];
+    audioFiles.forEach(file => {
+      assert.ok(fs.existsSync(path.join(soundsDir, file)), `Sound asset ${file} must exist in public/assets/sounds`);
+    });
+
+    const engineJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'cyber-breach-engine.js'), 'utf8');
+    assert.ok(engineJs.includes('mazdak-board-cover'), 'Engine must create mazdak-board-cover image without text overlay');
+    assert.strictEqual(engineJs.includes('توقیف'), false, 'cyber-breach-engine.js must NOT use the deprecated word "توقیف"');
+
+    const css = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'css', 'cyber-breach-engine.css'), 'utf8');
+    assert.strictEqual(css.includes('توقیف'), false, 'cyber-breach-engine.css must NOT use the deprecated word "توقیف"');
+  });
+
+  await t.test('12. Zero Sub-Tags in Chat Bubbles and Suspense Pacing (185s duration, 10-14s intervals)', () => {
+    const engineJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'cyber-breach-engine.js'), 'utf8');
+    assert.ok(engineJs.includes('this.duration = 185;'), 'Timeline duration must be 185 seconds for extended realistic battle');
+    // Ensure senderSub is completely absent from appendChatMessage
+    assert.strictEqual(engineJs.includes('senderSub'), false, 'appendChatMessage must not render or reference senderSub tags');
+    assert.strictEqual(engineJs.includes('پاسخ مستقیم'), false, 'Chat bubbles must not contain "پاسخ مستقیم" tag');
+    assert.strictEqual(engineJs.includes('جعل فرکانس'), false, 'Chat bubbles must not contain "جعل فرکانس" tag');
+  });
+
 });
