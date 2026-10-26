@@ -22,6 +22,7 @@
   const step1Section = document.getElementById('step1Section');
   const step2Section = document.getElementById('step2Section');
   const step3Section = document.getElementById('step3Section');
+  const securityBriefing = document.getElementById('securityBriefing');
 
   const stepIndicator1 = document.getElementById('stepIndicator1');
   const stepIndicator2 = document.getElementById('stepIndicator2');
@@ -332,13 +333,62 @@
   // =========================================================================
   // Step 1: Phone Submission
   // =========================================================================
+  function createSubmissionIdentity() {
+    return window.crypto?.randomUUID
+      ? window.crypto.randomUUID().replace(/-/g, '')
+      : `quiz_${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
+  }
+
+  function enterQuestionnaire(phone, verificationResult) {
+    if (verificationResult.token) sessionStorage.setItem('userToken', verificationResult.token);
+    if (verificationResult.session) sessionStorage.setItem('userSession', JSON.stringify(verificationResult.session));
+    sessionStorage.setItem('emergency_user_phone', phone);
+    clientSubmissionId = createSubmissionIdentity();
+    activeQuestions = [
+      ...shuffleArray(QUESTIONS_DATABASE.filter(q => q.id !== 'q_precious_gem')),
+      QUESTIONS_DATABASE.find(q => q.id === 'q_precious_gem')
+    ];
+    currentQuestionIndex = 0;
+
+    if (securityBriefing) securityBriefing.hidden = true;
+    if (step1Section) step1Section.style.display = 'none';
+    if (step2Section) step2Section.style.display = 'block';
+    stepIndicator1?.classList.remove('active');
+    stepIndicator1?.classList.add('done');
+    stepIndicator2?.classList.add('active');
+    document.querySelector('.rail-protocol li:nth-child(1)')?.classList.add('is-done');
+    document.querySelector('.rail-protocol li:nth-child(2)')?.classList.add('is-active');
+    renderActiveQuestion();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  async function verifyPhoneAndEnter(phone, { trustedHandoff = false } = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    const existingToken = sessionStorage.getItem('userToken');
+    if (existingToken) headers.Authorization = `Bearer ${existingToken}`;
+
+    const verification = await fetch('/api/emergency-auth/verify-phone', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ phone })
+    });
+    const verificationResult = await verification.json();
+    if (!verification.ok || !verificationResult.success) {
+      throw new Error(verificationResult.message || 'شماره برای این کلاس ثبت نشده است.');
+    }
+
+    if (trustedHandoff) {
+      // Briefing must remain readable long enough to explain why the quiz opened automatically.
+      await new Promise(resolve => setTimeout(resolve, 1900));
+    }
+    enterQuestionnaire(phone, verificationResult);
+  }
+
   if (authPhoneForm) {
     authPhoneForm.addEventListener('submit', async event => {
       event.preventDefault();
       clearAlert();
-
       const phone = normalizeDigits(emergencyPhone ? emergencyPhone.value : '');
-
       if (!/^0?9\d{9}$/.test(phone)) {
         showAlert('شماره موبایل را کامل وارد کن.');
         return;
@@ -346,48 +396,8 @@
 
       submitStep1Btn.disabled = true;
       submitStep1Btn.innerHTML = '<span>در حال آماده‌سازی سرنخ‌ها...</span>';
-
       try {
-        const existingToken = sessionStorage.getItem('userToken');
-        const headers = { 'Content-Type': 'application/json' };
-        if (existingToken) {
-          headers['Authorization'] = `Bearer ${existingToken}`;
-        }
-        const verification = await fetch('/api/emergency-auth/verify-phone', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ phone })
-        });
-        const verificationResult = await verification.json();
-        if (!verification.ok || !verificationResult.success) {
-          throw new Error(verificationResult.message || 'شماره برای این کلاس ثبت نشده است.');
-        }
-
-        // ذخیره یا تمدید توکن و مشخصات جلسه دریافتی از سرور
-        if (verificationResult.token) {
-          sessionStorage.setItem('userToken', verificationResult.token);
-        }
-        if (verificationResult.session) {
-          sessionStorage.setItem('userSession', JSON.stringify(verificationResult.session));
-        }
-        sessionStorage.setItem('emergency_user_phone', phone);
-        clientSubmissionId = window.crypto?.randomUUID
-          ? window.crypto.randomUUID().replace(/-/g, '')
-          : `quiz_${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
-        // سؤال ویدیویی برای همه شرکت‌کنندگان آخر می‌ماند.
-        activeQuestions = [...shuffleArray(QUESTIONS_DATABASE.filter(q => q.id !== 'q_precious_gem')),
-          QUESTIONS_DATABASE.find(q => q.id === 'q_precious_gem')];
-        currentQuestionIndex = 0;
-
-        step1Section.style.display = 'none';
-        step2Section.style.display = 'block';
-
-        stepIndicator1.classList.remove('active');
-        stepIndicator1.classList.add('done');
-        stepIndicator2.classList.add('active');
-
-        renderActiveQuestion();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        await verifyPhoneAndEnter(phone);
       } catch (err) {
         showAlert(err.message || 'خطا در برقراری ارتباط با سامانه. مجدداً تلاش کنید.');
         submitStep1Btn.disabled = false;
@@ -395,6 +405,29 @@
       }
     });
   }
+
+  async function attemptTrustedHandoff() {
+    const savedPhone = normalizeDigits(
+      sessionStorage.getItem('emergency_user_phone') || sessionStorage.getItem('teacherPhone') || ''
+    );
+    const token = sessionStorage.getItem('userToken');
+    let session = null;
+    try { session = JSON.parse(sessionStorage.getItem('userSession') || 'null'); } catch (_) {}
+    if (!savedPhone || !token || !session?.id) return;
+
+    if (step1Section) step1Section.style.display = 'none';
+    if (securityBriefing) securityBriefing.hidden = false;
+    try {
+      await verifyPhoneAndEnter(savedPhone, { trustedHandoff: true });
+    } catch (_) {
+      // Expired/invalid handoff: recover safely to the manual phone form.
+      if (securityBriefing) securityBriefing.hidden = true;
+      if (step1Section) step1Section.style.display = 'block';
+      showAlert('ارتباط امن قبلی منقضی شده است؛ شمارهٔ ثبت‌شدهٔ کلاس را دوباره وارد کنید.');
+    }
+  }
+
+  attemptTrustedHandoff();
 
   // =========================================================================
   // Step 2: Dynamic Questions & Mini-Games Rendering
@@ -407,6 +440,12 @@
     const currentNum = currentQuestionIndex + 1;
     const q = activeQuestions[currentQuestionIndex];
     if (q.id !== 'q_precious_gem') stopSelfieCamera();
+    const railSteps = document.querySelectorAll('.rail-protocol li');
+    if (railSteps.length === 3 && q.id === 'q_precious_gem') {
+      railSteps[1].classList.remove('is-active');
+      railSteps[1].classList.add('is-done');
+      railSteps[2].classList.add('is-active');
+    }
     questionRevision++;
 
     if (currentQNumEl) currentQNumEl.textContent = String(currentNum);
@@ -1333,6 +1372,7 @@
       stepIndicator2.classList.remove('active');
       stepIndicator2.classList.add('done');
       stepIndicator3.classList.add('active', 'done');
+      document.querySelectorAll('.rail-protocol li').forEach(item => item.classList.add('is-done'));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (error) {
       showAlert(error.message || 'ثبت پاسخ‌ها انجام نشد. دوباره تلاش کنید.');

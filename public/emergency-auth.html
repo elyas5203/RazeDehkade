@@ -7,7 +7,7 @@
   
   <link rel="preload" href="/assets/scene/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/gateway.css?v=2.0">
-  <link rel="stylesheet" href="/assets/css/emergency-auth.css?v=20261026_1915">
+  <link rel="stylesheet" href="/assets/css/emergency-auth.css?v=20261027_0240">
 </head>
 <body class="gateway-page emergency-auth-page">
 
@@ -21,6 +21,18 @@
   <main class="gateway-main emergency-main" id="emergencyContainer" role="main">
 
     <div class="gateway-card emergency-card" id="emergencyCard">
+      <aside class="emergency-rail" aria-label="وضعیت کانال امنیتی">
+        <div class="rail-brand"><span>RD</span><div><strong>RAZ DEHKADE</strong><small>IDENTITY RECOVERY UNIT</small></div></div>
+        <div class="rail-threat"><i></i><span>رخنه فعال</span><b>LEVEL 05</b></div>
+        <ol class="rail-protocol">
+          <li class="is-active"><span>01</span><div><strong>تطبیق کلاس</strong><small>شمارهٔ ثبت‌شده</small></div></li>
+          <li><span>02</span><div><strong>بازبینی سرنخ‌ها</strong><small>۱۲ ایستگاه پرونده</small></div></li>
+          <li><span>03</span><div><strong>گواهی تصویری</strong><small>دفترچه کنار صورت</small></div></li>
+        </ol>
+        <p class="rail-note">هیچ رمز یا کد گاوصندوقی در این کانال درخواست نمی‌شود.</p>
+      </aside>
+
+      <div class="emergency-workspace">
       
       <!-- آیکون نشان بالای کارت -->
       <div class="card-top-icon" aria-hidden="true">⌁</div>
@@ -48,6 +60,14 @@
 
       <!-- پیام وضعیت / آلرت خطای سیستم -->
       <div id="statusAlert" class="status-msg" role="alert" style="display: none;"></div>
+
+      <section id="securityBriefing" class="security-briefing" hidden aria-live="polite">
+        <div class="briefing-scan" aria-hidden="true"></div>
+        <span class="briefing-kicker">SECURITY BREACH // IDENTITY HANDOFF</span>
+        <h2>به‌علت رخنهٔ امنیتی دشمن، هویت شما باید دوباره تأیید شود</h2>
+        <p>به سرنخ‌های داخل پرونده‌ای که همراهتان است مراجعه کنید. به پیام‌های مشکوک اعتماد نکنید و هیچ رمز محرمانه‌ای را در چت ننویسید.</p>
+        <div class="briefing-status"><i></i><span>شمارهٔ ثبت‌شده پیدا شد؛ در حال باز کردن سؤال اول…</span></div>
+      </section>
 
       <!-- ============================================================== -->
       <!-- گام اول: ورود شماره همراه ثبت‌شده -->
@@ -139,6 +159,8 @@
         </div>
       </section>
 
+      </div>
+
     </div>
   </main>
 
@@ -147,6 +169,6 @@
   </footer>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/assets/js/emergency-auth.js?v=20261026_1915"></script>
+  <script src="/assets/js/emergency-auth.js?v=20261027_0240"></script>
 </body>
 </html>

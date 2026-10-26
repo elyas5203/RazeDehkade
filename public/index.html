@@ -367,10 +367,10 @@
 
           if (data.isHacked) {
             feedback.style.color = '#ef4444';
-            feedback.innerHTML = `⚠️ کلاس در وضعیت نفوذ سایبری است؛ در حال انتقال مستقیم به درگاه احراز هویت اضطراری…`;
+            feedback.innerHTML = `⚠️ <strong>رخنهٔ امنیتی شناسایی شد.</strong><br>به‌دلیل نفوذ دشمن به سایت، باید هویت شما تأیید شود. پرونده و سرنخ‌هایی را که همراهتان است کنار دستتان بگذارید؛ مستقیم به سؤال اول منتقل می‌شوید…`;
             setTimeout(() => {
               window.location.href = data.redirectUrl || '/emergency-auth.html';
-            }, 600);
+            }, 2400);
             return;
           }
 

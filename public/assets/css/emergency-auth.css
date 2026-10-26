@@ -1468,6 +1468,147 @@ body.emergency-auth-page::before {
 }
 .easel-art__canvas i { position: absolute; width: 24px; height: 24px; border-radius: 50%; bottom: 17%; box-shadow: inset 0 2px 5px #0006; }
 .easel-art__canvas i:nth-of-type(1) { right: 27%; background: #a13e48; }
+
+/* ==========================================================================
+   MASTER-27 — responsive incident-response dossier redesign
+   ========================================================================== */
+body.emergency-auth-page {
+  --incident-red: #ff3b57;
+  --incident-cyan: #60d9ff;
+  --incident-ink: #071019;
+  --incident-panel: #0d1923;
+  --incident-line: rgba(125, 170, 193, .22);
+  background:
+    radial-gradient(ellipse at 82% -10%, rgba(32, 122, 163, .2), transparent 40%),
+    radial-gradient(ellipse at 4% 110%, rgba(154, 31, 54, .16), transparent 42%),
+    linear-gradient(145deg, #050b11, #0a141d 48%, #071019);
+}
+body.emergency-auth-page::before {
+  background-image:
+    linear-gradient(rgba(91, 151, 178, .055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(91, 151, 178, .055) 1px, transparent 1px);
+  background-size: 42px 42px;
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent 88%);
+  mask-image: linear-gradient(to bottom, #000, transparent 88%);
+}
+.emergency-main { max-width: 1180px; padding: clamp(16px, 3vw, 42px); }
+.emergency-card {
+  display: grid;
+  grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  min-height: min(780px, calc(100dvh - 56px));
+  border: 1px solid rgba(122, 167, 190, .28);
+  border-radius: 24px;
+  background: rgba(8, 17, 25, .88);
+  box-shadow: 0 34px 90px #000b, inset 0 1px rgba(255,255,255,.05), 0 0 0 1px rgba(255,59,87,.04);
+}
+.emergency-rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 30px 24px;
+  direction: rtl;
+  color: #dbe9ef;
+  background:
+    linear-gradient(180deg, rgba(26, 49, 63, .94), rgba(10, 25, 35, .98)),
+    repeating-linear-gradient(135deg, transparent 0 12px, rgba(255,255,255,.02) 12px 13px);
+  border-left: 1px solid var(--incident-line);
+}
+.emergency-rail::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(100deg, transparent 42%, rgba(96,217,255,.035) 50%, transparent 58%);
+  transform: translateX(-120%); animation: emergencyRailSweep 7s ease-in-out infinite;
+}
+.rail-brand { display: flex; align-items: center; gap: 12px; direction: ltr; }
+.rail-brand > span { width: 45px; height: 45px; display: grid; place-items: center; border: 1px solid #77d9f377; color: #b9efff; background: #0b202d; font: 900 14px var(--font-mono); clip-path: polygon(0 0,78% 0,100% 22%,100% 100%,22% 100%,0 78%); }
+.rail-brand div { display: grid; gap: 3px; }
+.rail-brand strong { color: #f3fbff; font: 800 11px var(--font-mono); letter-spacing: .12em; }
+.rail-brand small { color: #6f9aad; font: 700 8px var(--font-mono); letter-spacing: .08em; }
+.rail-threat { display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: 9px; padding: 11px 12px; border: 1px solid rgba(255,59,87,.36); background: rgba(255,59,87,.08); border-radius: 8px; }
+.rail-threat i { width: 8px; height: 8px; border-radius: 50%; background: var(--incident-red); box-shadow: 0 0 13px var(--incident-red); animation: incidentPulse 1.8s ease-in-out infinite; }
+.rail-threat span { font-size: 12px; color: #ffc5ce; }
+.rail-threat b { direction: ltr; color: #ff7287; font: 800 9px var(--font-mono); }
+.rail-protocol { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.rail-protocol li { display: grid; grid-template-columns: 34px 1fr; align-items: center; gap: 10px; padding: 10px; opacity: .43; border-right: 2px solid #45606d; transition: opacity .25s, border-color .25s, background .25s; }
+.rail-protocol li > span { color: #7192a2; font: 800 10px var(--font-mono); }
+.rail-protocol li div { display: grid; gap: 2px; }
+.rail-protocol strong { color: #e8f4f7; font-size: 12px; }
+.rail-protocol small { color: #83a0ad; font-size: 10px; }
+.rail-protocol li.is-active { opacity: 1; border-color: var(--incident-cyan); background: rgba(96,217,255,.06); }
+.rail-protocol li.is-done { opacity: .76; border-color: #35d399; }
+.rail-note { margin: auto 0 0; padding: 13px; color: #91a8b3; font-size: 10px; line-height: 1.9; border-top: 1px solid var(--incident-line); }
+.emergency-workspace { min-width: 0; padding: clamp(26px, 5vw, 54px); position: relative; }
+.emergency-workspace::before { content: 'CASE FILE // IDENTITY RECOVERY'; display: block; margin-bottom: 22px; direction: ltr; color: #6f96a9; font: 800 9px var(--font-mono); letter-spacing: .18em; }
+.emergency-title { text-align: right; margin: 0; color: #f2f8fa; font-size: clamp(26px, 4vw, 42px); letter-spacing: -.035em; }
+.emergency-subtitle { text-align: right; margin: 8px 0 24px; color: #94aebb; font-size: 14px; }
+.security-briefing { position: relative; overflow: hidden; padding: clamp(24px, 5vw, 48px); min-height: 330px; display: grid; align-content: center; border: 1px solid rgba(255,59,87,.34); background: radial-gradient(circle at 80% 20%, rgba(255,59,87,.12), transparent 42%), #09131c; border-radius: 18px; box-shadow: inset 0 0 55px #0007; }
+.security-briefing[hidden] { display: none !important; }
+.briefing-scan { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(transparent 49%, rgba(255,77,104,.11) 50%, transparent 51%); background-size: 100% 8px; opacity: .36; }
+.briefing-kicker { position: relative; direction: ltr; color: #ff637a; font: 800 9px var(--font-mono); letter-spacing: .16em; }
+.security-briefing h2 { position: relative; max-width: 660px; margin: 14px 0 12px; color: #fff3f5; font-size: clamp(22px, 4vw, 37px); line-height: 1.55; }
+.security-briefing p { position: relative; max-width: 680px; margin: 0; color: #b8cbd4; font-size: 14px; line-height: 2; }
+.briefing-status { position: relative; display: flex; align-items: center; gap: 10px; margin-top: 24px; color: #99edff; font-size: 12px; }
+.briefing-status i { width: 9px; height: 9px; border-radius: 50%; background: var(--incident-cyan); box-shadow: 0 0 14px var(--incident-cyan); animation: incidentPulse 1.4s ease-in-out infinite; }
+.quiz-progress-wrap { top: 0; margin-inline: 0; background: rgba(8,17,25,.94); border-bottom: 1px solid var(--incident-line); }
+.quiz-progress-fill { background: linear-gradient(90deg, var(--incident-cyan), #b4efff); box-shadow: 0 0 18px rgba(96,217,255,.35); }
+.quiz-progress-meta { color: #b9d7e4; }
+.q-badge { color: var(--incident-cyan); letter-spacing: .04em; }
+.q-title-text { color: #f5fafc; text-wrap: balance; }
+.choice-card-btn, .clue-scene__choice { background: linear-gradient(145deg,#12232e,#0e1b24); border-color: #34505f; box-shadow: 0 7px 22px #0005, inset 0 1px rgba(255,255,255,.035); }
+.choice-card-btn:hover, .clue-scene__choice:hover { border-color: #5c8497; transform: translateY(-1px); }
+.choice-card-btn.selected, .clue-scene__choice.selected { background: #183943 !important; border-color: var(--incident-cyan) !important; box-shadow: inset 4px 0 var(--incident-cyan), 0 0 24px rgba(96,217,255,.11) !important; }
+.quiz-nav-actions { background: linear-gradient(to top,#081119 76%,rgba(8,17,25,.88)); border-color: var(--incident-line); }
+.gateway-submit-btn.btn-emergency { background: linear-gradient(135deg,#d72f4a,#a91f39); border: 1px solid #ff667c; color: #fff; box-shadow: 0 11px 32px rgba(215,47,74,.25); }
+
+@keyframes incidentPulse { 0%,100%{opacity:.35;transform:scale(.82)} 50%{opacity:1;transform:scale(1)} }
+@keyframes emergencyRailSweep { 0%,56%{transform:translateX(-120%)} 74%,100%{transform:translateX(120%)} }
+
+@media (max-width: 900px) {
+  .emergency-main { padding: 14px; }
+  .emergency-card { grid-template-columns: 1fr; min-height: calc(100dvh - 28px); }
+  .emergency-rail { gap: 14px; padding: 18px 20px; border-left: 0; border-bottom: 1px solid var(--incident-line); }
+  .rail-threat { position: absolute; top: 19px; left: 20px; width: min(210px, 44vw); }
+  .rail-protocol { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .rail-protocol li { grid-template-columns: 26px 1fr; min-width: 0; }
+  .rail-protocol small { display: none; }
+  .rail-note { display: none; }
+  .emergency-workspace { padding: clamp(22px, 5vw, 42px); }
+}
+@media (max-width: 600px) {
+  .emergency-main { padding: 0; }
+  .emergency-card { min-height: 100dvh; border: 0; border-radius: 0; box-shadow: none; }
+  .emergency-rail { padding: 14px 15px 12px; }
+  .rail-brand > span { width: 38px; height: 38px; }
+  .rail-brand small { display: none; }
+  .rail-threat { top: 14px; left: 12px; width: auto; padding: 9px 10px; }
+  .rail-threat b { display: none; }
+  .rail-protocol { margin-top: 4px; }
+  .rail-protocol li { display: flex; justify-content: center; min-height: 34px; padding: 7px 5px; border-right: 0; border-bottom: 2px solid #45606d; text-align: center; }
+  .rail-protocol li div { display: none; }
+  .emergency-workspace { padding: 22px 15px calc(96px + env(safe-area-inset-bottom)); }
+  .emergency-workspace::before { margin-bottom: 14px; font-size: 8px; }
+  .emergency-title { font-size: 26px; }
+  .emergency-subtitle { font-size: 13px; line-height: 1.8; }
+  .security-briefing { min-height: 360px; padding: 26px 20px; border-radius: 12px; }
+  .security-briefing h2 { font-size: 24px; }
+  .security-briefing p { font-size: 13px; }
+  .quiz-progress-wrap { margin-top: -8px; }
+  .q-title-text { font-size: clamp(19px, 5.8vw, 24px); }
+  .choice-card-btn, .clue-scene__choice { min-height: 60px; font-size: 14px; }
+}
+@media (max-width: 380px) {
+  .rail-threat span { font-size: 10px; }
+  .emergency-workspace { padding-inline: 11px; }
+  .security-briefing { padding-inline: 16px; }
+  .quiz-nav-actions { margin-inline: -11px; padding-inline: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .emergency-rail::after, .rail-threat i, .briefing-status i { animation: none !important; }
+  .choice-card-btn:hover, .clue-scene__choice:hover { transform: none; }
+}
 .easel-art__canvas i:nth-of-type(2) { right: 45%; background: #c79a42; }
 .easel-art__canvas i:nth-of-type(3) { right: 63%; background: #477c87; }
 .easel-art__beam { position: absolute; bottom: 17%; left: 50%; transform: translateX(-50%); width: min(78%,340px); height: 12px; background: #8c5936; box-shadow: 0 3px 6px #000a; z-index: 2; }
