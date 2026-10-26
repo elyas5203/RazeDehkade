@@ -27,6 +27,7 @@ class InMemoryDatabase {
       app_migrations: [],
       bot_state: [],
       session_assistants: [],
+      emergency_auth_submissions: [],
     };
     this.autoIds = {
       admins: 1,
@@ -39,6 +40,7 @@ class InMemoryDatabase {
       teachers: 1,
       weekly_content: 1,
       session_assistants: 1,
+      emergency_auth_submissions: 1,
     };
   }
 
@@ -52,6 +54,13 @@ class InMemoryDatabase {
     // 1. CREATE TABLE
     if (/^CREATE TABLE/i.test(cleanSql)) {
       return [{ affectedRows: 0, insertId: 0 }, []];
+    }
+
+    if (/^INSERT INTO emergency_auth_submissions/i.test(cleanSql)) {
+      const [reference_code, session_id, phone, answers_json] = params;
+      const id = this.autoIds.emergency_auth_submissions++;
+      this.tables.emergency_auth_submissions.push({ id, reference_code, session_id, phone, answers_json, created_at: new Date() });
+      return [{ affectedRows: 1, insertId: id }, []];
     }
 
     // 2. INSERT INTO admins

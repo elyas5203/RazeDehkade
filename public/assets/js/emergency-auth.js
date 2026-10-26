@@ -50,13 +50,13 @@
       id: 'q_shoe_rotary',
       type: 'rotary_phone',
       title: 'شماره کفش‌فروشی تنها چند است؟',
-      subtitle: 'با چرخاندن شماره‌گیر تلفن زیر، شماره کفش‌فروشی برادر کارآگاه را وارد کنید:'
+      subtitle: 'شماره را بگیر و تماس را برقرار کن.'
     },
     {
       id: 'q_terrorist_newspaper',
       type: 'newspaper_puzzle',
       title: 'اسم گروه تروریستی که به دهکده مرموز حمله کرده بود چه بود؟',
-      subtitle: 'تکه‌های نام گروه تروریستی را انتخاب و به هم متصل کنید:',
+      subtitle: 'دو تکه نام را از روزنامه پیدا کن.',
       pieces: ['مز', 'داک', 'ده', 'کده', 'کار', 'آگاه']
     },
     {
@@ -72,7 +72,8 @@
     },
     {
       id: 'q_padari',
-      type: 'choice',
+      type: 'scene_choice',
+      scene: 'family',
       title: 'آقای پادری گوینده اخبار چه نسبتی با آقایان پادری‌ها که به دهکده‌های مرموز رفتن داشت؟',
       options: [
         { letter: 'الف', text: 'عمه' },
@@ -83,7 +84,8 @@
     },
     {
       id: 'q_invest_2026',
-      type: 'choice',
+      type: 'scene_choice',
+      scene: 'ledger',
       title: 'بهترین سرمایه‌گذاری مالی در سال ۲۰۲۶ چیست؟ چرا؟',
       options: [
         { letter: 'الف', text: 'خرید قابلمه چنگیز چون توش راحت می‌شه خوابید' },
@@ -106,7 +108,8 @@
     },
     {
       id: 'q_letter_translators',
-      type: 'choice',
+      type: 'scene_choice',
+      scene: 'letter',
       title: 'چه کسانی نامه پیدا شده را ترجمه کردند؟',
       options: [
         { letter: 'الف', text: 'تاریخ‌شناسان و باستان‌شناسان' },
@@ -117,7 +120,8 @@
     },
     {
       id: 'q_migration_reason',
-      type: 'choice',
+      type: 'scene_choice',
+      scene: 'climate',
       title: 'علت اصلی مهاجرت اهالی دهکده به شهر پیش از کشف جواهر چه بود؟',
       options: [
         { letter: 'الف', text: 'جنگ و درگیری با گروه‌های تبهکار' },
@@ -128,7 +132,8 @@
     },
     {
       id: 'q_gem_feature',
-      type: 'choice',
+      type: 'scene_choice',
+      scene: 'gem',
       title: 'ویژگی خاص این جواهر از نظر تاریخ‌شناسان چه بود؟',
       options: [
         { letter: 'الف', text: 'هر کس آن را داشته باشد، همیشه ثروتمند می‌ماند.' },
@@ -139,7 +144,8 @@
     },
     {
       id: 'q_police_shoe_store',
-      type: 'choice',
+      type: 'scene_choice',
+      scene: 'crime',
       title: 'وقتی رئیس پلیس به کفش‌فروشی رسید، با چه وضعیتی روبرو شد؟',
       options: [
         { letter: 'الف', text: 'صاحب مغازه در حال فرار از دست تبهکاران بود.' },
@@ -150,27 +156,25 @@
     },
     {
       id: 'q_last_village_city',
-      type: 'tactical_map',
+      type: 'choice',
       sacred: true,
       title: 'طبق اطلاعات بدست آمده، دهکده آخر کدام شهر بود؟',
-      subtitle: 'موقعیت دهکده نهایی را روی نقشه با لمس نشانگر مشخص کنید:',
-      cities: [
-        { name: 'مشهد مقدس', icon: '🕌' },
-        { name: 'مکه مکرمه', icon: '🕋' },
-        { name: 'مدینه منوره', icon: '🌴' }
+      options: [
+        { letter: 'الف', text: 'مکه' },
+        { letter: 'ب', text: 'مدینه' },
+        { letter: 'ج', text: 'مشهد' }
       ]
     },
     {
       id: 'q_precious_gem',
-      type: 'golden_chest',
+      type: 'choice',
       sacred: true,
       title: 'جواهر ارزشمند داخل پرونده چه بود؟',
-      subtitle: 'صندوقچه اسرار را بازگشایی و گوهر حقیقی پرونده را مشخص کنید:',
-      gems: [
-        { icon: '💎', text: 'محبت و ولایت امیرالمومنین حضرت علی علیه السلام و فرزندانشان' },
-        { icon: '📖', text: 'قرآن کریم' },
-        { icon: '🕊️', text: 'پیامبر گرامی اسلام (ص)' },
-        { icon: '👑', text: 'حضرت امام زمان (عج)' }
+      options: [
+        { letter: 'الف', text: 'محبت و ولایت امیرالمومنین حضرت علی علیه السلام و فرزندانشان' },
+        { letter: 'ب', text: 'قرآن' },
+        { letter: 'ج', text: 'پیامبر' },
+        { letter: 'د', text: 'امام زمان' }
       ]
     }
   ];
@@ -230,6 +234,8 @@
   let currentQuestionIndex = 0;
   const userAnswers = {};
   let dialedPhoneDigits = '';
+  let submitting = false;
+  let questionRevision = 0;
 
   function showAlert(msg, type = 'error') {
     if (!statusAlert) return;
@@ -365,6 +371,7 @@
     const total = activeQuestions.length;
     const currentNum = currentQuestionIndex + 1;
     const q = activeQuestions[currentQuestionIndex];
+    questionRevision++;
 
     if (currentQNumEl) currentQNumEl.textContent = String(currentNum);
     if (totalQNumEl) totalQNumEl.textContent = String(total);
@@ -389,13 +396,137 @@
       renderNewspaperPuzzleGame(q);
     } else if (q.type === 'easel_puzzle') {
       renderEaselGame(q);
-    } else if (q.type === 'tactical_map') {
-      renderTacticalMapGame(q);
-    } else if (q.type === 'golden_chest') {
-      renderGoldenChestGame(q);
+    } else if (q.type === 'scene_choice') {
+      renderSceneChoice(q);
     } else {
       renderChoiceQuestion(q);
     }
+  }
+
+  function queueAdvance(delay) {
+    const revision = questionRevision;
+    setTimeout(() => {
+      if (revision === questionRevision && !submitting) advanceToNextQuestion();
+    }, delay);
+  }
+
+  function renderSceneChoice(q) {
+    const scenes = {
+      family: ['پرونده نسبت‌ها', 'رد نسبت را در کارت‌های پرونده پیدا کن.'],
+      ledger: ['دفتر سرمایه‌گذاری', 'یکی از یادداشت‌های دفتر را انتخاب کن.'],
+      letter: ['برگه ترجمه', 'امضای مترجم نامه را مشخص کن.'],
+      climate: ['نقشه مهاجرت', 'علت ترک دهکده را روی پرونده ثبت کن.'],
+      gem: ['گزارش جواهر', 'یکی از ویژگی‌های ثبت‌شده را انتخاب کن.'],
+      crime: ['صحنه کفش‌فروشی', 'گزارش رسیدن رئیس پلیس را بازسازی کن.']
+    };
+    const [label, instruction] = scenes[q.scene];
+    const header = document.createElement('div');
+    header.className = 'q-card-header';
+    header.innerHTML = `<div class="q-badge">${label}</div><h2 class="q-title-text">${q.title}</h2><p class="scene-instruction">${instruction}</p>`;
+    const scene = document.createElement('div');
+    scene.className = `clue-scene clue-scene--${q.scene}`;
+    scene.innerHTML = `<div class="clue-scene__seal" aria-hidden="true">${({family:'◇',ledger:'⌁',letter:'✉',climate:'◈',gem:'✦',crime:'⌖'})[q.scene]}</div><span>${label}</span>`;
+    const grid = document.createElement('div');
+    grid.className = 'clue-scene__choices';
+    const interaction = document.createElement('div');
+    interaction.className = 'clue-interaction';
+    const unlock = () => {
+      grid.hidden = false;
+      interaction.classList.add('completed');
+      playChimeSFX();
+    };
+    const makeControl = text => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'clue-interaction__control';
+      button.textContent = text;
+      interaction.appendChild(button);
+      return button;
+    };
+    if (q.scene === 'family') {
+      let opened = 0;
+      ['گوینده اخبار', 'اعضای سفر'].forEach(text => {
+        const button = makeControl(text);
+        button.addEventListener('click', () => {
+          if (button.disabled) return;
+          button.disabled = true;
+          button.classList.add('active');
+          opened++;
+          playTickSFX();
+          if (opened === 2) unlock();
+        });
+      });
+    } else if (q.scene === 'ledger') {
+      let counted = 0;
+      const button = makeControl('ورق زدن دفتر ۰/۳');
+      button.addEventListener('click', () => {
+        counted++;
+        button.textContent = `ورق زدن دفتر ${Math.min(counted, 3)}/۳`;
+        playTickSFX();
+        if (counted === 3) { button.disabled = true; unlock(); }
+      });
+    } else if (q.scene === 'letter') {
+      let stamps = 0;
+      ['مهر ۱', 'مهر ۲', 'مهر ۳'].forEach(text => {
+        const button = makeControl(text);
+        button.addEventListener('click', () => {
+          if (button.disabled) return;
+          button.disabled = true;
+          button.classList.add('active');
+          stamps++;
+          playTickSFX();
+          if (stamps === 3) unlock();
+        });
+      });
+    } else if (q.scene === 'climate') {
+      const range = document.createElement('input');
+      range.type = 'range'; range.min = '0'; range.max = '100'; range.value = '0';
+      range.setAttribute('aria-label', 'بررسی نقشه مهاجرت');
+      interaction.appendChild(range);
+      range.addEventListener('input', () => { if (Number(range.value) >= 75) { range.disabled = true; unlock(); } });
+      makeControl('بررسی نقشه').addEventListener('click', unlock);
+    } else if (q.scene === 'gem') {
+      let inspected = 0;
+      ['روی جواهر', 'پشت جواهر'].forEach(text => {
+        const button = makeControl(text);
+        button.addEventListener('click', () => {
+          if (button.disabled) return;
+          button.disabled = true;
+          button.classList.add('active');
+          inspected++;
+          playTickSFX();
+          if (inspected === 2) unlock();
+        });
+      });
+    } else if (q.scene === 'crime') {
+      const sequence = ['رسیدن', 'بازرسی', 'گزارش'];
+      let step = 0;
+      sequence.forEach((text, index) => {
+        const button = makeControl(text);
+        button.addEventListener('click', () => {
+          if (index !== step) return showAlert('صحنه را به ترتیب بررسی کن.');
+          clearAlert(); button.disabled = true; button.classList.add('active');
+          playTickSFX(); step++;
+          if (step === sequence.length) unlock();
+        });
+      });
+    }
+    grid.hidden = !userAnswers[q.id];
+    q.options.forEach(opt => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `clue-scene__choice ${userAnswers[q.id] === opt.text ? 'selected' : ''}`;
+      button.innerHTML = `<span class="choice-letter-badge">${opt.letter}</span><span>${opt.text}</span>`;
+      button.addEventListener('click', () => {
+        grid.querySelectorAll('button').forEach(item => item.classList.remove('selected'));
+        button.classList.add('selected');
+        userAnswers[q.id] = opt.text;
+        playTickSFX();
+        queueAdvance(450);
+      });
+      grid.appendChild(button);
+    });
+    dynamicQuestionSlot.append(header, scene, interaction, grid);
   }
 
   // -------------------------------------------------------------------------
@@ -521,12 +652,9 @@
 
     document.getElementById('rotaryCallBtn')?.addEventListener('click', () => {
       playChimeSFX();
-      if (!dialedPhoneDigits) {
-        dialedPhoneDigits = '384219'; // شماره کفش‌فروشی پیش‌فرض
-        userAnswers[q.id] = dialedPhoneDigits;
-      }
-      showAlert('تماس برقرار شد! سیگنال پایگاه دهکده تایید گردید.', 'success');
-      setTimeout(() => advanceToNextQuestion(), 700);
+      if (!dialedPhoneDigits) return showAlert('اول شماره را بگیر.');
+      showAlert('تماس ثبت شد.', 'success');
+      queueAdvance(700);
     });
   }
 
@@ -637,7 +765,7 @@
           res.className = 'puzzle-result-banner success';
           res.textContent = `✓ کلمه «${assembled}» با موفقیت ساخته شد و در سامانه به ثبت رسید.`;
         }
-        setTimeout(() => advanceToNextQuestion(), 900);
+        queueAdvance(900);
       }
     }
 
@@ -708,7 +836,7 @@
         optionsGrid.querySelectorAll('.choice-card-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         userAnswers[q.id] = opt.text;
-        setTimeout(() => advanceToNextQuestion(), 400);
+        queueAdvance(400);
       });
       optionsGrid.appendChild(btn);
     });
@@ -731,7 +859,7 @@
               slot.innerHTML = `<div class="easel-canvas-reveal">🖼️ بوم نقاشی برپا شد!<br><strong>«چون باید سه پایه داشته باشیم، حالا تو بگو کی پایه‌تر از ما! 😎»</strong></div>`;
             }
             userAnswers[q.id] = 'چون باید سه پایه داشته باشیم، حالا تو بگو کی پایه‌تر از ما! 😎';
-            setTimeout(() => advanceToNextQuestion(), 1100);
+            queueAdvance(1100);
           }
         }
       });
@@ -846,9 +974,7 @@
         userAnswers[q.id] = opt.text;
 
         // انتقال خودکار نرم به سوال بعدی پس از کلیک گزینه
-        setTimeout(() => {
-          advanceToNextQuestion();
-        }, 400);
+        queueAdvance(400);
       });
 
       grid.appendChild(btn);
@@ -865,20 +991,8 @@
     clearAlert();
     const q = activeQuestions[currentQuestionIndex];
     if (!userAnswers[q.id]) {
-      // پذیرش خطاناپذیر: اگر حتی کاربر پاسخی مشخص نکرده بود، یک پاسخ پیش‌فرض ثبت کن تا گیر نیفتد
-      if (q.type === 'choice') {
-        userAnswers[q.id] = q.options[0].text;
-      } else if (q.type === 'rotary_phone') {
-        userAnswers[q.id] = '384219';
-      } else if (q.type === 'newspaper_puzzle') {
-        userAnswers[q.id] = 'مزداک';
-      } else if (q.type === 'easel_puzzle') {
-        userAnswers[q.id] = 'چون باید سه پایه داشته باشیم، حالا تو بگو کی پایه‌تر از ما! 😎';
-      } else if (q.type === 'tactical_map') {
-        userAnswers[q.id] = 'مشهد مقدس';
-      } else if (q.type === 'golden_chest') {
-        userAnswers[q.id] = 'محبت و ولایت امیرالمومنین حضرت علی علیه السلام و فرزندانشان';
-      }
+      showAlert('برای ادامه، یک پاسخ ثبت کن.');
+      return;
     }
 
     if (currentQuestionIndex < activeQuestions.length - 1) {
@@ -911,29 +1025,33 @@
   // Finish Quiz & Transition to Step 3
   // -------------------------------------------------------------------------
   async function finishQuiz() {
-    step2Section.style.display = 'none';
-    step3Section.style.display = 'block';
-
-    stepIndicator2.classList.remove('active');
-    stepIndicator2.classList.add('done');
-    stepIndicator3.classList.add('active', 'done');
-
-    const randomRef = 'SEC-' + Math.floor(10000 + Math.random() * 90000);
-    if (trackingIdDisplay) {
-      trackingIdDisplay.textContent = `SECURITY REF: ${randomRef}`;
-    }
-
+    if (submitting) return;
+    submitting = true;
+    if (nextQuestionBtn) nextQuestionBtn.disabled = true;
     try {
       const phone = sessionStorage.getItem('emergency_user_phone');
-      const payload = {
-        phone,
-        answers: userAnswers,
-        completedAt: new Date().toISOString()
-      };
-      sessionStorage.setItem('emergency_answers_backup', JSON.stringify(payload));
-    } catch (_) {}
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+      const token = sessionStorage.getItem('userToken');
+      if (!token) throw new Error('برای ثبت پاسخ‌ها دوباره وارد کلاس شوید.');
+      const response = await fetch('/api/emergency-auth/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ phone, answers: userAnswers })
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || 'ثبت پاسخ‌ها انجام نشد.');
+      if (trackingIdDisplay) trackingIdDisplay.textContent = result.reference;
+      step2Section.style.display = 'none';
+      step3Section.style.display = 'block';
+      stepIndicator2.classList.remove('active');
+      stepIndicator2.classList.add('done');
+      stepIndicator3.classList.add('active', 'done');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error) {
+      showAlert(error.message || 'ثبت پاسخ‌ها انجام نشد. دوباره تلاش کنید.');
+    } finally {
+      submitting = false;
+      if (nextQuestionBtn) nextQuestionBtn.disabled = false;
+    }
   }
 
   // Initialize Unhack Listener on load

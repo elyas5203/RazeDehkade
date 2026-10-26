@@ -2,12 +2,12 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>درگاه اضطراری احراز هویت و معماهای امنیتی | مرکز عملیات راز دهکده</title>
   
   <link rel="preload" href="/assets/scene/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/gateway.css?v=2.0">
-  <link rel="stylesheet" href="/assets/css/emergency-auth.css?v=3.0">
+  <link rel="stylesheet" href="/assets/css/emergency-auth.css?v=4.0">
 </head>
 <body class="gateway-page emergency-auth-page">
 
@@ -45,12 +45,10 @@
     <div class="gateway-card emergency-card" id="emergencyCard">
       
       <!-- آیکون نشان بالای کارت -->
-      <div class="card-top-icon" aria-hidden="true">
-        🛡️
-      </div>
+      <div class="card-top-icon" aria-hidden="true">⌁</div>
 
-      <h1 class="emergency-title">درگاه اضطراری بازیابی پرونده دهکده</h1>
-      <p class="subtitle emergency-subtitle">جهت تثبیت اطلاعات پرونده و جلوگیری از تخریب سرنخ‌ها، احراز هویت کارآگاهی خود را تکمیل کنید.</p>
+      <h1 class="emergency-title">پرونده هنوز باز است</h1>
+      <p class="subtitle emergency-subtitle">شماره‌ات را وارد کن و سرنخ‌ها را بررسی کن.</p>
 
       <!-- نوار مراحل (Stepper) -->
       <nav class="stepper-nav" aria-label="مراحل احراز هویت">
@@ -80,7 +78,7 @@
         <div class="emergency-callout">
           <span class="callout-icon" aria-hidden="true">⚠️</span>
           <div class="callout-text">
-            <strong>توجه کارآگاهان:</strong> شماره تماسی که با آن وارد سامانه شده بودید را وارد فرمایید تا هویت شما در پایگاه تایید شود.
+            شماره همراهت را وارد کن.
           </div>
         </div>
 
@@ -106,7 +104,7 @@
           </div>
 
           <button type="submit" id="submitStep1Btn" class="gateway-submit-btn btn-emergency">
-            <span>تایید هویت و ورود به حل معماها</span>
+            <span>شروع بررسی سرنخ‌ها</span>
             <span aria-hidden="true">➔</span>
           </button>
         </form>
@@ -121,7 +119,7 @@
         <!-- نوار پیشرفت پرسش‌ها -->
         <div class="quiz-progress-wrap">
           <div class="quiz-progress-meta">
-            <span>معمای امنیتی شماره <strong id="currentQNum">۱</strong> از <strong id="totalQNum">۱۲</strong></span>
+            <span>پرونده <strong id="currentQNum">۱</strong> از <strong id="totalQNum">۱۲</strong></span>
             <span id="quizPercentText">۸٪</span>
           </div>
           <div class="quiz-progress-bar">
@@ -154,14 +152,10 @@
       <section id="step3Section" class="emergency-step" style="display: none;">
         <div class="success-screen">
           <div class="success-check-badge" aria-hidden="true">🛡️</div>
-          <h2 class="success-title">پاسخ‌ها با موفقیت برای بررسی ارسال شد</h2>
+          <h2 class="success-title">پاسخ‌ها برای بررسی ارسال شد</h2>
           <div class="tracking-badge" id="trackingIdDisplay">SECURITY REF: SEC-89421</div>
           <p class="success-desc">
-            اطلاعات و پاسخ‌های شما با موفقیت در مرکز فرماندهی راز دهکده ثبت گردید و در صف بررسی و اعتبارسنجی کارآگاهان قرار گرفت.
-            <br><br>
-            ⚠️ <strong>توجه:</strong> به علت شرایط اضطراری نفوذ، نتیجه پاسخ‌ها بلافاصله اعلام نمی‌شود و پس از تثبیت پایگاه و بازیابی سرورها در جلسه اعلام خواهد شد.
-            <br><br>
-            لطفاً تا زمان بازگشایی مجدد چت کلاس منتظر بمانید.
+            پاسخ‌ها ثبت شد و در صف بررسی مرکز فرماندهی است. نتیجه بعداً اعلام می‌شود.
           </p>
 
           <div style="display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto;">
@@ -184,6 +178,6 @@
   </footer>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/assets/js/emergency-auth.js?v=3.0"></script>
+  <script src="/assets/js/emergency-auth.js?v=4.0"></script>
 </body>
 </html>

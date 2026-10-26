@@ -155,6 +155,7 @@ const storeRoutes = require('./src/routes/store');
 const uploadRoutes = require('./src/routes/upload');
 const mediaLibraryRoutes = require('./src/routes/mediaLibrary');
 const weeklyContentRoutes = require('./src/routes/weeklyContent');
+const emergencyAuthRoutes = require('./src/routes/emergencyAuth');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/sessions', sessionRoutes);
@@ -163,6 +164,7 @@ app.use('/api/store', storeRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/media-library', mediaLibraryRoutes);
 app.use('/api/weekly-content', weeklyContentRoutes);
+app.use('/api/emergency-auth', emergencyAuthRoutes);
 
 // مسیر تست سلامت API
 app.get('/api/health', (req, res) => {

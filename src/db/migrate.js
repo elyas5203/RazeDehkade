@@ -123,6 +123,19 @@ async function runMigrations() {
     `);
 
     await query(`
+      CREATE TABLE IF NOT EXISTS emergency_auth_submissions (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        reference_code VARCHAR(32) NOT NULL UNIQUE,
+        session_id INT NOT NULL,
+        phone VARCHAR(20) NOT NULL,
+        answers_json JSON NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_emergency_auth_session (session_id),
+        FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await query(`
       CREATE TABLE IF NOT EXISTS app_migrations (
         migration_key VARCHAR(100) PRIMARY KEY,
         applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
