@@ -445,6 +445,8 @@
     card.innerHTML = `
       <div class="q-badge">آخرین پرسش پرونده</div>
       <h2 class="q-title-text">${q.title}</h2>
+      <p class="selfie-instruction">اول پاسخ درست را انتخاب کن؛ سپس همان پاسخ را در ویدیو با صدای واضح بگو.</p>
+      <div class="modern-options-grid selfie-answer-options" id="selfieAnswerOptions"></div>
       <p class="selfie-instruction">دفترچه را کنار صورتت بگیر، رو به دوربین نگاه کن و پاسخ این سؤال را با صدای واضح بگو.</p>
       <p class="selfie-privacy">ضبط فقط با زدن «شروع ضبط» آغاز می‌شود. ویدیو فقط برای مدیر از راه تلگرام فرستاده می‌شود؛ تا زمان ارسال موفق، در فضای خصوصی سامانه نگهداری و بعد از ارسال حذف می‌شود.</p>
       <div class="selfie-viewfinder"><video id="selfieVideo" playsinline muted autoplay aria-label="پیش‌نمایش دوربین"></video><span id="selfieStatus" role="status">دوربین خاموش است</span></div>
@@ -460,6 +462,22 @@
     const start = card.querySelector('#selfieStart');
     const stop = card.querySelector('#selfieStop');
     const retry = card.querySelector('#selfieRetry');
+    const answerOptions = card.querySelector('#selfieAnswerOptions');
+    q.options.forEach(opt => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `choice-card-btn ${userAnswers[q.id] === opt.text ? 'selected' : ''}`;
+      button.innerHTML = `<span class="choice-letter-badge">${opt.letter}</span><span class="choice-text">${opt.text}</span>`;
+      button.addEventListener('click', () => {
+        answerOptions.querySelectorAll('.choice-card-btn').forEach(item => item.classList.remove('selected'));
+        button.classList.add('selected');
+        userAnswers[q.id] = opt.text;
+        start.disabled = false;
+        playTickSFX();
+      });
+      answerOptions.appendChild(button);
+    });
+    start.disabled = !userAnswers[q.id];
     const showRecorded = () => {
       if (!selfieBlob) return;
       if (selfiePreviewUrl) URL.revokeObjectURL(selfiePreviewUrl);
@@ -474,7 +492,6 @@
       start.hidden = true;
       stop.hidden = true;
       retry.hidden = false;
-      userAnswers[q.id] = 'پاسخ در ویدیوی سلفی ثبت شد';
     };
     if (selfieBlob) showRecorded();
     const begin = async () => {
@@ -656,7 +673,7 @@
     wrap.innerHTML = `
       <div class="q-badge">کفش فروشی تنها</div>
       <h2 class="q-title-text">${q.title}</h2>
-      <p class="rotary-help">انگشتت را روی عدد بگذار، صفحه را تا گیره بچرخان و رها کن. لمس کوتاه عدد هم کار می‌کند.</p>
+      <p class="rotary-help">انگشتت را داخل حلقه عدد بگذار، صفحه را واقعاً تا گیره فلزی بچرخان و بعد رها کن.</p>
     `;
 
     const phoneContainer = document.createElement('div');
@@ -777,12 +794,7 @@
         suppressClick = true;
         setTimeout(() => { suppressClick = false; }, 80);
         if (turn >= max * .8) springBack(digit, turn);
-        else if (turn < 5) {
-          busy = true;
-          rotor.style.transition = 'transform .38s ease-out';
-          rotor.style.transform = `rotate(${max}deg)`;
-          setTimeout(() => springBack(digit, max), 390);
-        } else {
+        else {
           rotor.style.transition = 'transform .25s ease-out';
           rotor.style.transform = 'rotate(0deg)';
         }
@@ -795,7 +807,8 @@
         rotor.style.transform = 'rotate(0deg)';
       });
       hole.addEventListener('click', event => {
-        if (busy || suppressClick || event.detail > 0 && gesture) return;
+        // کلیک ماوس جای حرکت فیزیکی صفحه را نمی‌گیرد؛ فقط فعال‌سازی صفحه‌کلید برای دسترس‌پذیری مجاز است.
+        if (busy || suppressClick || event.detail !== 0) return;
         busy = true;
         rotor.style.transition = 'transform .38s ease-out';
         rotor.style.transform = `rotate(${hole.dataset.travel}deg)`;

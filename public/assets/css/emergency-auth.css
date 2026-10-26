@@ -760,6 +760,8 @@ body.emergency-auth-page {
   border: 2px solid #5f5145;
   background: linear-gradient(150deg, #3a2022, #17171b 58%, #321a1d);
   box-shadow: inset 0 3px 4px #90796a66, inset 0 -12px 24px #0008, 0 28px 56px #000a;
+  perspective: 900px;
+  transform-style: preserve-3d;
 }
 .phone-display-screen {
   max-width: 320px;
@@ -779,6 +781,9 @@ body.emergency-auth-page {
   height: auto;
   aspect-ratio: 1;
   margin: 36px auto 2px;
+  transform: rotateX(8deg);
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 22px 18px rgba(0,0,0,.65));
 }
 .rotary-handset {
   position: absolute;
@@ -796,6 +801,7 @@ body.emergency-auth-page {
   background: radial-gradient(circle, #9f8f79 0 26%, #211d1e 27% 55%, #a3957c 57%, #524843 61%, #1b1719 66%);
   border: 6px solid #130e10;
   box-shadow: inset 0 0 18px #000c, 0 12px 20px #000b, 0 0 0 2px #958069;
+  transform: translateZ(-10px);
 }
 .rotary-dial-rotor {
   inset: 6%; z-index: 5;
@@ -803,6 +809,7 @@ body.emergency-auth-page {
   border: 5px solid #b3a58d;
   box-shadow: inset 0 3px 13px #000c, 0 3px 2px #0008;
   touch-action: none;
+  transform-style: preserve-3d;
 }
 .rotary-center-hub {
   width: 37%; height: 37%; inset: 31.5%;
@@ -813,6 +820,7 @@ body.emergency-auth-page {
   font-size: clamp(16px, 4vw, 23px);
   letter-spacing: -.04em;
   pointer-events: none;
+  transform: translateZ(12px);
 }
 .rotary-center-hub small { font-size: 10px; letter-spacing: 0; }
 .rotary-finger-stop {
@@ -827,7 +835,10 @@ body.emergency-auth-page {
   border: 4px solid #50443d;
   box-shadow: inset 0 3px 6px #fff8, inset 0 -4px 5px #1e141877, 0 2px 4px #0009;
   touch-action: none;
+  transform-style: preserve-3d;
 }
+
+.selfie-answer-options { margin: 16px 0 20px; }
 .rotary-hole:hover, .rotary-hole:focus-visible {
   transform: translate(-50%,-50%) scale(1.08);
   color: #1d1514; outline: 3px solid #ffe3a0;
