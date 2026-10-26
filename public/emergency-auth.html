@@ -2,12 +2,12 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>درگاه احراز هویت امنیتی اضطراری | مرکز عملیات راز دهکده</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>درگاه اضطراری احراز هویت و معماهای امنیتی | مرکز عملیات راز دهکده</title>
   
   <link rel="preload" href="/assets/scene/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/gateway.css?v=2.0">
-  <link rel="stylesheet" href="/assets/css/emergency-auth.css?v=2.0">
+  <link rel="stylesheet" href="/assets/css/emergency-auth.css?v=3.0">
 </head>
 <body class="gateway-page emergency-auth-page">
 
@@ -15,7 +15,7 @@
   <div class="gateway-grid-bg" aria-hidden="true"></div>
   <div class="ambient-glow-ring" aria-hidden="true"></div>
 
-  <!-- نوار بالای صفحه هماهنگ با تم اصلی سایت -->
+  <!-- نوار بالای صفحه -->
   <header class="gateway-header">
     <div class="gateway-brand">
       <div class="brand-emblem" aria-hidden="true">RD</div>
@@ -23,12 +23,25 @@
     </div>
     <div class="gateway-status-badge breach-badge">
       <span class="pulse-led" aria-hidden="true"></span>
-      <span>پروتکل بازیابی امنیتی // سطح ۵</span>
+      <span>پروتکل بازیابی امنیتی پرونده</span>
     </div>
   </header>
 
-  <!-- کارت اصلی احراز هویت و بازیابی پرونده -->
+  <!-- کارت اصلی احراز هویت و مینی‌گیم‌های معما -->
   <main class="gateway-main emergency-main" id="emergencyContainer" role="main">
+
+    <!-- بنر اطلاع‌رسانی لغو نفوذ و بازگشت به چت کلاس (در صورت بازگشایی توسط ادمین) -->
+    <div id="unhackBanner" class="unhack-notification-banner" style="display: none;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 20px;">🔓</span>
+        <span>نفوذ سایبری مهار شد! وضعیت پایگاه به حالت عادی بازگشت.</span>
+      </div>
+      <a href="/chat.html" class="unhack-return-btn">
+        <span>ورود به چت کلاس</span>
+        <span aria-hidden="true">➔</span>
+      </a>
+    </div>
+
     <div class="gateway-card emergency-card" id="emergencyCard">
       
       <!-- آیکون نشان بالای کارت -->
@@ -36,43 +49,45 @@
         🛡️
       </div>
 
-      <h1 class="emergency-title">درگاه اضطراری بازیابی پرونده</h1>
-      <p class="subtitle emergency-subtitle">به دلیل نفوذ سایبری به پایگاه دهکده، جهت تثبیت اطلاعات و جلوگیری از حذف مدارک، احراز هویت کارآگاهی خود را تکمیل کنید.</p>
+      <h1 class="emergency-title">درگاه اضطراری بازیابی پرونده دهکده</h1>
+      <p class="subtitle emergency-subtitle">جهت تثبیت اطلاعات پرونده و جلوگیری از تخریب سرنخ‌ها، احراز هویت کارآگاهی خود را تکمیل کنید.</p>
 
-      <!-- نوار مراحل (Stepper) هماهنگ با استایل Liquid Glass -->
+      <!-- نوار مراحل (Stepper) -->
       <nav class="stepper-nav" aria-label="مراحل احراز هویت">
         <div class="step-item active" id="stepIndicator1">
           <span class="step-circle">۱</span>
-          <span class="step-label">شناسایی اولیه</span>
+          <span class="step-label">شناسایی هویت</span>
         </div>
         <div class="step-separator" aria-hidden="true"></div>
         <div class="step-item" id="stepIndicator2">
           <span class="step-circle">۲</span>
-          <span class="step-label">پرسشنامه امنیتی</span>
+          <span class="step-label">معماهای امنیتی</span>
         </div>
         <div class="step-separator" aria-hidden="true"></div>
         <div class="step-item" id="stepIndicator3">
           <span class="step-circle">۳</span>
-          <span class="step-label">تثبیت و ایمن‌سازی</span>
+          <span class="step-label">تثبیت و نجات</span>
         </div>
       </nav>
 
       <!-- پیام وضعیت / آلرت خطای سیستم -->
       <div id="statusAlert" class="status-msg" role="alert" style="display: none;"></div>
 
-      <!-- گام اول: شماره تماس و کد پرونده -->
+      <!-- ============================================================== -->
+      <!-- گام اول: ورود شماره همراه ثبت‌شده -->
+      <!-- ============================================================== -->
       <section id="step1Section" class="emergency-step">
         <div class="emergency-callout">
           <span class="callout-icon" aria-hidden="true">⚠️</span>
           <div class="callout-text">
-            <strong>توجه کارآگاهان:</strong> شماره تماسی که با آن وارد سامانه شده بودید را وارد فرمایید تا وضعیت پرونده شما اعتبارسنجی شود.
+            <strong>توجه کارآگاهان:</strong> شماره تماسی که با آن وارد سامانه شده بودید را وارد فرمایید تا هویت شما در پایگاه تایید شود.
           </div>
         </div>
 
         <form id="authPhoneForm" class="emergency-form" novalidate>
           <div class="form-group">
             <label for="emergencyPhone" class="form-label">
-              <span>شماره موبایل ثبت‌شده</span>
+              <span>شماره موبایل</span>
               <span class="form-label-hint">مثال: ۰۹۱۲۳۴۵۶۷۸۹</span>
             </label>
             <div class="input-wrap">
@@ -91,114 +106,73 @@
           </div>
 
           <button type="submit" id="submitStep1Btn" class="gateway-submit-btn btn-emergency">
-            <span>تایید هویت و ورود به پرسشنامه امنیتی</span>
+            <span>تایید هویت و ورود به حل معماها</span>
             <span aria-hidden="true">➔</span>
           </button>
         </form>
       </section>
 
-      <!-- گام دوم: پرسشنامه امنیتی -->
+      <!-- ============================================================== -->
+      <!-- گام دوم: معماهای امنیتی و مینی‌گیم‌های تصادفی (Randomized Puzzles) -->
+      <!-- ============================================================== -->
       <section id="step2Section" class="emergency-step" style="display: none;">
-        <div class="emergency-callout">
-          <span class="callout-icon" aria-hidden="true">🔒</span>
-          <div class="callout-text">
-            <strong>پرسش‌های امنیتی ضد نفوذ:</strong> این سوالات برای اثبات دسترسی واقعی اعضای تیم کارآگاهی طراحی شده است. به دقت پاسخ دهید.
+        <form id="questionnaireForm" class="emergency-form" onsubmit="event.preventDefault();" novalidate>
+        
+        <!-- نوار پیشرفت پرسش‌ها -->
+        <div class="quiz-progress-wrap">
+          <div class="quiz-progress-meta">
+            <span>معمای امنیتی شماره <strong id="currentQNum">۱</strong> از <strong id="totalQNum">۱۲</strong></span>
+            <span id="quizPercentText">۸٪</span>
+          </div>
+          <div class="quiz-progress-bar">
+            <div class="quiz-progress-fill" id="quizProgressBar" style="width: 8%;"></div>
           </div>
         </div>
 
-        <form id="questionnaireForm" class="emergency-form" novalidate>
-          
-          <!-- سوال ۱ -->
-          <div class="question-block">
-            <div class="question-title">
-              <span class="question-badge">Q-01</span>
-              <span>در بررسی صحنه جرم آسیاب کهنه، کدام نشانه حاکی از حضور مزداک یا دستیار او بود؟</span>
-            </div>
-            <div class="options-list">
-              <label class="option-label">
-                <input type="radio" name="q1" value="footprint" required>
-                <span class="radio-custom" aria-hidden="true"></span>
-                <span class="option-text">ردپای عمیق پوتین سایز ۴۲ با طرح دندانه‌دار</span>
-              </label>
-              <label class="option-label">
-                <input type="radio" name="q1" value="letter">
-                <span class="radio-custom" aria-hidden="true"></span>
-                <span class="option-text">نامه دست‌نویس با جوهر نامرئی در گوشه پنجره</span>
-              </label>
-              <label class="option-label">
-                <input type="radio" name="q1" value="flower">
-                <span class="radio-custom" aria-hidden="true"></span>
-                <span class="option-text">برگ خشکیده گل لیلیوم در کنار کیسه‌های گندم</span>
-              </label>
-            </div>
-          </div>
+        <!-- اسلات تزریق پویای سوال / مینی‌گیم -->
+        <div id="dynamicQuestionSlot" class="question-dynamic-stage">
+          <!-- محتوای سوال، مینی‌گیم تلفن یا پازل روزنامه به صورت جاوااسکریپتی اینجا رندر می‌شود -->
+        </div>
 
-          <!-- سوال ۲ -->
-          <div class="question-block">
-            <div class="question-title">
-              <span class="question-badge">Q-02</span>
-              <span>کد پیگیری حواله محموله گندم کشف‌شده در آسیاب چند بود؟</span>
-            </div>
-            <div class="options-list">
-              <label class="option-label">
-                <input type="radio" name="q2" value="892" required>
-                <span class="radio-custom" aria-hidden="true"></span>
-                <span class="option-text">کد رهگیری ۸۹۲ (محموله انبار مرکزی)</span>
-              </label>
-              <label class="option-label">
-                <input type="radio" name="q2" value="514">
-                <span class="radio-custom" aria-hidden="true"></span>
-                <span class="option-text">کد رهگیری ۵۱۴ (سفارش شخصی)</span>
-              </label>
-              <label class="option-label">
-                <input type="radio" name="q2" value="309">
-                <span class="radio-custom" aria-hidden="true"></span>
-                <span class="option-text">کد رهگیری ۳۰۹ (محموله متفرقه)</span>
-              </label>
-            </div>
-          </div>
-
-          <!-- سوال ۳ -->
-          <div class="question-block">
-            <div class="question-title">
-              <span class="question-badge">Q-03</span>
-              <span>تحلیل شما از انگیزه اصلی مزداک برای حمله سایبری به پایگاه دهکده چیست؟</span>
-            </div>
-            <div class="input-wrap" style="margin-top: 10px;">
-              <input 
-                type="text" 
-                id="q3Answer" 
-                class="gateway-input input-cyber" 
-                placeholder="پاسخ کوتاه تحلیلی خود را بنویسید (مثال: جلوگیری از افشای راز آسیاب)" 
-                style="direction: rtl; text-align: right;"
-                required
-              >
-            </div>
-          </div>
-
-          <button type="submit" id="submitStep2Btn" class="gateway-submit-btn btn-emergency">
-            <span>ثبت نهایی پاسخ‌ها و تثبیت وضعیت امنیتی</span>
-            <span aria-hidden="true">🔒</span>
+        <!-- کنترل‌های ناوبری زیر سوال -->
+        <div class="quiz-nav-actions" style="display: flex; gap: 12px; margin-top: 24px; align-items: center; justify-content: space-between;">
+          <button type="button" id="prevQuestionBtn" class="phone-action-btn" style="background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid rgba(255,255,255,0.1); padding: 10px 18px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; display: none;">
+            <span>➔ سوال قبل</span>
           </button>
+          
+          <button type="button" id="nextQuestionBtn" class="gateway-submit-btn btn-emergency" style="margin-top: 0; flex: 1; max-width: 200px; margin-right: auto;">
+            <span>ثبت و گام بعد ❮</span>
+          </button>
+        </div>
+
         </form>
       </section>
 
-      <!-- گام سوم: تایید نهایی و پیام موفقیت -->
+      <!-- ============================================================== -->
+      <!-- گام سوم: ارسال پاسخ‌ها برای بررسی مرکز فرماندهی -->
+      <!-- ============================================================== -->
       <section id="step3Section" class="emergency-step" style="display: none;">
         <div class="success-screen">
-          <div class="success-check-badge" aria-hidden="true">✓</div>
-          <h2 class="success-title">احراز هویت با موفقیت ثبت شد</h2>
+          <div class="success-check-badge" aria-hidden="true">🛡️</div>
+          <h2 class="success-title">پاسخ‌ها با موفقیت برای بررسی ارسال شد</h2>
           <div class="tracking-badge" id="trackingIdDisplay">SECURITY REF: SEC-89421</div>
           <p class="success-desc">
-            پاسخ‌های امنیتی تیم کارآگاهی شما در سرور مرکزی رمزنگاری شد و پرونده از خطر انهدام دائمی نجات یافت.
+            اطلاعات و پاسخ‌های شما با موفقیت در مرکز فرماندهی راز دهکده ثبت گردید و در صف بررسی و اعتبارسنجی کارآگاهان قرار گرفت.
             <br><br>
-            <strong>جلسه آینده:</strong> در جلسه حضوری هفته آینده با حضور سرکارآگاه و سایر اعضای تیم، قفل سامانه بازگشایی و ارتباط زنده با مرکز فرماندهی مجدداً برقرار خواهد شد.
+            ⚠️ <strong>توجه:</strong> به علت شرایط اضطراری نفوذ، نتیجه پاسخ‌ها بلافاصله اعلام نمی‌شود و پس از تثبیت پایگاه و بازیابی سرورها در جلسه اعلام خواهد شد.
+            <br><br>
+            لطفاً تا زمان بازگشایی مجدد چت کلاس منتظر بمانید.
           </p>
 
-          <a href="/" class="gateway-submit-btn" style="text-decoration: none; width: 100%; max-width: 280px; margin: 0 auto; display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <span>بازگشت به درگاه اصلی</span>
-            <span aria-hidden="true">➔</span>
-          </a>
+          <div style="display: flex; flex-direction: column; gap: 10px; max-width: 280px; margin: 0 auto;">
+            <a href="/chat.html" class="gateway-submit-btn" style="text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px;">
+              <span>ورود به چت کلاس (به محض بازگشایی)</span>
+              <span aria-hidden="true">➔</span>
+            </a>
+            <a href="/" style="color: var(--muted); font-size: 12px; text-decoration: underline; text-align: center; padding: 6px;">
+              بازگشت به صفحه اصلی
+            </a>
+          </div>
         </div>
       </section>
 
@@ -209,6 +183,7 @@
     سامانه امنیت سایبری پایگاه کارآگاهی راز دهکده · <a href="/">razedehkade.ir</a>
   </footer>
 
-  <script src="/assets/js/emergency-auth.js?v=2.0"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/assets/js/emergency-auth.js?v=3.0"></script>
 </body>
 </html>

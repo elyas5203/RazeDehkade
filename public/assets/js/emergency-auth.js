@@ -1,6 +1,13 @@
 /**
  * public/assets/js/emergency-auth.js
- * Logic for the Emergency Cyber Recovery Portal & Questionnaire
+ * Comprehensive interactive logic for Emergency Cyber Recovery Portal
+ * Includes:
+ * 1. Mobile-friendly Rotary Dial phone mini-game (vintage rotary dialer)
+ * 2. Newspaper headline puzzle mini-game (Maz + Dak assemble)
+ * 3. 10 Multiple choice detective riddles with respectful design for sacred questions
+ * 4. Shuffle algorithm for randomized question ordering per student
+ * 5. Instant forgiving acceptance (all answers advance smoothly with encouraging feedback)
+ * 6. Live Socket.io + Polling unhack detector (auto-redirects when admin clears breach)
  */
 
 'use strict';
@@ -11,6 +18,7 @@
     .replace(/[٠-٩]/g, digit => String('٠١٢٣٤٥٦٧٨٩'.indexOf(digit)))
     .replace(/[^0-9]/g, '');
 
+  // DOM Elements
   const step1Section = document.getElementById('step1Section');
   const step2Section = document.getElementById('step2Section');
   const step3Section = document.getElementById('step3Section');
@@ -20,13 +28,208 @@
   const stepIndicator3 = document.getElementById('stepIndicator3');
 
   const statusAlert = document.getElementById('statusAlert');
+  const unhackBanner = document.getElementById('unhackBanner');
   const authPhoneForm = document.getElementById('authPhoneForm');
   const emergencyPhone = document.getElementById('emergencyPhone');
   const submitStep1Btn = document.getElementById('submitStep1Btn');
 
-  const questionnaireForm = document.getElementById('questionnaireForm');
-  const submitStep2Btn = document.getElementById('submitStep2Btn');
+  const currentQNumEl = document.getElementById('currentQNum');
+  const totalQNumEl = document.getElementById('totalQNum');
+  const quizPercentText = document.getElementById('quizPercentText');
+  const quizProgressBar = document.getElementById('quizProgressBar');
+  const dynamicQuestionSlot = document.getElementById('dynamicQuestionSlot');
+  const prevQuestionBtn = document.getElementById('prevQuestionBtn');
+  const nextQuestionBtn = document.getElementById('nextQuestionBtn');
   const trackingIdDisplay = document.getElementById('trackingIdDisplay');
+
+  // =========================================================================
+  // Question Bank (12 Specialized Questions + Mini-Games)
+  // =========================================================================
+  const QUESTIONS_DATABASE = [
+    {
+      id: 'q_shoe_rotary',
+      type: 'rotary_phone',
+      title: 'شماره کفش‌فروشی تنها چند است؟',
+      subtitle: 'با چرخاندن شماره‌گیر تلفن زیر، شماره کفش‌فروشی برادر کارآگاه را وارد کنید:'
+    },
+    {
+      id: 'q_terrorist_newspaper',
+      type: 'newspaper_puzzle',
+      title: 'اسم گروه تروریستی که به دهکده مرموز حمله کرده بود چه بود؟',
+      subtitle: 'تکه‌های نام گروه تروریستی را انتخاب و به هم متصل کنید:',
+      pieces: ['مز', 'داک', 'ده', 'کده', 'کار', 'آگاه']
+    },
+    {
+      id: 'q_hajj',
+      type: 'choice',
+      title: 'چجوری روزی صد بار به حج قبول شده بریم ولی از مشهد خارج نشیم؟',
+      options: [
+        { letter: 'الف', text: 'تلویزیون رو بزنیم شبکه مسجدالحرام' },
+        { letter: 'ب', text: 'از روی رحمت به پدر و مادر نگاه کنیم' },
+        { letter: 'پ', text: 'هر روز صد بار بلیط هواپیما بگیریم بریم حج' },
+        { letter: 'د', text: 'برو عمو گرفتی منو، خود مردم مکه هم نمی‌تونن!' }
+      ]
+    },
+    {
+      id: 'q_padari',
+      type: 'choice',
+      title: 'آقای پادری گوینده اخبار چه نسبتی با آقایان پادری‌ها که به دهکده‌های مرموز رفتن داشت؟',
+      options: [
+        { letter: 'الف', text: 'عمه' },
+        { letter: 'ب', text: 'ارواح عمه‌اش، خاله‌اش بود بابا!' },
+        { letter: 'ج', text: 'آخه عمه و خاله که زن‌ان، داداش بودن' },
+        { letter: 'د', text: 'بابا این پادری حموم بود اون‌ها پادری دستشویی، نسبتی نداشتن' }
+      ]
+    },
+    {
+      id: 'q_invest_2026',
+      type: 'choice',
+      title: 'بهترین سرمایه‌گذاری مالی در سال ۲۰۲۶ چیست؟ چرا؟',
+      options: [
+        { letter: 'الف', text: 'خرید قابلمه چنگیز چون توش راحت می‌شه خوابید' },
+        { letter: 'ب', text: 'یه شونه تخم‌مرغ چون به جای جواهر رنگش کنیم بدیم مزداک' },
+        { letter: 'ج', text: '۱۲ تا مگس‌کش پرویز چون که زیرا' },
+        { letter: 'د', text: 'نیکی به پدر و مادر چون طبق فرموده امام صادق (ع) هرگز در زندگی فقیر نمی‌شویم' }
+      ]
+    },
+    {
+      id: 'q_oil_painting',
+      type: 'easel_puzzle',
+      title: 'چرا باید سه نفری رفت کلاس رنگ روغن؟',
+      subtitle: 'با لمس پایه‌های بوم نقاشی، سه‌پایه را برپا کنید:',
+      options: [
+        { letter: 'الف', text: 'نامردیه ما روغنی بشیم اونا نشن' },
+        { letter: 'ب', text: 'چون باید سه پایه داشته باشیم، حالا تو بگو کی پایه‌تر از ما! 😎' },
+        { letter: 'ج', text: 'بیکاریم' },
+        { letter: 'د', text: 'اینجوری بیشتر حال میده' }
+      ]
+    },
+    {
+      id: 'q_letter_translators',
+      type: 'choice',
+      title: 'چه کسانی نامه پیدا شده را ترجمه کردند؟',
+      options: [
+        { letter: 'الف', text: 'تاریخ‌شناسان و باستان‌شناسان' },
+        { letter: 'ب', text: 'گروه تبهکاران' },
+        { letter: 'ج', text: 'کسانی که جواهر را پیدا کردند' },
+        { letter: 'د', text: 'اهالی بومی روستا' }
+      ]
+    },
+    {
+      id: 'q_migration_reason',
+      type: 'choice',
+      title: 'علت اصلی مهاجرت اهالی دهکده به شهر پیش از کشف جواهر چه بود؟',
+      options: [
+        { letter: 'الف', text: 'جنگ و درگیری با گروه‌های تبهکار' },
+        { letter: 'ب', text: 'خشکسالی و کمبود غذا و آب آشامیدنی' },
+        { letter: 'ج', text: 'ناامنی و افزایش جرم و جنایت در دهکده' },
+        { letter: 'د', text: 'پیدا شدن یک معدن قدیمی در اعماق زمین' }
+      ]
+    },
+    {
+      id: 'q_gem_feature',
+      type: 'choice',
+      title: 'ویژگی خاص این جواهر از نظر تاریخ‌شناسان چه بود؟',
+      options: [
+        { letter: 'الف', text: 'هر کس آن را داشته باشد، همیشه ثروتمند می‌ماند.' },
+        { letter: 'ب', text: 'این جواهر می‌تواند بیماری‌های جسمی را درمان کند.' },
+        { letter: 'ج', text: 'هر کس از آن جواهر داشته باشد، خوشبخت می‌شود.' },
+        { letter: 'د', text: 'این جواهر می‌تواند حافظه انسان‌ها را تغییر دهد.' }
+      ]
+    },
+    {
+      id: 'q_police_shoe_store',
+      type: 'choice',
+      title: 'وقتی رئیس پلیس به کفش‌فروشی رسید، با چه وضعیتی روبرو شد؟',
+      options: [
+        { letter: 'الف', text: 'صاحب مغازه در حال فرار از دست تبهکاران بود.' },
+        { letter: 'ب', text: 'در مغازه بسته بود و صاحب آن به دلیل گاز سمی بیهوش شده بود.' },
+        { letter: 'ج', text: 'مغازه غارت شده بود و صاحب آن توسط تبهکاران کشته شده بود.' },
+        { letter: 'د', text: 'صاحب مغازه در حال پنهان کردن جواهر بود.' }
+      ]
+    },
+    {
+      id: 'q_last_village_city',
+      type: 'tactical_map',
+      sacred: true,
+      title: 'طبق اطلاعات بدست آمده، دهکده آخر کدام شهر بود؟',
+      subtitle: 'موقعیت دهکده نهایی را روی نقشه با لمس نشانگر مشخص کنید:',
+      cities: [
+        { name: 'مشهد مقدس', icon: '🕌' },
+        { name: 'مکه مکرمه', icon: '🕋' },
+        { name: 'مدینه منوره', icon: '🌴' }
+      ]
+    },
+    {
+      id: 'q_precious_gem',
+      type: 'golden_chest',
+      sacred: true,
+      title: 'جواهر ارزشمند داخل پرونده چه بود؟',
+      subtitle: 'صندوقچه اسرار را بازگشایی و گوهر حقیقی پرونده را مشخص کنید:',
+      gems: [
+        { icon: '💎', text: 'محبت و ولایت امیرالمومنین حضرت علی علیه السلام و فرزندانشان' },
+        { icon: '📖', text: 'قرآن کریم' },
+        { icon: '🕊️', text: 'پیامبر گرامی اسلام (ص)' },
+        { icon: '👑', text: 'حضرت امام زمان (عج)' }
+      ]
+    }
+  ];
+
+  // Web Audio Synthesizer for tactile feedback
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
+    return audioCtx;
+  }
+
+  function playTickSFX() {
+    try {
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1400, t);
+      g.gain.setValueAtTime(0.04, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.04);
+    } catch (_) {}
+  }
+
+  function playChimeSFX() {
+    try {
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, t);
+      osc.frequency.exponentialRampToValueAtTime(880, t + 0.15);
+      g.gain.setValueAtTime(0.06, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.4);
+    } catch (_) {}
+  }
+
+  // Runtime State
+  let activeQuestions = [];
+  let currentQuestionIndex = 0;
+  const userAnswers = {};
+  let dialedPhoneDigits = '';
 
   function showAlert(msg, type = 'error') {
     if (!statusAlert) return;
@@ -41,18 +244,77 @@
     statusAlert.style.display = 'none';
   }
 
-  // Radio button styling on select
-  document.querySelectorAll('.option-label input[type="radio"]').forEach(radio => {
-    radio.addEventListener('change', () => {
-      const name = radio.getAttribute('name');
-      document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
-        r.closest('.option-label')?.classList.remove('selected');
-      });
-      radio.closest('.option-label')?.classList.add('selected');
-    });
-  });
+  // Shuffle Array (Fisher-Yates)
+  function shuffleArray(arr) {
+    const copy = [...arr];
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
 
-  // Step 1: Submit Phone / Verification
+  // =========================================================================
+  // Unhack Detection (Live Socket + Polling)
+  // =========================================================================
+  function initUnhackDetector() {
+    let sessionData = {};
+    try {
+      sessionData = JSON.parse(sessionStorage.getItem('userSession') || '{}');
+    } catch (_) {}
+
+    const sessionId = sessionData.id;
+    if (!sessionId) return;
+
+    // 1. Socket.io Listener
+    if (typeof io !== 'undefined') {
+      try {
+        const socket = io();
+        socket.on('hack_cleared', data => {
+          if (data && Number(data.sessionId) === Number(sessionId)) {
+            handleUnhackSuccess();
+          }
+        });
+      } catch (_) {}
+    }
+
+    // 2. Periodic Polling check (every 5 seconds)
+    setInterval(async () => {
+      try {
+        const token = sessionStorage.getItem('userToken');
+        if (!token) return;
+        const res = await fetch(`/api/sessions/${sessionId}/messages`, {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.session && !data.session.is_hacked) {
+            handleUnhackSuccess();
+          }
+        }
+      } catch (_) {}
+    }, 5000);
+  }
+
+  function handleUnhackSuccess() {
+    try {
+      const sessionData = JSON.parse(sessionStorage.getItem('userSession') || '{}');
+      if (sessionData && sessionData.id) {
+        localStorage.removeItem(`session_hacked_${sessionData.id}`);
+        sessionData.is_hacked = 0;
+        sessionStorage.setItem('userSession', JSON.stringify(sessionData));
+      }
+    } catch (_) {}
+
+    if (unhackBanner) {
+      unhackBanner.style.display = 'flex';
+    }
+    showAlert('مرکز فرماندهی نفوذ مزداک را لغو کرد! می‌توانید به چت کلاس بازگردید.', 'success');
+  }
+
+  // =========================================================================
+  // Step 1: Phone Submission
+  // =========================================================================
   if (authPhoneForm) {
     authPhoneForm.addEventListener('submit', async event => {
       event.preventDefault();
@@ -66,16 +328,16 @@
       }
 
       submitStep1Btn.disabled = true;
-      submitStep1Btn.innerHTML = '<span>در حال بررسی وضعیت امنیتی پرونده...</span>';
+      submitStep1Btn.innerHTML = '<span>در حال بررسی هویت و استعلام وضعیت پرونده...</span>';
 
       try {
-        // Save phone in sessionStorage for recovery reference
         sessionStorage.setItem('emergency_user_phone', phone);
+        await new Promise(r => setTimeout(r, 900));
 
-        // Simulation delay for cyber scanning effect
-        await new Promise(r => setTimeout(r, 1200));
+        // تصادفی‌سازی سوالات برای هر کاربر
+        activeQuestions = shuffleArray(QUESTIONS_DATABASE);
+        currentQuestionIndex = 0;
 
-        // Transition to Step 2
         step1Section.style.display = 'none';
         step2Section.style.display = 'block';
 
@@ -83,74 +345,598 @@
         stepIndicator1.classList.add('done');
         stepIndicator2.classList.add('active');
 
-        showAlert('هویت شما در پایگاه شناسایی شد. لطفاً به سوالات امنیتی زیر پاسخ دهید.', 'success');
+        renderActiveQuestion();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch (err) {
-        showAlert('خطا در برقراری ارتباط با سامانه امنیتی. لطفاً مجدداً تلاش کنید.');
+        showAlert('خطا در برقراری ارتباط با سامانه. مجدداً تلاش کنید.');
         submitStep1Btn.disabled = false;
-        submitStep1Btn.innerHTML = '<span>⚡ تایید هویت و ورود به پرسشنامه امنیتی</span>';
+        submitStep1Btn.innerHTML = '<span>تایید هویت و ورود به حل معماها ➔</span>';
       }
     });
   }
 
-  // Step 2: Submit Questionnaire
-  if (questionnaireForm) {
-    questionnaireForm.addEventListener('submit', async event => {
-      event.preventDefault();
-      clearAlert();
+  // =========================================================================
+  // Step 2: Dynamic Questions & Mini-Games Rendering
+  // =========================================================================
+  function renderActiveQuestion() {
+    if (!dynamicQuestionSlot) return;
+    clearAlert();
 
-      const q1 = document.querySelector('input[name="q1"]:checked');
-      const q2 = document.querySelector('input[name="q2"]:checked');
-      const q3 = document.getElementById('q3Answer')?.value.trim();
+    const total = activeQuestions.length;
+    const currentNum = currentQuestionIndex + 1;
+    const q = activeQuestions[currentQuestionIndex];
 
-      if (!q1 || !q2) {
-        showAlert('لطفاً به تمامی گزینه‌های سوال ۱ و ۲ پاسخ دهید.');
-        return;
+    if (currentQNumEl) currentQNumEl.textContent = String(currentNum);
+    if (totalQNumEl) totalQNumEl.textContent = String(total);
+    const percent = Math.round((currentNum / total) * 100);
+    if (quizPercentText) quizPercentText.textContent = `${percent}%`;
+    if (quizProgressBar) quizProgressBar.style.width = `${percent}%`;
+
+    // دکمه بازگشت به سوال قبل
+    if (prevQuestionBtn) {
+      prevQuestionBtn.style.display = currentQuestionIndex > 0 ? 'inline-flex' : 'none';
+    }
+
+    if (nextQuestionBtn) {
+      nextQuestionBtn.textContent = (currentNum === total) ? 'ثبت نهایی و نجات پرونده 🔒' : 'ثبت و گام بعد ❮';
+    }
+
+    dynamicQuestionSlot.innerHTML = '';
+
+    if (q.type === 'rotary_phone') {
+      renderRotaryPhoneGame(q);
+    } else if (q.type === 'newspaper_puzzle') {
+      renderNewspaperPuzzleGame(q);
+    } else if (q.type === 'easel_puzzle') {
+      renderEaselGame(q);
+    } else if (q.type === 'tactical_map') {
+      renderTacticalMapGame(q);
+    } else if (q.type === 'golden_chest') {
+      renderGoldenChestGame(q);
+    } else {
+      renderChoiceQuestion(q);
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Mini-Game 1: Rotary Phone Dialer
+  // -------------------------------------------------------------------------
+  function renderRotaryPhoneGame(q) {
+    dialedPhoneDigits = userAnswers[q.id] || '';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'q-card-header';
+    wrap.innerHTML = `
+      <div class="q-badge">📞 مینی‌گیم شماره‌گیر چرخشی</div>
+      <h2 class="q-title-text">${q.title}</h2>
+      <p style="font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.6;">${q.subtitle}</p>
+    `;
+
+    const phoneContainer = document.createElement('div');
+    phoneContainer.className = 'rotary-phone-container';
+
+    // Display
+    const display = document.createElement('div');
+    display.className = 'phone-display-screen';
+    display.innerHTML = `
+      <div class="phone-display-label">شماره تلفن شماره‌گیری شده:</div>
+      <div class="phone-display-digits ${dialedPhoneDigits ? '' : 'placeholder'}" id="phoneDisplayDigits">
+        ${dialedPhoneDigits || 'شماره بگیرید...'}
+      </div>
+    `;
+
+    // Rotary Wheel
+    const wheelWrap = document.createElement('div');
+    wheelWrap.className = 'rotary-wheel-wrapper';
+    wheelWrap.innerHTML = `
+      <div class="rotary-base-plate">
+        <div class="rotary-center-hub" id="rotaryCenterHub">
+          <span>کفش</span>
+          <span style="font-size: 8.5px; opacity: 0.85;">تنها</span>
+        </div>
+      </div>
+      <div class="rotary-finger-stop" aria-hidden="true"></div>
+      <div class="rotary-dial-rotor" id="rotaryRotor"></div>
+    `;
+
+    phoneContainer.appendChild(display);
+    phoneContainer.appendChild(wheelWrap);
+
+    // Controls
+    const actions = document.createElement('div');
+    actions.className = 'rotary-actions';
+    actions.innerHTML = `
+      <button type="button" class="rotary-action-btn rotary-clear-btn" id="rotaryClearBtn">
+        <span>پاک کردن</span>
+      </button>
+      <button type="button" class="rotary-action-btn rotary-call-btn" id="rotaryCallBtn">
+        <span>برقراری تماس 📞</span>
+      </button>
+    `;
+    phoneContainer.appendChild(actions);
+
+    dynamicQuestionSlot.appendChild(wrap);
+    dynamicQuestionSlot.appendChild(phoneContainer);
+
+    // Render Digits inside Rotor around a circle
+    const rotor = document.getElementById('rotaryRotor');
+    if (rotor) {
+      const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
+      const startAngle = 30; // deg
+      const stepAngle = 28;  // deg
+      const radius = 86;     // px
+
+      numbers.forEach((num, idx) => {
+        const hole = document.createElement('button');
+        hole.type = 'button';
+        hole.className = 'rotary-hole';
+        hole.dataset.num = num;
+        hole.textContent = String(num);
+
+        const angleDeg = startAngle + (idx * stepAngle);
+        const angleRad = (angleDeg * Math.PI) / 180;
+        const x = 125 + radius * Math.cos(angleRad) - 22;
+        const y = 125 + radius * Math.sin(angleRad) - 22;
+
+        hole.style.left = `${x}px`;
+        hole.style.top = `${y}px`;
+
+        // Click / Touch to dial
+        hole.addEventListener('click', () => dialDigit(num, angleDeg));
+        rotor.appendChild(hole);
+      });
+    }
+
+    function dialDigit(digit, angle) {
+      playTickSFX();
+      const rotorEl = document.getElementById('rotaryRotor');
+      if (rotorEl) {
+        // انیمیشن چرخش مکانیکی تا براکت استاپ و بازگشت
+        const targetRotation = Math.max(40, 240 - angle);
+        rotorEl.style.transform = `rotate(${targetRotation}deg)`;
+        setTimeout(() => {
+          rotorEl.style.transform = 'rotate(0deg)';
+        }, 320);
       }
-      if (!q3) {
-        showAlert('لطفاً پاسخ تحلیلی سوال ۳ را نیز وارد نمایید.');
-        return;
+
+      dialedPhoneDigits += String(digit);
+      userAnswers[q.id] = dialedPhoneDigits;
+      const digitsEl = document.getElementById('phoneDisplayDigits');
+      if (digitsEl) {
+        digitsEl.classList.remove('placeholder');
+        digitsEl.textContent = dialedPhoneDigits;
       }
+    }
 
-      submitStep2Btn.disabled = true;
-      submitStep2Btn.innerHTML = '<span>در حال رمزنگاری و ثبت پاسخ‌ها...</span>';
+    document.getElementById('rotaryClearBtn')?.addEventListener('click', () => {
+      playTickSFX();
+      dialedPhoneDigits = '';
+      userAnswers[q.id] = '';
+      const digitsEl = document.getElementById('phoneDisplayDigits');
+      if (digitsEl) {
+        digitsEl.classList.add('placeholder');
+        digitsEl.textContent = 'شماره بگیرید...';
+      }
+    });
 
-      try {
-        // Store user answers
-        const recoveryData = {
-          phone: sessionStorage.getItem('emergency_user_phone'),
-          code: sessionStorage.getItem('emergency_class_code'),
-          answers: {
-            q1: q1.value,
-            q2: q2.value,
-            q3: q3
-          },
-          submittedAt: new Date().toISOString()
-        };
-        sessionStorage.setItem('emergency_recovery_data', JSON.stringify(recoveryData));
+    document.getElementById('rotaryCallBtn')?.addEventListener('click', () => {
+      playChimeSFX();
+      if (!dialedPhoneDigits) {
+        dialedPhoneDigits = '384219'; // شماره کفش‌فروشی پیش‌فرض
+        userAnswers[q.id] = dialedPhoneDigits;
+      }
+      showAlert('تماس برقرار شد! سیگنال پایگاه دهکده تایید گردید.', 'success');
+      setTimeout(() => advanceToNextQuestion(), 700);
+    });
+  }
 
-        // Random security tracking reference
-        const trackingRef = 'SEC-' + Math.floor(10000 + Math.random() * 90000);
-        if (trackingIdDisplay) {
-          trackingIdDisplay.textContent = `SECURITY REF: ${trackingRef}`;
+  // -------------------------------------------------------------------------
+  // Mini-Game 2: Newspaper Puzzle Scramble (مز + داک)
+  // -------------------------------------------------------------------------
+  function renderNewspaperPuzzleGame(q) {
+    const wrap = document.createElement('div');
+    wrap.className = 'q-card-header';
+    wrap.innerHTML = `
+      <div class="q-badge">📰 مینی‌گیم پازل روزنامه</div>
+      <h2 class="q-title-text">${q.title}</h2>
+      <p style="font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.6;">${q.subtitle}</p>
+    `;
+
+    const container = document.createElement('div');
+    container.className = 'newspaper-puzzle-wrap';
+
+    // Banner
+    const banner = document.createElement('div');
+    banner.className = 'newspaper-header-banner';
+    banner.innerHTML = `
+      <p class="newspaper-clue-quote">
+        «... گزارش‌ها حاکی از آن است که حمله شبانه به آسیاب و انبار توسط یک تشکیلات مخوف دو حرفی تحت عنوان گروه تروریستی هدایت شده که ردپای آنان در اسناد بایگانی مشاهده شد...»
+      </p>
+    `;
+
+    // Target Slots
+    const slots = document.createElement('div');
+    slots.className = 'puzzle-slots-container';
+    slots.innerHTML = `
+      <div class="puzzle-slot" id="puzzleSlot1" data-slot="0">
+        <span class="puzzle-slot-label">[ قطعه اول ]</span>
+      </div>
+      <div style="font-size: 24px; font-weight: 800; color: var(--gold); display: flex; align-items: center;">+</div>
+      <div class="puzzle-slot" id="puzzleSlot2" data-slot="1">
+        <span class="puzzle-slot-label">[ قطعه دوم ]</span>
+      </div>
+    `;
+
+    // Result banner
+    const resultBanner = document.createElement('div');
+    resultBanner.className = 'puzzle-result-banner';
+    resultBanner.id = 'puzzleResultBanner';
+
+    // Pieces Bank
+    const bank = document.createElement('div');
+    bank.className = 'puzzle-pieces-bank';
+    q.pieces.forEach((piece, idx) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'puzzle-piece-btn';
+      btn.dataset.piece = piece;
+      btn.dataset.idx = idx;
+      btn.textContent = piece;
+      btn.addEventListener('click', () => handlePieceClick(piece, btn));
+      bank.appendChild(btn);
+    });
+
+    container.appendChild(banner);
+    container.appendChild(slots);
+    container.appendChild(resultBanner);
+    container.appendChild(bank);
+
+    dynamicQuestionSlot.appendChild(wrap);
+    dynamicQuestionSlot.appendChild(container);
+
+    let selectedPieces = [];
+
+    function handlePieceClick(piece, btn) {
+      if (selectedPieces.length >= 2) return;
+      playTickSFX();
+      selectedPieces.push({ piece, btn });
+      btn.classList.add('selected');
+      updateSlots();
+    }
+
+    function updateSlots() {
+      const s1 = document.getElementById('puzzleSlot1');
+      const s2 = document.getElementById('puzzleSlot2');
+      const res = document.getElementById('puzzleResultBanner');
+
+      if (s1) {
+        if (selectedPieces[0]) {
+          s1.classList.add('filled');
+          s1.textContent = selectedPieces[0].piece;
+        } else {
+          s1.classList.remove('filled');
+          s1.innerHTML = '<span class="puzzle-slot-label">[ قطعه اول ]</span>';
         }
+      }
 
-        await new Promise(r => setTimeout(r, 1500));
+      if (s2) {
+        if (selectedPieces[1]) {
+          s2.classList.add('filled');
+          s2.textContent = selectedPieces[1].piece;
+        } else {
+          s2.classList.remove('filled');
+          s2.innerHTML = '<span class="puzzle-slot-label">[ قطعه دوم ]</span>';
+        }
+      }
 
-        // Transition to Step 3 (Success)
-        step2Section.style.display = 'none';
-        step3Section.style.display = 'block';
+      if (selectedPieces.length === 2) {
+        playChimeSFX();
+        const assembled = selectedPieces[0].piece + selectedPieces[1].piece;
+        userAnswers[q.id] = assembled;
+        if (res) {
+          res.className = 'puzzle-result-banner success';
+          res.textContent = `✓ کلمه «${assembled}» با موفقیت ساخته شد و در سامانه به ثبت رسید.`;
+        }
+        setTimeout(() => advanceToNextQuestion(), 900);
+      }
+    }
 
-        stepIndicator2.classList.remove('active');
-        stepIndicator2.classList.add('done');
-        stepIndicator3.classList.add('active', 'done');
+    // Tap slot to undo
+    document.getElementById('puzzleSlot1')?.addEventListener('click', () => {
+      playTickSFX();
+      if (selectedPieces[0]) {
+        selectedPieces[0].btn.classList.remove('selected');
+        selectedPieces.splice(0, 1);
+        updateSlots();
+      }
+    });
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } catch (err) {
-        showAlert('خطا در ثبت پاسخ‌ها. مجدداً تلاش نمایید.');
-        submitStep2Btn.disabled = false;
-        submitStep2Btn.innerHTML = '<span>🔒 ثبت نهایی پاسخ‌ها و تثبیت وضعیت امنیتی پرونده</span>';
+    document.getElementById('puzzleSlot2')?.addEventListener('click', () => {
+      playTickSFX();
+      if (selectedPieces[1]) {
+        selectedPieces[1].btn.classList.remove('selected');
+        selectedPieces.splice(1, 1);
+        updateSlots();
       }
     });
   }
+
+  // -------------------------------------------------------------------------
+  // Mini-Game 3: Easel & 3-Legged Stand Puzzle (کلاس رنگ روغن)
+  // -------------------------------------------------------------------------
+  function renderEaselGame(q) {
+    const wrap = document.createElement('div');
+    wrap.className = 'q-card-header';
+    wrap.innerHTML = `
+      <div class="q-badge">🎨 مینی‌گیم بوم و سه‌پایه نقاشی</div>
+      <h2 class="q-title-text">${q.title}</h2>
+      <p style="font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.6;">${q.subtitle}</p>
+    `;
+
+    const container = document.createElement('div');
+    container.className = 'easel-mini-game-wrap';
+
+    const frame = document.createElement('div');
+    frame.className = 'easel-stand-frame';
+    frame.innerHTML = `
+      <div class="easel-tripod-pins">
+        <button type="button" class="tripod-pin-btn" id="tripodPin1" data-pin="1"><span>📍 پایه ۱</span></button>
+        <button type="button" class="tripod-pin-btn" id="tripodPin2" data-pin="2"><span>📍 پایه ۲</span></button>
+        <button type="button" class="tripod-pin-btn" id="tripodPin3" data-pin="3"><span>📍 پایه ۳</span></button>
+      </div>
+      <div id="easelCanvasSlot" style="width: 100%; text-align: center; color: var(--muted); font-size: 12.5px;">
+        برای برپا کردن بوم، هر سه پایه را لمس کنید
+      </div>
+    `;
+
+    container.appendChild(frame);
+
+    const optionsGrid = document.createElement('div');
+    optionsGrid.className = 'modern-options-grid';
+    optionsGrid.style.marginTop = '14px';
+
+    q.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `choice-card-btn ${userAnswers[q.id] === opt.text ? 'selected' : ''}`;
+      btn.innerHTML = `
+        <span class="choice-letter-badge">${opt.letter}</span>
+        <span class="choice-text">${opt.text}</span>
+      `;
+      btn.addEventListener('click', () => {
+        playTickSFX();
+        optionsGrid.querySelectorAll('.choice-card-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        userAnswers[q.id] = opt.text;
+        setTimeout(() => advanceToNextQuestion(), 400);
+      });
+      optionsGrid.appendChild(btn);
+    });
+
+    container.appendChild(optionsGrid);
+    dynamicQuestionSlot.appendChild(wrap);
+    dynamicQuestionSlot.appendChild(container);
+
+    let anchoredPins = 0;
+    ['tripodPin1', 'tripodPin2', 'tripodPin3'].forEach(id => {
+      document.getElementById(id)?.addEventListener('click', function() {
+        if (!this.classList.contains('anchored')) {
+          this.classList.add('anchored');
+          playTickSFX();
+          anchoredPins++;
+          if (anchoredPins === 3) {
+            playChimeSFX();
+            const slot = document.getElementById('easelCanvasSlot');
+            if (slot) {
+              slot.innerHTML = `<div class="easel-canvas-reveal">🖼️ بوم نقاشی برپا شد!<br><strong>«چون باید سه پایه داشته باشیم، حالا تو بگو کی پایه‌تر از ما! 😎»</strong></div>`;
+            }
+            userAnswers[q.id] = 'چون باید سه پایه داشته باشیم، حالا تو بگو کی پایه‌تر از ما! 😎';
+            setTimeout(() => advanceToNextQuestion(), 1100);
+          }
+        }
+      });
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Mini-Game 4: Tactical Map (دهکده آخر)
+  // -------------------------------------------------------------------------
+  function renderTacticalMapGame(q) {
+    const wrap = document.createElement('div');
+    wrap.className = 'q-card-header q-sacred';
+    wrap.innerHTML = `
+      <div class="q-badge">🗺️ مینی‌گیم نقشه تاکتیکی پایگاه</div>
+      <h2 class="q-title-text">${q.title}</h2>
+      <p style="font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.6;">${q.subtitle}</p>
+    `;
+
+    const grid = document.createElement('div');
+    grid.className = 'tactical-map-grid';
+
+    q.cities.forEach(city => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = `city-beacon-card ${userAnswers[q.id] === city.name ? 'selected' : ''}`;
+      card.innerHTML = `
+        <div class="city-beacon-pin">${city.icon}</div>
+        <div class="city-beacon-title">${city.name}</div>
+      `;
+      card.addEventListener('click', () => {
+        playTickSFX();
+        grid.querySelectorAll('.city-beacon-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        userAnswers[q.id] = city.name;
+        playChimeSFX();
+        setTimeout(() => advanceToNextQuestion(), 500);
+      });
+      grid.appendChild(card);
+    });
+
+    dynamicQuestionSlot.appendChild(wrap);
+    dynamicQuestionSlot.appendChild(grid);
+  }
+
+  // -------------------------------------------------------------------------
+  // Mini-Game 5: Golden Chest Revelation (جواهر ارزشمند)
+  // -------------------------------------------------------------------------
+  function renderGoldenChestGame(q) {
+    const wrap = document.createElement('div');
+    wrap.className = 'q-card-header q-sacred';
+    wrap.innerHTML = `
+      <div class="q-badge">✨ گشایش صندوقچه اسرار پرونده</div>
+      <h2 class="q-title-text">${q.title}</h2>
+      <p style="font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.6;">${q.subtitle}</p>
+    `;
+
+    const grid = document.createElement('div');
+    grid.className = 'sacred-chest-grid';
+
+    q.gems.forEach(gem => {
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = `sacred-card-item ${userAnswers[q.id] === gem.text ? 'selected' : ''}`;
+      card.innerHTML = `
+        <div class="sacred-icon-aura">${gem.icon}</div>
+        <div style="font-size: 14.5px; font-weight: 700; line-height: 1.6;">${gem.text}</div>
+      `;
+      card.addEventListener('click', () => {
+        playTickSFX();
+        grid.querySelectorAll('.sacred-card-item').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        userAnswers[q.id] = gem.text;
+        playChimeSFX();
+        setTimeout(() => advanceToNextQuestion(), 500);
+      });
+      grid.appendChild(card);
+    });
+
+    dynamicQuestionSlot.appendChild(wrap);
+    dynamicQuestionSlot.appendChild(grid);
+  }
+
+  // -------------------------------------------------------------------------
+  // Multiple Choice Questions
+  // -------------------------------------------------------------------------
+  function renderChoiceQuestion(q) {
+    const wrap = document.createElement('div');
+    wrap.className = `q-card-header ${q.sacred ? 'q-sacred' : ''}`;
+    wrap.innerHTML = `
+      <div class="q-badge">${q.sacred ? '✨ سوال ویژه پرونده' : '🔍 پرسش کارآگاهی'}</div>
+      <h2 class="q-title-text">${q.title}</h2>
+    `;
+
+    const grid = document.createElement('div');
+    grid.className = 'modern-options-grid';
+
+    const currentAnswer = userAnswers[q.id];
+
+    q.options.forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `choice-card-btn ${currentAnswer === opt.text ? 'selected' : ''}`;
+      btn.innerHTML = `
+        <span class="choice-letter-badge">${opt.letter}</span>
+        <span class="choice-text">${opt.text}</span>
+      `;
+
+      btn.addEventListener('click', () => {
+        playTickSFX();
+        grid.querySelectorAll('.choice-card-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        userAnswers[q.id] = opt.text;
+
+        // انتقال خودکار نرم به سوال بعدی پس از کلیک گزینه
+        setTimeout(() => {
+          advanceToNextQuestion();
+        }, 400);
+      });
+
+      grid.appendChild(btn);
+    });
+
+    dynamicQuestionSlot.appendChild(wrap);
+    dynamicQuestionSlot.appendChild(grid);
+  }
+
+  // -------------------------------------------------------------------------
+  // Navigation: Next & Prev
+  // -------------------------------------------------------------------------
+  function advanceToNextQuestion() {
+    clearAlert();
+    const q = activeQuestions[currentQuestionIndex];
+    if (!userAnswers[q.id]) {
+      // پذیرش خطاناپذیر: اگر حتی کاربر پاسخی مشخص نکرده بود، یک پاسخ پیش‌فرض ثبت کن تا گیر نیفتد
+      if (q.type === 'choice') {
+        userAnswers[q.id] = q.options[0].text;
+      } else if (q.type === 'rotary_phone') {
+        userAnswers[q.id] = '384219';
+      } else if (q.type === 'newspaper_puzzle') {
+        userAnswers[q.id] = 'مزداک';
+      } else if (q.type === 'easel_puzzle') {
+        userAnswers[q.id] = 'چون باید سه پایه داشته باشیم، حالا تو بگو کی پایه‌تر از ما! 😎';
+      } else if (q.type === 'tactical_map') {
+        userAnswers[q.id] = 'مشهد مقدس';
+      } else if (q.type === 'golden_chest') {
+        userAnswers[q.id] = 'محبت و ولایت امیرالمومنین حضرت علی علیه السلام و فرزندانشان';
+      }
+    }
+
+    if (currentQuestionIndex < activeQuestions.length - 1) {
+      currentQuestionIndex++;
+      renderActiveQuestion();
+      window.scrollTo({ top: 120, behavior: 'smooth' });
+    } else {
+      finishQuiz();
+    }
+  }
+
+  function goToPreviousQuestion() {
+    clearAlert();
+    if (currentQuestionIndex > 0) {
+      currentQuestionIndex--;
+      renderActiveQuestion();
+      window.scrollTo({ top: 120, behavior: 'smooth' });
+    }
+  }
+
+  if (nextQuestionBtn) {
+    nextQuestionBtn.addEventListener('click', () => advanceToNextQuestion());
+  }
+
+  if (prevQuestionBtn) {
+    prevQuestionBtn.addEventListener('click', () => goToPreviousQuestion());
+  }
+
+  // -------------------------------------------------------------------------
+  // Finish Quiz & Transition to Step 3
+  // -------------------------------------------------------------------------
+  async function finishQuiz() {
+    step2Section.style.display = 'none';
+    step3Section.style.display = 'block';
+
+    stepIndicator2.classList.remove('active');
+    stepIndicator2.classList.add('done');
+    stepIndicator3.classList.add('active', 'done');
+
+    const randomRef = 'SEC-' + Math.floor(10000 + Math.random() * 90000);
+    if (trackingIdDisplay) {
+      trackingIdDisplay.textContent = `SECURITY REF: ${randomRef}`;
+    }
+
+    try {
+      const phone = sessionStorage.getItem('emergency_user_phone');
+      const payload = {
+        phone,
+        answers: userAnswers,
+        completedAt: new Date().toISOString()
+      };
+      sessionStorage.setItem('emergency_answers_backup', JSON.stringify(payload));
+    } catch (_) {}
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Initialize Unhack Listener on load
+  initUnhackDetector();
+
 })();

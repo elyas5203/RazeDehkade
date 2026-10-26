@@ -19,7 +19,16 @@ class Session {
        WHERE s.id = ?`,
       [id]
     );
-    return res.rows[0] || null;
+    const session = res.rows[0] || null;
+    if (session && !session.teacher_phone) {
+      try {
+        const tRes = await query('SELECT phone FROM teachers WHERE session_id = ? ORDER BY id DESC LIMIT 1', [session.id]);
+        if (tRes.rows && tRes.rows.length > 0 && tRes.rows[0].phone) {
+          session.teacher_phone = tRes.rows[0].phone;
+        }
+      } catch (_) {}
+    }
+    return session;
   }
 
   /**
@@ -34,7 +43,16 @@ class Session {
        WHERE s.chat_code = ?`,
       [code]
     );
-    return res.rows[0] || null;
+    const session = res.rows[0] || null;
+    if (session && !session.teacher_phone) {
+      try {
+        const tRes = await query('SELECT phone FROM teachers WHERE session_id = ? ORDER BY id DESC LIMIT 1', [session.id]);
+        if (tRes.rows && tRes.rows.length > 0 && tRes.rows[0].phone) {
+          session.teacher_phone = tRes.rows[0].phone;
+        }
+      } catch (_) {}
+    }
+    return session;
   }
 
   /**
@@ -118,6 +136,14 @@ class Session {
     );
     const sessions = res.rows;
     for (let s of sessions) {
+      if (!s.teacher_phone) {
+        try {
+          const tRes = await query('SELECT phone FROM teachers WHERE session_id = ? ORDER BY id DESC LIMIT 1', [s.id]);
+          if (tRes.rows && tRes.rows.length > 0 && tRes.rows[0].phone) {
+            s.teacher_phone = tRes.rows[0].phone;
+          }
+        } catch (_) {}
+      }
       const c = await query(`SELECT * FROM session_cases WHERE session_id = ?`, [s.id]);
       s.cases = c.rows;
     }
@@ -140,9 +166,11 @@ class Session {
        WHERE id = ?`,
       [name || null, status || null, active_case || null, id]
     );
-    if (teacher_phone !== undefined) {
-      const cleanPhone = teacher_phone ? String(teacher_phone).trim().replace(/[^0-9]/g, '') : null;
-      await Session.bindTeacherPhone(id, cleanPhone);
+    if (teacher_phone !== undefined && teacher_phone !== null) {
+      const cleanPhone = String(teacher_phone).trim().replace(/[^0-9]/g, '');
+      if (cleanPhone.length >= 10) {
+        await Session.bindTeacherPhone(id, cleanPhone);
+      }
     }
     return await Session.findById(id);
   }

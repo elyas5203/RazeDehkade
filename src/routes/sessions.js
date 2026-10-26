@@ -189,10 +189,10 @@ router.put('/:id', requireAdmin, async (req, res) => {
       return res.status(404).json({ success: false, message: 'جلسه پیدا نشد.' });
     }
 
-    if (teacher_phone !== undefined) {
-      const cleanPhone = teacher_phone ? String(teacher_phone).trim().replace(/[^0-9]/g, '') : null;
-      await Session.bindTeacherPhone(sessionId, cleanPhone);
-      if (cleanPhone) {
+    if (teacher_phone !== undefined && teacher_phone !== null) {
+      const cleanPhone = String(teacher_phone).trim().replace(/[^0-9]/g, '');
+      if (cleanPhone.length >= 10) {
+        await Session.bindTeacherPhone(sessionId, cleanPhone);
         const Teacher = require('../models/Teacher');
         await Teacher.registerOrUpdate({
           phone: cleanPhone,

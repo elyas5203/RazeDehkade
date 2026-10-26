@@ -232,6 +232,13 @@ function initAdminSocket() {
     debouncedLoadAdminSessions(1200);
   });
 
+  // دریافت زنده پیام‌های نبرد چت نفوذ مزداک در پنل ادمین
+  socket.on('hack_battle_message', (data) => {
+    if (data && Number(data.sessionId) === Number(activeSessionId) && data.message) {
+      renderAdminMessage(data.message, true);
+    }
+  });
+
   socket.on('session_read', (data) => {
     if (data && data.sessionId && sessionsMap[data.sessionId]) {
       sessionsMap[data.sessionId].unread_count = 0;

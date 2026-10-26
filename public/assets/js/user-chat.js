@@ -94,11 +94,8 @@ if (!userToken || !sessionData.id) {
   window.location.href = '/enter-code.html';
 }
 
-// اگر کلاس تحت نفوذ مزداک باشد، هدایت به درگاه احراز هویت اضطراری
+// فلگ‌های محلی نفوذ مزداک - وضعیت نهایی به صورت موثق از سرور در fetchHistory استعلام می‌شود
 const localHackFlag = sessionData && sessionData.id ? localStorage.getItem(`session_hacked_${sessionData.id}`) : null;
-if ((sessionData && sessionData.is_hacked) || localHackFlag === '1') {
-  window.location.replace('/emergency-auth.html');
-}
 
 const userMessagesMap = new Map();
 let activeEditMessageId = null;
@@ -309,6 +306,16 @@ async function loadHistory() {
         } catch (_) {}
         window.location.replace('/emergency-auth.html');
         return;
+      } else if (data.session) {
+        // نفوذ در سرور فعال نیست؛ رفع قطعی وضعیت هک و بازگشایی چت
+        sessionData.is_hacked = 0;
+        try {
+          sessionStorage.setItem('userSession', JSON.stringify(sessionData));
+          localStorage.removeItem(`session_hacked_${sessionData.id}`);
+        } catch (_) {}
+        if (window.cyberBreachEngine) {
+          window.cyberBreachEngine.reset();
+        }
       }
 
       if (data.session && typeof data.session.is_chat_locked !== 'undefined') {

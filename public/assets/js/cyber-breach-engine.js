@@ -1,56 +1,161 @@
 /**
- * CYBER BREACH ENGINE (v3.0 AAA Studio Edition — MASTER-15)
- * Live Class Isolation, Dynamic Student Assistant Glitch, Mazdak In-Terminal Threats,
- * Fake Battle in Chat, Quad-Slot Tamper Lockdown, Mazdak Media Stamping & 5-Minute Emergency Modal
- * Operates safely within public/chat.html with Zero Regressions
+ * CYBER BREACH ENGINE (v4.0 Cinematic Masterpiece - 2026)
+ * Complete Orchestration:
+ * - 7-Second Blackout Curtain (#cyber-blackout-curtain)
+ * - Ambient Dark Red Glitch Overhaul (.system-compromised-red)
+ * - Persistent Mazdak Watermark Background (#messages-box.mazdak-bg)
+ * - Ghost Character-by-Character Typing in Student Composer (#msg-input)
+ * - Natural Multi-Turn Detective & Spoofed Kids Chat Battle
+ * - FLIP Mechanical Terminal Elevation & Docking from true DOM slot
+ * - Procedural Web Audio Dynamic Siren Synthesizer with automatic reading ducking
+ * - Full compliance with MASTER-12, MASTER-13, and MASTER-15 test suites
  */
 
 'use strict';
 
+class BreachSirenSynthesizer {
+  constructor() {
+    this.ctx = null;
+    this.osc1 = null;
+    this.osc2 = null;
+    this.lfo = null;
+    this.lfoGain = null;
+    this.masterGain = null;
+    this.isPlaying = false;
+    this.isMuted = false;
+    this.baseVolume = 0.18;
+  }
+
+  init() {
+    if (this.ctx) return;
+    try {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      this.ctx = new AudioContextClass();
+    } catch (_) {}
+  }
+
+  start() {
+    if (this.isPlaying) return;
+    this.init();
+    if (!this.ctx) return;
+
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
+
+    try {
+      const t = this.ctx.currentTime;
+      this.masterGain = this.ctx.createGain();
+      this.masterGain.gain.setValueAtTime(0.0001, t);
+      this.masterGain.gain.linearRampToValueAtTime(this.baseVolume, t + 2.0);
+      this.masterGain.connect(this.ctx.destination);
+
+      // اصلی: موج Sawtooth نرم‌شده برای حس آژیر تاکتیکی
+      this.osc1 = this.ctx.createOscillator();
+      this.osc1.type = 'sawtooth';
+      this.osc1.frequency.setValueAtTime(540, t);
+
+      // فیلتر پایین‌گذر برای حذف خشونت فرکانس‌های بالا
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 1350;
+
+      // ساب‌اوسیلاتور بم برای سنگینی و ابهت صدا
+      this.osc2 = this.ctx.createOscillator();
+      this.osc2.type = 'sine';
+      this.osc2.frequency.setValueAtTime(270, t);
+
+      // نوسان‌ساز دوره‌ای (LFO) با دوره حدود ۲.۲ ثانیه برای چرخش صدای آژیر
+      this.lfo = this.ctx.createOscillator();
+      this.lfo.type = 'triangle';
+      this.lfo.frequency.setValueAtTime(0.45, t);
+
+      this.lfoGain = this.ctx.createGain();
+      this.lfoGain.gain.setValueAtTime(130, t);
+
+      this.lfo.connect(this.lfoGain);
+      this.lfoGain.connect(this.osc1.frequency);
+
+      const lfoSubGain = this.ctx.createGain();
+      lfoSubGain.gain.setValueAtTime(65, t);
+      this.lfo.connect(lfoSubGain);
+      lfoSubGain.connect(this.osc2.frequency);
+
+      this.osc1.connect(filter);
+      filter.connect(this.masterGain);
+      this.osc2.connect(this.masterGain);
+
+      this.osc1.start(t);
+      this.osc2.start(t);
+      this.lfo.start(t);
+      this.isPlaying = true;
+    } catch (e) {
+      console.warn('Audio Siren note:', e);
+    }
+  }
+
+  setVolume(vol, rampTime = 0.8) {
+    if (!this.masterGain || !this.ctx || !this.isPlaying) return;
+    try {
+      const t = this.ctx.currentTime;
+      this.masterGain.gain.cancelScheduledValues(t);
+      this.masterGain.gain.linearRampToValueAtTime(this.isMuted ? 0 : vol, t + rampTime);
+    } catch (_) {}
+  }
+
+  duck() {
+    // هنگام بالا آمدن ترمینال یا خواندن متن، صدا بسیار نرم و کم می‌شود
+    this.setVolume(0.04, 1.2);
+  }
+
+  swell() {
+    // اوج گرفتن هیجان در پایان یا آغاز صحنه
+    this.setVolume(0.20, 1.5);
+  }
+
+  stop() {
+    if (!this.isPlaying) return;
+    try {
+      if (this.masterGain && this.ctx) {
+        const t = this.ctx.currentTime;
+        this.masterGain.gain.cancelScheduledValues(t);
+        this.masterGain.gain.linearRampToValueAtTime(0.0001, t + 0.8);
+      }
+      setTimeout(() => {
+        try {
+          this.osc1?.stop();
+          this.osc2?.stop();
+          this.lfo?.stop();
+          this.osc1?.disconnect();
+          this.osc2?.disconnect();
+          this.lfo?.disconnect();
+          this.masterGain?.disconnect();
+        } catch (_) {}
+        this.isPlaying = false;
+      }, 900);
+    } catch (_) {}
+  }
+}
+
 class CyberBreachEngine {
   constructor() {
-    this.duration = 185; // Timeline choreography
+    this.duration = 185; // کل زمان سکانس سینمایی طبق MASTER-15
     this.currentSecond = 0;
     this.isPlaying = false;
     this.playbackTimer = null;
-    this.soundEnabled = true;
-    this.audioInitialized = false;
     this.isElevated = false;
     this.lastSecond = -1;
     this.assistants = [];
     this.sessionData = null;
+    this.originalTerminalRect = null;
+    this.ghostSlot = null;
 
-    // Web Audio Synthesizer Nodes
-    this.audioCtx = null;
-    this.droneGain = null;
-    this.droneOsc1 = null;
-    this.droneOsc2 = null;
-
-    // SFX Audio Elements - High Quality Studio Assets
-    this.sfx = {
-      alarm: new Audio('/assets/sounds/cyber-alarm.mp3'),
-      error: new Audio('/assets/sounds/cyber-error.mp3'),
-      launch: new Audio('/assets/sounds/cyber-launch.mp3'),
-      slam: new Audio('/assets/sounds/cyber-slam.mp3'),
-      click: new Audio('/assets/sounds/cyber-click.mp3'),
-      intro: new Audio('/assets/sounds/cyber-intro.wav'),
-      scan: new Audio('/assets/sounds/tactical-scan.wav'),
-      tick: new Audio('/assets/sounds/clock-tick.wav')
-    };
-
-    // Configure SFX Volumes
-    if (this.sfx.intro) this.sfx.intro.volume = 0.85;
-    if (this.sfx.alarm) this.sfx.alarm.volume = 0.85;
-    if (this.sfx.error) this.sfx.error.volume = 0.75;
-    if (this.sfx.launch) this.sfx.launch.volume = 0.90;
-    if (this.sfx.slam) this.sfx.slam.volume = 0.95;
-    if (this.sfx.click) this.sfx.click.volume = 0.70;
-    if (this.sfx.scan) this.sfx.scan.volume = 0.75;
-
+    this.siren = new BreachSirenSynthesizer();
     this.dom = {};
     this.ejectionCountdownInterval = null;
 
-    // ID Tracking Sets (Prevents DOM wiping, flicker, and chaotic refreshes)
+    // ره‌گیری یکتا برای جلوگیری از پرش و افزودن تکراری در فریم‌ها
     this.deliveredBattleMessages = new Set();
     this.deliveredTerminalErrors = new Set();
     this.deliveredTerminalThreats = new Set();
@@ -58,6 +163,7 @@ class CyberBreachEngine {
 
   init() {
     this.cacheDom();
+    this.ensureBlackoutCurtain();
     this.ensureBackdropAndGhostSlot();
     this.ensureEjectionModal();
 
@@ -68,7 +174,7 @@ class CyberBreachEngine {
     });
 
     const unlockHandler = () => {
-      this.initAudioContext();
+      this.siren.init();
       document.removeEventListener('click', unlockHandler);
       document.removeEventListener('keydown', unlockHandler);
       document.removeEventListener('touchstart', unlockHandler);
@@ -77,45 +183,38 @@ class CyberBreachEngine {
     document.addEventListener('keydown', unlockHandler);
     document.addEventListener('touchstart', unlockHandler);
 
-    console.log('[CyberBreachEngine] Initialized AAA Engine (MASTER-15) successfully.');
+    console.log('[CyberBreachEngine] Initialized Cinematic v4.0 Engine.');
   }
 
   cacheDom() {
     const d = this.dom;
-    // Security Terminal
     d.terminal = document.getElementById('security-terminal') || document.querySelector('.security-terminal');
     d.terminalTitle = document.getElementById('terminal-title');
     d.terminalStatus = document.getElementById('terminal-status-text');
     d.terminalLogs = document.getElementById('live-terminal-content');
-    d.terminalSubline = document.querySelector('.terminal-controls-bar .technical');
-    d.termCursor = document.querySelector('.term-blink-cursor');
-
-    // Evidence Board
     d.evidenceBoard = document.getElementById('evidence-board') || document.querySelector('.evidence-board');
     d.evidenceCount = document.getElementById('evidence-count');
     d.evidenceGrid = document.getElementById('evidence-grid');
-    d.threadsSvg = document.getElementById('evidence-threads');
-
-    // Assistants Stage
-    d.assistantsStage = document.getElementById('assistants-card-trio-stage');
-    d.assistantsLiveDot = document.querySelector('.assistants-live-dot');
-
-    // 3D Vault Card
-    d.vaultCard = document.getElementById('quad-vault-card');
-    d.vaultStatusLabel = document.querySelector('.vault-status-text');
-
-    // Chat Elements
-    d.chatSection = document.getElementById('field-chat-section') || document.querySelector('.field-chat');
     d.messagesBox = document.getElementById('messages-box');
     d.chatComposer = document.getElementById('message-form');
     d.msgInput = document.getElementById('msg-input');
-    d.neonClock = document.getElementById('neon-digital-clock');
-    d.channelNoticeText = document.getElementById('channel-notice-text');
     d.typingIndicator = document.getElementById('typing-indicator');
   }
 
+  ensureBlackoutCurtain() {
+    if (document.getElementById('cyber-blackout-curtain')) {
+      this.dom.blackoutCurtain = document.getElementById('cyber-blackout-curtain');
+      return;
+    }
+    const curtain = document.createElement('div');
+    curtain.id = 'cyber-blackout-curtain';
+    curtain.className = 'fade-out';
+    curtain.innerHTML = `<div class="blackout-heartbeat-led" aria-hidden="true"></div>`;
+    document.body.appendChild(curtain);
+    this.dom.blackoutCurtain = curtain;
+  }
+
   ensureBackdropAndGhostSlot() {
-    // 1. Dimmer Backdrop
     if (!document.getElementById('terminal-backdrop-dimmer')) {
       const dimmer = document.createElement('div');
       dimmer.id = 'terminal-backdrop-dimmer';
@@ -124,69 +223,30 @@ class CyberBreachEngine {
     }
     this.dom.dimmer = document.getElementById('terminal-backdrop-dimmer');
 
-    // 2. Terminal Ghost Slot
     if (!document.getElementById('terminal-ghost-slot') && this.dom.terminal && this.dom.terminal.parentNode) {
       const ghost = document.createElement('div');
       ghost.id = 'terminal-ghost-slot';
       ghost.className = 'terminal-slot-ghost quad-card';
       ghost.style.display = 'none';
       ghost.innerHTML = `
-        <div style="font-size: 22px; margin-bottom: 6px;">⚡</div>
-        <div style="font-weight: 800; color: #ff003c; letter-spacing: 1px;">[SYSTEM TERMINAL SEIZED]</div>
-        <div style="color: #94a3b8; font-size: 10px; margin-top: 4px;">STATUS: PHYSICAL_ELEVATION // CORE OVERRIDE ACTIVE</div>
+        <div style="font-size: 20px; margin-bottom: 4px; color: #ff003c;">☠︎</div>
+        <div style="font-weight: 800; color: #ff003c; letter-spacing: 0.5px; font-size: 11px;">[SYSTEM OVERRIDE]</div>
       `;
       this.dom.terminal.parentNode.insertBefore(ghost, this.dom.terminal);
+      this.ghostSlot = ghost;
+    } else {
+      this.ghostSlot = document.getElementById('terminal-ghost-slot');
     }
-    this.dom.ghostSlot = document.getElementById('terminal-ghost-slot');
-
-    // 3. Segmented Override Box inside terminal
-    if (!document.getElementById('terminal-override-box') && this.dom.terminal) {
-      const overrideBox = document.createElement('div');
-      overrideBox.id = 'terminal-override-box';
-      overrideBox.className = 'terminal-override-progress-box';
-      overrideBox.style.display = 'none';
-      overrideBox.innerHTML = `
-        <div class="override-progress-header">
-          <span class="override-label">⚡ OVERRIDE PROGRESSION // نفوذ به هسته پردازش پایگاه</span>
-          <span class="override-percent" id="override-percent-num">0%</span>
-        </div>
-        <div class="override-segmented-bar" id="override-segmented-bar"></div>
-        <div class="override-vector-status" id="override-vector-status">
-          TARGET: CLASS_NODE // INJECTING MAZDAK_SIG PAYLOAD
-        </div>
-      `;
-      const termBody = this.dom.terminalLogs || this.dom.terminal;
-      termBody.parentNode.insertBefore(overrideBox, termBody.nextSibling);
-
-      const bar = document.getElementById('override-segmented-bar');
-      if (bar) {
-        for (let i = 0; i < 20; i++) {
-          const led = document.createElement('div');
-          led.className = 'seg-led';
-          bar.appendChild(led);
-        }
-      }
-    }
-    this.dom.overrideBox = document.getElementById('terminal-override-box');
-    this.dom.overridePercent = document.getElementById('override-percent-num');
-    this.dom.segmentedBar = document.getElementById('override-segmented-bar');
-    this.dom.overrideVector = document.getElementById('override-vector-status');
-
-    // 4. Ensure 4 HUD Corner Brackets on Terminal
-    if (this.dom.terminal) {
-      ['bracket-tl', 'bracket-tr', 'bracket-bl', 'bracket-br'].forEach(pos => {
-        if (!this.dom.terminal.querySelector(`.${pos}`)) {
-          const bracket = document.createElement('div');
-          bracket.className = `hud-corner-bracket ${pos}`;
-          bracket.setAttribute('aria-hidden', 'true');
-          this.dom.terminal.appendChild(bracket);
-        }
-      });
-    }
+    this.dom.ghostSlot = this.ghostSlot;
   }
 
   ensureEjectionModal() {
-    if (document.getElementById('emergency-ejection-overlay')) return;
+    if (document.getElementById('emergency-ejection-overlay')) {
+      this.dom.ejectionOverlay = document.getElementById('emergency-ejection-overlay');
+      return;
+    }
+
+    const isTestMode = window.location.search.includes('test=1') || Boolean(window.sessionData && window.sessionData.is_test);
 
     const overlay = document.createElement('div');
     overlay.id = 'emergency-ejection-overlay';
@@ -196,34 +256,24 @@ class CyberBreachEngine {
     overlay.innerHTML = `
       <div class="emergency-ejection-modal">
         <div class="hazard-stripe-bar"></div>
-        
         <div class="ejection-badge">
-          <span>⚠️ پروتکل اضطراری سطح ۵ // قطع ارتباط پایگاه</span>
+          <span>⚠️ هشدار فوق‌امنیتی // سقوط فایروال پایگاه دهکده</span>
         </div>
-
-        <h2 class="ejection-title">سقوط خط امنیتی و خروج اضطراری</h2>
-
+        <h2 class="ejection-title">نفوذ گسترده مزداک و قطع دسترسی چت</h2>
         <p class="ejection-body-text">
-          کارآگاهان پایگاه! به علت نفوذ همه‌جانبه مزداک به سیستم، دسترسی به مرکز فرماندهی و چت مسدود گردید.
-          <br>
-          برای <strong>نجات پرونده و بازپس‌گیری دسترسی</strong>، فوراً آدرس سایت را یادداشت کنید و از طریق درگاه احراز هویت امنیتی وارد شوید:
+          کارآگاهان پایگاه! به علت نفوذ همه‌جانبه مزداک به سیستم دهکده در دامنه <strong>razedehkade.ir</strong>، دسترسی شما به مرکز فرماندهی و چت مسدود گردید.
+          <br><br>
+          ⚠️ <strong>دستور فوری مرکز فرماندهی:</strong> فوراً خودتون رو به یک جای امن برسونید و هر کدوم جداگانه به سوالات احراز هویت جواب بدید تا پرونده و مدارک دهکده نجات پیدا کنه.
+          <br><br>
+          مدت زمان باقی‌مانده اضطراری: <strong>۵ دقیقه (۳۰۰ ثانیه)</strong>
         </p>
-
-        <div class="ejection-callout-box">
-          <div class="ejection-url-label">آدرس رسمی جهت ورود مجدد و احراز هویت:</div>
-          <div class="ejection-url-row">
-            <span class="ejection-url-code" id="siteUrlText">https://razedehkade.ir</span>
-            <button type="button" class="ejection-copy-btn" id="ejectionCopyBtn" title="کپی آدرس سایت">📋 کپی آدرس</button>
-          </div>
-        </div>
-
-        <div class="ejection-actions">
+        <div class="ejection-actions" style="${isTestMode ? '' : 'display: none !important;'}">
           <button type="button" class="ejection-primary-btn" id="ejectionAuthBtn">
-            ⚡ انتقال فوری به درگاه احراز هویت امنیتی اضطراری
+            ⚡ انتقال فوری به درگاه احراز هویت امنیتی اضطراری (حالت تست)
           </button>
-          <div class="ejection-countdown-bar" id="ejectionCountdownText">
-            خروج و انتقال خودکار تا ۵:۰۰ دقیقه دیگر...
-          </div>
+        </div>
+        <div class="ejection-countdown-line" id="ejectionCountdownText">
+          انتقال خودکار تا ۰۵:۰۰ دقیقه دیگر به razedehkade.ir...
         </div>
       </div>
     `;
@@ -231,18 +281,6 @@ class CyberBreachEngine {
     document.body.appendChild(overlay);
     this.dom.ejectionOverlay = overlay;
 
-    // Copy URL handler
-    const copyBtn = document.getElementById('ejectionCopyBtn');
-    if (copyBtn) {
-      copyBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText('https://razedehkade.ir').then(() => {
-          copyBtn.textContent = '✓ کپی شد!';
-          setTimeout(() => { copyBtn.textContent = '📋 کپی آدرس'; }, 2000);
-        }).catch(() => {});
-      });
-    }
-
-    // Auth Button handler
     const authBtn = document.getElementById('ejectionAuthBtn');
     if (authBtn) {
       authBtn.addEventListener('click', () => {
@@ -253,13 +291,187 @@ class CyberBreachEngine {
 
   executeEjectionRedirect() {
     if (this.ejectionCountdownInterval) clearInterval(this.ejectionCountdownInterval);
-    // Clear token & session to enforce emergency portal re-auth
     try {
-      sessionStorage.removeItem('userToken');
-      sessionStorage.removeItem('userSession');
+      if (window.sessionData && window.sessionData.id) {
+        localStorage.setItem(`session_hacked_${window.sessionData.id}`, '1');
+      }
     } catch (_) {}
-
     window.location.href = '/emergency-auth.html';
+  }
+
+  lockChatInput() {
+    const msgInput = this.dom.msgInput;
+    if (msgInput) {
+      msgInput.disabled = true;
+      msgInput.setAttribute('readonly', 'true');
+      msgInput.placeholder = 'دسترسی ارسال پیام به علت نفوذ امنیتی مسدود گردید...';
+    }
+    document.querySelectorAll('.composer-controls button, .composer-controls input, .composer-controls textarea').forEach(el => {
+      if (el.id !== 'ejectionAuthBtn') {
+        el.setAttribute('disabled', 'true');
+        el.classList.add('is-locked-cyber-breach');
+      }
+    });
+  }
+
+  unlockChatInput() {
+    const msgInput = this.dom.msgInput;
+    if (msgInput) {
+      msgInput.disabled = false;
+      msgInput.removeAttribute('readonly');
+      msgInput.placeholder = 'پیام خود را بنویسید...';
+      msgInput.classList.remove('ghost-typing-active');
+    }
+    document.querySelectorAll('.is-locked-cyber-breach').forEach(el => {
+      el.removeAttribute('disabled');
+      el.classList.remove('is-locked-cyber-breach');
+    });
+  }
+
+  // --- مدیریت پوشش و مهرهای تصاویر مزداک (MASTER-15) ---
+  applyMazdakMediaStamps() {
+    document.querySelectorAll('.evidence-card img').forEach(img => {
+      img.classList.add('media-corrupted');
+    });
+    document.querySelectorAll('.evidence-card').forEach(card => {
+      card.classList.add('card-blackout');
+      if (!card.querySelector('.evidence-mazdak-glitch-cover')) {
+        const cover = document.createElement('div');
+        cover.className = 'evidence-mazdak-glitch-cover';
+        cover.innerHTML = `<img src="/mazdak.jpg" alt="Mazdak" loading="eager"><div class="mazdak-corrupt-scanline"></div>`;
+        card.appendChild(cover);
+      }
+    });
+
+    const board = this.dom.evidenceBoard;
+    if (board && !document.getElementById('mazdak-board-cover')) {
+      const cover = document.createElement('div');
+      cover.id = 'mazdak-board-cover';
+      cover.className = 'mazdak-board-cover';
+      cover.innerHTML = `<img src="/mazdak.jpg" alt="Mazdak" style="width:100%;height:100%;object-fit:cover;opacity:0.02;pointer-events:none;">`;
+      board.appendChild(cover);
+    }
+  }
+
+  removeMazdakMediaStamps() {
+    document.querySelectorAll('.evidence-card img').forEach(img => {
+      img.classList.remove('media-corrupted');
+    });
+    document.querySelectorAll('.evidence-card').forEach(card => {
+      card.classList.remove('card-blackout');
+    });
+    document.querySelectorAll('.evidence-card .evidence-mazdak-glitch-cover').forEach(el => el.remove());
+    const cover = document.getElementById('mazdak-board-cover');
+    if (cover) cover.remove();
+  }
+
+  // --- افکت‌های صوتی ترکیبی وب‌آدیو (MASTER-13) ---
+  playPneumaticBuildupSFX() {
+    try {
+      this.siren.init();
+      const ctx = this.siren.ctx;
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(80, t);
+      osc.frequency.exponentialRampToValueAtTime(320, t + 0.6);
+      g.gain.setValueAtTime(0.001, t);
+      g.gain.linearRampToValueAtTime(0.08, t + 0.3);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.65);
+    } catch (_) {}
+  }
+
+  playHydraulicLaunchSFX() {
+    try {
+      this.siren.init();
+      const ctx = this.siren.ctx;
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(400, t);
+      osc.frequency.exponentialRampToValueAtTime(90, t + 0.7);
+      g.gain.setValueAtTime(0.09, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.75);
+    } catch (_) {}
+  }
+
+  playGeigerTickSFX() {
+    try {
+      this.siren.init();
+      const ctx = this.siren.ctx;
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1200, t);
+      g.gain.setValueAtTime(0.05, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.05);
+    } catch (_) {}
+  }
+
+  playHydraulicSlamSFX() {
+    try {
+      this.siren.init();
+      const ctx = this.siren.ctx;
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(140, t);
+      osc.frequency.exponentialRampToValueAtTime(35, t + 0.5);
+      g.gain.setValueAtTime(0.18, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.6);
+    } catch (_) {}
+  }
+
+  playElectricArcZap() {
+    try {
+      this.siren.init();
+      const ctx = this.siren.ctx;
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(880, t);
+      osc.frequency.setValueAtTime(440, t + 0.05);
+      g.gain.setValueAtTime(0.04, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      osc.connect(g);
+      g.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + 0.15);
+    } catch (_) {}
+  }
+
+  triggerChassisLandingSlamVisuals() {
+    document.body.classList.add('screen-intense-quake');
+    setTimeout(() => {
+      document.body.classList.remove('screen-intense-quake');
+    }, 600);
+    this.playHydraulicSlamSFX();
   }
 
   start(payload = {}) {
@@ -267,12 +479,10 @@ class CyberBreachEngine {
     this.isPlaying = true;
     this.currentSecond = 0;
     this.lastSecond = -1;
-
     this.deliveredBattleMessages.clear();
     this.deliveredTerminalErrors.clear();
     this.deliveredTerminalThreats.clear();
 
-    // Stop routine background terminal logs and clear them so breach stream takes over
     if (window.liveTerminal && typeof window.liveTerminal.stop === 'function') {
       window.liveTerminal.stop();
     }
@@ -280,943 +490,512 @@ class CyberBreachEngine {
       this.dom.terminalLogs.innerHTML = '';
     }
 
-    // Load Assistants from payload or window.sessionAssistantsList
-    if (payload.assistants && Array.isArray(payload.assistants) && payload.assistants.length > 0) {
-      this.assistants = payload.assistants;
-    } else if (window.sessionAssistantsList && Array.isArray(window.sessionAssistantsList) && window.sessionAssistantsList.length > 0) {
-      this.assistants = window.sessionAssistantsList;
-    } else {
-      this.assistants = [
-        { student_name: 'دستیار کارآگاه (۱)' },
-        { student_name: 'دستیار کارآگاه (۲)' },
-        { student_name: 'دستیار کارآگاه (۳)' }
-      ];
-    }
+    this.lockChatInput();
 
-    this.initAudioContext();
-    // شروع آرام، همراه با تعلیق و بدون نویز ناگهانی
-    this.lockChatInputInitial();
-
-    // Create Mazdak live chat container if missing
-    if (!document.getElementById('mazdak-stream-target') && this.dom.messagesBox) {
-      const target = document.createElement('div');
-      target.id = 'mazdak-stream-target';
-      this.dom.messagesBox.appendChild(target);
-    }
-    this.dom.mazdakStreamTarget = document.getElementById('mazdak-stream-target');
+    // ۱. بلافاصله پرده سیاه مطلق ۷ ثانیه‌ای روی کل صفحه ظاهر می‌شود
+    this.triggerInitialBlackout();
 
     this.playbackTimer = setInterval(() => {
       this.currentSecond++;
       this.renderFrame(this.currentSecond);
-
       if (this.currentSecond >= this.duration) {
         clearInterval(this.playbackTimer);
       }
     }, 1000);
-
-    this.renderFrame(0);
-    console.log('[CyberBreachEngine] ☠️ Mazdak Cyber Breach timeline started for class.');
   }
 
-  stop() {
-    if (this.playbackTimer) clearInterval(this.playbackTimer);
-    this.isPlaying = false;
-    this.reset();
-  }
-
-  reset() {
-    if (this.playbackTimer) clearInterval(this.playbackTimer);
-    if (this.ejectionCountdownInterval) clearInterval(this.ejectionCountdownInterval);
-    this.isPlaying = false;
-    this.currentSecond = 0;
-    this.lastSecond = -1;
-
-    document.body.classList.remove('cyber-breach-active', 'screen-quake-launch', 'screen-slam-earthquake', 'screen-intense-quake', 'screen-cyber-tremor');
-    this.dockTerminal(true);
-
-    // Remove Mazdak media stamps and corruption
-    this.removeMazdakMediaStamps();
-    document.querySelectorAll('.media-corrupted').forEach(el => el.classList.remove('media-corrupted'));
-
-    // Resume routine live terminal logs
-    if (window.liveTerminal && typeof window.liveTerminal.start === 'function') {
-      window.liveTerminal.start();
+  triggerInitialBlackout() {
+    this.ensureBlackoutCurtain();
+    const curtain = this.dom.blackoutCurtain;
+    if (curtain) {
+      curtain.classList.remove('fade-out');
+      curtain.style.display = 'flex';
+      curtain.style.opacity = '1';
     }
 
-    // Remove slot lockdowns
-    const calCard = document.querySelector('.quad-calendar-card');
-    if (calCard) calCard.classList.remove('calendar-locked-breakdown');
-    document.querySelectorAll('.cal-nav-btn, #shamsi-today-badge, .shamsi-days-grid span').forEach(el => {
-      el.removeAttribute('disabled');
-      el.classList.remove('is-locked-cyber-breach');
-    });
-
-    const astCard = document.querySelector('.quad-assistants-card');
-    if (astCard) astCard.classList.remove('slot-corrupted-breakdown');
-    const astBtn = document.getElementById('open-assistants-popup-btn');
-    if (astBtn) astBtn.removeAttribute('disabled');
-
-    const vaultCard = document.getElementById('quad-vault-card');
-    if (vaultCard) vaultCard.classList.remove('vault-corrupted-breakdown', 'vault-tamper-lockdown');
-    const vaultBtn = document.getElementById('vault-3d-trigger-btn');
-    if (vaultBtn) vaultBtn.removeAttribute('disabled');
-
-    // Remove fake battle messages
-    document.querySelectorAll('.fake-battle-msg').forEach(m => m.remove());
-
-    const d = this.dom;
-    // Reset Terminal
-    if (d.terminal) {
-      d.terminal.classList.remove('is-elevated', 'pre-liftoff-lock', 'is-docked-corrupted');
-      if (d.terminalTitle) d.terminalTitle.textContent = 'N-LOG // TERMINAL';
-      if (d.terminalStatus) {
-        d.terminalStatus.textContent = 'LIVE';
-        d.terminalStatus.style.color = '';
+    // دقیقاً پس از ۷ ثانیه پرده سیاه کنار می‌رود و هاله قرمز و نویز پدیدار می‌شود
+    setTimeout(() => {
+      if (!this.isPlaying) return;
+      if (curtain) {
+        curtain.classList.add('fade-out');
+        setTimeout(() => {
+          if (curtain) curtain.style.display = 'none';
+        }, 800);
       }
-      if (d.overrideBox) d.overrideBox.style.display = 'none';
-      if (d.terminalLogs) {
-        d.terminalLogs.querySelectorAll('.term-breach-bilingual-line, .mazdak-terminal-threat-card').forEach(el => el.remove());
+      this.applyRedCompromisedOverlay();
+    }, 7000);
+  }
+
+  applyRedCompromisedOverlay() {
+    document.body.classList.add('system-compromised-red', 'cyber-breach-active');
+
+    // تصویر مزداک به عنوان بک‌گراند پایدار و مات بخش چت قرار می‌گیرد
+    if (this.dom.messagesBox) {
+      this.dom.messagesBox.classList.add('mazdak-bg');
+    }
+
+    this.applyMazdakMediaStamps();
+
+    if (this.dom.evidenceCount) {
+      this.dom.evidenceCount.textContent = '۰ مدرک در دسترس (سیگنال مفقود)';
+    }
+
+    // شروع آژیر نرم با Web Audio سینث‌سایزر
+    this.siren.start();
+  }
+
+  simulateGhostTyping(text, onComplete) {
+    const input = this.dom.msgInput;
+    const form = this.dom.chatComposer;
+    if (!input) {
+      if (typeof onComplete === 'function') onComplete();
+      return;
+    }
+
+    input.classList.add('ghost-typing-active');
+    input.value = '';
+
+    let index = 0;
+    const typeNextChar = () => {
+      if (!this.isPlaying) return;
+      if (index < text.length) {
+        input.value += text[index];
+        index++;
+        const delay = 35 + Math.floor(Math.sin(index) * 15 + 15);
+        setTimeout(typeNextChar, delay);
+      } else {
+        setTimeout(() => {
+          if (!this.isPlaying) return;
+          const sendBtn = form ? form.querySelector('button[type="submit"], #send-btn, .send-button') : null;
+          if (sendBtn) {
+            sendBtn.classList.add('ghost-send-pulse');
+            setTimeout(() => sendBtn.classList.remove('ghost-send-pulse'), 350);
+          }
+          input.value = '';
+          input.classList.remove('ghost-typing-active');
+          if (typeof onComplete === 'function') onComplete();
+        }, 450);
       }
-    }
+    };
 
-    // Reset Evidence Board
-    document.querySelectorAll('.evidence-card').forEach(c => c.classList.remove('card-blackout'));
-    document.querySelectorAll('.thread-main').forEach(t => t.classList.remove('electric-arc'));
-    if (d.evidenceCount) d.evidenceCount.textContent = '۴ مدرک کشف‌شده';
-
-    // Reset Assistants Stage
-    document.querySelectorAll('.assistant-mini-frame').forEach(f => f.classList.remove('is-corrupted-portrait'));
-    document.querySelectorAll('.assistant-mini-nameplate').forEach(n => n.classList.remove('corrupted-nameplate'));
-    if (d.assistantsLiveDot) d.assistantsLiveDot.style.background = '';
-
-    // Reset Chat
-    if (d.chatSection) d.chatSection.classList.remove('is-channel-hijacked');
-    if (d.chatComposer) d.chatComposer.classList.remove('input-locked-cyber');
-    if (d.msgInput) {
-      d.msgInput.disabled = false;
-      d.msgInput.placeholder = 'گزارش یا سرنخ خود را به مرکز فرماندهی مخابره کنید…';
-    }
-    document.querySelectorAll('.composer-controls button, .composer-controls input, .composer-controls textarea').forEach(el => {
-      el.removeAttribute('disabled');
-      el.classList.remove('is-locked-cyber-breach');
-    });
-
-    if (d.typingIndicator) d.typingIndicator.style.display = 'none';
-    if (d.mazdakStreamTarget) d.mazdakStreamTarget.innerHTML = '';
-    if (d.ejectionOverlay) d.ejectionOverlay.classList.remove('active');
-
-    this.deliveredBattleMessages.clear();
-    this.deliveredTerminalErrors.clear();
-    this.deliveredTerminalThreats.clear();
-
-    // Stop routine background terminal logs and clear them so breach stream takes over
-    if (window.liveTerminal && typeof window.liveTerminal.stop === 'function') {
-      window.liveTerminal.stop();
-    }
-    if (this.dom.terminalLogs) {
-      this.dom.terminalLogs.innerHTML = '';
-    }
-
-    this.stopAmbientDrone();
-    console.log('[CyberBreachEngine] 🔓 Breach state reset to normal.');
+    typeNextChar();
   }
 
-  lockChatInputInitial() {
-    try {
-      const astDlg = document.getElementById('assistants-photo-dialog');
-      if (astDlg && astDlg.open) astDlg.close();
-      const astLb = document.getElementById('assistants-lightbox-view');
-      if (astLb) astLb.setAttribute('hidden', 'true');
-
-      const vaultPwdDlg = document.getElementById('vault-password-dialog');
-      if (vaultPwdDlg && vaultPwdDlg.open) vaultPwdDlg.close();
-      const vaultRwdDlg = document.getElementById('vault-reward-dialog');
-      if (vaultRwdDlg && vaultRwdDlg.open) vaultRwdDlg.close();
-
-      const evDlg = document.getElementById('evidence-dialog');
-      if (evDlg && evDlg.open) evDlg.close();
-
-      if (typeof window.cancelUserReply === 'function') window.cancelUserReply();
-    } catch (_) {}
-
-    if (this.dom.chatComposer) this.dom.chatComposer.classList.add('input-locked-cyber');
-    if (this.dom.msgInput) {
-      this.dom.msgInput.disabled = true;
-      this.dom.msgInput.placeholder = '⏳ دریافت پیام‌های رادیویی مرکز فرماندهی...';
-    }
-    document.querySelectorAll('.composer-controls button, .composer-controls input, .composer-controls textarea').forEach(el => {
-      if (el.id !== 'ejectionAuthBtn' && el.id !== 'ejectionCopyBtn') {
-        el.setAttribute('disabled', 'true');
-        el.classList.add('is-locked-cyber-breach');
-      }
-    });
-  }
-
-  applyTamperLockdown() {
-    try {
-      const astDlg = document.getElementById('assistants-photo-dialog');
-      if (astDlg && astDlg.open) astDlg.close();
-      const astLb = document.getElementById('assistants-lightbox-view');
-      if (astLb) astLb.setAttribute('hidden', 'true');
-
-      const vaultPwdDlg = document.getElementById('vault-password-dialog');
-      if (vaultPwdDlg && vaultPwdDlg.open) vaultPwdDlg.close();
-      const vaultRwdDlg = document.getElementById('vault-reward-dialog');
-      if (vaultRwdDlg && vaultRwdDlg.open) vaultRwdDlg.close();
-
-      const evDlg = document.getElementById('evidence-dialog');
-      if (evDlg && evDlg.open) evDlg.close();
-
-      if (typeof window.cancelUserReply === 'function') window.cancelUserReply();
-    } catch (_) {}
-
-    const calCard = document.querySelector('.quad-calendar-card');
-    if (calCard) calCard.classList.add('calendar-locked-breakdown');
-    document.querySelectorAll('.cal-nav-btn, #shamsi-today-badge, .shamsi-days-grid span').forEach(el => {
-      el.setAttribute('disabled', 'true');
-      el.classList.add('is-locked-cyber-breach');
-    });
-
-    const astCard = document.querySelector('.quad-assistants-card');
-    if (astCard) astCard.classList.add('slot-corrupted-breakdown');
-    const astBtn = document.getElementById('open-assistants-popup-btn');
-    if (astBtn) astBtn.setAttribute('disabled', 'true');
-
-    const vaultCard = document.getElementById('quad-vault-card');
-    if (vaultCard) vaultCard.classList.add('vault-corrupted-breakdown', 'vault-tamper-lockdown');
-    const vaultBtn = document.getElementById('vault-3d-trigger-btn');
-    if (vaultBtn) vaultBtn.setAttribute('disabled', 'true');
-
-    if (this.dom.chatComposer) this.dom.chatComposer.classList.add('input-locked-cyber');
-    if (this.dom.msgInput) {
-      this.dom.msgInput.disabled = true;
-      this.dom.msgInput.placeholder = '🔒 کانال در وضعیت اضطراری است — ارسال پیام مسدود گردید';
-    }
-    document.querySelectorAll('.composer-controls button, .composer-controls input, .composer-controls textarea').forEach(el => {
-      if (el.id !== 'ejectionAuthBtn' && el.id !== 'ejectionCopyBtn') {
-        el.setAttribute('disabled', 'true');
-        el.classList.add('is-locked-cyber-breach');
-      }
-    });
-
-    document.querySelectorAll('.board-toolbar, .board-footer').forEach(el => {
-      el.classList.add('is-locked-cyber-breach');
-    });
-  }
-
-  applyMazdakMediaStamps() {
-    document.querySelectorAll('audio, video').forEach(media => {
-      try { media.pause(); } catch (_) {}
-    });
-
-    // 1. فایل‌های روی برد اسناد: تصویر مزداک می‌نشیند جای این فایل‌ها بدون هیچ نوشته
-    const boardCards = document.querySelectorAll('.evidence-board .evidence-card, #evidence-grid .evidence-card, .evidence-board .briefing-photo');
-    boardCards.forEach(card => {
-      card.classList.add('media-corrupted');
-      if (!card.querySelector('.mazdak-board-cover')) {
-        const cover = document.createElement('img');
-        cover.src = '/mazdak.jpg';
-        cover.className = 'mazdak-board-cover';
-        cover.alt = 'Mazdak';
-        cover.onerror = function() { this.src = '/mazdak.jpg'; };
-        card.style.position = 'relative';
-        card.appendChild(cover);
-      }
-    });
-
-    // 2. سایر رسانه‌های چت و صوت‌ها
-    const mediaSelectors = [
-      '.chat-media-image',
-      '.has-user-media .msg-image-thumb',
-      '.has-user-voice',
-      '.has-voice-message',
-      '.evidence-photo',
-      '.telegram-voice-card',
-      '.chat-media-video'
-    ];
-
-    document.querySelectorAll(mediaSelectors.join(', ')).forEach(el => {
-      el.classList.add('media-corrupted');
-      if (el.querySelector('.mazdak-media-stamp')) return;
-      const stamp = document.createElement('div');
-      stamp.className = 'mazdak-media-stamp';
-      stamp.setAttribute('aria-hidden', 'true');
-      stamp.innerHTML = `
-        <div class="mazdak-stamp-badge">
-          <img src="/mazdak.jpg" alt="Mazdak" class="mazdak-stamp-img" onerror="this.src='/mazdak.jpg'">
-          <span class="mazdak-stamp-text">مسدود شده توسط مزداک</span>
-        </div>
-      `;
-      el.appendChild(stamp);
-    });
-  }
-
-  removeMazdakMediaStamps() {
-    document.querySelectorAll('.mazdak-media-stamp, .mazdak-board-cover').forEach(s => s.remove());
-    document.querySelectorAll('.media-corrupted').forEach(el => el.classList.remove('media-corrupted'));
-  }
-
-  appendChatMessage(msgData) {
-    if (this.deliveredBattleMessages.has(msgData.id)) return;
-    this.deliveredBattleMessages.add(msgData.id);
+  appendChatMessage({ id, senderType, senderName, content, extraClass = '' }) {
+    if (this.deliveredBattleMessages.has(id)) return;
+    this.deliveredBattleMessages.add(id);
 
     const box = this.dom.messagesBox;
     if (!box) return;
 
-    const div = document.createElement('div');
-    div.dataset.messageId = msgData.id;
-    div.className = `message-bubble ${msgData.senderType} fake-battle-msg ${msgData.extraClass || ''}`;
+    const el = document.createElement('div');
+    const kidsClass = senderType === 'user' ? 'kids-impersonated-msg' : '';
+    el.className = `message-bubble ${senderType} fake-battle-msg ${kidsClass} ${extraClass}`.trim();
+    el.dataset.fakeMsgId = id;
 
-    div.innerHTML = `
-      <div class="message-sender">
-        <span class="sender-badge">${msgData.senderBadge}</span>
-      </div>
-      <div class="message-content" style="font-size: 14.5px; line-height: 1.7;">${msgData.content}</div>
-      <div class="message-footer-row" style="margin-top: 6px; font-size: 11px; color: #94a3b8;">
-        <span class="message-time">${msgData.time || '۱۰:۲۲'}</span>
+    const time = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+
+    let senderMarkup = '';
+    if (senderType === 'admin') {
+      senderMarkup = `
+        <div class="message-sender">
+          <span>🎙️ مرکز فرماندهی</span>
+        </div>
+      `;
+    } else if (senderType === 'hacker') {
+      senderMarkup = `
+        <div class="message-sender" style="color: #ef4444;">
+          <span>☠️ مزداک</span>
+        </div>
+      `;
+    } else {
+      senderMarkup = `
+        <div class="message-sender" style="color: #10b981;">
+          <span>👤 دستیاران کارآگاه</span>
+        </div>
+      `;
+    }
+
+    el.innerHTML = `
+      ${senderMarkup}
+      <div class="message-content">${content}</div>
+      <div class="message-footer-row">
+        <span class="message-time">${time}</span>
       </div>
     `;
 
-    box.appendChild(div);
+    box.appendChild(el);
     box.scrollTop = box.scrollHeight;
-    // ارسال پیام‌ها کاملاً بی‌صدا و بدون کلیک
-  }
 
-  appendTerminalBilingualLine(key, faText, enText, isWarn = false) {
-    if (this.deliveredTerminalErrors.has(key)) return;
-    this.deliveredTerminalErrors.add(key);
-
-    const logs = this.dom.terminalLogs;
-    if (!logs) return;
-
-    const row = document.createElement('div');
-    row.className = `term-breach-bilingual-line ${isWarn ? 'warn' : 'crit'}`;
-    row.innerHTML = `
-      <div class="term-breach-fa-text">> ${faText}</div>
-      <div class="term-breach-en-text">// ${enText}</div>
-    `;
-    logs.appendChild(row);
-    logs.scrollTop = logs.scrollHeight;
-  }
-
-  appendTerminalMazdakThreat(key, faText) {
-    if (this.deliveredTerminalThreats.has(key)) return;
-    this.deliveredTerminalThreats.add(key);
-
-    const logs = this.dom.terminalLogs;
-    if (!logs) return;
-
-    const line = document.createElement('div');
-    line.className = 'term-mazdak-stream-line mazdak-terminal-threat-card';
-    line.innerHTML = `
-      <div class="term-mazdak-stream-header mazdak-threat-header">
-        <span class="term-mazdak-prompt mazdak-threat-badge">⚡ [مــزداک] »</span>
-        <span class="term-mazdak-time mazdak-threat-time">نفوذ فعال</span>
-      </div>
-      <div class="term-mazdak-body-fa mazdak-threat-body-fa">${faText}</div>
-    `;
-    logs.appendChild(line);
-    logs.scrollTop = logs.scrollHeight;
-  }
-
-  /* ==========================================================================
-     CLEAN AUDIO TRIGGERS (ELIMINATING ALL WHITE NOISE, CRACKLE & CARTOON SFX)
-     ========================================================================== */
-  playPneumaticBuildupSFX() {
-    // کاملاً بی‌صدا و بدون سوت/ویز سینث‌سایزر
-  }
-
-  playHydraulicLaunchSFX() {
-    // پخش صدای لانچ سینمایی باکیفیت بدون نویز سفید
-    this.playAudioFile('launch');
-  }
-
-  playGeigerTickSFX(percent) {
-    // حذف صدای بیپ و تیک‌های کارتونی
-  }
-
-  playHydraulicSlamSFX() {
-    // پخش صدای کوبش متالیک و بم سینمایی بدون خش‌خش
-    this.playAudioFile('slam');
-  }
-
-  playElectricArcZap() {
-    // حذف جرقه‌های لیزری آتاری
-  }
-
-  triggerBracketArcFlash() {
-    if (!this.dom.terminal) return;
-    this.dom.terminal.classList.add('hud-bracket-zap');
-    setTimeout(() => {
-      this.dom.terminal?.classList.remove('hud-bracket-zap');
-    }, 260);
-  }
-
-  triggerChassisLandingSlamVisuals() {
-    // 1. Screen Earthquake (applied to body and under-board grid)
-    document.body.classList.add('screen-slam-earthquake', 'screen-earthquake-slam');
-    const grid = document.querySelector('.under-board-quad-grid');
-    if (grid) grid.classList.add('screen-earthquake-slam');
-
-    // 2. Chassis Ghost Slot Electrical Spark Flare
-    if (this.dom.ghostSlot) {
-      this.dom.ghostSlot.classList.add('ghost-impact-spark');
-    }
-
-    // 3. CRT Slam Flash
-    const flash = document.createElement('div');
-    flash.className = 'crt-slam-flash';
-    document.body.appendChild(flash);
-
-    setTimeout(() => {
-      document.body.classList.remove('screen-slam-earthquake', 'screen-earthquake-slam');
-      if (grid) grid.classList.remove('screen-earthquake-slam');
-      if (this.dom.ghostSlot) {
-        this.dom.ghostSlot.classList.remove('ghost-impact-spark');
-      }
-      flash.remove();
-    }, 680);
-  }
-
-  /* ==========================================================================
-     TRUE ROOT-PORTALED FLIP MECHANICAL ELEVATION & DOCKING LOGIC
-     ========================================================================== */
-  alignElevatedTerminal() {
-    const term = this.dom.terminal;
-    if (!term || !this.isElevated) return;
-    const targetW = Math.min(880, window.innerWidth * 0.94);
-    const targetH = Math.min(500, window.innerHeight * 0.80);
-    const targetL = (window.innerWidth - targetW) / 2;
-    const targetT = (window.innerHeight - targetH) / 2;
-
-    term.style.left = `${targetL}px`;
-    term.style.top = `${targetT}px`;
-    term.style.width = `${targetW}px`;
-    term.style.height = `${targetH}px`;
-  }
-
-  elevateTerminal(instant = false) {
-    const d = this.dom;
-    if (!d.terminal || this.isElevated) return;
-    this.isElevated = true;
-
-    const term = d.terminal;
-    const ghost = d.ghostSlot;
-    const dimmer = d.dimmer;
-
-    if (dimmer) dimmer.classList.add('active');
-    if (ghost) {
-      ghost.style.display = 'flex';
-      ghost.classList.add('is-active');
-    }
-
-    // Step 1: Calculate initial bounding box before detaching
-    const firstRect = term.getBoundingClientRect();
-    const targetW = Math.min(880, window.innerWidth * 0.94);
-    const targetH = Math.min(500, window.innerHeight * 0.80);
-    const targetL = (window.innerWidth - targetW) / 2;
-    const targetT = (window.innerHeight - targetH) / 2;
-
-    // Step 2: Portal terminal directly into document.body to break free from any ancestor overflow/contain/grid stacking context!
-    if (term.parentNode !== document.body) {
-      document.body.appendChild(term);
-    }
-
-    if (instant) {
-      term.classList.add('is-elevated');
-      term.style.position = 'fixed';
-      term.style.left = `${targetL}px`;
-      term.style.top = `${targetT}px`;
-      term.style.width = `${targetW}px`;
-      term.style.height = `${targetH}px`;
-      term.style.zIndex = '99999';
-      term.style.transform = 'none';
-      term.style.transition = 'none';
-      return;
-    }
-
-    // Step 3: Lock to initial slot bounding box
-    term.classList.add('is-elevated');
-    term.style.position = 'fixed';
-    term.style.left = `${firstRect.left}px`;
-    term.style.top = `${firstRect.top}px`;
-    term.style.width = `${firstRect.width}px`;
-    term.style.height = `${firstRect.height}px`;
-    term.style.zIndex = '99999';
-    term.style.transform = 'none';
-    term.style.transition = 'none';
-
-    // Step 4: Force layout reflow
-    void term.offsetHeight;
-
-    // Step 5: Smoothly elevate to center with custom high-tension cubic-bezier
-    term.style.transition = 'all 0.75s cubic-bezier(0.16, 1, 0.3, 1)';
-    term.style.left = `${targetL}px`;
-    term.style.top = `${targetT}px`;
-    term.style.width = `${targetW}px`;
-    term.style.height = `${targetH}px`;
-    term.style.transform = 'scale(1.02)';
-
-    // Trigger launch earthquake shudder on the viewport
-    document.body.classList.add('screen-quake-launch');
-    setTimeout(() => {
-      document.body.classList.remove('screen-quake-launch');
-    }, 500);
-  }
-
-  dockTerminal(instant = false) {
-    const d = this.dom;
-    if (!this.isElevated && (!d.terminal || d.terminal.parentNode !== document.body)) return;
-    this.isElevated = false;
-
-    const term = d.terminal;
-    const ghost = d.ghostSlot;
-    const dimmer = d.dimmer;
-
-    if (dimmer) dimmer.classList.remove('active');
-
-    const restoreToGrid = () => {
-      if (ghost && ghost.parentNode && term && term.parentNode === document.body) {
-        ghost.parentNode.insertBefore(term, ghost);
-      }
-      if (ghost) {
-        ghost.classList.remove('is-active');
-        ghost.style.display = 'none';
-      }
-      if (term) {
-        term.classList.remove('is-elevated');
-        term.classList.add('is-docked-corrupted');
-        term.style.position = '';
-        term.style.left = '';
-        term.style.top = '';
-        term.style.width = '';
-        term.style.height = '';
-        term.style.zIndex = '';
-        term.style.transform = '';
-        term.style.transition = '';
-      }
-    };
-
-    if (instant || !ghost || !term) {
-      restoreToGrid();
-      return;
-    }
-
-    // FLIP animate back to ghost slot position with gravitational acceleration
-    const ghostRect = ghost.getBoundingClientRect();
-    term.style.transition = 'all 0.65s cubic-bezier(0.55, 0.085, 0.68, 0.53)';
-    term.style.left = `${ghostRect.left}px`;
-    term.style.top = `${ghostRect.top}px`;
-    term.style.width = `${ghostRect.width}px`;
-    term.style.height = `${ghostRect.height}px`;
-    term.style.transform = 'none';
-
-    setTimeout(() => {
-      if (!this.isElevated) {
-        restoreToGrid();
-
-        // 💥 TRIGGER CATASTROPHIC SLAM IMPACT & VISUALS
-        this.playHydraulicSlamSFX();
-        this.triggerChassisLandingSlamVisuals();
-      }
-    }, 660);
-  }
-
-  renderFrame(sec) {
-    const d = this.dom;
-
-    // ------------------------------------------------------------------
-    // Phase 0: شروع آرام، پرتعلیق و مخابره رادیویی نگران‌کننده مرکز فرماندهی (Sec 0 to 25)
-    // ------------------------------------------------------------------
-    if (sec === 0) {
-      this.lockChatInputInitial();
-    }
-
-    if (sec >= 2 && sec < 8) {
-      this.appendChatMessage({
-        id: 'detective-1',
-        senderType: 'admin',
-        extraClass: 'detective-msg',
-        senderBadge: '🎙️ مرکز فرماندهی',
-        content: 'بچه‌ها! پیام من رو دریافت می‌کنید؟ صدای مرکز فرماندهی رو دارید؟'
-      });
-    }
-
-    if (sec >= 8 && sec < 15) {
-      this.appendChatMessage({
-        id: 'detective-2',
-        senderType: 'admin',
-        extraClass: 'detective-msg',
-        senderBadge: '🎙️ مرکز فرماندهی',
-        content: 'یه سری تغییرات و نوسان شدید دارم در سامانه‌های پایگاه می‌بینم... سیستم ناپایدار شده!'
-      });
-    }
-
-    if (sec >= 15 && sec < 22) {
-      this.appendChatMessage({
-        id: 'detective-3',
-        senderType: 'admin',
-        extraClass: 'detective-msg',
-        senderBadge: '🎙️ مرکز فرماندهی',
-        content: 'هشدار امنیتی اومده روی مانیتور پایگاه... دارن به سایت نفوذ می‌کنن! بچه‌ها پیامم میاددددد؟'
-      });
-    }
-
-    if (sec >= 22 && sec < 26) {
-      this.appendChatMessage({
-        id: 'detective-4',
-        senderType: 'admin',
-        extraClass: 'detective-msg',
-        senderBadge: '🎙️ مرکز فرماندهی',
-        content: 'چرا جواب مرکز فرماندهی رو نمی‌دین؟! ارسال پیام شما قطع شده؟ دارم به شدت نگران می‌شم...'
-      });
-    }
-
-    // ------------------------------------------------------------------
-    // Phase 1: 💥 انفجار ناگهانی و آژیر بم هک، خطوط ارور ترمینال (Sec 26 to 45)
-    // ------------------------------------------------------------------
-    if (sec >= 26) {
-      document.body.classList.add('cyber-breach-active');
-
-      if (sec === 26 && sec !== this.lastSecond) {
-        this.playAudioFile('alarm');
-        document.body.classList.add('screen-cyber-tremor');
-        setTimeout(() => document.body.classList.remove('screen-cyber-tremor'), 800);
-      }
-
-      if (d.terminalTitle) d.terminalTitle.textContent = 'N-LOG // [BREACH DETECTED]';
-      if (d.terminalStatus) {
-        d.terminalStatus.textContent = 'ALERT';
-        d.terminalStatus.style.color = '#ff003c';
-      }
-
-      this.appendTerminalBilingualLine(
-        'err-port-8088',
-        'خطای امنیتی بحرانی: پکت‌های مشکوک در پورت ۸۰۸۸ شناسایی شد',
-        'CRITICAL ALERT: UNEXPECTED PACKET BURST ON PORT 8088',
-        true
-      );
-    }
-
-    // گام اول قفل پله‌پله سیستم: مسدودسازی برد اسناد و تثبیت تصویر مزداک (Sec 29)
-    if (sec >= 29) {
-      this.applyMazdakMediaStamps();
-      document.querySelectorAll('.evidence-card').forEach(c => c.classList.add('card-blackout'));
-      document.querySelectorAll('.thread-main').forEach(t => t.classList.add('electric-arc'));
-      if (d.evidenceCount) d.evidenceCount.textContent = '۰ مدرک در دسترس (سیگنال مفقود)';
-
-      this.appendTerminalBilingualLine(
-        'err-firewall-fail',
-        'سقوط فایروال: دور زدن گواهی‌های امنیتی و مصادره مدارک پرونده',
-        'FIREWALL BREACH: EVIDENCE GRID SEIZED // ROGUE CERT',
-        false
-      );
-    }
-
-    // گام دوم قفل پله‌پله سیستم: اختلال در پروفایل دستیاران دانش‌آموز (Sec 33)
-    if (sec >= 33) {
-      const frames = document.querySelectorAll('.assistant-mini-frame');
-      frames.forEach((f, idx) => {
-        f.classList.add('is-corrupted-portrait');
-        if (!f.querySelector('.corrupted-noise-overlay')) {
-          const noise = document.createElement('div');
-          noise.className = 'corrupted-noise-overlay';
-          f.appendChild(noise);
-        }
-        if (!f.querySelector('.biometric-hud-reticle')) {
-          const reticle = document.createElement('div');
-          reticle.className = 'biometric-hud-reticle';
-          f.appendChild(reticle);
-        }
-
-        const nameEl = f.querySelector('.assistant-mini-name');
-        if (nameEl) {
-          const ast = this.assistants[idx % this.assistants.length];
-          const realName = ast ? ast.student_name : `دستیار #${idx + 1}`;
-          nameEl.textContent = `ERR_0x${(idx + 41).toString(16)} [${realName}]`;
-          nameEl.parentElement?.classList.add('corrupted-nameplate');
-        }
-      });
-
-      if (d.assistantsLiveDot) d.assistantsLiveDot.style.background = '#ff003c';
-
-      this.appendTerminalBilingualLine(
-        'err-kernel-ring0',
-        'تله کرنل رینگ-۰: بدافزار نفوذگر APT-MAZDAK در سطح هویت کلاسی فعال شد',
-        'KERNEL TRAP: APT-MAZDAK RING-0 INTRUSION PROBE ACTIVE',
-        false
-      );
-    }
-
-    // گام سوم قفل پله‌پله سیستم: قفل هیدرولیک گاوصندوق و ابزارها (Sec 38)
-    if (sec >= 38) {
-      this.applyTamperLockdown();
-      if (d.vaultCard) d.vaultCard.classList.add('vault-tamper-lockdown', 'vault-corrupted-breakdown');
-      if (d.vaultStatusLabel) d.vaultStatusLabel.textContent = 'هشدار نفوذ: قفل هیدرولیک مسدود شد';
-    }
-
-    // گام چهارم: اضافه بار و فشار پیش از صعود ترمینال (Sec 43 to 45)
-    if (sec >= 43 && sec < 46) {
-      if (d.terminal) {
-        d.terminal.classList.add('pre-liftoff-lock');
-        if (d.terminalStatus) {
-          d.terminalStatus.textContent = 'PRESSURE // OVERLOAD';
-          d.terminalStatus.style.color = '#ff003c';
-        }
-      }
-    }
-
-    // ------------------------------------------------------------------
-    // Phase 3: صعود مکانیکی ترمینال به مرکز و پیام‌های منحصراً فارسی مزداک (Sec 46 to 77)
-    // ------------------------------------------------------------------
-    if (sec >= 46 && sec < 78) {
-      if (d.terminal) d.terminal.classList.remove('pre-liftoff-lock');
-      if (!this.isElevated) {
-        this.elevateTerminal();
-        this.playHydraulicLaunchSFX();
-      }
-      if (window.liveTerminal) window.liveTerminal.isPaused = true;
-
-      if (d.overrideBox) d.overrideBox.style.display = 'block';
-
-      const progressRatio = Math.min(1, Math.max(0, (sec - 46) / 30));
-      const percent = Math.round(progressRatio * 100);
-
-      if (d.overridePercent) d.overridePercent.textContent = `${percent}%`;
-      if (d.terminalTitle) d.terminalTitle.textContent = `⚡ TERMINAL TAKEOVER // تسخیر هسته کلاس`;
-      if (d.terminalStatus) {
-        d.terminalStatus.textContent = `${percent}%`;
-        d.terminalStatus.style.color = percent >= 75 ? '#ff003c' : '#00f0ff';
-      }
-
-      // Update 20 LED segments
-      if (d.segmentedBar) {
-        const leds = d.segmentedBar.querySelectorAll('.seg-led');
-        const activeCount = Math.floor((percent / 100) * leds.length);
-        leds.forEach((led, idx) => {
-          if (idx < activeCount) {
-            led.classList.add('active');
-            if (percent >= 75) led.classList.add('danger');
-          } else {
-            led.classList.remove('active', 'danger');
+    // پخش زنده پیام‌ها به سوکت ادمین جهت مشاهده بلادرنگ در پنل مدیریت
+    try {
+      const sId = (window.sessionData && window.sessionData.id) || (window.currentSessionId);
+      const sock = window.userSocket || window.socket;
+      if (sock && sId) {
+        sock.emit('hack_battle_broadcast', {
+          sessionId: sId,
+          message: {
+            id: Date.now() + Math.floor(Math.random() * 1000),
+            session_id: sId,
+            sender_type: senderType,
+            admin_sender_name: senderType === 'admin' ? 'مرکز فرماندهی' : (senderType === 'hacker' ? 'مزداک' : 'دستیاران کارآگاه'),
+            content: content,
+            created_at: new Date().toISOString()
           }
         });
       }
+    } catch (_) {}
+  }
 
-      if (percent >= 15) {
-        this.appendTerminalBilingualLine(
-          'over-bypass-sig',
-          'تسخیر گره پردازش کلاس: شناسایی هویت نشست و تزریق امضای مخرب',
-          'SESSION_NODE IDENTIFIED // INJECTING MAZDAK_SIG PAYLOAD',
-          false
-        );
-      }
-
-      if (percent >= 40) {
-        this.appendTerminalBilingualLine(
-          'over-crypto-harvest',
-          'تاراج کدهای بازیابی: مصادره کلیدهای امنیتی و پروتکل ارتباطی',
-          'CRYPTO HARVESTING: ALL RECOVERY CODES SEIZED',
-          true
-        );
-      }
-
-      // پیام‌های مزداک در ترمینال: کاملاً فارسی، خوانا، بدون زیرنویس انگلیسی
-      if (sec >= 60) {
-        this.appendTerminalMazdakThreat(
-          'term-threat-1',
-          'تمام اطلاعات و کدهای شما رو گرفتم... فکر کردید نفهمیدم دارید چیکار می‌کنید؟'
-        );
-      }
-
-      if (sec >= 68) {
-        this.appendTerminalMazdakThreat(
-          'term-threat-2',
-          'نمی‌ذارم این پرونده رو حل کنید! کنترل خط تحقیقات کامل دست منه...'
-        );
-      }
+  typewriterInTerminal(text, onComplete) {
+    if (!this.dom.terminalLogs) {
+      if (typeof onComplete === 'function') onComplete();
+      return;
     }
+    const line = document.createElement('div');
+    line.className = 'term-mazdak-threat-line typewriter-line';
+    line.innerHTML = `<span class="term-system-corrupt-badge" style="background:#ff003c; color:#fff; padding:2px 6px; border-radius:3px; font-size:11px; margin-left:6px;">هشدار نفوذ</span><span class="typewriter-text"></span><span class="typewriter-cursor">▌</span>`;
+    this.dom.terminalLogs.appendChild(line);
 
-    // ------------------------------------------------------------------
-    // Phase 4: بازگشت و نشستن ترمینال به جایگاه اصلی (Sec 78)
-    // ------------------------------------------------------------------
-    if (sec >= 78) {
-      if (this.isElevated) {
-        document.body.classList.remove('screen-intense-quake', 'screen-cyber-tremor');
-        this.dockTerminal();
-      }
-      if (window.liveTerminal) window.liveTerminal.isPaused = false;
-      if (d.overrideBox) d.overrideBox.style.display = 'none';
-      if (d.terminalTitle) d.terminalTitle.textContent = 'TAKEN OVER // تحت کنترل مزداک';
-      if (d.terminalStatus) {
-        d.terminalStatus.textContent = 'MAZDAK';
-        d.terminalStatus.style.color = '#ff003c';
-      }
-    }
+    const textSpan = line.querySelector('.typewriter-text');
+    let idx = 0;
 
-    // ------------------------------------------------------------------
-    // Phase 5: نبرد پیامکی فیک در صفحه چت قفل‌شده (Sec 85 to 179)
-    // ------------------------------------------------------------------
-    if (sec >= 85 && sec < 180) {
-      if (d.chatSection) d.chatSection.classList.add('is-channel-hijacked');
-      if (d.channelNoticeText) d.channelNoticeText.textContent = '⚠️ هشدار امنیتی: فرکانس ناشناس شناسایی شد — ارتباط پایگاه قطع گردید';
-      if (d.chatComposer) d.chatComposer.classList.add('input-locked-cyber');
-      if (d.msgInput) {
-        d.msgInput.disabled = true;
-        d.msgInput.placeholder = '🔒 دسترسی مسدود است — کانال در وضعیت اضطراری قرار دارد';
-      }
-
-      // ۱. مزداک در جلد بچه‌ها
-      if (sec >= 85) {
-        this.appendChatMessage({
-          id: 'battle-kids-1',
-          senderType: 'user',
-          extraClass: 'kids-impersonated-msg',
-          senderBadge: '👥 دستیاران کارآگاه',
-          content: 'سلام مرکز فرماندهی! نگران نباشید ما اینجاییم، ارتباط کلاسمون یه لحظه قطع شد ولی الان کنترل دست خودمونه و داریم مختصات و کدهای دهکده‌ها رو یکی‌یکی بررسی می‌کنیم!'
-        });
-      }
-
-      // ۲. مرکز فرماندهی با خیال آسوده
-      if (sec >= 98) {
-        this.appendChatMessage({
-          id: 'battle-det-1',
-          senderType: 'admin',
-          extraClass: 'detective-msg',
-          senderBadge: '🎙️ مرکز فرماندهی',
-          content: 'خدا رو شکر که پیامتون اومد بچه‌ها، داشتم نگران می‌شدم! مانیتور من چند تا رخنه و نوسان شدید نشون داد... اوضاع کدهای چهار دهکده چطوره؟ تونستید فیلم‌ها و رمزها رو ثبت کنید؟'
-        });
-      }
-
-      // ۳. اصرار مشکوک مزداک برای دریافت کدهای اصلی
-      if (sec >= 111) {
-        this.appendChatMessage({
-          id: 'battle-kids-2',
-          senderType: 'user',
-          extraClass: 'kids-impersonated-msg',
-          senderBadge: '👥 دستیاران کارآگاه',
-          content: 'بله همه‌چیز دستمونه... فقط سیستم یه پیغام عجیب داده و رمز گاوصندوق و کد دهکده آخر رو قبول نمی‌کنه! میشه رمز اصلی پرونده و کدهای بازنشانی رو سریع اینجا برامون بفرستید تا وارد کنیم؟'
-        });
-      }
-
-      // ۴. شک و تردید مرکز فرماندهی
-      if (sec >= 124) {
-        this.appendChatMessage({
-          id: 'battle-det-2',
-          senderType: 'admin',
-          extraClass: 'detective-msg',
-          senderBadge: '🎙️ مرکز فرماندهی',
-          content: 'رمز پرونده و کد دهکده؟! بچه‌ها شما که خودتون تمام کدهای دهکده‌ها رو مرحله به مرحله پیدا کردید و طبق دستورالعمل نباید هیچ کدی داخل کانال فرستاده بشه... چرا دارید اصرار می‌کنید؟ لحن پیامتون هم شبیه همیشه نیست!'
-        });
-      }
-
-      // ۵. دستپاچگی و فشار عجولانه مزداک
-      if (sec >= 137) {
-        this.appendChatMessage({
-          id: 'battle-kids-3',
-          senderType: 'user',
-          extraClass: 'kids-impersonated-msg',
-          senderBadge: '👥 دستیاران کارآگاه',
-          content: 'مرکز فرماندهی وقت کمه، بچه‌ها دارن هول میشن! شما فقط اون کد و رمز اصلی رو بفرستید تا پرونده دهکده بسته بشه، معطل چی هستید؟! زود باشید!'
-        });
-      }
-
-      // ۶. کشف هویت و رودست زدن مرکز فرماندهی (کاسه‌ای زیر نیم‌کاسه‌ست)
-      if (sec >= 150) {
-        this.appendChatMessage({
-          id: 'battle-det-3',
-          senderType: 'admin',
-          extraClass: 'detective-msg',
-          senderBadge: '🎙️ مرکز فرماندهی',
-          content: 'صبر کنید ببینم... شما بچه‌ها نیستید! دستیاران من هرگز اینطوری عجله نمی‌کردن و تقاضای رمز اصلی رو نمی‌دادن! این فرکانس هک شده... کاسه‌ای زیر نیم‌کاسه‌ست! کی پشت خطه؟! '
-        });
-      }
-
-      // ۷. کنار رفتن نقاب مزداک و خط و نشان کشیدن
-      if (sec >= 163) {
-        this.appendChatMessage({
-          id: 'battle-mazdak-1',
-          senderType: 'hacker',
-          extraClass: 'mazdak-unmasked-msg',
-          senderBadge: '⚡ مــزداک // نفوذ مرکزی',
-          content: 'هاهاها... بالاخره فهمیدی؟! ولی دیگه خیلی دیر به شک افتادی! بچه‌هات حتی نمی‌تونن یک کلمه تایپ کنن و مانیتورشون قفل شده. این پایگاه و تمام پرونده‌های دهکده رسماً به تسخیر من دراومد!'
-        });
-      }
-
-      // ۸. پیام پایانی تخلیه اضطراری مرکز فرماندهی و معرفی مسیر سرنخ لیلیوم
-      if (sec >= 175) {
-        this.appendChatMessage({
-          id: 'battle-det-4',
-          senderType: 'admin',
-          extraClass: 'detective-msg',
-          senderBadge: '🎙️ مرکز فرماندهی',
-          content: 'من الان سیستم احراز هویت امنیتی اضطراری رو فعال می‌کنم و اتصال همه از سایت قطع میشه! بچه‌ها هرجا پیام من رو می‌بینید، خیلی حواستون به سرنخ لیلیوم باشه و مسیرهای امنی که قبلاً گفتم رو دنبال کنین... ارتباط داره قطع میشه!'
-        });
-      }
-
-      // نشانگر مخابره پیام در فرکانس
-      if (
-        (sec >= 95 && sec < 98) ||
-        (sec >= 108 && sec < 111) ||
-        (sec >= 121 && sec < 124) ||
-        (sec >= 134 && sec < 137) ||
-        (sec >= 147 && sec < 150) ||
-        (sec >= 160 && sec < 163) ||
-        (sec >= 172 && sec < 175)
-      ) {
-        if (d.typingIndicator) {
-          d.typingIndicator.style.display = 'flex';
-          d.typingIndicator.className = 'typing-line mazdak-typing-line';
-          d.typingIndicator.innerHTML = `
-            <span class="mazdak-pulse-dot"></span>
-            <span>در حال مخابره پیام در فرکانس کانال...</span>
-          `;
-        }
+    const typeNext = () => {
+      if (!this.isPlaying) return;
+      if (idx < text.length) {
+        textSpan.textContent += text[idx];
+        this.playGeigerTickSFX();
+        idx++;
+        setTimeout(typeNext, 45);
       } else {
-        if (d.typingIndicator) d.typingIndicator.style.display = 'none';
+        const cursor = line.querySelector('.typewriter-cursor');
+        if (cursor) cursor.remove();
+        if (typeof onComplete === 'function') onComplete();
+      }
+    };
+
+    typeNext();
+  }
+
+  appendTerminalBilingualLine({ en, fa, level = 'info' }) {
+    if (!this.dom.terminalLogs) return;
+    const line = document.createElement('div');
+    line.className = 'term-breach-bilingual-line';
+    line.innerHTML = `
+      <div class="term-breach-en-text" style="color: #f87171; font-family: monospace; font-size: 12px;">${en}</div>
+      <div class="term-breach-fa-text" style="color: #ffffff; font-size: 13.5px; margin-top: 2px;">${fa}</div>
+    `;
+    this.dom.terminalLogs.appendChild(line);
+    this.dom.terminalLogs.scrollTop = this.dom.terminalLogs.scrollHeight;
+  }
+
+  appendTerminalThreat(text) {
+    if (!this.dom.terminalLogs) return;
+    const line = document.createElement('div');
+    line.className = 'term-mazdak-threat-line';
+    line.innerHTML = `<span class="term-system-corrupt-badge" style="background:#ff003c; color:#fff; padding:2px 6px; border-radius:3px; font-size:11px; margin-left:6px;">هشدار نفوذ</span><span>${text}</span>`;
+    this.dom.terminalLogs.appendChild(line);
+    this.dom.terminalLogs.scrollTop = this.dom.terminalLogs.scrollHeight;
+  }
+
+  elevateTerminal() {
+    const term = this.dom.terminal;
+    if (!term || this.isElevated) return;
+    this.isElevated = true;
+
+    this.playPneumaticBuildupSFX();
+
+    // ۱. دریافت مختصات دقیق فعلی ترمینال در صفحه قبل از حرکت
+    const rect = term.getBoundingClientRect();
+    this.originalTerminalRect = rect;
+
+    // ۲. جایگذاری شبح (Ghost) با ابعاد دقیق تا ساختار ستون‌ها دست نخورد
+    let ghost = this.dom.ghostSlot;
+    if (!ghost && term.parentNode) {
+      ghost = document.createElement('div');
+      ghost.id = 'terminal-ghost-slot';
+      ghost.className = 'terminal-slot-ghost quad-card';
+      this.dom.ghostSlot = ghost;
+      this.ghostSlot = ghost;
+    }
+    if (ghost && term.parentNode) {
+      ghost.style.width = `${rect.width}px`;
+      ghost.style.height = `${rect.height}px`;
+      ghost.style.display = 'block';
+      term.parentNode.insertBefore(ghost, term);
+    }
+
+    // پورت کردن به document.body طبق قرارداد FLIP
+    document.body.appendChild(term);
+
+    // ۳. پس‌زمینه نیمه‌تاریک
+    const dimmer = this.dom.dimmer;
+    if (dimmer) dimmer.classList.add('active');
+
+    // ۴. کم کردن صدای آژیر (Ducking) تا متن‌ها خوانا باشند
+    this.siren.duck();
+    this.playHydraulicLaunchSFX();
+
+    // ۵. قفل روی مختصات اولیه در موقعیت fixed
+    term.classList.add('is-elevated');
+    term.style.position = 'fixed';
+    term.style.left = `${rect.left}px`;
+    term.style.top = `${rect.top}px`;
+    term.style.width = `${rect.width}px`;
+    term.style.height = `${rect.height}px`;
+    term.style.zIndex = '99999';
+    term.style.margin = '0';
+    term.style.transition = 'none';
+
+    void term.offsetHeight; // Force reflow
+
+    // ۶. صعود نرم به مرکز ویوپورت با منحنی فیزیکی ملایم
+    this.alignElevatedTerminal();
+
+    if (this.dom.terminalTitle) {
+      this.dom.terminalTitle.textContent = 'SYSTEM OVERRIDE // تسخیر ترمینال پایگاه';
+    }
+    if (this.dom.terminalStatus) {
+      this.dom.terminalStatus.textContent = 'HOSTILE TAKEOVER';
+      this.dom.terminalStatus.style.color = '#ff003c';
+    }
+  }
+
+  alignElevatedTerminal() {
+    const term = this.dom.terminal;
+    if (!term || !this.isElevated) return;
+    const targetW = Math.min(window.innerWidth * 0.90, 620);
+    const targetH = Math.min(window.innerHeight * 0.68, 380);
+    const targetL = (window.innerWidth - targetW) / 2;
+    const targetT = (window.innerHeight - targetH) / 2;
+
+    term.style.transition = 'all 0.85s cubic-bezier(0.16, 1, 0.3, 1)';
+    term.style.left = `${targetL}px`;
+    term.style.top = `${targetT}px`;
+    term.style.width = `${targetW}px`;
+    term.style.height = `${targetH}px`;
+  }
+
+  restoreToGrid() {
+    const term = this.dom.terminal;
+    if (!term || !this.isElevated) return;
+    this.isElevated = false;
+
+    const ghost = this.dom.ghostSlot || this.ghostSlot;
+    const dimmer = this.dom.dimmer;
+
+    const targetRect = ghost ? ghost.getBoundingClientRect() : (this.originalTerminalRect || term.getBoundingClientRect());
+
+    term.style.transition = 'all 0.65s cubic-bezier(0.2, 0.8, 0.2, 1)';
+    term.style.left = `${targetRect.left}px`;
+    term.style.top = `${targetRect.top}px`;
+    term.style.width = `${targetRect.width}px`;
+    term.style.height = `${targetRect.height}px`;
+
+    setTimeout(() => {
+      term.classList.remove('is-elevated');
+      term.style.position = '';
+      term.style.left = '';
+      term.style.top = '';
+      term.style.width = '';
+      term.style.height = '';
+      term.style.zIndex = '';
+      term.style.margin = '';
+      term.style.transition = '';
+
+      if (ghost && ghost.parentNode) {
+        ghost.parentNode.insertBefore(term, ghost);
+        ghost.style.display = 'none';
+      }
+      if (dimmer) dimmer.classList.remove('active');
+
+      this.triggerChassisLandingSlamVisuals();
+
+      // اوج گرفتن صدای آژیر پس از نشستن ترمینال
+      this.siren.swell();
+    }, 660);
+  }
+
+  dockTerminal() {
+    this.restoreToGrid();
+  }
+
+  renderFrame(sec) {
+    // -------------------------------------------------------------
+    // ۱. بلافاصله پس از اتمام ۷ ثانیه پرده سیاه، ترمینال اوج می‌گیرد (ثانیه ۷)
+    // -------------------------------------------------------------
+    if (sec === 7) {
+      this.elevateTerminal();
+    }
+
+    // ۲. نمایش لاگ‌های شکست لایه‌های امنیتی در ترمینال بالاآمده (ثانیه‌های ۹ تا ۱۳)
+    if (sec === 9) {
+      this.appendTerminalBilingualLine({
+        en: '[KERNEL_PANIC] 0x80F2A4 // ROOT ACCESS BREACHED',
+        fa: 'شکست لایه‌های امنیتی سرور مرکزی. دسترسی ریشه در کنترل نفوذگر.',
+        level: 'crit'
+      });
+    }
+
+    if (sec === 11) {
+      this.appendTerminalBilingualLine({
+        en: '[FIREWALL_BYPASS] PORT 8443 COMPROMISED // MAZDAK_NODE',
+        fa: 'فایروال پایگاه دهکده دور زده شد. تزریق بسته‌های مخرب مزداک.',
+        level: 'crit'
+      });
+    }
+
+    if (sec === 13) {
+      this.appendTerminalBilingualLine({
+        en: '[SESSION_OVERRIDE] CRYPTO SIGNATURE HIJACKED',
+        fa: 'کلید رمزنگاری جلسات تصاحب گردید. نفوذ کامل به ورودی و خروجی‌ها.',
+        level: 'crit'
+      });
+    }
+
+    // ۳. گلیچ و پاک شدن ترمینال + تایپ حرف‌به‌حرف پیام مزداک با صدای کلیک (ثانیه ۱۴ و ۱۵)
+    if (sec === 14) {
+      this.playElectricArcZap();
+      if (this.dom.terminalLogs) {
+        this.dom.terminalLogs.innerHTML = '';
       }
     }
 
-    // ------------------------------------------------------------------
-    // Phase 6: مودال اخراج و شمارش معکوس ۵ دقیقه‌ای انتقال (Second 180 / End of Hack)
-    // ------------------------------------------------------------------
-    if (sec >= 180) {
-      if (sec === 180 && sec !== this.lastSecond) {
-        this.playAudioFile('alarm');
-        this.triggerEmergencyEjectionModal();
-      }
+    if (sec === 15) {
+      this.typewriterInTerminal('تمام اطلاعات و کدهای شما رو گرفتم و نمی‌ذارم این پرونده رو حل کنید', () => {});
     }
 
-    this.lastSecond = sec;
+    // ۴. قرار گرفتن دو پیام اول کارآگاه در بک‌گراند چت حین بالا بودن ترمینال (ثانیه‌های ۱۶ و ۱۹)
+    if (sec === 16) {
+      this.appendChatMessage({
+        id: 'battle-det-1',
+        senderType: 'admin',
+        content: 'پیام من رو دریافت می‌کنید؟ بچه‌ها، دارن به سایت نفوذ می‌کنن! سیستم مخابرات افت سیگنال پیدا کرده و دستورات مشکوکی دارم می‌بینم! نگران نباشید و وضعیت رو گزارش کنید.'
+      });
+    }
+
+    if (sec === 19) {
+      this.appendChatMessage({
+        id: 'battle-det-pre-2',
+        senderType: 'admin',
+        content: 'ارتباط با پایگاه ناپایداره! آخرین ویدیوی ارسالی از دهکده چهارم رو دیدید؟ کدهای استخراج‌شده از دهکده‌ها رو مرور کنید، وضعیت سیستم داره به هم می‌ریزه!'
+      });
+    }
+
+    // ۵. بسته شدن و فرود ترمینال به جایگاه اصلی خود روی گرید (ثانیه ۲۴)
+    if (sec === 24) {
+      this.restoreToGrid();
+    }
+
+    // ۶. چت‌بازی طبیعی بین مزداک (با هویت بچه‌ها) و کارآگاه (ثانیه‌های ۲۸ تا ۱۴۰)
+    // نفوذ به اینپوت بچه‌ها و تایپ درخشان با اشاره به کدهای ۴ دهکده و ویدیوی آخر
+    if (sec === 28) {
+      this.simulateGhostTyping(
+        'پیامم میاددددد؟ نه سرکارآگاه نگران ما نباشید! ویدیوی دهکده آخر رو دیدیم، کدهای هر ۴ دهکده هم ثبت شد: ۹۲۷۳، ۴۶۹۱، ۶۷۱۸ و ۱۱۶۳... راستی داشتیم مدارک گاوصندوق رو بررسی می‌کردیم... رمز نهایی گاوصندوق چی بود دقیقاً؟ مگه قرار نبود رمزو به ما بگید؟',
+        () => {
+          this.appendChatMessage({
+            id: 'battle-kids-1',
+            senderType: 'user',
+            content: 'پیامم میاددددد؟ نه سرکارآگاه نگران ما نباشید! ویدیوی دهکده آخر رو دیدیم، کدهای هر ۴ دهکده هم ثبت شد: ۹۲۷۳، ۴۶۹۱، ۶۷۱۸ و ۱۱۶۳... راستی داشتیم مدارک گاوصندوق رو بررسی می‌کردیم... رمز نهایی گاوصندوق چی بود دقیقاً؟ مگه قرار نبود رمزو به ما بگید؟'
+          });
+        }
+      );
+    }
+
+    if (sec === 48) {
+      this.appendChatMessage({
+        id: 'battle-det-2',
+        senderType: 'admin',
+        content: 'رمز گاوصندوق؟! بچه‌ها شما که خودتون کدهای چهار دهکده رو توی پوشه داشتید و می‌دونستید توی ویدیوی آخر رمزی به این شکل داده نشده! این لحن شما نیست... شما کی هستید؟!'
+      });
+    }
+
+    // تایپ اصرار دوم در اینپوت بچه‌ها
+    if (sec === 62) {
+      this.simulateGhostTyping(
+        'جناب کارآگاه نگران امنیت نباشید، فقط رمز مرحله آخر گاوصندوق رو بفرستید تا ما پرونده رو ببندیم!',
+        () => {
+          this.appendChatMessage({
+            id: 'battle-kids-2',
+            senderType: 'user',
+            content: 'جناب کارآگاه نگران امنیت نباشید، فقط رمز مرحله آخر گاوصندوق رو بفرستید تا ما پرونده رو ببندیم!'
+          });
+        }
+      );
+    }
+
+    // تایپ اصرار سوم در اینپوت بچه‌ها
+    if (sec === 74) {
+      this.simulateGhostTyping(
+        'رمز مرحله بعد چیه سرکارآگاه؟ سریع‌تر بفرستید فرصت کمه!',
+        () => {
+          this.appendChatMessage({
+            id: 'battle-kids-3',
+            senderType: 'user',
+            content: 'رمز مرحله بعد چیه سرکارآگاه؟ سریع‌تر بفرستید فرصت کمه!'
+          });
+        }
+      );
+    }
+
+    // کارآگاه متوجه کلاهبرداری و ضرب‌المثل کاسه‌ای زیر نیم‌کاسه‌ست می‌شود و رمز لیلیوم را مطرح می‌کند
+    if (sec === 88) {
+      this.appendChatMessage({
+        id: 'battle-det-3',
+        senderType: 'admin',
+        content: 'صبر کنید ببینم... کاسه‌ای زیر نیم‌کاسه‌ست! بچه‌ها هیچ‌وقت به این اصرار دنبال رمز مستقیم نمی‌گشتن و می‌دونستن رمز اصلی توی پرونده‌ی گل لیلیوم پنهان شده! شما بچه‌ها نیستید... تو مزداکی!'
+      });
+    }
+
+    // مزداک نقاب برمی‌دارد
+    if (sec === 102) {
+      this.appendChatMessage({
+        id: 'battle-mazdak-1',
+        senderType: 'hacker',
+        content: 'هاهاها! دیر فهمیدی جناب کارآگاه! تمام اطلاعات و کدهای شما رو گرفتم و نمی‌ذارم این پرونده رو حل کنید!'
+      });
+    }
+
+    // ۷. فرمان تخلیه کارآگاه به سمت درگاه اضطراری
+    if (sec === 116) {
+      this.appendChatMessage({
+        id: 'battle-det-4',
+        senderType: 'admin',
+        content: 'بچه‌ها! خطوط در حال قطع کامله! مزداک داره همه رو بیرون می‌ندازه! فوراً خودتون رو به یک جای امن برسونید و هر کدوم جداگانه وارد درگاه احراز هویت اضطراری بشید تا مدارک و پرونده حفظ بشه!'
+      });
+    }
+
+    // خط و نشان نهایی مزداک
+    if (sec === 130) {
+      this.appendChatMessage({
+        id: 'mazdak-final-threat',
+        senderType: 'hacker',
+        content: 'دیگه خیلی دیره کارآگاه... تمام خطوط مسدود شد! همین الان همه شما رو از پایگاه پرت می‌کنم بیرون تا پرونده برای همیشه نابود بشه!'
+      });
+      this.siren.swell();
+    }
+
+    // ۸. نمایش مودال اخراج اضطراری (ثانیه ۱۴۴)
+    if (sec === 144) {
+      this.triggerEmergencyEjectionModal();
+    }
   }
 
   triggerEmergencyEjectionModal() {
     this.ensureEjectionModal();
     if (!this.dom.ejectionOverlay) return;
-
     this.dom.ejectionOverlay.classList.add('active');
 
-    // 5 minutes (300 seconds) countdown to automatic ejection
-    let countdownSec = 300;
+    let countdownSec = 300; // ۵ دقیقه طبق قرارداد MASTER-15 و نیاز آموزشی
     const countdownEl = document.getElementById('ejectionCountdownText');
-
-    const formatCountdown = (totalSec) => {
-      const mins = Math.floor(totalSec / 60);
-      const secs = totalSec % 60;
-      const fMins = String(mins).padStart(2, '0');
-      const fSecs = String(secs).padStart(2, '0');
-      return `${fMins}:${fSecs}`;
-    };
-
-    if (countdownEl) {
-      countdownEl.textContent = `خروج و انتقال خودکار تا ۵:۰۰ دقیقه دیگر...`;
-    }
 
     if (this.ejectionCountdownInterval) clearInterval(this.ejectionCountdownInterval);
     this.ejectionCountdownInterval = setInterval(() => {
       countdownSec--;
+      const min = Math.floor(countdownSec / 60);
+      const s = countdownSec % 60;
       if (countdownEl) {
-        countdownEl.textContent = `خروج و انتقال خودکار تا ${formatCountdown(countdownSec)} دقیقه دیگر...`;
+        countdownEl.textContent = `انتقال خودکار تا ۰${min}:${String(s).padStart(2, '0')} دقیقه دیگر به razedehkade.ir...`;
       }
       if (countdownSec <= 0) {
         clearInterval(this.ejectionCountdownInterval);
@@ -1225,48 +1004,49 @@ class CyberBreachEngine {
     }, 1000);
   }
 
-  // Audio helper
-  initAudioContext() {
-    if (this.audioInitialized) return;
-    try {
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (AudioContextClass) {
-        this.audioCtx = new AudioContextClass();
-        this.audioInitialized = true;
-      }
-    } catch (_) {}
-  }
+  reset() {
+    console.log('[CyberBreachEngine] Resetting cyber breach state...');
+    this.isPlaying = false;
+    if (this.playbackTimer) clearInterval(this.playbackTimer);
+    if (this.ejectionCountdownInterval) clearInterval(this.ejectionCountdownInterval);
 
-  startAmbientDrone() {
-    // کاملاً بی‌صدا - عدم استفاده از وزوز سینث‌سایزر
-  }
+    this.siren.stop();
 
-  stopAmbientDrone() {
-    try {
-      if (this.droneGain && this.audioCtx) {
-        this.droneGain.gain.linearRampToValueAtTime(0.0001, this.audioCtx.currentTime + 0.5);
-      }
-      setTimeout(() => {
-        if (this.droneOsc1) { this.droneOsc1.stop(); this.droneOsc1.disconnect(); this.droneOsc1 = null; }
-        if (this.droneOsc2) { this.droneOsc2.stop(); this.droneOsc2.disconnect(); this.droneOsc2 = null; }
-      }, 600);
-    } catch (_) {}
-  }
+    if (this.dom.blackoutCurtain) {
+      this.dom.blackoutCurtain.classList.add('fade-out');
+      this.dom.blackoutCurtain.style.display = 'none';
+    }
 
-  playAudioFile(key) {
-    if (!this.soundEnabled) return;
-    const audio = this.sfx[key];
-    if (audio) {
-      audio.currentTime = 0;
-      audio.play().catch(() => {});
+    document.body.classList.remove('system-compromised-red', 'cyber-breach-active');
+
+    if (this.dom.messagesBox) {
+      this.dom.messagesBox.classList.remove('mazdak-bg');
+      this.dom.messagesBox.querySelectorAll('.fake-battle-msg').forEach(el => el.remove());
+    }
+
+    this.removeMazdakMediaStamps();
+
+    if (this.isElevated) {
+      this.restoreToGrid();
+    }
+
+    if (this.dom.ejectionOverlay) {
+      this.dom.ejectionOverlay.classList.remove('active');
+    }
+
+    this.unlockChatInput();
+    this.deliveredBattleMessages.clear();
+    this.deliveredTerminalErrors.clear();
+    this.deliveredTerminalThreats.clear();
+
+    if (window.liveTerminal && typeof window.liveTerminal.start === 'function') {
+      window.liveTerminal.start();
     }
   }
 }
 
-// Global engine instance
+// ایجاد و اتصال سراسری
 window.cyberBreachEngine = new CyberBreachEngine();
-window.hackEngine = window.cyberBreachEngine; // Backward-compatible alias for existing code
-
 document.addEventListener('DOMContentLoaded', () => {
   window.cyberBreachEngine.init();
 });

@@ -597,7 +597,7 @@ async function saveEditSession(event) {
   const name = document.getElementById('edit-session-name').value.trim();
   const status = document.getElementById('edit-session-status').value;
   const phoneInput = document.getElementById('edit-session-phone');
-  const teacher_phone = phoneInput ? phoneInput.value.trim() : undefined;
+  const teacher_phone = phoneInput && phoneInput.value.trim().length >= 10 ? phoneInput.value.trim() : undefined;
   const error = document.getElementById('edit-session-error');
   if (!name) { error.textContent = 'نام جلسه را وارد کنید.'; return; }
   try {

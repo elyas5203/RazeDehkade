@@ -855,6 +855,20 @@ function setupSocketIO(io) {
       }
     });
 
+    /**
+     * رویداد hack_battle_broadcast: انتشار زنده پیام‌های نبرد چت نفوذ سایبری به پنل ادمین
+     */
+    socket.on('hack_battle_broadcast', (data) => {
+      try {
+        const sessionId = parseInt(data && data.sessionId, 10);
+        if (!sessionId || !data.message) return;
+        io.to('admins').emit('hack_battle_message', {
+          sessionId,
+          message: data.message
+        });
+      } catch (_) {}
+    });
+
     socket.on('unlock_hack_sequence', async (data, ack = () => {}) => {
       try {
         if (user.role !== 'admin') {

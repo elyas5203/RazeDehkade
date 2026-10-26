@@ -1312,3 +1312,343 @@ body.cyber-breach-active .briefing-photo::after {
   display: block !important;
   opacity: 1 !important;
 }
+
+/* ==========================================================================
+   MASTER-2026: CINEMATIC BLACKOUT, RED COMPROMISED OVERLAY, MAZDAK CHAT WATERMARK
+   ========================================================================== */
+
+/* 1. پرده سیاه مطلق ۷ ثانیه‌ای ناگهانی */
+#cyber-blackout-curtain {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000000;
+  z-index: 99999999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: all;
+}
+
+#cyber-blackout-curtain.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.blackout-heartbeat-led {
+  width: 12px;
+  height: 12px;
+  background: #ff003c;
+  border-radius: 50%;
+  box-shadow: 0 0 20px #ff003c, 0 0 40px rgba(255, 0, 60, 0.8);
+  animation: ledPulseHeartbeat 1.6s infinite ease-in-out;
+}
+
+@keyframes ledPulseHeartbeat {
+  0%, 100% { opacity: 0.2; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.3); box-shadow: 0 0 35px #ff003c, 0 0 60px #ff003c; }
+}
+
+/* 2. هاله قرمز و نویز سایبری نفوذ روی کل صفحه */
+body.system-compromised-red::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  background: radial-gradient(circle at center, rgba(255, 0, 60, 0.04) 0%, rgba(180, 0, 30, 0.16) 70%, rgba(100, 0, 15, 0.42) 100%);
+  mix-blend-mode: color-burn;
+  animation: redAtmosphereBreath 4s ease-in-out infinite alternate;
+}
+
+body.system-compromised-red::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9997;
+  background: repeating-linear-gradient(0deg, rgba(255, 0, 60, 0.05) 0px, rgba(255, 0, 60, 0.05) 1.5px, transparent 1.5px, transparent 3.5px);
+  opacity: 0.8;
+  animation: breachScanlinesRolling 10s linear infinite;
+}
+
+@keyframes redAtmosphereBreath {
+  0% { opacity: 0.75; }
+  100% { opacity: 1; }
+}
+
+@keyframes breachScanlinesRolling {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(100vh); }
+}
+
+/* 3. واترمارک ماندگار تصویر مزداک در پس‌زمینه ستون چت */
+#messages-box.mazdak-bg {
+  position: relative;
+}
+
+#messages-box.mazdak-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url('/mazdak.jpg');
+  background-position: center 30%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: 0.14;
+  filter: contrast(1.4) brightness(0.65) sepia(0.6) hue-rotate(305deg);
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 1.2s ease;
+}
+
+#messages-box.mazdak-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* 4. استایل تایپ حرف‌به‌حرف روح مزداک در اینپوت کامپوزر بچه‌ها (کنتراست نئونی فوق‌العاده بالا و درخشان) */
+.composer-input.ghost-typing-active,
+#msg-input.ghost-typing-active,
+#msg-input:disabled.ghost-typing-active,
+#msg-input[readonly].ghost-typing-active {
+  background: #050b12 !important;
+  color: #00ffcc !important;
+  -webkit-text-fill-color: #00ffcc !important;
+  opacity: 1 !important;
+  border: 2px solid #00ffcc !important;
+  box-shadow: 0 0 25px rgba(0, 255, 204, 0.7), inset 0 0 15px rgba(0, 255, 204, 0.35) !important;
+  font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, monospace !important;
+  font-size: 15.5px !important;
+  font-weight: 800 !important;
+  text-shadow: 0 0 10px rgba(0, 255, 204, 0.9) !important;
+  caret-color: #00ffcc !important;
+  letter-spacing: 0.5px !important;
+  animation: ghostInputPulse 1.2s infinite alternate ease-in-out !important;
+}
+
+@keyframes ghostInputPulse {
+  0% { box-shadow: 0 0 15px rgba(0, 255, 204, 0.4), inset 0 0 8px rgba(0, 255, 204, 0.2); }
+  100% { box-shadow: 0 0 30px rgba(0, 255, 204, 0.95), inset 0 0 18px rgba(0, 255, 204, 0.5); }
+}
+
+/* 4.1. پاکسازی پس‌زمینه قدیمی برد شواهد و اعمال گرید قرمز سایبری مزداک */
+body.cyber-breach-active .evidence-board .evidence-grid,
+body.cyber-breach-active #evidence-grid {
+  background-color: #0a0406 !important;
+  background-image: 
+    radial-gradient(ellipse at 50% 15%, rgba(255, 0, 60, 0.32) 0%, rgba(20, 2, 6, 0.96) 65%, #05070c 100%),
+    repeating-linear-gradient(0deg, rgba(255, 0, 60, 0.08) 0px, rgba(255, 0, 60, 0.08) 1px, transparent 1px, transparent 24px),
+    repeating-linear-gradient(90deg, rgba(255, 0, 60, 0.08) 0px, rgba(255, 0, 60, 0.08) 1px, transparent 1px, transparent 24px) !important;
+  background-size: 100% 100%, 24px 24px, 24px 24px !important;
+  box-shadow: inset 0 0 45px rgba(255, 0, 60, 0.45) !important;
+}
+
+body.cyber-breach-active #evidence-threads-bg,
+body.cyber-breach-active #evidence-threads-fg {
+  opacity: 0.05 !important;
+}
+
+/* 4.2. افکت نویز و مخدوش شدن روی پرونده دستیاران کارآگاه */
+body.cyber-breach-active .quad-assistants-card {
+  border-color: #ff003c !important;
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.45), inset 0 0 15px rgba(255, 0, 60, 0.25) !important;
+  animation: frame-subtle-jitter 0.3s infinite alternate;
+  position: relative;
+}
+body.cyber-breach-active .assistant-mini-photo-box img {
+  filter: contrast(1.4) brightness(0.75) sepia(0.6) hue-rotate(310deg) saturate(2.5) !important;
+}
+body.cyber-breach-active .assistant-mini-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(255, 0, 60, 0.2) 0px, transparent 2px, transparent 4px);
+  pointer-events: none;
+  z-index: 10;
+  mix-blend-mode: color-dodge;
+}
+
+@keyframes frame-subtle-jitter {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(-1px, 1px); }
+  100% { transform: translate(1px, -1px); }
+}
+
+/* 4.3. افکت نویز و قفل روی تقویم کارآگاهی */
+body.cyber-breach-active .quad-calendar-card {
+  border-color: #ff003c !important;
+  box-shadow: 0 0 25px rgba(255, 0, 60, 0.45), inset 0 0 15px rgba(255, 0, 60, 0.25) !important;
+  position: relative;
+}
+body.cyber-breach-active .quad-calendar-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(255, 0, 60, 0.16) 0px, transparent 2px, transparent 4px);
+  pointer-events: none;
+  z-index: 15;
+}
+
+/* 4.4. افکت آژیر قرمز و مخدوش شدن روی گاوصندوق */
+body.cyber-breach-active #quad-vault-card,
+body.cyber-breach-active .quad-vault-card {
+  border-color: #ff003c !important;
+  box-shadow: 0 0 35px rgba(255, 0, 60, 0.55), inset 0 0 20px rgba(255, 0, 60, 0.35) !important;
+  pointer-events: none !important;
+  position: relative;
+}
+body.cyber-breach-active .quad-vault-card .vault-3d-door {
+  filter: contrast(1.3) brightness(0.8) sepia(0.7) hue-rotate(305deg) saturate(2.8) !important;
+}
+
+/* 4.5. پنهان‌سازی دکمه انتقال فوری در مودال اخراج برای کاربران عادی */
+.emergency-ejection-modal .ejection-actions {
+  display: none;
+}
+body.debug-test-mode .emergency-ejection-modal .ejection-actions {
+  display: flex !important;
+}
+
+.ghost-send-pulse {
+  animation: ghostSendPress 0.4s ease-out !important;
+}
+
+/* 4.6. روکش مخدوش مزداک روی تمام کارت‌های مدارک و اسناد بورد */
+.evidence-card .evidence-mazdak-glitch-cover {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  background: #0d0205;
+  border-radius: inherit;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 0, 60, 0.7);
+  box-shadow: 0 0 15px rgba(255, 0, 60, 0.5);
+  pointer-events: none;
+}
+
+.evidence-card .evidence-mazdak-glitch-cover img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  filter: contrast(1.4) brightness(0.85) sepia(0.6) hue-rotate(310deg) saturate(2.5) !important;
+  opacity: 0.92 !important;
+}
+
+.evidence-card .evidence-mazdak-glitch-cover .mazdak-corrupt-scanline {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(255, 0, 60, 0.25) 0px, transparent 2px, transparent 4px);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+.evidence-card .evidence-mazdak-glitch-cover::after {
+  content: '⚠️ سند مخدوش شد';
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  left: 4px;
+  background: rgba(255, 0, 60, 0.88);
+  color: #fff;
+  font-size: 9.5px;
+  font-weight: 800;
+  text-align: center;
+  padding: 2px 4px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+@keyframes ghostSendPress {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.15); filter: brightness(1.8) drop-shadow(0 0 12px #ff003c); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+/* 5. بازطراحی کامل، تمیز، مدرن و نئونی دارک ترمینال صعودکرده */
+.security-terminal.is-elevated {
+  position: fixed !important;
+  z-index: 99999 !important;
+  background: rgba(8, 11, 16, 0.98) !important;
+  border: 1.5px solid rgba(255, 0, 60, 0.75) !important;
+  box-shadow: 
+    0 0 45px rgba(255, 0, 60, 0.35),
+    0 25px 90px rgba(0, 0, 0, 0.98),
+    inset 0 0 25px rgba(255, 0, 60, 0.12) !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+.security-terminal.is-elevated .terminal-bar {
+  background: linear-gradient(90deg, rgba(255, 0, 60, 0.25) 0%, rgba(18, 22, 30, 0.98) 100%) !important;
+  border-bottom: 1.5px solid rgba(255, 0, 60, 0.4) !important;
+  padding: 12px 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.security-terminal.is-elevated .term-heading {
+  font-family: 'Vazirmatn', sans-serif !important;
+  font-size: 13.5px !important;
+  font-weight: 700 !important;
+  color: #ff4d6d !important;
+  letter-spacing: 0.5px !important;
+}
+
+.security-terminal.is-elevated .terminal-body {
+  background: #05070a !important;
+  padding: 20px 22px !important;
+  height: 310px !important;
+  font-family: 'Vazirmatn', sans-serif !important;
+  font-size: 14.5px !important;
+  line-height: 1.95 !important;
+  color: #ecf0f4 !important;
+  direction: rtl !important;
+  text-align: right !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+.term-mazdak-threat-line {
+  margin: 10px 0;
+  padding: 12px 16px;
+  background: rgba(255, 0, 60, 0.08);
+  border-right: 4px solid #ff003c;
+  border-radius: 8px;
+  font-family: 'Vazirmatn', sans-serif;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.8;
+  box-shadow: 0 4px 15px rgba(255, 0, 60, 0.15);
+  animation: mazdakThreatLineArrival 0.4s ease-out both;
+}
+
+@keyframes mazdakThreatLineArrival {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.term-system-corrupt-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(255, 0, 60, 0.2);
+  border: 1px solid rgba(255, 0, 60, 0.5);
+  border-radius: 4px;
+  color: #ff3366;
+  font-size: 11px;
+  font-weight: 800;
+  margin-left: 8px;
+}
+

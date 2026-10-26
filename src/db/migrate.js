@@ -81,6 +81,19 @@ async function runMigrations() {
           console.warn('Note ensuring reply_to_id column:', colErr.message);
         }
       }
+
+      // همگام‌سازی و بازیابی خودکار شماره‌های ثبت شده در جدول معلمان به جدول جلسات
+      try {
+        await query(`
+          UPDATE sessions s 
+          JOIN teachers t ON t.session_id = s.id 
+          SET s.teacher_phone = t.phone 
+          WHERE (s.teacher_phone IS NULL OR s.teacher_phone = '') 
+            AND t.phone IS NOT NULL AND t.phone != ''
+        `);
+      } catch (syncErr) {
+        console.warn('Note syncing teacher phones:', syncErr.message);
+      }
     }
 
     // ساخت جدول ذخیره وضعیت بات تلگرام در دیتابیس و پاکسازی موارد تست قبلی

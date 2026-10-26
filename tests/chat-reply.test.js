@@ -124,10 +124,15 @@ describe('Two-Way Chat Reply & Quote Engine (MASTER-07)', () => {
 
     userClient.emit('join_session', { sessionId: sessionA.id });
     adminClient.emit('join_session', { sessionId: sessionA.id });
+    await new Promise(r => setTimeout(r, 60));
 
     // گام الف: ادمین پیامی ارسال می‌کند
-    const origAdminMsg = await new Promise(resolve => {
-      userClient.once('new_message', resolve);
+    const origAdminMsg = await new Promise((resolve, reject) => {
+      const tm = setTimeout(() => reject(new Error('Timeout waiting for admin msg')), 4000);
+      userClient.once('new_message', (m) => {
+        clearTimeout(tm);
+        resolve(m);
+      });
       adminClient.emit('send_message', {
         sessionId: sessionA.id,
         content: 'سند محرمانه گاوصندوق را تحویل گرفتید؟',
@@ -137,9 +142,11 @@ describe('Two-Way Chat Reply & Quote Engine (MASTER-07)', () => {
     });
 
     // گام ب: شنونده ریپلای روی adminClient برای پیام user با reply_to_id متناظر
-    const userReplyPromise = new Promise(resolve => {
+    const userReplyPromise = new Promise((resolve, reject) => {
+      const tm = setTimeout(() => reject(new Error('Timeout waiting for user reply')), 4000);
       const handler = (msg) => {
         if (msg.sender_type === 'user' && Number(msg.reply_to_id) === Number(origAdminMsg.id)) {
+          clearTimeout(tm);
           adminClient.off('new_message', handler);
           resolve(msg);
         }
@@ -176,10 +183,15 @@ describe('Two-Way Chat Reply & Quote Engine (MASTER-07)', () => {
 
     userClient.emit('join_session', { sessionId: sessionA.id });
     adminClient.emit('join_session', { sessionId: sessionA.id });
+    await new Promise(r => setTimeout(r, 60));
 
     // پیام دانش‌آموز
-    const origUserMsg = await new Promise(resolve => {
-      adminClient.once('new_message', resolve);
+    const origUserMsg = await new Promise((resolve, reject) => {
+      const tm = setTimeout(() => reject(new Error('Timeout waiting for user orig msg')), 4000);
+      adminClient.once('new_message', (m) => {
+        clearTimeout(tm);
+        resolve(m);
+      });
       userClient.emit('send_message', {
         sessionId: sessionA.id,
         content: 'ما گام سوم سناریو را کامل کردیم.',
@@ -188,9 +200,11 @@ describe('Two-Way Chat Reply & Quote Engine (MASTER-07)', () => {
     });
 
     // ریپلای ادمین/کارآگاه به دانش‌آموز
-    const adminReplyPromise = new Promise(resolve => {
+    const adminReplyPromise = new Promise((resolve, reject) => {
+      const tm = setTimeout(() => reject(new Error('Timeout waiting for admin reply')), 4000);
       const handler = (msg) => {
         if (msg.sender_type === 'admin' && Number(msg.reply_to_id) === Number(origUserMsg.id)) {
+          clearTimeout(tm);
           userClient.off('new_message', handler);
           resolve(msg);
         }
