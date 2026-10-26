@@ -708,17 +708,18 @@
 
     const phoneContainer = document.createElement('div');
     phoneContainer.className = 'rotary-phone-container';
+    phoneContainer.style.cssText = 'position: relative !important; width: 100% !important; max-width: 380px !important; margin: 16px auto 0 !important; box-sizing: border-box !important;';
     phoneContainer.innerHTML = `
       <div class="rotary-handset" aria-hidden="true"><span></span><span></span></div>
       
-      <div class="phone-display-screen">
+      <div class="phone-display-screen" style="position: relative !important; top: auto !important; left: auto !important; transform: none !important; width: 100% !important; max-width: 270px !important; margin: 10px auto 14px !important;">
         <div class="phone-display-label">شماره گرفته‌شده</div>
         <div class="phone-display-digits ${dialedPhoneDigits ? '' : 'placeholder'}" id="phoneDisplayDigits" aria-live="polite">
           ${dialedPhoneDigits || '—'}
         </div>
       </div>
 
-      <div class="rotary-wheel-wrapper">
+      <div class="rotary-wheel-wrapper" style="position: relative !important; width: min(68vw, 240px) !important; height: min(68vw, 240px) !important; margin: 6px auto 16px !important; top: auto !important; left: auto !important; transform: none !important; aspect-ratio: 1 !important;">
         <div class="rotary-base-plate"></div>
         <div class="rotary-finger-stop" aria-hidden="true"></div>
         <div class="rotary-dial-rotor" id="rotaryRotor">
@@ -728,7 +729,7 @@
         </div>
       </div>
 
-      <div class="rotary-actions">
+      <div class="rotary-actions" style="position: relative !important; top: auto !important; left: auto !important; transform: none !important; width: 100% !important; max-width: 280px !important; margin-top: 4px !important; display: flex !important;">
         <button type="button" class="rotary-action-btn rotary-clear-btn" id="rotaryClearBtn">
           <span>پاک کردن</span>
         </button>
