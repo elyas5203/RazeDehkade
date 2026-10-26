@@ -94,9 +94,6 @@ if (!userToken || !sessionData.id) {
   window.location.href = '/enter-code.html';
 }
 
-// فلگ‌های محلی نفوذ مزداک - وضعیت نهایی به صورت موثق از سرور در fetchHistory استعلام می‌شود
-const localHackFlag = sessionData && sessionData.id ? localStorage.getItem(`session_hacked_${sessionData.id}`) : null;
-
 const userMessagesMap = new Map();
 let activeEditMessageId = null;
 let activeDeleteMessageId = null;
@@ -218,7 +215,10 @@ function updateMicrophoneHelp(message) {
   const help = document.getElementById('microphone-help');
   const text = document.getElementById('microphone-help-text');
   const button = document.getElementById('microphone-enable-btn');
-  if (help) help.hidden = !message;
+  // The microphone recovery control is a diagnostic affordance for test sessions.
+  // Browsers still handle the initial permission request through their own prompt.
+  const showDiagnostics = new URLSearchParams(window.location.search).get('test') === '1';
+  if (help) help.hidden = !message || !showDiagnostics;
   if (text) text.textContent = message;
   if (button) button.hidden = !navigator.mediaDevices?.getUserMedia;
 }
@@ -270,11 +270,13 @@ function applyChatLock(isLocked) {
 
 let isHistoryLoaded = false;
 let isFetchingHistory = false;
+let hackStateRevision = 0;
 
 // بارگذاری تاریخچه پیام‌های قبلی به صورت بهینه و فوق‌سریع
 async function loadHistory() {
   if (isFetchingHistory) return;
   isFetchingHistory = true;
+  const requestedRevision = hackStateRevision;
 
   try {
     const res = await fetch(`/api/sessions/${sessionData.id}/messages`, {
@@ -288,6 +290,9 @@ async function loadHistory() {
       return;
     }
     const data = await res.json();
+    // A socket unlock/trigger may arrive while this HTTP request is in flight.
+    // In that case its older session flag must not redirect or relock the page.
+    if (requestedRevision !== hackStateRevision) return;
     if (data.success && Array.isArray(data.data)) {
       const box = document.getElementById('messages-box');
       data.data.forEach(msg => renderMessage(msg, { skipScroll: true, skipThreads: true, isHistory: true }));
@@ -332,6 +337,7 @@ async function loadHistory() {
     console.error('Error loading history:', err);
   } finally {
     isFetchingHistory = false;
+    if (requestedRevision !== hackStateRevision) queueMicrotask(loadHistory);
   }
 }
 
@@ -538,6 +544,7 @@ function initSocket() {
 
   socket.on('hack_sequence_triggered', (data) => {
     if (!data || Number(data.sessionId) !== Number(sessionData.id)) return;
+    hackStateRevision++;
     console.log('🚨 رویداد سکانس هک مزداک دریافت شد:', data);
     sessionData.is_hacked = 1;
     try {
@@ -553,6 +560,7 @@ function initSocket() {
 
   socket.on('hack_cleared', (data) => {
     if (!data || Number(data.sessionId) !== Number(sessionData.id)) return;
+    hackStateRevision++;
     console.log('🔓 نفوذ لغو شد و چت بازگشایی گردید:', data);
     try {
       if (sessionData && sessionData.id) {
@@ -564,6 +572,7 @@ function initSocket() {
     if (window.cyberBreachEngine) {
       window.cyberBreachEngine.reset();
     }
+    if (!isFetchingHistory) loadHistory();
   });
 
   // دریافت درخواست شروع استریم صدای میکروفون توسط ادمین

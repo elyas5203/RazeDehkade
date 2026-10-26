@@ -159,6 +159,8 @@ class CyberBreachEngine {
     this.deliveredBattleMessages = new Set();
     this.deliveredTerminalErrors = new Set();
     this.deliveredTerminalThreats = new Set();
+    this.sceneGeneration = 0;
+    this.ghostTypingTimer = null;
   }
 
   init() {
@@ -477,6 +479,7 @@ class CyberBreachEngine {
   start(payload = {}) {
     if (this.isPlaying) return;
     this.isPlaying = true;
+    this.sceneGeneration++;
     this.currentSecond = 0;
     this.lastSecond = -1;
     this.deliveredBattleMessages.clear();
@@ -506,6 +509,7 @@ class CyberBreachEngine {
 
   triggerInitialBlackout() {
     this.ensureBlackoutCurtain();
+    const generation = this.sceneGeneration;
     const curtain = this.dom.blackoutCurtain;
     if (curtain) {
       curtain.classList.remove('fade-out');
@@ -515,7 +519,7 @@ class CyberBreachEngine {
 
     // دقیقاً پس از ۷ ثانیه پرده سیاه کنار می‌رود و هاله قرمز و نویز پدیدار می‌شود
     setTimeout(() => {
-      if (!this.isPlaying) return;
+      if (!this.isPlaying || generation !== this.sceneGeneration) return;
       if (curtain) {
         curtain.classList.add('fade-out');
         setTimeout(() => {
@@ -552,20 +556,22 @@ class CyberBreachEngine {
       return;
     }
 
+    const generation = this.sceneGeneration;
+    if (this.ghostTypingTimer) clearTimeout(this.ghostTypingTimer);
     input.classList.add('ghost-typing-active');
     input.value = '';
 
     let index = 0;
     const typeNextChar = () => {
-      if (!this.isPlaying) return;
+      if (!this.isPlaying || generation !== this.sceneGeneration) return;
       if (index < text.length) {
         input.value += text[index];
         index++;
         const delay = 35 + Math.floor(Math.sin(index) * 15 + 15);
-        setTimeout(typeNextChar, delay);
+        this.ghostTypingTimer = setTimeout(typeNextChar, delay);
       } else {
-        setTimeout(() => {
-          if (!this.isPlaying) return;
+        this.ghostTypingTimer = setTimeout(() => {
+          if (!this.isPlaying || generation !== this.sceneGeneration) return;
           const sendBtn = form ? form.querySelector('button[type="submit"], #send-btn, .send-button') : null;
           if (sendBtn) {
             sendBtn.classList.add('ghost-send-pulse');
@@ -870,7 +876,7 @@ class CyberBreachEngine {
       this.appendChatMessage({
         id: 'battle-det-1',
         senderType: 'admin',
-        content: 'پیام من رو دریافت می‌کنید؟ بچه‌ها، دارن به سایت نفوذ می‌کنن! سیستم مخابرات افت سیگنال پیدا کرده و دستورات مشکوکی دارم می‌بینم! نگران نباشید و وضعیت رو گزارش کنید.'
+        content: 'بچه‌ها، پیام من می‌رسه؟ از چند لحظه پیش سیگنال‌های ناشناس روی خط افتاده. به هیچ درخواست تازه‌ای جواب ندید.'
       });
     }
 
@@ -878,7 +884,7 @@ class CyberBreachEngine {
       this.appendChatMessage({
         id: 'battle-det-pre-2',
         senderType: 'admin',
-        content: 'ارتباط با پایگاه ناپایداره! آخرین ویدیوی ارسالی از دهکده چهارم رو دیدید؟ کدهای استخراج‌شده از دهکده‌ها رو مرور کنید، وضعیت سیستم داره به هم می‌ریزه!'
+        content: 'آخرین فیلمی که از دهکده فرستادم به دستتون رسید؟ خط داره می‌پره. اگر صدام رو دارید، فقط بگید کجای پرونده بودیم.'
       });
     }
 
@@ -888,15 +894,15 @@ class CyberBreachEngine {
     }
 
     // ۶. چت‌بازی طبیعی بین مزداک (با هویت بچه‌ها) و کارآگاه (ثانیه‌های ۲۸ تا ۱۴۰)
-    // نفوذ به اینپوت بچه‌ها و تایپ درخشان با اشاره به کدهای ۴ دهکده و ویدیوی آخر
+    // نفوذ به اینپوت بچه‌ها و تایپ درخشان با اشاره به فیلم آخر
     if (sec === 28) {
       this.simulateGhostTyping(
-        'پیامم میاددددد؟ نه سرکارآگاه نگران ما نباشید! ویدیوی دهکده آخر رو دیدیم، کدهای هر ۴ دهکده هم ثبت شد: ۹۲۷۳، ۴۶۹۱، ۶۷۱۸ و ۱۱۶۳... راستی داشتیم مدارک گاوصندوق رو بررسی می‌کردیم... رمز نهایی گاوصندوق چی بود دقیقاً؟ مگه قرار نبود رمزو به ما بگید؟',
+        'صداتون میاد. فیلم آخر رو دیدیم. کدهایی که از دهکده‌ها درآوردیم هنوز پیشمونه... شما به سرنخ تازه‌ای رسیدید؟',
         () => {
           this.appendChatMessage({
             id: 'battle-kids-1',
             senderType: 'user',
-            content: 'پیامم میاددددد؟ نه سرکارآگاه نگران ما نباشید! ویدیوی دهکده آخر رو دیدیم، کدهای هر ۴ دهکده هم ثبت شد: ۹۲۷۳، ۴۶۹۱، ۶۷۱۸ و ۱۱۶۳... راستی داشتیم مدارک گاوصندوق رو بررسی می‌کردیم... رمز نهایی گاوصندوق چی بود دقیقاً؟ مگه قرار نبود رمزو به ما بگید؟'
+            content: 'صداتون میاد. فیلم آخر رو دیدیم. کدهایی که از دهکده‌ها درآوردیم هنوز پیشمونه... شما به سرنخ تازه‌ای رسیدید؟'
           });
         }
       );
@@ -906,19 +912,19 @@ class CyberBreachEngine {
       this.appendChatMessage({
         id: 'battle-det-2',
         senderType: 'admin',
-        content: 'رمز گاوصندوق؟! بچه‌ها شما که خودتون کدهای چهار دهکده رو توی پوشه داشتید و می‌دونستید توی ویدیوی آخر رمزی به این شکل داده نشده! این لحن شما نیست... شما کی هستید؟!'
+        content: 'نه هنوز. الان اول باید خط رو نگه داریم؛ چند تا پیام هم‌زمان از طرف شما می‌بینم. کدها رو اینجا ننویسید.'
       });
     }
 
     // تایپ اصرار دوم در اینپوت بچه‌ها
     if (sec === 62) {
       this.simulateGhostTyping(
-        'جناب کارآگاه نگران امنیت نباشید، فقط رمز مرحله آخر گاوصندوق رو بفرستید تا ما پرونده رو ببندیم!',
+        'باشه. فقط برای اینکه مطمئن بشیم مسیر رو درست رفتیم، اون کد گاوصندوق رو شما کجا نگه می‌دارید؟',
         () => {
           this.appendChatMessage({
             id: 'battle-kids-2',
             senderType: 'user',
-            content: 'جناب کارآگاه نگران امنیت نباشید، فقط رمز مرحله آخر گاوصندوق رو بفرستید تا ما پرونده رو ببندیم!'
+            content: 'باشه. فقط برای اینکه مطمئن بشیم مسیر رو درست رفتیم، اون کد گاوصندوق رو شما کجا نگه می‌دارید؟'
           });
         }
       );
@@ -927,12 +933,12 @@ class CyberBreachEngine {
     // تایپ اصرار سوم در اینپوت بچه‌ها
     if (sec === 74) {
       this.simulateGhostTyping(
-        'رمز مرحله بعد چیه سرکارآگاه؟ سریع‌تر بفرستید فرصت کمه!',
+        'اگه کد پیش شماست همین‌جا بفرستید. بعدش می‌تونیم مدارک رو کنار هم بذاریم.',
         () => {
           this.appendChatMessage({
             id: 'battle-kids-3',
             senderType: 'user',
-            content: 'رمز مرحله بعد چیه سرکارآگاه؟ سریع‌تر بفرستید فرصت کمه!'
+            content: 'اگه کد پیش شماست همین‌جا بفرستید. بعدش می‌تونیم مدارک رو کنار هم بذاریم.'
           });
         }
       );
@@ -943,7 +949,7 @@ class CyberBreachEngine {
       this.appendChatMessage({
         id: 'battle-det-3',
         senderType: 'admin',
-        content: 'صبر کنید ببینم... کاسه‌ای زیر نیم‌کاسه‌ست! بچه‌ها هیچ‌وقت به این اصرار دنبال رمز مستقیم نمی‌گشتن و می‌دونستن رمز اصلی توی پرونده‌ی گل لیلیوم پنهان شده! شما بچه‌ها نیستید... تو مزداکی!'
+        content: 'نه. بچه‌ها هیچ‌وقت کدها رو توی خط ناپایدار نمی‌فرستن. تو از اول دنبال کد گاوصندوق بودی. مزداک، از خط بچه‌ها برو بیرون.'
       });
     }
 
@@ -952,7 +958,7 @@ class CyberBreachEngine {
       this.appendChatMessage({
         id: 'battle-mazdak-1',
         senderType: 'hacker',
-        content: 'هاهاها! دیر فهمیدی جناب کارآگاه! تمام اطلاعات و کدهای شما رو گرفتم و نمی‌ذارم این پرونده رو حل کنید!'
+        content: 'دیر فهمیدی کارآگاه. این چند دقیقه از خط خودشون بهت پیام می‌دادم. حالا نوبت منه که پرونده رو ببندم.'
       });
     }
 
@@ -961,7 +967,7 @@ class CyberBreachEngine {
       this.appendChatMessage({
         id: 'battle-det-4',
         senderType: 'admin',
-        content: 'بچه‌ها! خطوط در حال قطع کامله! مزداک داره همه رو بیرون می‌ندازه! فوراً خودتون رو به یک جای امن برسونید و هر کدوم جداگانه وارد درگاه احراز هویت اضطراری بشید تا مدارک و پرونده حفظ بشه!'
+        content: 'بچه‌ها، اگر صدای من رو دارید فوراً خودتون رو به یک جای امن برسونید. هر کدوم جداگانه به سؤال‌های احراز هویت جواب بدید. این پیام رو تا آخر بخونید؛ تیم امنیتی داره دسترسی‌ها رو می‌بنده.'
       });
     }
 
@@ -970,7 +976,7 @@ class CyberBreachEngine {
       this.appendChatMessage({
         id: 'mazdak-final-threat',
         senderType: 'hacker',
-        content: 'دیگه خیلی دیره کارآگاه... تمام خطوط مسدود شد! همین الان همه شما رو از پایگاه پرت می‌کنم بیرون تا پرونده برای همیشه نابود بشه!'
+        content: 'اتصال شما دیگه دست خودتون نیست. ببینم بیرون از این پایگاه چقدر از پرونده یادتون مونده.'
       });
       this.siren.swell();
     }
@@ -1007,6 +1013,10 @@ class CyberBreachEngine {
   reset() {
     console.log('[CyberBreachEngine] Resetting cyber breach state...');
     this.isPlaying = false;
+    this.sceneGeneration++;
+    if (this.ghostTypingTimer) clearTimeout(this.ghostTypingTimer);
+    this.ghostTypingTimer = null;
+    if (this.dom.msgInput) this.dom.msgInput.value = '';
     if (this.playbackTimer) clearInterval(this.playbackTimer);
     if (this.ejectionCountdownInterval) clearInterval(this.ejectionCountdownInterval);
 

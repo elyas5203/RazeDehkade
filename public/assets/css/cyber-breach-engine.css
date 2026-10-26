@@ -1311,6 +1311,16 @@ body.cyber-breach-active .briefing-photo::after {
   pointer-events: none !important;
   display: block !important;
   opacity: 1 !important;
+  filter: contrast(1.5) saturate(1.8) sepia(.28) hue-rotate(315deg) !important;
+  box-shadow: inset 0 0 0 3px rgba(255, 34, 66, .72), inset 0 0 45px rgba(128, 0, 25, .75) !important;
+  animation: evidenceSignalBreak 4.6s steps(1, end) infinite !important;
+}
+
+@keyframes evidenceSignalBreak {
+  0%, 89%, 93%, 100% { transform: translate(0); clip-path: inset(0); }
+  90% { transform: translate(3px, -1px); clip-path: inset(15% 0 57% 0); }
+  91% { transform: translate(-3px, 1px); clip-path: inset(57% 0 17% 0); }
+  92% { transform: translate(1px, 0); clip-path: inset(0); }
 }
 
 /* ==========================================================================
