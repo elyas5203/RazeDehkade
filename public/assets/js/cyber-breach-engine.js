@@ -231,8 +231,8 @@ class CyberBreachEngine {
       ghost.className = 'terminal-slot-ghost quad-card';
       ghost.style.display = 'none';
       ghost.innerHTML = `
-        <div style="font-size: 20px; margin-bottom: 4px; color: #ff003c;">☠︎</div>
-        <div style="font-weight: 800; color: #ff003c; letter-spacing: 0.5px; font-size: 11px;">[SYSTEM OVERRIDE]</div>
+        <div class="ghost-slot-signal" aria-hidden="true"></div>
+        <div class="ghost-slot-label">سیگنال قطع شد</div>
       `;
       this.dom.terminal.parentNode.insertBefore(ghost, this.dom.terminal);
       this.ghostSlot = ghost;
@@ -660,14 +660,15 @@ class CyberBreachEngine {
     }
     const line = document.createElement('div');
     line.className = 'term-mazdak-threat-line typewriter-line';
-    line.innerHTML = `<span class="term-system-corrupt-badge" style="background:#ff003c; color:#fff; padding:2px 6px; border-radius:3px; font-size:11px; margin-left:6px;">هشدار نفوذ</span><span class="typewriter-text"></span><span class="typewriter-cursor">▌</span>`;
+    line.innerHTML = `<span class="term-system-corrupt-badge">مزداک / خط اشغال شد</span><span class="typewriter-text"></span><span class="typewriter-cursor">▌</span>`;
     this.dom.terminalLogs.appendChild(line);
 
     const textSpan = line.querySelector('.typewriter-text');
     let idx = 0;
+    const generation = this.sceneGeneration;
 
     const typeNext = () => {
-      if (!this.isPlaying) return;
+      if (!this.isPlaying || generation !== this.sceneGeneration) return;
       if (idx < text.length) {
         textSpan.textContent += text[idx];
         this.playGeigerTickSFX();
@@ -759,10 +760,10 @@ class CyberBreachEngine {
     this.alignElevatedTerminal();
 
     if (this.dom.terminalTitle) {
-      this.dom.terminalTitle.textContent = 'SYSTEM OVERRIDE // تسخیر ترمینال پایگاه';
+      this.dom.terminalTitle.textContent = 'خط ارتباطی اشغال شد';
     }
     if (this.dom.terminalStatus) {
-      this.dom.terminalStatus.textContent = 'HOSTILE TAKEOVER';
+      this.dom.terminalStatus.textContent = 'نفوذ فعال';
       this.dom.terminalStatus.style.color = '#ff003c';
     }
   }
@@ -770,8 +771,8 @@ class CyberBreachEngine {
   alignElevatedTerminal() {
     const term = this.dom.terminal;
     if (!term || !this.isElevated) return;
-    const targetW = Math.min(window.innerWidth * 0.90, 620);
-    const targetH = Math.min(window.innerHeight * 0.68, 380);
+    const targetW = Math.min(window.innerWidth * 0.94, 800);
+    const targetH = Math.min(window.innerHeight * 0.76, 510);
     const targetL = (window.innerWidth - targetW) / 2;
     const targetT = (window.innerHeight - targetH) / 2;
 
@@ -800,6 +801,7 @@ class CyberBreachEngine {
 
     setTimeout(() => {
       term.classList.remove('is-elevated');
+      term.classList.remove('is-threat');
       term.style.position = '';
       term.style.left = '';
       term.style.top = '';
@@ -865,6 +867,7 @@ class CyberBreachEngine {
       if (this.dom.terminalLogs) {
         this.dom.terminalLogs.innerHTML = '';
       }
+      this.dom.terminal?.classList.add('is-threat');
     }
 
     if (sec === 15) {

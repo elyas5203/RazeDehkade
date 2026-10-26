@@ -1662,3 +1662,112 @@ body.debug-test-mode .emergency-ejection-modal .ejection-actions {
   margin-left: 8px;
 }
 
+/* MASTER-19: the breached scene uses one legible visual hierarchy. */
+#terminal-backdrop-dimmer.active {
+  background: rgba(3, 6, 10, .72);
+  backdrop-filter: blur(5px) saturate(.5);
+}
+body.cyber-breach-active #terminal-log-counter,
+body.cyber-breach-active .terminal-controls-bar { display: none !important; }
+body.cyber-breach-active #evidence-grid,
+body.cyber-breach-active .evidence-grid {
+  position: relative;
+  isolation: isolate;
+  background: #210b11 !important;
+}
+body.cyber-breach-active #evidence-grid::before,
+body.cyber-breach-active .evidence-grid::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(120deg,#310711bb,#16070aaa), url('/mazdak.jpg') center / cover no-repeat;
+  opacity: .82;
+  filter: contrast(1.5) saturate(.7);
+}
+body.cyber-breach-active #evidence-grid > *,
+body.cyber-breach-active .evidence-grid > * { position: relative; z-index: 1; }
+body.cyber-breach-active #evidence-grid::after,
+body.cyber-breach-active .evidence-grid::after {
+  content: ''; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: repeating-linear-gradient(0deg,transparent 0 19px,#f33a 20px 21px);
+  opacity: .24;
+  animation: breachScanlinesRolling 14s linear infinite;
+}
+.terminal-slot-ghost .ghost-slot-signal {
+  width: 48px; height: 48px; border: 1px solid #aa6069; border-radius: 50%;
+  background: radial-gradient(circle,#d63456 0 3px,transparent 4px); box-shadow: 0 0 22px #be264688;
+}
+.terminal-slot-ghost .ghost-slot-label { font: 800 13px 'Vazirmatn',sans-serif; color: #e29ba5; }
+.security-terminal.is-elevated {
+  background: #071016 !important; border: 1px solid #bb4e5d !important;
+  border-radius: 8px !important;
+  box-shadow: 0 0 0 1px #f5b2bb22, 0 30px 100px #000e, 0 0 65px #b6122f55 !important;
+  backdrop-filter: none !important;
+}
+.security-terminal.is-elevated .terminal-bar {
+  background: #1f111a !important; border-bottom: 1px solid #9e4954 !important;
+  min-height: 60px; padding: 14px clamp(14px,3vw,28px) !important;
+}
+.security-terminal.is-elevated .term-heading {
+  font: 800 clamp(17px,2.3vw,24px) 'Vazirmatn',sans-serif !important;
+  color: #ffdadf !important; letter-spacing: 0 !important;
+}
+.security-terminal.is-elevated .terminal-body {
+  height: calc(100% - 60px) !important;
+  padding: clamp(20px,4vw,42px) !important;
+  background: radial-gradient(circle at 20% 15%,#29121a,#091016 70%) !important;
+  overflow-y: auto !important;
+  display: flex; flex-direction: column; justify-content: center; gap: 16px;
+}
+.security-terminal.is-elevated .term-breach-bilingual-line {
+  border: 0 !important; border-right: 3px solid #d6686b !important;
+  padding: 12px 18px !important; background: #6d252744 !important;
+  border-radius: 3px !important; min-height: 75px;
+}
+.security-terminal.is-elevated .term-breach-en-text { font-size: clamp(11px,1.4vw,14px) !important; color: #ff949d !important; }
+.security-terminal.is-elevated .term-breach-fa-text { font-size: clamp(15px,2vw,20px) !important; line-height: 1.7 !important; }
+.security-terminal.is-elevated.is-threat .terminal-body { align-items: stretch; }
+.security-terminal.is-elevated .term-mazdak-threat-line {
+  margin: 0; min-height: 215px; padding: clamp(22px,4vw,42px) !important;
+  border: 0; border-top: 1px solid #cc6476; border-bottom: 1px solid #cc6476;
+  border-radius: 0; background: linear-gradient(90deg,#9b193326,#40112188);
+  box-shadow: inset 0 0 40px #a2223233;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 22px;
+}
+.security-terminal.is-elevated .term-system-corrupt-badge {
+  border: 0; background: transparent; color: #ff9bab;
+  font: 800 12px 'Vazirmatn',sans-serif; margin: 0; padding: 0;
+}
+.security-terminal.is-elevated .typewriter-text {
+  display: block; color: #fff2f2; font: 800 clamp(21px,3.8vw,36px)/1.8 'Vazirmatn',sans-serif;
+  text-align: right; text-shadow: 0 0 20px #e8406044;
+}
+body.cyber-breach-active #msg-input.ghost-typing-active {
+  background: #102024 !important; color: #dbffed !important;
+  -webkit-text-fill-color: #dbffed !important;
+  border: 2px solid #8bdbc4 !important;
+  box-shadow: 0 0 0 3px #8bdbc444, 0 0 28px #9bffd544 !important;
+  text-shadow: none !important; font-size: 16px !important;
+}
+.emergency-ejection-modal {
+  max-height: calc(100dvh - 28px); overflow-y: auto;
+  background: #131c25; border: 1px solid #a35660; border-radius: 6px 26px 6px 26px;
+  box-shadow: 0 30px 100px #000e, inset 0 1px #fff2;
+}
+.ejection-title { font-size: clamp(23px,4vw,34px); text-shadow: none; }
+.ejection-body-text { color: #f2e8e4; font-size: clamp(15px,2.2vw,18px); }
+.ejection-callout-box { background: #2a1a22; border-color: #b56b6f; }
+@media (max-width: 600px) {
+  .security-terminal.is-elevated .terminal-bar { min-height: 50px; padding: 10px 12px !important; }
+  .security-terminal.is-elevated .term-heading { font-size: 15px !important; }
+  .security-terminal.is-elevated .terminal-body { height: calc(100% - 50px) !important; padding: 14px !important; }
+  .security-terminal.is-elevated .term-mazdak-threat-line { min-height: 170px; padding: 18px !important; }
+  .security-terminal.is-elevated .typewriter-text { font-size: 21px !important; }
+  .security-terminal.is-elevated .term-breach-bilingual-line { min-height: 58px; padding: 8px 10px !important; }
+  .emergency-ejection-overlay { padding: 10px; }
+  .emergency-ejection-modal { padding: 22px 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.cyber-breach-active::after, body.system-compromised-red::before, body.system-compromised-red::after,
+  body.cyber-breach-active #evidence-grid::after { animation: none !important; }
+}
+

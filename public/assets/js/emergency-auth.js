@@ -55,8 +55,8 @@
     {
       id: 'q_terrorist_newspaper',
       type: 'newspaper_puzzle',
-      title: 'اسم گروه تروریستی که به دهکده مرموز حمله کرده بود چه بود؟',
-      subtitle: 'دو تکه نام را از روزنامه پیدا کن.',
+      title: 'اسم گروه تروریستی چه بود؟',
+      subtitle: 'تکه‌های نام را کنار هم بگذار.',
       pieces: ['مز', 'داک', 'ده', 'کده', 'کار', 'آگاه']
     },
     {
@@ -64,44 +64,44 @@
       type: 'choice',
       title: 'چجوری روزی صد بار به حج قبول شده بریم ولی از مشهد خارج نشیم؟',
       options: [
-        { letter: 'الف', text: 'تلویزیون رو بزنیم شبکه مسجدالحرام' },
+        { letter: 'الف', text: 'تلویزین رو بزنیم شبکه مسجدالحرام' },
         { letter: 'ب', text: 'از روی رحمت به پدر و مادر نگاه کنیم' },
         { letter: 'پ', text: 'هر روز صد بار بلیط هواپیما بگیریم بریم حج' },
-        { letter: 'د', text: 'برو عمو گرفتی منو، خود مردم مکه هم نمی‌تونن!' }
+        { letter: 'د', text: 'برو عمو گرفتی منو خود مردم مکه، هم نمی تونن' }
       ]
     },
     {
       id: 'q_padari',
       type: 'scene_choice',
       scene: 'family',
-      title: 'آقای پادری گوینده اخبار چه نسبتی با آقایان پادری‌ها که به دهکده‌های مرموز رفتن داشت؟',
+      title: 'آقای پادری گوینده اخبار چه نسبتی با اقایان پادری‌ها که به دهکده های مرموز رفتن داشت؟',
       options: [
         { letter: 'الف', text: 'عمه' },
-        { letter: 'ب', text: 'ارواح عمه‌اش، خاله‌اش بود بابا!' },
-        { letter: 'ج', text: 'آخه عمه و خاله که زن‌ان، داداش بودن' },
-        { letter: 'د', text: 'بابا این پادری حموم بود اون‌ها پادری دستشویی، نسبتی نداشتن' }
+        { letter: 'ب', text: 'ارواح عمه اش ، خالش بود بابا' },
+        { letter: 'ج', text: 'اخه عمه و خاله که زن ان، داداش بودن' },
+        { letter: 'د', text: 'بابا این پادری حموم بود اونها پادری دستشویی، نسبتی نداشتن' }
       ]
     },
     {
       id: 'q_invest_2026',
       type: 'scene_choice',
       scene: 'ledger',
-      title: 'بهترین سرمایه‌گذاری مالی در سال ۲۰۲۶ چیست؟ چرا؟',
+      title: 'بهترین سرمایه گذاری مالی در سال ۲۰۲۶ چیست؟چرا؟',
       options: [
-        { letter: 'الف', text: 'خرید قابلمه چنگیز چون توش راحت می‌شه خوابید' },
-        { letter: 'ب', text: 'یه شونه تخم‌مرغ چون به جای جواهر رنگش کنیم بدیم مزداک' },
-        { letter: 'ج', text: '۱۲ تا مگس‌کش پرویز چون که زیرا' },
-        { letter: 'د', text: 'نیکی به پدر و مادر چون طبق فرموده امام صادق (ع) هرگز در زندگی فقیر نمی‌شویم' }
+        { letter: 'الف', text: 'خرید قابلمه چنگیز چون توش راحت می شه خوابید' },
+        { letter: 'ب', text: 'یه شونه تخم مرغ چون به جای جواهر رنگش کنیم بدیم مزداک' },
+        { letter: 'ج', text: '۱۲ تا مگس کش پرویز چون که زیرا' },
+        { letter: 'د', text: 'نیکی به پدر مادر چون طبق گفته امام صادق هرگز در زندگی فقیر نمی شویم' }
       ]
     },
     {
       id: 'q_oil_painting',
       type: 'easel_puzzle',
       title: 'چرا باید سه نفری رفت کلاس رنگ روغن؟',
-      subtitle: 'با لمس پایه‌های بوم نقاشی، سه‌پایه را برپا کنید:',
+      subtitle: 'سه پایه را برپا کن.',
       options: [
         { letter: 'الف', text: 'نامردیه ما روغنی بشیم اونا نشن' },
-        { letter: 'ب', text: 'چون باید سه پایه داشته باشیم، حالا تو بگو کی پایه‌تر از ما! 😎' },
+        { letter: 'ب', text: 'چون باید سه پایه داشته باشیم، حالا تو بگو کی پایه تر از ما😎' },
         { letter: 'ج', text: 'بیکاریم' },
         { letter: 'د', text: 'اینجوری بیشتر حال میده' }
       ]
@@ -110,12 +110,12 @@
       id: 'q_letter_translators',
       type: 'scene_choice',
       scene: 'letter',
-      title: 'چه کسانی نامه پیدا شده را ترجمه کردند؟',
+      title: 'چه کسانی نامه پیدا شده را ترجمه کردند ؟',
       options: [
-        { letter: 'الف', text: 'تاریخ‌شناسان و باستان‌شناسان' },
-        { letter: 'ب', text: 'گروه تبهکاران' },
+        { letter: 'الف', text: 'تاریخ شناسان' },
+        { letter: 'ب', text: 'تبهکاران' },
         { letter: 'ج', text: 'کسانی که جواهر را پیدا کردند' },
-        { letter: 'د', text: 'اهالی بومی روستا' }
+        { letter: 'د', text: 'اهالی روستا' }
       ]
     },
     {
@@ -158,7 +158,7 @@
       id: 'q_last_village_city',
       type: 'choice',
       sacred: true,
-      title: 'طبق اطلاعات بدست آمده، دهکده آخر کدام شهر بود؟',
+      title: 'طبق اطلاعات بدست آمده دهکده آخر کدام شهر بود؟',
       options: [
         { letter: 'الف', text: 'مکه' },
         { letter: 'ب', text: 'مدینه' },
@@ -169,7 +169,7 @@
       id: 'q_precious_gem',
       type: 'choice',
       sacred: true,
-      title: 'جواهر ارزشمند داخل پرونده چه بود؟',
+      title: 'جواهر ارزشمند داخل پرونده چه بود ؟',
       options: [
         { letter: 'الف', text: 'محبت و ولایت امیرالمومنین حضرت علی علیه السلام و فرزندانشان' },
         { letter: 'ب', text: 'قرآن' },
@@ -233,6 +233,7 @@
   let activeQuestions = [];
   let currentQuestionIndex = 0;
   const userAnswers = {};
+  const newspaperSelections = {};
   let dialedPhoneDigits = '';
   let submitting = false;
   let questionRevision = 0;
@@ -410,12 +411,12 @@
 
   function renderSceneChoice(q) {
     const scenes = {
-      family: ['پرونده نسبت‌ها', 'رد نسبت را در کارت‌های پرونده پیدا کن.'],
-      ledger: ['دفتر سرمایه‌گذاری', 'یکی از یادداشت‌های دفتر را انتخاب کن.'],
-      letter: ['برگه ترجمه', 'امضای مترجم نامه را مشخص کن.'],
-      climate: ['نقشه مهاجرت', 'علت ترک دهکده را روی پرونده ثبت کن.'],
-      gem: ['گزارش جواهر', 'یکی از ویژگی‌های ثبت‌شده را انتخاب کن.'],
-      crime: ['صحنه کفش‌فروشی', 'گزارش رسیدن رئیس پلیس را بازسازی کن.']
+      family: ['پرونده پادری‌ها', 'دو پرونده را ببین و نسبت را مشخص کن.'],
+      ledger: ['دفتر سرمایه‌گذاری', 'برگه‌ها را ورق بزن و انتخابت را ثبت کن.'],
+      letter: ['نامه پیدا شده', 'مهر نامه را باز کن و مترجم را مشخص کن.'],
+      climate: ['نقشه کوچ اهالی', 'مسیر را بررسی کن و دلیل مهاجرت را ثبت کن.'],
+      gem: ['جواهر پرونده', 'جواهر را بچرخان و ویژگی‌اش را انتخاب کن.'],
+      crime: ['کفش‌فروشی', 'سه بخش صحنه را بررسی کن، بعد گزارش را ثبت کن.']
     };
     const [label, instruction] = scenes[q.scene];
     const header = document.createElement('div');
@@ -423,93 +424,81 @@
     header.innerHTML = `<div class="q-badge">${label}</div><h2 class="q-title-text">${q.title}</h2><p class="scene-instruction">${instruction}</p>`;
     const scene = document.createElement('div');
     scene.className = `clue-scene clue-scene--${q.scene}`;
-    scene.innerHTML = `<div class="clue-scene__seal" aria-hidden="true">${({family:'◇',ledger:'⌁',letter:'✉',climate:'◈',gem:'✦',crime:'⌖'})[q.scene]}</div><span>${label}</span>`;
+    const art = {
+      family: '<div class="scene-portraits"><span>گوینده اخبار</span><span>مسافران دهکده</span></div><div class="scene-result" aria-live="polite">؟</div>',
+      ledger: '<div class="scene-book"><span>دفتر ۲۰۲۶</span><span class="scene-result" aria-live="polite">ورق بزن</span></div>',
+      letter: '<div class="scene-envelope"><span>نامه</span><span class="scene-result" aria-live="polite">مهر بسته است</span></div>',
+      climate: '<div class="scene-route"><span>دهکده</span><i></i><span>شهر</span></div><div class="scene-result" aria-live="polite">رد مهاجرت</div>',
+      gem: '<div class="scene-gem-stone" role="img" aria-label="جواهر پرونده">◆</div><div class="scene-result" aria-live="polite">جواهر را لمس کن</div>',
+      crime: '<div class="scene-store"><div class="scene-store__sign">کفش‌فروشی تنها</div><div class="scene-store__door"></div></div><div class="scene-result" aria-live="polite">صحنه بررسی نشده</div>'
+    };
+    scene.innerHTML = art[q.scene];
     const grid = document.createElement('div');
     grid.className = 'clue-scene__choices';
     const interaction = document.createElement('div');
     interaction.className = 'clue-interaction';
-    const unlock = () => {
-      grid.hidden = false;
-      interaction.classList.add('completed');
-      playChimeSFX();
-    };
-    const makeControl = text => {
+    const result = scene.querySelector('.scene-result');
+    const makeControl = (text, callback) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'clue-interaction__control';
       button.textContent = text;
+      button.addEventListener('click', callback);
       interaction.appendChild(button);
       return button;
     };
     if (q.scene === 'family') {
-      let opened = 0;
-      ['گوینده اخبار', 'اعضای سفر'].forEach(text => {
-        const button = makeControl(text);
-        button.addEventListener('click', () => {
-          if (button.disabled) return;
-          button.disabled = true;
-          button.classList.add('active');
-          opened++;
-          playTickSFX();
-          if (opened === 2) unlock();
-        });
+      makeControl('ورق زدن پرونده‌ها', () => {
+        scene.classList.toggle('is-open');
+        result.textContent = scene.classList.contains('is-open') ? 'نسبت را ثبت کن' : '؟';
+        playTickSFX();
       });
     } else if (q.scene === 'ledger') {
-      let counted = 0;
-      const button = makeControl('ورق زدن دفتر ۰/۳');
-      button.addEventListener('click', () => {
-        counted++;
-        button.textContent = `ورق زدن دفتر ${Math.min(counted, 3)}/۳`;
+      let page = 0;
+      makeControl('ورق بعد', () => {
+        page = (page + 1) % q.options.length;
+        scene.style.setProperty('--page-tilt', `${page * 3 - 5}deg`);
+        result.textContent = `${page + 1} / ${q.options.length}`;
+        grid.querySelectorAll('button')[page]?.focus();
         playTickSFX();
-        if (counted === 3) { button.disabled = true; unlock(); }
       });
     } else if (q.scene === 'letter') {
-      let stamps = 0;
-      ['مهر ۱', 'مهر ۲', 'مهر ۳'].forEach(text => {
-        const button = makeControl(text);
-        button.addEventListener('click', () => {
-          if (button.disabled) return;
-          button.disabled = true;
-          button.classList.add('active');
-          stamps++;
-          playTickSFX();
-          if (stamps === 3) unlock();
-        });
+      makeControl('باز کردن مهر', () => {
+        scene.classList.toggle('is-open');
+        result.textContent = scene.classList.contains('is-open') ? 'مترجم را انتخاب کن' : 'مهر بسته است';
+        playTickSFX();
       });
     } else if (q.scene === 'climate') {
       const range = document.createElement('input');
       range.type = 'range'; range.min = '0'; range.max = '100'; range.value = '0';
       range.setAttribute('aria-label', 'بررسی نقشه مهاجرت');
       interaction.appendChild(range);
-      range.addEventListener('input', () => { if (Number(range.value) >= 75) { range.disabled = true; unlock(); } });
-      makeControl('بررسی نقشه').addEventListener('click', unlock);
+      range.addEventListener('input', () => {
+        scene.style.setProperty('--route-progress', `${range.value}%`);
+        result.textContent = `مسیر بررسی شده: ${range.value}٪`;
+      });
     } else if (q.scene === 'gem') {
-      let inspected = 0;
-      ['روی جواهر', 'پشت جواهر'].forEach(text => {
-        const button = makeControl(text);
-        button.addEventListener('click', () => {
-          if (button.disabled) return;
-          button.disabled = true;
-          button.classList.add('active');
-          inspected++;
-          playTickSFX();
-          if (inspected === 2) unlock();
-        });
+      let turns = 0;
+      makeControl('چرخاندن جواهر', () => {
+        turns++;
+        scene.style.setProperty('--gem-turn', `${turns * 90}deg`);
+        result.textContent = turns % 2 ? 'پشت جواهر' : 'روی جواهر';
+        playTickSFX();
       });
     } else if (q.scene === 'crime') {
-      const sequence = ['رسیدن', 'بازرسی', 'گزارش'];
+      const sequence = ['ورودی', 'مغازه', 'صاحب مغازه'];
       let step = 0;
       sequence.forEach((text, index) => {
-        const button = makeControl(text);
-        button.addEventListener('click', () => {
+        const button = makeControl(text, () => {
           if (index !== step) return showAlert('صحنه را به ترتیب بررسی کن.');
           clearAlert(); button.disabled = true; button.classList.add('active');
-          playTickSFX(); step++;
-          if (step === sequence.length) unlock();
+          playTickSFX(); step++; scene.classList.add(`scene-step-${step}`);
+          result.textContent = `${step} از ${sequence.length} بخش بررسی شد`;
+          if (step === sequence.length) grid.hidden = false;
         });
       });
     }
-    grid.hidden = !userAnswers[q.id];
+    grid.hidden = q.scene === 'crime' && !userAnswers[q.id];
     q.options.forEach(opt => {
       const button = document.createElement('button');
       button.type = 'button';
@@ -519,8 +508,8 @@
         grid.querySelectorAll('button').forEach(item => item.classList.remove('selected'));
         button.classList.add('selected');
         userAnswers[q.id] = opt.text;
+        result.textContent = `${opt.letter} ثبت شد`;
         playTickSFX();
-        queueAdvance(450);
       });
       grid.appendChild(button);
     });
@@ -536,42 +525,37 @@
     const wrap = document.createElement('div');
     wrap.className = 'q-card-header';
     wrap.innerHTML = `
-      <div class="q-badge">📞 مینی‌گیم شماره‌گیر چرخشی</div>
+      <div class="q-badge">کفش‌فروشی تنها</div>
       <h2 class="q-title-text">${q.title}</h2>
-      <p style="font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.6;">${q.subtitle}</p>
+      <p class="rotary-help">انگشتت را روی عدد بگذار، صفحه را تا گیره بچرخان و رها کن. لمس کوتاه عدد هم کار می‌کند.</p>
     `;
 
     const phoneContainer = document.createElement('div');
     phoneContainer.className = 'rotary-phone-container';
 
-    // Display
     const display = document.createElement('div');
     display.className = 'phone-display-screen';
     display.innerHTML = `
-      <div class="phone-display-label">شماره تلفن شماره‌گیری شده:</div>
-      <div class="phone-display-digits ${dialedPhoneDigits ? '' : 'placeholder'}" id="phoneDisplayDigits">
-        ${dialedPhoneDigits || 'شماره بگیرید...'}
+      <div class="phone-display-label">شماره گرفته‌شده</div>
+      <div class="phone-display-digits ${dialedPhoneDigits ? '' : 'placeholder'}" id="phoneDisplayDigits" aria-live="polite">
+        ${dialedPhoneDigits || '—'}
       </div>
     `;
 
-    // Rotary Wheel
     const wheelWrap = document.createElement('div');
     wheelWrap.className = 'rotary-wheel-wrapper';
     wheelWrap.innerHTML = `
-      <div class="rotary-base-plate">
-        <div class="rotary-center-hub" id="rotaryCenterHub">
-          <span>کفش</span>
-          <span style="font-size: 8.5px; opacity: 0.85;">تنها</span>
-        </div>
-      </div>
+      <div class="rotary-handset" aria-hidden="true"><span></span><span></span></div>
+      <div class="rotary-base-plate"></div>
       <div class="rotary-finger-stop" aria-hidden="true"></div>
-      <div class="rotary-dial-rotor" id="rotaryRotor"></div>
+      <div class="rotary-dial-rotor" id="rotaryRotor">
+        <div class="rotary-center-hub" aria-hidden="true"><span>تــنها</span><small>کفش‌فروشی</small></div>
+      </div>
     `;
 
     phoneContainer.appendChild(display);
     phoneContainer.appendChild(wheelWrap);
 
-    // Controls
     const actions = document.createElement('div');
     actions.className = 'rotary-actions';
     actions.innerHTML = `
@@ -579,7 +563,7 @@
         <span>پاک کردن</span>
       </button>
       <button type="button" class="rotary-action-btn rotary-call-btn" id="rotaryCallBtn">
-        <span>برقراری تماس 📞</span>
+        <span>تماس</span>
       </button>
     `;
     phoneContainer.appendChild(actions);
@@ -587,47 +571,36 @@
     dynamicQuestionSlot.appendChild(wrap);
     dynamicQuestionSlot.appendChild(phoneContainer);
 
-    // Render Digits inside Rotor around a circle
     const rotor = document.getElementById('rotaryRotor');
     if (rotor) {
       const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
-      const startAngle = 30; // deg
-      const stepAngle = 28;  // deg
-      const radius = 86;     // px
-
+      const startAngle = -115;
+      const stepAngle = 29;
       numbers.forEach((num, idx) => {
         const hole = document.createElement('button');
         hole.type = 'button';
         hole.className = 'rotary-hole';
         hole.dataset.num = num;
+        hole.dataset.travel = String(42 + idx * 28);
         hole.textContent = String(num);
-
         const angleDeg = startAngle + (idx * stepAngle);
         const angleRad = (angleDeg * Math.PI) / 180;
-        const x = 125 + radius * Math.cos(angleRad) - 22;
-        const y = 125 + radius * Math.sin(angleRad) - 22;
-
-        hole.style.left = `${x}px`;
-        hole.style.top = `${y}px`;
-
-        // Click / Touch to dial
-        hole.addEventListener('click', () => dialDigit(num, angleDeg));
+        hole.style.left = `${50 + 36 * Math.cos(angleRad)}%`;
+        hole.style.top = `${50 + 36 * Math.sin(angleRad)}%`;
+        hole.setAttribute('aria-label', `شماره‌گیری ${num}`);
         rotor.appendChild(hole);
       });
     }
 
-    function dialDigit(digit, angle) {
-      playTickSFX();
-      const rotorEl = document.getElementById('rotaryRotor');
-      if (rotorEl) {
-        // انیمیشن چرخش مکانیکی تا براکت استاپ و بازگشت
-        const targetRotation = Math.max(40, 240 - angle);
-        rotorEl.style.transform = `rotate(${targetRotation}deg)`;
-        setTimeout(() => {
-          rotorEl.style.transform = 'rotate(0deg)';
-        }, 320);
-      }
-
+    let busy = false;
+    let gesture = null;
+    let suppressClick = false;
+    const angleAt = event => {
+      const rect = rotor.getBoundingClientRect();
+      return Math.atan2(event.clientY - rect.top - rect.height / 2, event.clientX - rect.left - rect.width / 2) * 180 / Math.PI;
+    };
+    const appendDigit = digit => {
+      if (dialedPhoneDigits.length >= 16) return;
       dialedPhoneDigits += String(digit);
       userAnswers[q.id] = dialedPhoneDigits;
       const digitsEl = document.getElementById('phoneDisplayDigits');
@@ -635,7 +608,66 @@
         digitsEl.classList.remove('placeholder');
         digitsEl.textContent = dialedPhoneDigits;
       }
-    }
+      playTickSFX();
+    };
+    const springBack = (digit, travel) => {
+      busy = true;
+      rotor.style.transition = 'transform .62s cubic-bezier(.15,.72,.18,1)';
+      rotor.style.transform = 'rotate(0deg)';
+      const timer = setTimeout(() => {
+        if (rotor.isConnected) {
+          appendDigit(digit);
+          rotor.style.transition = '';
+        }
+        busy = false;
+      }, Math.max(340, Math.min(650, 300 + travel)));
+      return timer;
+    };
+    rotor.querySelectorAll('.rotary-hole').forEach(hole => {
+      hole.addEventListener('pointerdown', event => {
+        if (busy) return;
+        gesture = { pointerId: event.pointerId, digit: hole.dataset.num,
+          max: Number(hole.dataset.travel), start: angleAt(event), last: angleAt(event), turn: 0 };
+        hole.setPointerCapture(event.pointerId);
+        rotor.style.transition = 'none';
+      });
+      hole.addEventListener('pointermove', event => {
+        if (!gesture || gesture.pointerId !== event.pointerId) return;
+        const current = angleAt(event);
+        let delta = current - gesture.last;
+        if (delta < -180) delta += 360;
+        if (delta > 180) delta -= 360;
+        gesture.turn = Math.min(gesture.max, Math.max(0, gesture.turn + delta));
+        gesture.last = current;
+        rotor.style.transform = `rotate(${gesture.turn}deg)`;
+      });
+      const finish = event => {
+        if (!gesture || gesture.pointerId !== event.pointerId) return;
+        const { digit, turn, max } = gesture;
+        gesture = null;
+        suppressClick = true;
+        setTimeout(() => { suppressClick = false; }, 80);
+        if (turn >= max * .45) springBack(digit, turn);
+        else if (turn < 5) {
+          busy = true;
+          rotor.style.transition = 'transform .38s ease-out';
+          rotor.style.transform = `rotate(${max}deg)`;
+          setTimeout(() => springBack(digit, max), 390);
+        } else {
+          rotor.style.transition = 'transform .25s ease-out';
+          rotor.style.transform = 'rotate(0deg)';
+        }
+      };
+      hole.addEventListener('pointerup', finish);
+      hole.addEventListener('pointercancel', finish);
+      hole.addEventListener('click', event => {
+        if (busy || suppressClick || event.detail > 0 && gesture) return;
+        busy = true;
+        rotor.style.transition = 'transform .38s ease-out';
+        rotor.style.transform = `rotate(${hole.dataset.travel}deg)`;
+        setTimeout(() => springBack(hole.dataset.num, Number(hole.dataset.travel)), 390);
+      });
+    });
 
     document.getElementById('rotaryClearBtn')?.addEventListener('click', () => {
       playTickSFX();
@@ -644,7 +676,7 @@
       const digitsEl = document.getElementById('phoneDisplayDigits');
       if (digitsEl) {
         digitsEl.classList.add('placeholder');
-        digitsEl.textContent = 'شماره بگیرید...';
+        digitsEl.textContent = '—';
       }
     });
 
@@ -663,9 +695,9 @@
     const wrap = document.createElement('div');
     wrap.className = 'q-card-header';
     wrap.innerHTML = `
-      <div class="q-badge">📰 مینی‌گیم پازل روزنامه</div>
+      <div class="q-badge">بریده روزنامه</div>
       <h2 class="q-title-text">${q.title}</h2>
-      <p style="font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.6;">${q.subtitle}</p>
+      <p class="scene-instruction">${q.subtitle}</p>
     `;
 
     const container = document.createElement('div');
@@ -675,22 +707,20 @@
     const banner = document.createElement('div');
     banner.className = 'newspaper-header-banner';
     banner.innerHTML = `
-      <p class="newspaper-clue-quote">
-        «... گزارش‌ها حاکی از آن است که حمله شبانه به آسیاب و انبار توسط یک تشکیلات مخوف دو حرفی تحت عنوان گروه تروریستی هدایت شده که ردپای آنان در اسناد بایگانی مشاهده شد...»
-      </p>
+      <p class="newspaper-clue-quote">گزارش حمله به دهکده</p>
     `;
 
     // Target Slots
     const slots = document.createElement('div');
     slots.className = 'puzzle-slots-container';
     slots.innerHTML = `
-      <div class="puzzle-slot" id="puzzleSlot1" data-slot="0">
+      <button type="button" class="puzzle-slot" id="puzzleSlot1" data-slot="0" aria-label="حذف قطعه اول">
         <span class="puzzle-slot-label">[ قطعه اول ]</span>
-      </div>
+      </button>
       <div style="font-size: 24px; font-weight: 800; color: var(--gold); display: flex; align-items: center;">+</div>
-      <div class="puzzle-slot" id="puzzleSlot2" data-slot="1">
+      <button type="button" class="puzzle-slot" id="puzzleSlot2" data-slot="1" aria-label="حذف قطعه دوم">
         <span class="puzzle-slot-label">[ قطعه دوم ]</span>
-      </div>
+      </button>
     `;
 
     // Result banner
@@ -720,12 +750,17 @@
     dynamicQuestionSlot.appendChild(wrap);
     dynamicQuestionSlot.appendChild(container);
 
-    let selectedPieces = [];
+    let selectedPieces = (newspaperSelections[q.id] || []).map(index => ({
+      piece: q.pieces[index], btn: bank.querySelector(`[data-idx="${index}"]`)
+    }));
+    selectedPieces.forEach(item => item.btn?.classList.add('selected'));
+    updateSlots();
 
     function handlePieceClick(piece, btn) {
-      if (selectedPieces.length >= 2) return;
+      if (selectedPieces.length >= 2 || selectedPieces.some(item => item.btn === btn)) return;
       playTickSFX();
       selectedPieces.push({ piece, btn });
+      newspaperSelections[q.id] = selectedPieces.map(item => Number(item.btn.dataset.idx));
       btn.classList.add('selected');
       updateSlots();
     }
@@ -760,11 +795,14 @@
         const assembled = selectedPieces[0].piece + selectedPieces[1].piece;
         userAnswers[q.id] = assembled;
         if (res) {
-          res.className = 'puzzle-result-banner success';
-          res.textContent = `✓ کلمه «${assembled}» با موفقیت ساخته شد و در سامانه به ثبت رسید.`;
+          res.className = 'puzzle-result-banner';
+          res.textContent = `نام انتخاب‌شده: ${assembled}`;
         }
-        queueAdvance(900);
+      } else {
+        delete userAnswers[q.id];
+        if (res) res.textContent = '';
       }
+      newspaperSelections[q.id] = selectedPieces.map(item => Number(item.btn.dataset.idx));
     }
 
     // Tap slot to undo
@@ -794,7 +832,7 @@
     const wrap = document.createElement('div');
     wrap.className = 'q-card-header';
     wrap.innerHTML = `
-      <div class="q-badge">🎨 مینی‌گیم بوم و سه‌پایه نقاشی</div>
+      <div class="q-badge">کارگاه رنگ روغن</div>
       <h2 class="q-title-text">${q.title}</h2>
       <p style="font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.6;">${q.subtitle}</p>
     `;
@@ -805,10 +843,17 @@
     const frame = document.createElement('div');
     frame.className = 'easel-stand-frame';
     frame.innerHTML = `
+      <div class="easel-art" aria-hidden="true">
+        <div class="easel-art__canvas"><span>کارگاه رنگ روغن</span><i></i><i></i><i></i></div>
+        <div class="easel-art__beam"></div>
+        <div class="easel-art__leg easel-art__leg--1"></div>
+        <div class="easel-art__leg easel-art__leg--2"></div>
+        <div class="easel-art__leg easel-art__leg--3"></div>
+      </div>
       <div class="easel-tripod-pins">
-        <button type="button" class="tripod-pin-btn" id="tripodPin1" data-pin="1"><span>📍 پایه ۱</span></button>
-        <button type="button" class="tripod-pin-btn" id="tripodPin2" data-pin="2"><span>📍 پایه ۲</span></button>
-        <button type="button" class="tripod-pin-btn" id="tripodPin3" data-pin="3"><span>📍 پایه ۳</span></button>
+        <button type="button" class="tripod-pin-btn" id="tripodPin1" data-pin="1"><span>پایه ۱</span></button>
+        <button type="button" class="tripod-pin-btn" id="tripodPin2" data-pin="2"><span>پایه ۲</span></button>
+        <button type="button" class="tripod-pin-btn" id="tripodPin3" data-pin="3"><span>پایه ۳</span></button>
       </div>
       <div id="easelCanvasSlot" style="width: 100%; text-align: center; color: var(--muted); font-size: 12.5px;">
         برای برپا کردن بوم، هر سه پایه را لمس کنید
@@ -820,6 +865,7 @@
     const optionsGrid = document.createElement('div');
     optionsGrid.className = 'modern-options-grid';
     optionsGrid.style.marginTop = '14px';
+    optionsGrid.hidden = !userAnswers[q.id];
 
     q.options.forEach(opt => {
       const btn = document.createElement('button');
@@ -834,7 +880,6 @@
         optionsGrid.querySelectorAll('.choice-card-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         userAnswers[q.id] = opt.text;
-        queueAdvance(400);
       });
       optionsGrid.appendChild(btn);
     });
@@ -848,16 +893,16 @@
       document.getElementById(id)?.addEventListener('click', function() {
         if (!this.classList.contains('anchored')) {
           this.classList.add('anchored');
+          frame.classList.add(`has-leg-${this.dataset.pin}`);
           playTickSFX();
           anchoredPins++;
           if (anchoredPins === 3) {
             playChimeSFX();
             const slot = document.getElementById('easelCanvasSlot');
             if (slot) {
-              slot.innerHTML = `<div class="easel-canvas-reveal">🖼️ بوم نقاشی برپا شد!<br><strong>«چون باید سه پایه داشته باشیم، حالا تو بگو کی پایه‌تر از ما! 😎»</strong></div>`;
+              slot.innerHTML = '<div class="easel-canvas-reveal">بوم آماده است. پاسخت را انتخاب کن.</div>';
             }
-            userAnswers[q.id] = 'چون باید سه پایه داشته باشیم، حالا تو بگو کی پایه‌تر از ما! 😎';
-            queueAdvance(1100);
+            optionsGrid.hidden = false;
           }
         }
       });
@@ -971,8 +1016,7 @@
         btn.classList.add('selected');
         userAnswers[q.id] = opt.text;
 
-        // انتقال خودکار نرم به سوال بعدی پس از کلیک گزینه
-        queueAdvance(400);
+        // Keep the student's selection visible until they choose to continue.
       });
 
       grid.appendChild(btn);
