@@ -404,7 +404,7 @@
     }
 
     if (nextQuestionBtn) {
-      nextQuestionBtn.textContent = (currentNum === total) ? 'ثبت نهایی و نجات پرونده 🔒' : 'ثبت و گام بعد ❮';
+      nextQuestionBtn.textContent = (currentNum === total) ? 'ثبت احراز هویت 🔒' : 'ثبت و گام بعد ❮';
     }
 
     dynamicQuestionSlot.innerHTML = '';
@@ -446,26 +446,24 @@
       <div class="q-badge">آخرین پرسش پرونده</div>
       <h2 class="q-title-text">${q.title}</h2>
       
-      <p class="selfie-instruction" style="font-size: 14.5px; font-weight: 700; color: #f8fafc; margin-bottom: 6px;">
-        این ۴ گزینه پیش روی شماست؛ به نظرت کدام است؟
-      </p>
-
-      <!-- گزینه‌های مرجع غیرقابل کلیک فقط جهت مشاهده و مقایسه دانش‌آموز -->
-      <div class="modern-options-grid selfie-answer-options" id="selfieAnswerOptions" style="margin-bottom: 14px;"></div>
-      
-      <div class="selfie-instructions-box" style="background: rgba(245, 158, 11, 0.08); border: 1.5px solid rgba(245, 158, 11, 0.35); border-radius: 14px; padding: 14px 16px; margin: 8px 0 16px;">
+      <div class="selfie-instructions-box" style="background: rgba(245, 158, 11, 0.08); border: 1.5px solid rgba(245, 158, 11, 0.35); border-radius: 14px; padding: 14px 16px; margin: 12px 0 16px;">
         <p style="font-size: 13.5px; font-weight: 800; color: #fbbf24; margin-bottom: 6px;">
           📋 دستورالعمل ضبط ویدیوی پاسخ نهایی:
         </p>
         <ul style="font-size: 12.8px; color: #e2e8f0; line-height: 1.85; padding-right: 18px; margin: 0;">
           <li>دفترچه پرونده را کنار صورتت بگیر و رو به دوربین نگاه کن.</li>
           <li><strong>ابتدا نام و نام خانوادگی‌ات را با صدای واضح بگو.</strong></li>
-          <li>بگو حدس می‌زنی کدام گزینه از ۴ مورد بالا جواهر پرونده است.</li>
+          <li>بگو حدس می‌زنی کدام گزینه از گزینه‌های زیر جواهر پرونده است.</li>
           <li>یک توضیح کوتاه بده که به چه دلیل این گزینه را انتخاب کردی.</li>
         </ul>
       </div>
 
-      <p class="selfie-privacy">ضبط فقط با زدن «شروع ضبط» آغاز می‌شود. ویدیو فقط برای مدیر از راه تلگرام فرستاده می‌شود؛ تا زمان ارسال موفق، در فضای خصوصی سامانه نگهداری و بعد از ارسال حذف می‌شود.</p>
+      <p class="selfie-instruction" style="font-size: 14.5px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">
+        این ۴ گزینه پیش روی شماست؛ به نظرت کدام است؟
+      </p>
+
+      <!-- گزینه‌های مرجع غیرقابل کلیک فقط جهت مشاهده و مقایسه دانش‌آموز -->
+      <div class="modern-options-grid selfie-answer-options" id="selfieAnswerOptions" style="margin-bottom: 16px;"></div>
       
       <div class="selfie-viewfinder">
         <video id="selfieVideo" playsinline muted autoplay aria-label="پیش‌نمایش دوربین"></video>
@@ -478,7 +476,7 @@
         <button type="button" id="selfieRetry" class="phone-action-btn" hidden>ضبط دوباره 🔄</button>
       </div>
 
-      <p class="selfie-note">ویدیو حداکثر ۳۰ تا ۴۵ ثانیه باشد. پس از پایان ضبط، ویدیو را بازبینی کن و در انتها دکمه «ثبت نهایی و نجات پرونده 🔒» را بزن.</p>
+      <p class="selfie-note">ویدیو حداکثر ۳۰ تا ۴۵ ثانیه باشد. پس از پایان ضبط، ویدیو را بازبینی کن و در انتها دکمه «ثبت احراز هویت 🔒» را بزن.</p>
     `;
 
     dynamicQuestionSlot.appendChild(card);

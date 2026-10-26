@@ -1,3 +1,4 @@
+.gateway-header { display: none !important; }
 /* ==========================================================================
    emergency-auth.css - درگاه احراز هویت امنیتی اضطراری (Cyber Recovery Portal)
    تم سینمایی، فوق‌العاده شیک و هماهنگ ۱۰۰٪ با هویت بصری Warm Noir + Liquid Glass
@@ -575,14 +576,18 @@ body.emergency-auth-page {
   width: 100%;
   max-width: 380px;
   margin: 16px auto 0;
-  padding: 24px 16px 20px;
-  border-radius: 28px 28px 36px 36px;
-  border: 2px solid #5f5145;
-  background: linear-gradient(150deg, #321c1e 0%, #171518 55%, #2a1619 100%);
+  padding: 32px 18px 22px;
+  border-radius: 32px 32px 38px 38px;
+  border: 2px solid #3d2c22;
+  background: radial-gradient(circle at 50% -10%, #2f221a 0%, #17110e 45%, #0b0807 100%);
   box-shadow: 
-    inset 0 3px 5px rgba(144, 121, 106, 0.4), 
-    inset 0 -10px 20px rgba(0, 0, 0, 0.8), 
-    0 16px 36px rgba(0, 0, 0, 0.7);
+    0 28px 55px -10px rgba(0, 0, 0, 0.95),
+    0 12px 24px -6px rgba(0, 0, 0, 0.8),
+    inset 0 1px 2px rgba(255, 235, 205, 0.2),
+    inset 0 3px 10px rgba(255, 255, 255, 0.05),
+    inset 0 -8px 18px rgba(0, 0, 0, 0.9),
+    0 0 0 1px #2a1e16,
+    0 0 0 3px #120c09;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -592,72 +597,111 @@ body.emergency-auth-page {
   -webkit-user-select: none;
 }
 
+/* Chrome cradle forks for handset support */
+.rotary-phone-container::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 18%;
+  right: 18%;
+  height: 18px;
+  background: linear-gradient(180deg, #e2e8f0 0%, #94a3b8 50%, #475569 100%);
+  border-radius: 4px;
+  box-shadow: inset 0 1px 1px #fff, 0 4px 8px rgba(0, 0, 0, 0.7);
+  z-index: 2;
+}
+
 /* Handset on top */
 .rotary-handset {
   position: absolute;
-  width: 92%;
-  height: 36px;
-  left: 4%;
-  top: -18px;
+  width: 90%;
+  height: 40px;
+  left: 5%;
+  top: -20px;
   z-index: 12;
-  border-radius: 18px;
-  background: linear-gradient(180deg, #4a2528 0%, #170f13 45%, #502e30 75%, #231216 100%);
-  border: 2px solid #6f5550;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.75), inset 0 2px 3px rgba(155, 119, 120, 0.4);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #483329 0%, #1f1612 40%, #0d0907 70%, #291d17 100%);
+  border: 1.5px solid #5a4132;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.85), inset 0 2px 4px rgba(255, 255, 255, 0.2), inset 0 -2px 6px rgba(0, 0, 0, 0.9);
 }
 
 .rotary-handset span {
   position: absolute;
-  top: 15%;
-  width: 22%;
-  height: 70%;
+  top: -4px;
+  width: 24%;
+  height: 48px;
   border-radius: 12px;
-  background: #140d10;
-  box-shadow: inset 0 0 5px #000;
+  background: radial-gradient(circle at 45% 35%, #422f25 0%, #1c1410 55%, #080605 100%);
+  border: 2px solid #5d4334;
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.25), inset 0 -4px 8px rgba(0, 0, 0, 0.9), 0 6px 14px rgba(0, 0, 0, 0.75);
 }
-.rotary-handset span:first-child { left: 4%; }
-.rotary-handset span:last-child { right: 4%; }
+.rotary-handset span:first-child { left: 2%; }
+.rotary-handset span:last-child { right: 2%; }
 
-/* Brass display plate */
+/* Antique brass display plate */
 .phone-display-screen {
+  position: relative;
   width: 100%;
   max-width: 270px;
   margin: 10px auto 14px;
-  padding: 8px 14px;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #d8caa7 0%, #c4b38a 60%, #a8966c 100%);
-  border: 2px solid #3d2e1e;
-  box-shadow: inset 0 2px 6px rgba(52, 37, 31, 0.5), 0 3px 8px rgba(0, 0, 0, 0.5);
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #d4b884 0%, #b8985c 30%, #8f723c 60%, #b8995e 85%, #6e5428 100%);
+  border: 2px solid #3c2a16;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.8), inset 0 -2px 4px rgba(0, 0, 0, 0.6), 0 5px 12px rgba(0, 0, 0, 0.6);
   text-align: center;
   box-sizing: border-box;
 }
 
+.phone-display-screen::before,
+.phone-display-screen::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 40%, #e8d7b3, #8a6c38);
+  border: 1px solid #4a361b;
+  box-shadow: inset 0 1px 1px #fff, 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.phone-display-screen::before { left: 8px; }
+.phone-display-screen::after { right: 8px; }
+
 .phone-display-label {
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 800;
-  color: #4b3729;
+  color: #3b2816;
   letter-spacing: 0.5px;
   margin-bottom: 2px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .phone-display-digits {
   font-family: ui-monospace, 'Courier New', monospace;
-  font-size: clamp(20px, 5.5vw, 24px);
+  font-size: clamp(21px, 5.5vw, 25px);
   font-weight: 900;
-  color: #241914;
+  color: #1a100a;
   letter-spacing: 4px;
   direction: ltr;
   min-height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  padding: 2px 8px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .phone-display-digits.placeholder {
-  color: rgba(75, 55, 41, 0.45);
+  color: rgba(60, 42, 25, 0.5);
   font-size: 16px;
   letter-spacing: 1px;
+  background: transparent;
+  box-shadow: none;
 }
 
 /* Rotary Wheel Unit */
@@ -669,25 +713,25 @@ body.emergency-auth-page {
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
-  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.65));
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.85));
 }
 
 .rotary-base-plate {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, #9f8f79 0 26%, #211d1e 27% 55%, #a3957c 57%, #524843 61%, #1b1719 66%);
-  border: 4px solid #130e10;
-  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.8), 0 8px 16px rgba(0, 0, 0, 0.6), 0 0 0 2px #7d6b56;
+  background: radial-gradient(circle, #fbf7ee 0%, #ece2cb 52%, #dacab0 76%, #8a7356 91%, #352a22 100%);
+  border: 4px solid #1a1410;
+  box-shadow: inset 0 0 20px rgba(74, 52, 33, 0.6), 0 0 0 3px #8b7355, 0 0 0 5px #261e18, 0 10px 22px rgba(0, 0, 0, 0.7);
 }
 
 .rotary-dial-rotor {
   position: absolute;
   inset: 5%;
   border-radius: 50%;
-  background: radial-gradient(circle, transparent 0 32%, #655b56 34%, #a79b88 35%, #342e2d 39%, #171315 100%);
-  border: 4px solid #b3a58d;
-  box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.8), 0 3px 6px rgba(0, 0, 0, 0.5);
+  background: radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.08) 28%, rgba(210, 220, 230, 0.03) 50%, rgba(0, 0, 0, 0.35) 100%);
+  border: 3.5px solid rgba(220, 205, 175, 0.65);
+  box-shadow: inset 0 2px 6px rgba(255, 255, 255, 0.5), inset 0 -3px 8px rgba(0, 0, 0, 0.7), 0 4px 10px rgba(0, 0, 0, 0.6);
   touch-action: none;
   cursor: grab;
   z-index: 5;
@@ -705,18 +749,19 @@ body.emergency-auth-page {
   height: 38%;
   inset: 31%;
   border-radius: 50%;
-  background: radial-gradient(circle at 36% 28%, #eee0c7, #c5b28f 63%, #8a7456);
-  border: 4px solid #514337;
-  box-shadow: 0 0 0 2px #c6b9a1, inset 0 3px 5px rgba(255, 255, 255, 0.6), 0 4px 8px rgba(0, 0, 0, 0.6);
-  color: #33201e;
+  background: radial-gradient(circle at 38% 30%, #fff6e0 0%, #e2cf9f 40%, #b5985e 75%, #6a522c 100%);
+  border: 3.5px solid #3c2f1e;
+  box-shadow: 0 0 0 2px #d4c29c, 0 6px 14px rgba(0, 0, 0, 0.75), inset 0 3px 6px rgba(255, 255, 255, 0.8), inset 0 -3px 6px rgba(0, 0, 0, 0.5);
+  color: #2b1c12;
   font-size: clamp(10px, 3vw, 12px);
-  font-weight: 800;
+  font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   pointer-events: none;
   z-index: 10;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 
 .rotary-center-hub span {
@@ -727,16 +772,16 @@ body.emergency-auth-page {
 
 .rotary-finger-stop {
   position: absolute;
-  width: 13%;
-  height: 7%;
+  width: 14%;
+  height: 8%;
   left: 9%;
   bottom: 15%;
-  background: linear-gradient(135deg, #d8c6a6, #81715f);
-  border: 2px solid #41372f;
-  border-radius: 6px 3px 5px 6px;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(135deg, #f5ebd5 0%, #c4b087 40%, #735e40 85%, #3d2f1d 100%);
+  border: 2px solid #2e2316;
+  border-radius: 6px 3px 6px 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.8), inset 0 1px 2px rgba(255, 255, 255, 0.8);
   z-index: 8;
-  transform: rotate(40deg);
+  transform: rotate(38deg);
 }
 
 .rotary-hole {
@@ -744,14 +789,14 @@ body.emergency-auth-page {
   width: 17%;
   height: 17%;
   transform: translate(-50%, -50%);
-  color: #251b19;
-  font-family: var(--font-mono);
+  color: #1a120c;
+  font-family: 'Vazirmatn', var(--font-mono), sans-serif;
   font-size: clamp(14px, 4vw, 18px);
   font-weight: 900;
-  background: radial-gradient(circle at 44% 36%, #f4ead4 0 38%, #b8aa90 70%, #514942 100%);
-  border: 3px solid #50443d;
+  background: radial-gradient(circle at 45% 35%, #fffdf8 0%, #f4ede0 50%, #d8caa7 85%, #9e8a6a 100%);
+  border: 2.5px solid #4a3c2c;
   border-radius: 50%;
-  box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.6), inset 0 -3px 4px rgba(30, 20, 24, 0.5), 0 2px 4px rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 2px 3px rgba(255, 255, 255, 0.9), inset 0 -2px 4px rgba(45, 33, 24, 0.6), 0 3px 6px rgba(0, 0, 0, 0.6);
   touch-action: none;
   cursor: pointer;
   display: flex;
@@ -760,6 +805,7 @@ body.emergency-auth-page {
   user-select: none;
   -webkit-user-select: none;
   transition: transform 0.15s ease, border-color 0.15s ease;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .rotary-hole:hover,
@@ -794,24 +840,28 @@ body.emergency-auth-page {
 }
 
 .rotary-clear-btn {
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.4);
-  color: #fca5a5;
+  background: linear-gradient(180deg, #7f1d1d 0%, #450a0a 100%);
+  border: 1.5px solid #991b1b;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.25), 0 4px 10px rgba(0, 0, 0, 0.5);
+  color: #fecaca;
 }
 
 .rotary-clear-btn:hover {
-  background: rgba(239, 68, 68, 0.28);
+  background: linear-gradient(180deg, #991b1b 0%, #591010 100%);
   border-color: #ef4444;
+  color: #ffffff;
 }
 
 .rotary-call-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(180deg, #059669 0%, #064e3b 100%);
+  border: 1.5px solid #10b981;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.35), 0 4px 12px rgba(5, 150, 105, 0.4);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
 }
 
 .rotary-call-btn:hover {
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.5);
+  background: linear-gradient(180deg, #10b981 0%, #047857 100%);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.55);
   transform: translateY(-1px);
 }
 
@@ -1342,12 +1392,7 @@ body.emergency-auth-page::before {
   box-shadow: 0 30px 80px #0009, inset 0 1px #ffffff1a;
   backdrop-filter: none;
 }
-.emergency-card::before {
-  content: 'CASE FILE / RECOVERY'; position: absolute; inset: 0 auto auto 24px;
-  transform: translateY(-50%); padding: 4px 10px;
-  background: #b89461; color: #16191a; font: 700 10px var(--font-mono);
-  letter-spacing: .12em;
-}
+.emergency-card::before { display: none !important; }
 .emergency-card .card-top-icon { display: none; }
 .emergency-title { text-align: right; font-size: clamp(24px,4vw,38px); color: #f5ebd7; line-height: 1.4; }
 .emergency-subtitle { text-align: right; font-size: 15px; color: #c3cbd0; margin-bottom: 28px; }
