@@ -102,11 +102,12 @@ test('Mazdak Cyber Warfare, Tamper Lockdown & Emergency Recovery (MASTER-15)', a
     assert.ok(engineJs.includes('appendTerminalBilingualLine'), 'Must have appendTerminalBilingualLine method');
     assert.ok(engineJs.includes('appendChatMessage'), 'Must have appendChatMessage method');
 
-    // Detective auto-messages
-    assert.ok(engineJs.includes('پیام من رو دریافت می‌کنید؟'), 'Must contain Detective panic auto-message 1');
-    assert.ok(engineJs.includes('دارن به سایت'), 'Must contain Detective panic auto-message 2');
-    assert.ok(engineJs.includes('پیامم میاددددد؟'), 'Must contain Detective panic auto-message 3');
-    assert.ok(engineJs.includes('نگران'), 'Must contain Detective panic auto-message 4');
+    // The detective's first two messages arrive while the terminal is raised,
+    // then the impersonated student asks for the vault code in the chat.
+    assert.ok(engineJs.includes("id: 'battle-det-1'"), 'Must show the first detective message');
+    assert.ok(engineJs.includes("id: 'battle-det-pre-2'"), 'Must show the second detective message');
+    assert.ok(engineJs.indexOf("id: 'battle-det-1'") < engineJs.indexOf('if (sec === 24)'), 'Detective message must precede terminal docking');
+    assert.ok(engineJs.includes('کد گاوصندوق رو شما کجا نگه می‌دارید؟'), 'Impersonator must seek the vault code');
 
     // Mazdak terminal threats
     assert.ok(engineJs.includes('تمام اطلاعات و کدهای شما رو گرفتم'), 'Must contain Mazdak terminal threat 1');

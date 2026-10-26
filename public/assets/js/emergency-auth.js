@@ -328,18 +328,16 @@
 
       const phone = normalizeDigits(emergencyPhone ? emergencyPhone.value : '');
 
-      if (!phone || phone.length < 10) {
-        showAlert('لطفاً شماره موبایل معتبر (حداقل ۱۰ رقم) وارد نمایید.');
+      if (!/^0?9\d{9}$/.test(phone)) {
+        showAlert('شماره موبایل را کامل وارد کن.');
         return;
       }
 
       submitStep1Btn.disabled = true;
-      submitStep1Btn.innerHTML = '<span>در حال بررسی هویت و استعلام وضعیت پرونده...</span>';
+      submitStep1Btn.innerHTML = '<span>در حال آماده‌سازی سرنخ‌ها...</span>';
 
       try {
         sessionStorage.setItem('emergency_user_phone', phone);
-        await new Promise(r => setTimeout(r, 900));
-
         // تصادفی‌سازی سوالات برای هر کاربر
         activeQuestions = shuffleArray(QUESTIONS_DATABASE);
         currentQuestionIndex = 0;
@@ -356,7 +354,7 @@
       } catch (err) {
         showAlert('خطا در برقراری ارتباط با سامانه. مجدداً تلاش کنید.');
         submitStep1Btn.disabled = false;
-        submitStep1Btn.innerHTML = '<span>تایید هویت و ورود به حل معماها ➔</span>';
+        submitStep1Btn.innerHTML = '<span>شروع بررسی سرنخ‌ها</span>';
       }
     });
   }

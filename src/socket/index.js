@@ -858,13 +858,23 @@ function setupSocketIO(io) {
     /**
      * رویداد hack_battle_broadcast: انتشار زنده پیام‌های نبرد چت نفوذ سایبری به پنل ادمین
      */
-    socket.on('hack_battle_broadcast', (data) => {
+    socket.on('hack_battle_broadcast', async (data) => {
       try {
         const sessionId = parseInt(data && data.sessionId, 10);
-        if (!sessionId || !data.message) return;
+        if (!sessionId || user.role !== 'user' || Number(user.sessionId) !== sessionId || !data.message) return;
+        if (!(await Session.isHacked(sessionId))) return;
+        const message = data.message;
+        if (!['admin', 'user', 'hacker'].includes(message.sender_type) ||
+            typeof message.content !== 'string' || message.content.length > 1500 ||
+            !Number.isSafeInteger(Number(message.id))) return;
         io.to('admins').emit('hack_battle_message', {
           sessionId,
-          message: data.message
+          message: {
+            id: Number(message.id), session_id: sessionId, sender_type: message.sender_type,
+            admin_sender_name: message.sender_type === 'admin' ? 'مرکز فرماندهی' :
+              (message.sender_type === 'hacker' ? 'مزداک' : 'دستیاران کارآگاه'),
+            content: message.content, created_at: new Date().toISOString()
+          }
         });
       } catch (_) {}
     });
