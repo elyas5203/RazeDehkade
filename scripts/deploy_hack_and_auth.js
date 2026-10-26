@@ -26,6 +26,7 @@ const filesToDeploy = [
   'public/chat.html',
   'public/assets/css/emergency-auth.css',
   'public/assets/js/emergency-auth.js',
+  'public/assets/images/telephone/real-rotary-phone-body.jpg',
   'public/assets/css/cyber-breach-engine.css',
   'public/assets/js/cyber-breach-engine.js',
   'public/assets/js/user-chat.js',
@@ -35,7 +36,10 @@ const filesToDeploy = [
   'tests/emergency-question-fidelity.test.js',
   'tests/mazdak-cyber-warfare.test.js',
   'tests/breach-sensory-overhaul.test.js',
+  'tests/rotary-telephone-3d.test.js',
   'docs/ai/masters/MASTER_21_CINEMATIC_BREACH_SENSORY_OVERHAUL.md',
+  'docs/ai/masters/MASTER_22_ROTARY_TELEPHONE_3D_MINIGAME.md',
+  'ai-kit/tasks/TASK-007-ROTARY-TELEPHONE-3D.md',
   'scripts/test-runner.js'
 ];
 

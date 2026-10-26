@@ -561,290 +561,332 @@ body.emergency-auth-page {
 }
 
 /* ==========================================================================
-   MINI-GAME 1: ROTARY TELEPHONE DIAL (تلفن چرخشی نوستالژیک)
+   MINI-GAME 1: 3D ROTARY TELEPHONE (تلفن چرخشی نوستالژیک سه‌بعدی - MASTER-22)
    ========================================================================== */
+.rotary-help { 
+  color: #d4c6ab; 
+  font-size: 13px; 
+  line-height: 1.8; 
+  margin: 6px 0 16px; 
+  text-align: center;
+}
+
 .rotary-phone-container {
+  width: 100%;
+  max-width: 370px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px 0;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: visible;
 }
 
-.phone-display-screen {
-  background: #04070a;
-  border: 1.5px solid rgba(245, 158, 11, 0.4);
-  border-radius: 12px;
-  padding: 12px 20px;
+/* 3D Vintage Phone Chassis (Real Studio Bakelite Casing) */
+.rotary-phone-chassis {
+  position: relative;
   width: 100%;
-  max-width: 280px;
+  aspect-ratio: 1 / 1.14;
+  max-width: 350px;
+  border-radius: 36px 36px 44px 44px;
+  background-color: #120e10;
+  background-image: 
+    url('/assets/images/telephone/real-rotary-phone-body.jpg'),
+    radial-gradient(circle at 50% 20%, #3a2522, #181415 65%, #0e0a0c 100%);
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  border: 3px solid #4a3731;
+  box-shadow: 
+    0 24px 48px rgba(0, 0, 0, 0.8),
+    inset 0 2px 4px rgba(255, 235, 205, 0.3),
+    inset 0 -10px 24px rgba(0, 0, 0, 0.85);
+  overflow: visible;
+}
+
+/* Vintage Brass Plate Readout (Display Screen) */
+.phone-display-screen {
+  position: absolute;
+  top: 31.8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 58%;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #d8caa7 0%, #bdab80 60%, #9e8c61 100%);
+  border: 2px solid #57462c;
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.6),
+    inset 0 2px 4px rgba(255, 255, 255, 0.5),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);
   text-align: center;
-  margin-bottom: 20px;
-  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 0 15px rgba(245, 158, 11, 0.15);
+  z-index: 15;
 }
 
 .phone-display-label {
-  font-size: 10.5px;
-  color: var(--muted);
-  margin-bottom: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  color: #45341c;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
 }
 
 .phone-display-digits {
-  font-family: var(--font-mono);
-  font-size: 24px;
-  font-weight: 800;
-  color: #fbbf24;
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: clamp(17px, 5.2vw, 23px);
+  font-weight: 900;
+  color: #1a120b;
   letter-spacing: 4px;
-  min-height: 34px;
+  direction: ltr;
+  min-height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .phone-display-digits.placeholder {
-  color: rgba(245, 158, 11, 0.3);
-  font-size: 16px;
+  color: rgba(69, 52, 28, 0.45);
   letter-spacing: 1px;
 }
 
-/* Rotary Dial Disc Visuals */
+/* Rotary Wheel Unit (Centered over phone face) */
 .rotary-wheel-wrapper {
-  position: relative;
-  width: 250px;
-  height: 250px;
-  margin: 10px auto;
-  user-select: none;
-  -webkit-user-select: none;
+  position: absolute;
+  left: 50.4%;
+  top: 57.2%;
+  transform: translate(-50%, -50%);
+  width: 63%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.8);
   touch-action: none;
+  z-index: 20;
+  overflow: visible;
 }
 
+/* Base Dial Plate: Cream Number Ring with Brass Rim */
 .rotary-base-plate {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle, #1a222d 0%, #0d1219 70%, #070a0e 100%);
-  border: 4px solid #283444;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: radial-gradient(circle, 
+    #8d7853 0%, 
+    #5c4a30 28%, 
+    #2b2216 32%,
+    #f7eedb 34%, 
+    #eddcc0 59%, 
+    #c4b292 62%, 
+    #3a2c20 64%, 
+    #1a1411 70%
+  );
+  border: 4px solid #786241;
+  box-shadow: 
+    inset 0 0 16px rgba(0, 0, 0, 0.7),
+    0 0 0 2px #261c15,
+    0 8px 16px rgba(0, 0, 0, 0.6);
 }
 
-.rotary-center-hub {
+/* Dial Face Numbers Layer (Static numbers printed under the rotor) */
+.rotary-dial-face {
   position: absolute;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: radial-gradient(circle, #f59e0b 0%, #b45309 60%, #451a03 100%);
-  border: 3px solid #fbbf24;
-  box-shadow: 0 0 25px rgba(245, 158, 11, 0.4), inset 0 0 10px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 800;
-  color: #fff;
-  z-index: 10;
-  cursor: pointer;
-  text-align: center;
+  inset: 0;
+  pointer-events: none;
 }
 
+.rotary-face-num {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: clamp(14px, 4.4vw, 19px);
+  font-weight: 900;
+  color: #1a120c;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Polished Metal Finger Stop (Positioned at 4 o'clock) */
+.rotary-finger-stop {
+  position: absolute;
+  right: 11%;
+  bottom: 22%;
+  width: 14%;
+  height: 7%;
+  background: linear-gradient(135deg, #f1f5f9 0%, #94a3b8 50%, #475569 100%);
+  border: 1.5px solid #1e293b;
+  border-radius: 4px 10px 10px 4px;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.7),
+    inset 0 1px 2px rgba(255, 255, 255, 0.9);
+  z-index: 35;
+  pointer-events: none;
+  transform: rotate(35deg);
+}
+
+/* Rotating Acrylic Rotor Disc */
 .rotary-dial-rotor {
   position: absolute;
   inset: 0;
   border-radius: 50%;
   cursor: grab;
+  touch-action: none;
+  z-index: 30;
+  background: radial-gradient(circle, 
+    transparent 0%, 
+    transparent 32%, 
+    rgba(255, 255, 255, 0.12) 34%, 
+    rgba(255, 255, 255, 0.04) 55%, 
+    rgba(255, 255, 255, 0.16) 66%,
+    rgba(240, 240, 250, 0.28) 69%,
+    rgba(0, 0, 0, 0.4) 71%,
+    transparent 72%
+  );
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 
+    inset 0 2px 6px rgba(255, 255, 255, 0.4),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.5);
   transform-origin: center center;
-  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
-  z-index: 5;
+  will-change: transform;
 }
 
-.rotary-dial-rotor:active {
-  cursor: grabbing;
-}
+.rotary-dial-rotor:active { cursor: grabbing; }
 
-.rotary-finger-stop {
+/* Center Brass Medallion ("کفش فروشی تنها") */
+.rotary-center-hub {
   position: absolute;
-  bottom: 28px;
-  left: 45px;
-  width: 28px;
-  height: 12px;
-  background: #cbd5e1;
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
-  z-index: 8;
-  transform: rotate(45deg);
-}
-
-.rotary-hole {
-  position: absolute;
-  width: 44px;
-  height: 44px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 35%;
+  height: 35%;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: radial-gradient(circle at 35% 30%, 
+    #fef08a 0%, 
+    #d97706 45%, 
+    #92400e 75%, 
+    #451a03 100%
+  );
+  border: 3px solid #fbbf24;
+  box-shadow: 
+    0 0 0 2px #5a3811,
+    0 6px 12px rgba(0, 0, 0, 0.6),
+    inset 0 2px 4px rgba(255, 255, 255, 0.7),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 19px;
+  text-align: center;
+  pointer-events: none;
+  z-index: 32;
+}
+
+.rotary-center-hub span {
+  font-size: clamp(9px, 2.7vw, 12px);
   font-weight: 900;
-  color: #ffffff;
+  color: #fff;
+  line-height: 1.25;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+  max-width: 85%;
+  display: block;
+}
+
+/* Finger Holes in the Rotor Disc */
+.rotary-hole {
+  position: absolute;
+  width: 17%;
+  height: 17%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, 
+    rgba(255, 255, 255, 0.05) 0%, 
+    rgba(255, 255, 255, 0.18) 70%, 
+    rgba(255, 255, 255, 0.45) 90%, 
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 
+    inset 0 2px 4px rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.7),
+    0 2px 5px rgba(0, 0, 0, 0.4);
   cursor: pointer;
-  box-shadow: inset 0 3px 8px rgba(0, 0, 0, 0.6), 0 0 10px rgba(255, 255, 255, 0.1);
-  transition: all 0.15s ease;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+  padding: 0;
+  transition: transform 0.15s ease, border-color 0.15s ease;
 }
 
-.rotary-hole:hover,
-.rotary-hole:active {
-  background: rgba(245, 158, 11, 0.35);
-  border-color: #f59e0b;
-  transform: scale(1.08);
-  color: #fef08a;
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+.rotary-hole:hover, .rotary-hole:focus-visible {
+  border-color: #fbbf24;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
 }
 
+/* Ergonomic Vintage Tactile Action Buttons (Call / Clear) */
 .rotary-actions {
   display: flex;
   gap: 12px;
   width: 100%;
-  max-width: 280px;
+  max-width: 350px;
   margin-top: 18px;
 }
 
 .rotary-action-btn {
   flex: 1;
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: all 0.2s ease;
+  min-height: 48px;
+  border-radius: 14px;
+  font-family: var(--font-persian);
+  font-size: 14px;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 2px solid transparent;
 }
 
 .rotary-clear-btn {
-  background: rgba(239, 68, 68, 0.12);
-  border-color: rgba(239, 68, 68, 0.35);
-  color: #f87171;
+  background: linear-gradient(145deg, #7f1d1d 0%, #450a0a 100%);
+  border-color: #991b1b;
+  color: #fecaca;
+  box-shadow: 
+    0 6px 14px rgba(127, 29, 29, 0.35),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
 
 .rotary-clear-btn:hover {
-  background: rgba(239, 68, 68, 0.25);
+  background: linear-gradient(145deg, #991b1b 0%, #5c0d0d 100%);
   color: #fff;
+}
+
+.rotary-clear-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 6px rgba(127, 29, 29, 0.4);
 }
 
 .rotary-call-btn {
-  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-  color: #fff;
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  background: linear-gradient(145deg, #059669 0%, #064e3b 100%);
+  border-color: #10b981;
+  color: #a7f3d0;
+  box-shadow: 
+    0 6px 14px rgba(5, 150, 105, 0.35),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3);
 }
 
 .rotary-call-btn:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
+  background: linear-gradient(145deg, #10b981 0%, #047857 100%);
+  color: #fff;
+  filter: brightness(1.08);
 }
 
-/* MASTER-19: a physical dial, scaled as one component on narrow screens. */
-.rotary-help { color: #d4c6ab; font-size: 13px; line-height: 1.8; margin: 5px 0 0; }
-.rotary-phone-container {
-  width: min(100%, 440px);
-  margin: 0 auto;
-  padding: 18px 16px 22px;
-  border-radius: 28px 28px 38px 38px;
-  border: 2px solid #5f5145;
-  background: linear-gradient(150deg, #3a2022, #17171b 58%, #321a1d);
-  box-shadow: inset 0 3px 4px #90796a66, inset 0 -12px 24px #0008, 0 28px 56px #000a;
-  perspective: 900px;
-  transform-style: preserve-3d;
-}
-.phone-display-screen {
-  max-width: 320px;
-  margin: 4px auto 14px;
-  border-radius: 6px;
-  background: #c9ba9b;
-  border: 3px solid #251c1b;
-  box-shadow: inset 0 3px 9px #34251f77;
-}
-.phone-display-label { color: #4b3729; font-size: 12px; font-weight: 800; }
-.phone-display-digits, .phone-display-digits.placeholder {
-  color: #2d221d; text-shadow: none; font-size: clamp(21px, 6vw, 29px);
-  letter-spacing: .1em; direction: ltr;
-}
-.rotary-wheel-wrapper {
-  width: min(74vw, 300px);
-  height: auto;
-  aspect-ratio: 1;
-  margin: 36px auto 2px;
-  transform: rotateX(8deg);
-  transform-style: preserve-3d;
-  filter: drop-shadow(0 22px 18px rgba(0,0,0,.65));
-}
-.rotary-handset {
-  position: absolute;
-  width: 112%; height: 17%; left: -6%; top: -15%; z-index: 2;
-  border-radius: 50% 50% 18px 18px;
-  background: linear-gradient(#4a2528, #170f13 42%, #60393b 70%, #231216);
-  border: 2px solid #6f5550;
-  box-shadow: 0 10px 12px #0008, inset 0 3px 3px #9b777855;
-}
-.rotary-handset span { position: absolute; top: 28%; width: 20%; height: 70%; border-radius: 45%; background: #160f12; box-shadow: inset 0 0 4px #000; }
-.rotary-handset span:first-child { left: 5%; }
-.rotary-handset span:last-child { right: 5%; }
-.rotary-base-plate {
-  inset: 0;
-  background: radial-gradient(circle, #9f8f79 0 26%, #211d1e 27% 55%, #a3957c 57%, #524843 61%, #1b1719 66%);
-  border: 6px solid #130e10;
-  box-shadow: inset 0 0 18px #000c, 0 12px 20px #000b, 0 0 0 2px #958069;
-  transform: translateZ(-10px);
-}
-.rotary-dial-rotor {
-  inset: 6%; z-index: 5;
-  background: radial-gradient(circle, transparent 0 32%, #655b56 34%, #a79b88 35%, #342e2d 39%, #171315 100%);
-  border: 5px solid #b3a58d;
-  box-shadow: inset 0 3px 13px #000c, 0 3px 2px #0008;
-  touch-action: none;
-  transform-style: preserve-3d;
-}
-.rotary-center-hub {
-  width: 37%; height: 37%; inset: 31.5%;
-  background: radial-gradient(circle at 36% 28%, #eee0c7, #c5b28f 63%, #8a7456);
-  border: 5px solid #514337;
-  box-shadow: 0 0 0 3px #c6b9a1, inset 0 4px 6px #fff9, 0 5px 10px #0008;
-  color: #33201e;
-  font-size: clamp(16px, 4vw, 23px);
-  letter-spacing: -.04em;
-  pointer-events: none;
-  transform: translateZ(12px);
-}
-.rotary-center-hub small { font-size: 10px; letter-spacing: 0; }
-.rotary-finger-stop {
-  width: 13%; height: 7%; left: 9%; bottom: 15%;
-  background: linear-gradient(#d8c6a6,#81715f); border: 2px solid #41372f;
-  border-radius: 7px 3px 5px 8px; z-index: 8;
-}
-.rotary-hole {
-  width: 15%; height: 15%; transform: translate(-50%,-50%);
-  color: #251b19; font-size: clamp(17px, 5vw, 22px);
-  background: radial-gradient(circle at 44% 36%, #f4ead4 0 38%, #b8aa90 70%, #514942 100%);
-  border: 4px solid #50443d;
-  box-shadow: inset 0 3px 6px #fff8, inset 0 -4px 5px #1e141877, 0 2px 4px #0009;
-  touch-action: none;
-  transform-style: preserve-3d;
+.rotary-call-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.4);
 }
 
 .selfie-answer-options { margin: 16px 0 20px; }
-.rotary-hole:hover, .rotary-hole:focus-visible {
-  transform: translate(-50%,-50%) scale(1.08);
-  color: #1d1514; outline: 3px solid #ffe3a0;
-}
-.rotary-actions { max-width: 330px; margin-top: 22px; }
-.rotary-action-btn { min-height: 50px; font: 800 14px var(--font-persian); }
 
 /* ==========================================================================
    MINI-GAME 2: NEWSPAPER PUZZLE (پازل روزنامه و انتخاب مز + داک)
@@ -1416,8 +1458,6 @@ body.emergency-auth-page::before {
   .emergency-subtitle { font-size: 14px; }
   .q-title-text { font-size: 21px; }
   .quiz-progress-wrap { top: 0; padding-top: 12px; }
-  .rotary-phone-container { padding: 16px 9px 18px; }
-  .rotary-wheel-wrapper { width: min(74vw,300px); }
   .choice-card-btn, .clue-scene__choice { min-height: 62px; padding: 12px 14px; }
   .quiz-nav-actions { margin: 18px -15px 0; padding: 12px 15px calc(10px + env(safe-area-inset-bottom)); }
   .emergency-auth-page .gateway-grid-bg { display: none; }
@@ -1436,9 +1476,6 @@ body.emergency-auth-page::before {
 .selfie-controls { display: flex; flex-wrap: wrap; gap: 10px; }
 .selfie-controls button { min-height: 48px; padding: 8px 16px; margin: 0; flex: 1 1 130px; }
 .selfie-controls [hidden] { display: none !important; }
-.rotary-center-hub span { display: block; max-width: 90%; margin: auto; font-size: clamp(11px, 3.2vw, 17px); line-height: 1.45; white-space: normal; }
-.rotary-dial-rotor { transform-origin: center; will-change: transform; }
-.rotary-hole { user-select: none; -webkit-user-select: none; }
 
 /* Physical three-leg easel: each control places a visible support. */
 .easel-stand-frame {
