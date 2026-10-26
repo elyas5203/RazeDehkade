@@ -49,7 +49,7 @@
     {
       id: 'q_shoe_rotary',
       type: 'rotary_phone',
-      title: 'شماره کفش‌فروشی تنها چند است؟',
+      title: 'شماره کفش فروشی تنها چند است؟',
       subtitle: 'شماره را بگیر و تماس را برقرار کن.'
     },
     {
@@ -72,7 +72,7 @@
     },
     {
       id: 'q_padari',
-      type: 'scene_choice',
+      type: 'choice',
       scene: 'family',
       title: 'آقای پادری گوینده اخبار چه نسبتی با اقایان پادری‌ها که به دهکده های مرموز رفتن داشت؟',
       options: [
@@ -84,7 +84,7 @@
     },
     {
       id: 'q_invest_2026',
-      type: 'scene_choice',
+      type: 'choice',
       scene: 'ledger',
       title: 'بهترین سرمایه گذاری مالی در سال ۲۰۲۶ چیست؟چرا؟',
       options: [
@@ -96,7 +96,7 @@
     },
     {
       id: 'q_oil_painting',
-      type: 'easel_puzzle',
+      type: 'choice',
       title: 'چرا باید سه نفری رفت کلاس رنگ روغن؟',
       subtitle: 'سه پایه را برپا کن.',
       options: [
@@ -108,7 +108,7 @@
     },
     {
       id: 'q_letter_translators',
-      type: 'scene_choice',
+      type: 'choice',
       scene: 'letter',
       title: 'چه کسانی نامه پیدا شده را ترجمه کردند ؟',
       options: [
@@ -120,7 +120,7 @@
     },
     {
       id: 'q_migration_reason',
-      type: 'scene_choice',
+      type: 'choice',
       scene: 'climate',
       title: 'علت اصلی مهاجرت اهالی دهکده به شهر پیش از کشف جواهر چه بود؟',
       options: [
@@ -132,7 +132,7 @@
     },
     {
       id: 'q_gem_feature',
-      type: 'scene_choice',
+      type: 'choice',
       scene: 'gem',
       title: 'ویژگی خاص این جواهر از نظر تاریخ‌شناسان چه بود؟',
       options: [
@@ -144,7 +144,7 @@
     },
     {
       id: 'q_police_shoe_store',
-      type: 'scene_choice',
+      type: 'choice',
       scene: 'crime',
       title: 'وقتی رئیس پلیس به کفش‌فروشی رسید، با چه وضعیتی روبرو شد؟',
       options: [
@@ -162,7 +162,8 @@
       options: [
         { letter: 'الف', text: 'مکه' },
         { letter: 'ب', text: 'مدینه' },
-        { letter: 'ج', text: 'مشهد' }
+        { letter: 'ج', text: 'مشهد' },
+        { letter: 'د', text: 'قم' }
       ]
     },
     {
@@ -174,7 +175,7 @@
         { letter: 'الف', text: 'محبت و ولایت امیرالمومنین حضرت علی علیه السلام و فرزندانشان' },
         { letter: 'ب', text: 'قرآن' },
         { letter: 'ج', text: 'پیامبر' },
-        { letter: 'د', text: 'امام زمان' }
+        { letter: 'د', text: 'حضرت امام زمان عجل الله تعالی فرجه الشریف' }
       ]
     }
   ];
@@ -237,6 +238,13 @@
   let dialedPhoneDigits = '';
   let submitting = false;
   let questionRevision = 0;
+  let selfieBlob = null;
+  let selfieRecorder = null;
+  let selfieStream = null;
+  let selfiePreviewUrl = null;
+  let selfieStopTimer = null;
+  let selfieCaptureRevision = 0;
+  let clientSubmissionId = null;
 
   function showAlert(msg, type = 'error') {
     if (!statusAlert) return;
@@ -313,6 +321,7 @@
       }
     } catch (_) {}
 
+    if (step3Section?.style.display === 'block') return;
     if (unhackBanner) {
       unhackBanner.style.display = 'flex';
     }
@@ -338,9 +347,24 @@
       submitStep1Btn.innerHTML = '<span>در حال آماده‌سازی سرنخ‌ها...</span>';
 
       try {
+        const token = sessionStorage.getItem('userToken');
+        if (!token) throw new Error('برای ادامه، دوباره وارد کلاس شوید.');
+        const verification = await fetch('/api/emergency-auth/verify-phone', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ phone })
+        });
+        const verificationResult = await verification.json();
+        if (!verification.ok || !verificationResult.success) {
+          throw new Error(verificationResult.message || 'شماره برای این کلاس ثبت نشده است.');
+        }
         sessionStorage.setItem('emergency_user_phone', phone);
-        // تصادفی‌سازی سوالات برای هر کاربر
-        activeQuestions = shuffleArray(QUESTIONS_DATABASE);
+        clientSubmissionId = window.crypto?.randomUUID
+          ? window.crypto.randomUUID().replace(/-/g, '')
+          : `quiz_${Date.now()}_${Math.random().toString(36).slice(2, 14)}`;
+        // سؤال ویدیویی برای همه شرکت‌کنندگان آخر می‌ماند.
+        activeQuestions = [...shuffleArray(QUESTIONS_DATABASE.filter(q => q.id !== 'q_precious_gem')),
+          QUESTIONS_DATABASE.find(q => q.id === 'q_precious_gem')];
         currentQuestionIndex = 0;
 
         step1Section.style.display = 'none';
@@ -353,7 +377,7 @@
         renderActiveQuestion();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } catch (err) {
-        showAlert('خطا در برقراری ارتباط با سامانه. مجدداً تلاش کنید.');
+        showAlert(err.message || 'خطا در برقراری ارتباط با سامانه. مجدداً تلاش کنید.');
         submitStep1Btn.disabled = false;
         submitStep1Btn.innerHTML = '<span>شروع بررسی سرنخ‌ها</span>';
       }
@@ -370,6 +394,7 @@
     const total = activeQuestions.length;
     const currentNum = currentQuestionIndex + 1;
     const q = activeQuestions[currentQuestionIndex];
+    if (q.id !== 'q_precious_gem') stopSelfieCamera();
     questionRevision++;
 
     if (currentQNumEl) currentQNumEl.textContent = String(currentNum);
@@ -389,7 +414,9 @@
 
     dynamicQuestionSlot.innerHTML = '';
 
-    if (q.type === 'rotary_phone') {
+    if (q.id === 'q_precious_gem') {
+      renderSelfieQuestion(q);
+    } else if (q.type === 'rotary_phone') {
       renderRotaryPhoneGame(q);
     } else if (q.type === 'newspaper_puzzle') {
       renderNewspaperPuzzleGame(q);
@@ -408,6 +435,113 @@
       if (revision === questionRevision && !submitting) advanceToNextQuestion();
     }, delay);
   }
+
+  function stopSelfieCamera() {
+    if (selfieStopTimer) clearTimeout(selfieStopTimer);
+    selfieStopTimer = null;
+    if (selfieRecorder?.state === 'recording') selfieRecorder.stop();
+    selfieStream?.getTracks().forEach(track => track.stop());
+    selfieStream = null;
+  }
+
+  function renderSelfieQuestion(q) {
+    const card = document.createElement('section');
+    card.className = 'selfie-question';
+    card.innerHTML = `
+      <div class="q-badge">آخرین پرسش پرونده</div>
+      <h2 class="q-title-text">${q.title}</h2>
+      <p class="selfie-instruction">دفترچه‌ات را باز کن و پاسخ را روی آن بنویس. بعد دوربین را روبه‌روی خودت بگیر و در یک ویدیوی کوتاه، دفترچه را نشان بده و پاسخ را با صدای خودت بگو.</p>
+      <p class="selfie-privacy">ضبط فقط با زدن «شروع ضبط» آغاز می‌شود. ویدیو فقط برای مدیر از راه تلگرام فرستاده می‌شود؛ تا زمان ارسال موفق، در فضای خصوصی سامانه نگهداری و بعد از ارسال حذف می‌شود.</p>
+      <div class="selfie-viewfinder"><video id="selfieVideo" playsinline muted autoplay aria-label="پیش‌نمایش دوربین"></video><span id="selfieStatus" role="status">دوربین خاموش است</span></div>
+      <div class="selfie-controls">
+        <button type="button" id="selfieStart" class="gateway-submit-btn">شروع ضبط</button>
+        <button type="button" id="selfieStop" class="phone-action-btn" hidden>پایان ضبط</button>
+        <button type="button" id="selfieRetry" class="phone-action-btn" hidden>ضبط دوباره</button>
+      </div>
+      <p class="selfie-note">ویدیو حداکثر ۳۰ ثانیه باشد. پس از ضبط، آن را بازبینی کن و سپس پاسخ‌ها را بفرست.</p>`;
+    dynamicQuestionSlot.appendChild(card);
+    const video = card.querySelector('#selfieVideo');
+    const status = card.querySelector('#selfieStatus');
+    const start = card.querySelector('#selfieStart');
+    const stop = card.querySelector('#selfieStop');
+    const retry = card.querySelector('#selfieRetry');
+    const showRecorded = () => {
+      if (!selfieBlob) return;
+      if (selfiePreviewUrl) URL.revokeObjectURL(selfiePreviewUrl);
+      selfiePreviewUrl = URL.createObjectURL(selfieBlob);
+      video.srcObject = null;
+      video.src = selfiePreviewUrl;
+      video.controls = true;
+      video.muted = false;
+      video.autoplay = false;
+      video.load();
+      status.textContent = 'ویدیو ضبط شد؛ آن را بازبینی کن.';
+      start.hidden = true;
+      stop.hidden = true;
+      retry.hidden = false;
+      userAnswers[q.id] = 'پاسخ در ویدیوی سلفی ثبت شد';
+    };
+    if (selfieBlob) showRecorded();
+    const begin = async () => {
+      clearAlert();
+      const captureRevision = ++selfieCaptureRevision;
+      if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+        showAlert('دوربین یا ضبط ویدیو در این مرورگر فعال نیست. با مرورگر دیگری امتحان کن.');
+        return;
+      }
+      try {
+        stopSelfieCamera();
+        selfieStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true });
+        const mimeType = ['video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']
+          .find(type => MediaRecorder.isTypeSupported(type));
+        if (!mimeType) throw new Error('ضبط ویدیو در این مرورگر پشتیبانی نمی‌شود.');
+        if (selfiePreviewUrl) URL.revokeObjectURL(selfiePreviewUrl);
+        selfiePreviewUrl = null;
+        selfieBlob = null;
+        delete userAnswers[q.id];
+        video.removeAttribute('src');
+        video.controls = false;
+        video.muted = true;
+        video.srcObject = selfieStream;
+        await video.play();
+        const chunks = [];
+        selfieRecorder = new MediaRecorder(selfieStream, { mimeType });
+        selfieRecorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+        selfieRecorder.onstop = () => {
+          if (captureRevision !== selfieCaptureRevision) return;
+          stopSelfieCamera();
+          const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
+          if (!blob.size || blob.size > 25 * 1024 * 1024) {
+            showAlert('ویدیو ثبت نشد یا حجم آن بیش از ۲۵ مگابایت است. دوباره ضبط کن.');
+            start.hidden = false; stop.hidden = true; retry.hidden = true;
+            return;
+          }
+          selfieBlob = blob;
+          if (video.isConnected) showRecorded();
+        };
+        selfieRecorder.start(1000);
+        start.hidden = true;
+        retry.hidden = true;
+        stop.hidden = false;
+        status.textContent = 'در حال ضبط…';
+        selfieStopTimer = setTimeout(() => { if (selfieRecorder?.state === 'recording') selfieRecorder.stop(); }, 30000);
+      } catch (error) {
+        stopSelfieCamera();
+        showAlert(error.name === 'NotAllowedError'
+          ? 'دسترسی به دوربین یا میکروفون داده نشد. اجازه دسترسی را در مرورگر فعال کن و دوباره تلاش کن.'
+          : (error.message || 'دسترسی به دوربین و میکروفون ممکن نشد.'));
+      }
+    };
+    start.addEventListener('click', begin);
+    retry.addEventListener('click', begin);
+    stop.addEventListener('click', () => { if (selfieRecorder?.state === 'recording') selfieRecorder.stop(); });
+  }
+
+  window.addEventListener('pagehide', () => {
+    if (selfieRecorder?.state === 'recording') selfieRecorder.stop();
+    stopSelfieCamera();
+    if (selfiePreviewUrl) URL.revokeObjectURL(selfiePreviewUrl);
+  });
 
   function renderSceneChoice(q) {
     const scenes = {
@@ -525,7 +659,7 @@
     const wrap = document.createElement('div');
     wrap.className = 'q-card-header';
     wrap.innerHTML = `
-      <div class="q-badge">کفش‌فروشی تنها</div>
+      <div class="q-badge">کفش فروشی تنها</div>
       <h2 class="q-title-text">${q.title}</h2>
       <p class="rotary-help">انگشتت را روی عدد بگذار، صفحه را تا گیره بچرخان و رها کن. لمس کوتاه عدد هم کار می‌کند.</p>
     `;
@@ -549,7 +683,7 @@
       <div class="rotary-base-plate"></div>
       <div class="rotary-finger-stop" aria-hidden="true"></div>
       <div class="rotary-dial-rotor" id="rotaryRotor">
-        <div class="rotary-center-hub" aria-hidden="true"><span>تــنها</span><small>کفش‌فروشی</small></div>
+        <div class="rotary-center-hub" aria-hidden="true"><span>کفش فروشی تنها</span></div>
       </div>
     `;
 
@@ -1073,22 +1207,29 @@
   // -------------------------------------------------------------------------
   async function finishQuiz() {
     if (submitting) return;
+    if (!selfieBlob) return showAlert('ابتدا ویدیوی پاسخ آخر را ضبط کن.');
     submitting = true;
     if (nextQuestionBtn) nextQuestionBtn.disabled = true;
     try {
       const phone = sessionStorage.getItem('emergency_user_phone');
       const token = sessionStorage.getItem('userToken');
       if (!token) throw new Error('برای ثبت پاسخ‌ها دوباره وارد کلاس شوید.');
+      const form = new FormData();
+      form.append('phone', phone);
+      form.append('answers', JSON.stringify(userAnswers));
+      form.append('clientSubmissionId', clientSubmissionId);
+      form.append('video', selfieBlob, selfieBlob.type === 'video/mp4' ? 'answer.mp4' : 'answer.webm');
       const response = await fetch('/api/emergency-auth/submissions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ phone, answers: userAnswers })
+        headers: { Authorization: `Bearer ${token}` },
+        body: form
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.message || 'ثبت پاسخ‌ها انجام نشد.');
       if (trackingIdDisplay) trackingIdDisplay.textContent = result.reference;
       step2Section.style.display = 'none';
       step3Section.style.display = 'block';
+      if (unhackBanner) unhackBanner.style.display = 'none';
       stepIndicator2.classList.remove('active');
       stepIndicator2.classList.add('done');
       stepIndicator3.classList.add('active', 'done');

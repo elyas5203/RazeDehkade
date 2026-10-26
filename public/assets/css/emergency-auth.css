@@ -1415,6 +1415,20 @@ body.emergency-auth-page::before {
   .emergency-auth-page *, .emergency-auth-page *::before, .emergency-auth-page *::after { animation-duration: .01ms !important; scroll-behavior: auto !important; }
 }
 
+.selfie-question { display: grid; gap: 14px; }
+.selfie-instruction, .selfie-privacy, .selfie-note { margin: 0; color: #e3e8e9; line-height: 1.9; }
+.selfie-privacy { padding: 12px 15px; border-right: 3px solid #d3b375; background: #26333b; font-size: 13px; }
+.selfie-note { color: #b8c5ca; font-size: 12px; }
+.selfie-viewfinder { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: 420px; overflow: hidden; border: 1px solid #ac9368; border-radius: 12px; background: #050b10; }
+.selfie-viewfinder video { display: block; width: 100%; height: 100%; object-fit: contain; }
+.selfie-viewfinder span { position: absolute; inset: auto 10px 10px; width: fit-content; padding: 5px 10px; border-radius: 5px; background: #071017d9; color: #fff; font-size: 12px; }
+.selfie-controls { display: flex; flex-wrap: wrap; gap: 10px; }
+.selfie-controls button { min-height: 48px; padding: 8px 16px; margin: 0; flex: 1 1 130px; }
+.selfie-controls [hidden] { display: none !important; }
+.rotary-center-hub span { display: block; max-width: 90%; margin: auto; font-size: clamp(11px, 3.2vw, 17px); line-height: 1.45; white-space: normal; }
+.rotary-dial-rotor { transform-origin: center; will-change: transform; }
+.rotary-hole { user-select: none; -webkit-user-select: none; }
+
 /* Physical three-leg easel: each control places a visible support. */
 .easel-stand-frame {
   max-width: 640px; min-height: 390px; height: auto; padding: 20px;
