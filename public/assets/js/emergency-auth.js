@@ -31,6 +31,12 @@
   const unhackBanner = document.getElementById('unhackBanner');
   const authPhoneForm = document.getElementById('authPhoneForm');
   const emergencyPhone = document.getElementById('emergencyPhone');
+  if (emergencyPhone) {
+    const savedPhone = sessionStorage.getItem('emergency_user_phone') || sessionStorage.getItem('teacherPhone');
+    if (savedPhone && !emergencyPhone.value) {
+      emergencyPhone.value = savedPhone;
+    }
+  }
   const submitStep1Btn = document.getElementById('submitStep1Btn');
 
   const currentQNumEl = document.getElementById('currentQNum');
@@ -342,16 +348,27 @@
       submitStep1Btn.innerHTML = '<span>در حال آماده‌سازی سرنخ‌ها...</span>';
 
       try {
-        const token = sessionStorage.getItem('userToken');
-        if (!token) throw new Error('برای ادامه، دوباره وارد کلاس شوید.');
+        const existingToken = sessionStorage.getItem('userToken');
+        const headers = { 'Content-Type': 'application/json' };
+        if (existingToken) {
+          headers['Authorization'] = `Bearer ${existingToken}`;
+        }
         const verification = await fetch('/api/emergency-auth/verify-phone', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          headers,
           body: JSON.stringify({ phone })
         });
         const verificationResult = await verification.json();
         if (!verification.ok || !verificationResult.success) {
           throw new Error(verificationResult.message || 'شماره برای این کلاس ثبت نشده است.');
+        }
+
+        // ذخیره یا تمدید توکن و مشخصات جلسه دریافتی از سرور
+        if (verificationResult.token) {
+          sessionStorage.setItem('userToken', verificationResult.token);
+        }
+        if (verificationResult.session) {
+          sessionStorage.setItem('userSession', JSON.stringify(verificationResult.session));
         }
         sessionStorage.setItem('emergency_user_phone', phone);
         clientSubmissionId = window.crypto?.randomUUID

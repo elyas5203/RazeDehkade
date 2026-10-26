@@ -4,7 +4,9 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const { execFile } = require('child_process');
-const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { authenticateToken, requireAdmin, generateToken } = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_detective_game_2025';
 const { query } = require('../db/pool');
 const Session = require('../models/Session');
 
@@ -65,21 +67,95 @@ function videoDurationSeconds(filePath) {
 
 async function phoneMatchesSession(sessionId, rawPhone) {
   const phone = normalizePhone(rawPhone);
+  if (!/^0?9\d{9}$/.test(phone)) return false;
+  const phoneWithoutZero = phone.replace(/^0/, '');
   const session = await Session.findById(Number(sessionId));
+  if (!session) return false;
   const registered = normalizePhone(session?.teacher_phone);
-  return Boolean(/^0?9\d{9}$/.test(phone) && registered && phone === registered);
-}
-
-router.post('/verify-phone', authenticateToken, async (req, res) => {
-  if (req.user?.role !== 'user' || !Number.isInteger(Number(req.user.sessionId))) {
-    return res.status(403).json({ success: false, message: 'دسترسی این بخش برای شما فعال نیست.' });
+  const registeredWithoutZero = registered.replace(/^0/, '');
+  if (registered && (phone === registered || phoneWithoutZero === registeredWithoutZero)) {
+    return true;
   }
   try {
-    if (!await phoneMatchesSession(req.user.sessionId, req.body?.phone)) {
+    const tRes = await query('SELECT phone FROM teachers WHERE session_id = ?', [session.id]);
+    if (tRes.rows && tRes.rows.length > 0) {
+      for (const row of tRes.rows) {
+        const tPhone = normalizePhone(row.phone);
+        const tPhoneWithoutZero = tPhone.replace(/^0/, '');
+        if (tPhone && (phone === tPhone || phoneWithoutZero === tPhoneWithoutZero)) {
+          return true;
+        }
+      }
+    }
+  } catch (_) {}
+  return false;
+}
+
+function optionalToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (!err && user) {
+      req.user = user;
+    } else {
+      req.user = null;
+    }
+    next();
+  });
+}
+
+router.post('/verify-phone', optionalToken, async (req, res) => {
+  const rawPhone = req.body?.phone;
+  const phone = normalizePhone(rawPhone);
+  if (!/^0?9\d{9}$/.test(phone)) {
+    return res.status(400).json({ success: false, message: 'شماره تلفن معتبر نیست.' });
+  }
+
+  try {
+    let targetSession = null;
+
+    // ۱. اگر توکن کاربر موجود و معتبر بود، ابتدا بررسی تطبیق جلسه همان توکن
+    if (req.user?.role === 'user' && Number.isInteger(Number(req.user.sessionId))) {
+      const isMatch = await phoneMatchesSession(req.user.sessionId, phone);
+      if (isMatch) {
+        targetSession = await Session.findById(Number(req.user.sessionId));
+      }
+    }
+
+    // ۲. اگر توکن نبود یا با جلسه تطبیق نداشت، جستجوی مستقیم شماره در دیتابیس
+    if (!targetSession) {
+      targetSession = await Session.findByTeacherPhone(phone);
+    }
+
+    if (!targetSession) {
       return res.status(403).json({ success: false, message: 'این شماره برای کلاس شما ثبت نشده است.' });
     }
-    return res.json({ success: true });
-  } catch (_) {
+
+    // صدور یا تجدید توکن احراز هویت برای ادامه فرآیند درگاه اضطراری
+    const token = generateToken({
+      sessionId: targetSession.id,
+      sessionCode: targetSession.chat_code || targetSession.code,
+      role: 'user',
+      name: 'دستیاران کارآگاه',
+      activeCase: targetSession.active_case,
+    });
+
+    return res.json({
+      success: true,
+      token,
+      session: {
+        id: targetSession.id,
+        name: targetSession.name,
+        code: targetSession.chat_code || targetSession.code,
+        is_hacked: targetSession.is_hacked ? 1 : 0
+      }
+    });
+  } catch (error) {
+    console.error('Error in emergency verify-phone:', error);
     return res.status(503).json({ success: false, message: 'بررسی شماره انجام نشد. دوباره تلاش کنید.' });
   }
 });

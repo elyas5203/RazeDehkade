@@ -310,6 +310,7 @@ class Session {
    */
   static async findByTeacherPhone(phone) {
     const cleanPhone = String(phone || '').trim().replace(/[^0-9]/g, '');
+    if (!cleanPhone) return null;
     const res = await query(
       `SELECT * FROM sessions
        WHERE teacher_phone = ? AND status IN ('waiting', 'active')
@@ -317,7 +318,17 @@ class Session {
        LIMIT 1`,
       [cleanPhone]
     );
-    return res.rows[0] || null;
+    if (res.rows && res.rows[0]) return res.rows[0];
+
+    const altPhone = cleanPhone.startsWith('0') ? cleanPhone.slice(1) : ('0' + cleanPhone);
+    const altRes = await query(
+      `SELECT * FROM sessions
+       WHERE teacher_phone = ? AND status IN ('waiting', 'active')
+       ORDER BY last_activity_at DESC
+       LIMIT 1`,
+      [altPhone]
+    );
+    return altRes.rows ? (altRes.rows[0] || null) : null;
   }
 
   /**

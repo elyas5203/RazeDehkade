@@ -354,9 +354,26 @@
         const data = await res.json();
         if (res.ok && data.success && data.registered) {
           sessionStorage.setItem('teacherPhone', phone);
+          sessionStorage.setItem('emergency_user_phone', phone);
           if (data.data && data.data.chatCode) {
             sessionStorage.setItem('prefillCode', data.data.chatCode);
           }
+          if (data.data && data.data.token) {
+            sessionStorage.setItem('userToken', data.data.token);
+          }
+          if (data.data && data.data.session) {
+            sessionStorage.setItem('userSession', JSON.stringify(data.data.session));
+          }
+
+          if (data.isHacked) {
+            feedback.style.color = '#ef4444';
+            feedback.innerHTML = `⚠️ کلاس در وضعیت نفوذ سایبری است؛ در حال انتقال مستقیم به درگاه احراز هویت اضطراری…`;
+            setTimeout(() => {
+              window.location.href = data.redirectUrl || '/emergency-auth.html';
+            }, 600);
+            return;
+          }
+
           feedback.style.color = '#22c55e';
           feedback.innerHTML = `✅ شماره تایید شد. در حال انتقال…`;
           setTimeout(() => {

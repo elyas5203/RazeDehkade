@@ -616,7 +616,7 @@ class InMemoryDatabase {
     }
 
     if (/^SELECT .* FROM teachers/i.test(cleanSql)) {
-      if (/WHERE (?:t\.)?phone = \?/i.test(cleanSql)) {
+      if (/WHERE.*(?:t\.)?phone/i.test(cleanSql)) {
         const cleanPhone = String(params[0] || '').trim();
         const t = this.tables.teachers.find(x => x.phone === cleanPhone);
         if (!t) return [[], []];
@@ -627,6 +627,9 @@ class InMemoryDatabase {
           order_code: s ? s.order_code : null,
           session_name: s ? s.name : null,
         }], []];
+      }
+      if (/WHERE/i.test(cleanSql)) {
+        return [[], []];
       }
       const list = this.tables.teachers.map(t => {
         const s = t.session_id ? this.tables.sessions.find(x => x.id == t.session_id) : null;

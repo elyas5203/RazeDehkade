@@ -103,12 +103,29 @@ router.post('/user/join', async (req, res) => {
 
     // اگر کلاس مورد حمله سایبری مزداک قرار گرفته باشد، دسترسی به چت مسدود است و باید به درگاه احراز هویت اضطراری هدایت شوند
     if (session.is_hacked) {
+      const token = generateToken({
+        sessionId: session.id,
+        sessionCode: session.chat_code || session.code,
+        role: 'user',
+        name: 'دستیاران کارآگاه',
+        activeCase: session.active_case,
+      });
+
       return res.status(403).json({
         success: false,
         isHacked: true,
         message: '⚠️ هشدار فوق‌امنیتی: این پایگاه تحت نفوذ سایبری دشمن قرار گرفته و تمام دسترسی‌ها مسدود است! برای نجات پرونده فوراً به درگاه احراز هویت امنیتی مراجعه کنید.',
         redirectUrl: '/emergency-auth.html',
         sessionName: session.name,
+        data: {
+          token,
+          session: {
+            id: session.id,
+            code: session.chat_code || session.code,
+            name: session.name,
+            is_hacked: 1
+          }
+        }
       });
     }
 
@@ -196,14 +213,49 @@ router.post('/teacher/check', async (req, res) => {
       });
     }
 
+    const targetSession = session || (teacher?.session_id ? await Session.findById(teacher.session_id) : null);
+    const isHacked = Boolean(targetSession && targetSession.is_hacked);
+
+    // اگر کلاس مورد حمله سایبری مزداک قرار گرفته باشد، مستقیم به درگاه احراز هویت اضطراری هدایت شوند
+    if (isHacked && targetSession) {
+      const token = generateToken({
+        sessionId: targetSession.id,
+        sessionCode: targetSession.chat_code || targetSession.code,
+        role: 'user',
+        name: 'دستیاران کارآگاه',
+        activeCase: targetSession.active_case,
+      });
+
+      return res.json({
+        success: true,
+        registered: true,
+        isHacked: true,
+        redirectUrl: '/emergency-auth.html',
+        message: '⚠️ هشدار فوق‌امنیتی: کلاس شما تحت نفوذ سایبری است. در حال انتقال مستقیم به درگاه احراز هویت اضطراری...',
+        data: {
+          token,
+          phone: cleanPhone,
+          sessionName: targetSession.name,
+          chatCode: targetSession.chat_code || targetSession.code,
+          session: {
+            id: targetSession.id,
+            code: targetSession.chat_code || targetSession.code,
+            name: targetSession.name,
+            is_hacked: 1
+          }
+        }
+      });
+    }
+
     return res.json({
       success: true,
       registered: true,
+      isHacked: false,
       message: 'شماره مدرس تایید شد.',
       data: {
         phone: cleanPhone,
-        sessionName: session ? session.name : (teacher ? teacher.session_name : null),
-        chatCode: session ? (session.chat_code || session.code) : (teacher ? teacher.chat_code : null),
+        sessionName: targetSession ? targetSession.name : (teacher ? teacher.session_name : null),
+        chatCode: targetSession ? (targetSession.chat_code || targetSession.code) : (teacher ? teacher.chat_code : null),
       },
     });
   } catch (error) {
