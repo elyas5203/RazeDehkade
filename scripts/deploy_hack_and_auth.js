@@ -19,6 +19,7 @@ const filesToDeploy = [
   'src/db/pool.js',
   'src/routes/emergencyAuth.js',
   'src/services/emergencyVideoQueue.js',
+  'src/utils/videoTranscoder.js',
   'src/socket/index.js',
   'src/models/Session.js',
   'src/routes/sessions.js',
@@ -39,11 +40,14 @@ const filesToDeploy = [
   'tests/breach-sensory-overhaul.test.js',
   'tests/rotary-telephone-3d.test.js',
   'tests/cyber-psychological-warfare-and-telegram-bot.test.js',
+  'tests/streamable-mp4-and-submission-answers.test.js',
   'docs/ai/masters/MASTER_21_CINEMATIC_BREACH_SENSORY_OVERHAUL.md',
   'docs/ai/masters/MASTER_22_ROTARY_TELEPHONE_3D_MINIGAME.md',
   'docs/ai/masters/MASTER_23_CYBER_BREACH_PSYCHOLOGICAL_WARFARE_AND_TELEGRAM_QUEUE.md',
+  'docs/ai/masters/MASTER_24_STREAMABLE_MP4_AND_SUBMISSION_ANSWERS_DISPATCH.md',
   'ai-kit/tasks/TASK-007-ROTARY-TELEPHONE-3D.md',
   'ai-kit/tasks/TASK-008-PSYCHOLOGICAL-WARFARE-AND-TELEGRAM-BOT.md',
+  'ai-kit/tasks/TASK-009-STREAMABLE-MP4-AND-SUBMISSION-ANSWERS.md',
   'ai-kit/memory/STATE.md',
   'scripts/test-runner.js'
 ];

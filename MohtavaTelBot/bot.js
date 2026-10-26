@@ -114,6 +114,16 @@ function getAssistantsMenuKeyboard() {
   };
 }
 
+function getEmergencyVideosKeyboard() {
+  return {
+    keyboard: [
+      [{ text: '🔄 ارسال مجدد ویدیوها' }],
+      [{ text: BTN_BACK_MAIN }],
+    ],
+    resize_keyboard: true,
+  };
+}
+
 function getAssistantsClassSelectKeyboard(sessions = [], prefix = '🏫 ') {
   const rows = [];
   const filtered = sessions.filter((s) => String(s.name).trim() !== 'تست سرور');
@@ -1177,6 +1187,91 @@ class MohtavaTelegramBot {
     lines.push(`🕵️‍♂️ مجموع کل عکس‌های دستیاران: ${totalPhotos} نفر`);
 
     await this.sendMessage(chatId, lines.join('\n'), getAssistantsMenuKeyboard());
+  }
+
+  /**
+   * منوی مدیریت و آمار ویدیوهای احراز هویت اضطراری
+   */
+  async handleEmergencyVideosMenu(chatId) {
+    try {
+      const countsRes = await query(`
+        SELECT status, COUNT(*) as cnt FROM emergency_auth_videos GROUP BY status
+      `);
+      const counts = { pending: 0, sending: 0, sent: 0, failed: 0 };
+      (countsRes.rows || []).forEach(r => { counts[r.status] = Number(r.cnt); });
+
+      const listRes = await query(`
+        SELECT v.id, v.reference_code, v.session_id, s.name as session_name, v.phone, v.status, v.created_at
+        FROM emergency_auth_videos v
+        LEFT JOIN sessions s ON s.id = v.session_id
+        ORDER BY v.id DESC LIMIT 5
+      `);
+
+      const lines = [
+        '📹 «مدیریت و ارسال ویدیوهای احراز هویت»',
+        '',
+        '📊 آمار وضعیت ویدیوها:',
+        `▫️ ارسال‌شده به تلگرام: ${counts.sent}`,
+        `▫️ در صف ارسال: ${counts.pending}`,
+        `▫️ ناموفق (نیازمند تلاش مجدد): ${counts.failed}`,
+        `▫️ در حال پردازش: ${counts.sending}`,
+        ''
+      ];
+
+      if (listRes.rows && listRes.rows.length > 0) {
+        lines.push('📋 آخرین ویدیوهای ثبت‌شده:');
+        listRes.rows.forEach((r, idx) => {
+          const stBadge = r.status === 'sent' ? '✅ ارسال شد' : (r.status === 'failed' ? '❌ خطا' : '⏳ در صف');
+          lines.push(`${idx + 1}. ${r.session_name || 'کلاس ' + r.session_id} (${r.phone}) ⬅️ ${stBadge}`);
+        });
+      } else {
+        lines.push('هنوز ویدیویی در سامانه ثبت نشده است.');
+      }
+
+      lines.push('');
+      lines.push('💡 جهت ارسال فوری ویدیوهای موجود در صف به همراه پاسخ‌های کامل ۱۲ معما به صورت فایل استریم MP4، دکمه «🔄 ارسال مجدد ویدیوها» یا دستور /resend_videos را ارسال کنید.');
+
+      await this.sendMessage(chatId, lines.join('\n'), getEmergencyVideosKeyboard());
+    } catch (err) {
+      console.error('❌ خطا در دریافت منوی ویدیوها:', err);
+      await this.sendMessage(chatId, `❌ خطا در دریافت وضعیت ویدیوها: ${err.message}`, getMainMenuKeyboard());
+    }
+  }
+
+  /**
+   * پردازش و ارسال فوری ویدیوهای معلق یا ناموفق به تلگرام همراه با پاسخ‌های ۱۲ سؤال
+   */
+  async handleResendLatestVideos(chatId) {
+    try {
+      await this.sendMessage(chatId, '⏳ در حال بررسی و آغاز صف ارسال ویدیوها به همراه پاسخ‌های ۱۲ سؤال به تلگرام...');
+      await query(`
+        UPDATE emergency_auth_videos
+        SET status = 'pending', next_attempt_at = NULL, last_error = NULL
+        WHERE status IN ('failed', 'sending') OR (status = 'pending' AND next_attempt_at IS NOT NULL)
+      `);
+
+      let sentCount = 0;
+      let more = true;
+      while (more && sentCount < 20) {
+        const didProcess = await processOne();
+        if (didProcess) {
+          sentCount++;
+        } else {
+          more = false;
+        }
+      }
+
+      await this.sendMessage(
+        chatId,
+        sentCount > 0
+          ? `✅ پردازش صف انجام شد. ${sentCount} ویدیو به صورت استریم MP4 همراه با پاسخ‌های کامل برای شما ارسال شد.`
+          : 'ℹ️ تمام ویدیوهای موجود قبلاً ارسال شده‌اند یا ویدیوی جدیدی در صف نیست.',
+        getEmergencyVideosKeyboard()
+      );
+    } catch (err) {
+      console.error('❌ خطا در ارسال مجدد ویدیوها:', err);
+      await this.sendMessage(chatId, `❌ خطا در ارسال ویدیوها: ${err.message}`, getEmergencyVideosKeyboard());
+    }
   }
 
   /**

@@ -529,8 +529,17 @@
       try {
         stopSelfieCamera();
         selfieStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true });
-        const mimeType = ['video/webm;codecs=vp8,opus', 'video/webm', 'video/mp4']
-          .find(type => MediaRecorder.isTypeSupported(type));
+        const candidateTypes = [
+          'video/mp4;codecs=avc1,mp4a.40.2',
+          'video/mp4;codecs=avc1',
+          'video/mp4',
+          'video/webm;codecs=vp8,opus',
+          'video/webm;codecs=vp9,opus',
+          'video/webm'
+        ];
+        const mimeType = candidateTypes.find(type => {
+          try { return MediaRecorder.isTypeSupported(type); } catch (_) { return false; }
+        });
         if (!mimeType) throw new Error('ضبط ویدیو در این مرورگر پشتیبانی نمی‌شود.');
         if (selfiePreviewUrl) URL.revokeObjectURL(selfiePreviewUrl);
         selfiePreviewUrl = null;

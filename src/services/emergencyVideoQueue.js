@@ -3,6 +3,7 @@ const https = require('https');
 const path = require('path');
 const crypto = require('crypto');
 const { query } = require('../db/pool');
+const { formatAnswersReport, ensureStreamableVideo } = require('../utils/videoTranscoder');
 
 const MAX_ATTEMPTS = 5;
 const POLL_MS = 15000;
@@ -16,6 +17,51 @@ function telegramConfig() {
   return { token, chatId: String(chatId) };
 }
 
+/**
+ * ارسال پیام متنی به تلگرام (برای ارسال گزارش‌های تکمیلی طولانی یا پیام‌های بات)
+ */
+function sendTelegramTextMessage(text, replyToId = null, config = telegramConfig()) {
+  if (!config) return Promise.reject(new Error('Telegram destination is not configured'));
+  const payload = JSON.stringify({
+    chat_id: config.chatId,
+    text,
+    reply_to_message_id: replyToId || undefined
+  });
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'api.telegram.org',
+      path: `/bot${config.token}/sendMessage`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload)
+      },
+      timeout: 30000
+    }, res => {
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { body += chunk; });
+      res.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          if (res.statusCode !== 200 || !data.ok) {
+            return reject(new Error(data.description || `Telegram HTTP ${res.statusCode}`));
+          }
+          resolve(data.result?.message_id);
+        } catch (e) { reject(e); }
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', () => req.destroy(new Error('Telegram message timed out')));
+    req.write(payload);
+    req.end();
+  });
+}
+
+/**
+ * ارسال ویدیوی استریم MP4 احراز هویت به همراه پاسخ کامل ۱۲ سؤال دانش‌آموز به ادمین در تلگرام
+ */
 async function sendTelegramVideo(job, config = telegramConfig()) {
   if (!config) return Promise.reject(new Error('Telegram destination is not configured'));
   const filePath = path.resolve(job.file_path);
@@ -33,49 +79,134 @@ async function sendTelegramVideo(job, config = telegramConfig()) {
   }
   className = className || `کلاس ${job.session_id || 'نامشخص'}`;
 
-  const captionText = [
-    '📹 پاسخ ویدیویی احراز هویت پرونده',
-    `🏫 کلاس: ${className}`,
-    `📞 شماره تماس: ${job.phone}`,
-    `📂 کد پرونده: ${job.reference_code}`
-  ].join('\n');
+  // دریافت پاسخ‌های ۱۲ معما از جدول ثبت‌نام
+  let studentAnswers = null;
+  try {
+    const subRes = await query(
+      'SELECT answers_json FROM emergency_auth_submissions WHERE reference_code = ? LIMIT 1',
+      [job.reference_code]
+    );
+    if (subRes.rows && subRes.rows[0]?.answers_json) {
+      studentAnswers = typeof subRes.rows[0].answers_json === 'string'
+        ? JSON.parse(subRes.rows[0].answers_json)
+        : subRes.rows[0].answers_json;
+    }
+  } catch (_) {}
+
+  // تولید متن کامل مشخصات و پاسخ‌ها
+  const fullAnswersReport = formatAnswersReport(studentAnswers, {
+    className,
+    phone: job.phone,
+    referenceCode: job.reference_code
+  });
+
+  // محدودیت کپشن تلگرام ۱۰۲۴ نویسه است
+  let captionText = fullAnswersReport;
+  let followUpText = null;
+  if (Buffer.byteLength(fullAnswersReport, 'utf8') > 1000 || fullAnswersReport.length > 950) {
+    captionText = [
+      '📹 پاسخ ویدیویی احراز هویت پرونده',
+      `🏫 کلاس: ${className}`,
+      `📞 شماره تماس: ${job.phone}`,
+      `📂 کد پرونده: ${job.reference_code}`,
+      '📋 متن کامل پاسخ‌های ۱۲ سؤال در پیام بعدی پیوست شد ⬇️'
+    ].join('\n');
+    followUpText = fullAnswersReport;
+  }
+
+  // تبدیل به MP4 استریم‌شونده (H.264/AAC با اتم FastStart در ابتدا) در صورت نیاز
+  let streamable = null;
+  try {
+    streamable = await ensureStreamableVideo(filePath, job.mime_type);
+  } catch (convErr) {
+    console.warn('ensureStreamableVideo error:', convErr.message);
+    streamable = {
+      filePath,
+      mimeType: job.mime_type,
+      isMp4: job.mime_type === 'video/mp4',
+      transcoded: false
+    };
+  }
+
+  const targetPath = streamable.filePath;
+  const targetMime = streamable.mimeType;
+  const targetStat = fs.statSync(targetPath);
+  const isMp4 = targetMime === 'video/mp4';
+  const method = isMp4 ? 'sendVideo' : 'sendDocument';
 
   const boundary = `----Raze${crypto.randomBytes(12).toString('hex')}`;
   const field = (name, value) => Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`);
+
   const prelude = [
     field('chat_id', config.chatId),
-    field('caption', captionText),
-    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${job.mime_type === 'video/mp4' ? 'video' : 'document'}"; filename="${path.basename(filePath)}"\r\nContent-Type: ${job.mime_type}\r\n\r\n`)
+    field('caption', captionText)
   ];
+
+  if (isMp4) {
+    // فعال‌سازی پخش درجا و مستقیم ویدیو در تلگرام
+    prelude.push(field('supports_streaming', 'true'));
+  }
+
+  prelude.push(
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${isMp4 ? 'video' : 'document'}"; filename="${path.basename(targetPath)}"\r\nContent-Type: ${targetMime}\r\n\r\n`)
+  );
+
   const ending = Buffer.from(`\r\n--${boundary}--\r\n`);
-  const contentLength = prelude.reduce((n, b) => n + b.length, 0) + stat.size + ending.length;
-  const method = job.mime_type === 'video/mp4' ? 'sendVideo' : 'sendDocument';
-  return new Promise((resolve, reject) => {
-    const req = https.request({ hostname: 'api.telegram.org', path: `/bot${config.token}/${method}`, method: 'POST',
-      headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}`, 'Content-Length': contentLength },
-      timeout: 120000 }, res => {
-      let body = '';
-      res.setEncoding('utf8');
-      res.on('data', chunk => {
-        body += chunk;
-        if (body.length > 1024 * 1024) req.destroy(new Error('Telegram response too large'));
+  const contentLength = prelude.reduce((n, b) => n + b.length, 0) + targetStat.size + ending.length;
+
+  try {
+    const messageId = await new Promise((resolve, reject) => {
+      const req = https.request({
+        hostname: 'api.telegram.org',
+        path: `/bot${config.token}/${method}`,
+        method: 'POST',
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          'Content-Length': contentLength
+        },
+        timeout: 120000
+      }, res => {
+        let body = '';
+        res.setEncoding('utf8');
+        res.on('data', chunk => {
+          body += chunk;
+          if (body.length > 1024 * 1024) req.destroy(new Error('Telegram response too large'));
+        });
+        res.on('end', () => {
+          try {
+            const data = JSON.parse(body);
+            if (res.statusCode !== 200 || !data.ok || !data.result?.message_id) {
+              throw new Error(data.description || `Telegram HTTP ${res.statusCode}`);
+            }
+            resolve(data.result.message_id);
+          } catch (error) { reject(error); }
+        });
       });
-      res.on('end', () => {
-        try {
-          const data = JSON.parse(body);
-          if (res.statusCode !== 200 || !data.ok || !data.result?.message_id) throw new Error(data.description || `Telegram HTTP ${res.statusCode}`);
-          resolve(data.result.message_id);
-        } catch (error) { reject(error); }
-      });
+      req.on('error', reject);
+      req.on('timeout', () => req.destroy(new Error('Telegram upload timed out')));
+      for (const part of prelude) req.write(part);
+      const stream = fs.createReadStream(targetPath, { highWaterMark: 128 * 1024 });
+      stream.on('error', error => req.destroy(error));
+      stream.on('end', () => req.end(ending));
+      stream.pipe(req, { end: false });
     });
-    req.on('error', reject);
-    req.on('timeout', () => req.destroy(new Error('Telegram upload timed out')));
-    for (const part of prelude) req.write(part);
-    const stream = fs.createReadStream(filePath, { highWaterMark: 128 * 1024 });
-    stream.on('error', error => req.destroy(error));
-    stream.on('end', () => req.end(ending));
-    stream.pipe(req, { end: false });
-  });
+
+    // اگر متن کامل پاسخ‌ها بیش از حجم مجاز کپشن بود، در پیامی بلافاصله بعد از ویدیو ارسال می‌شود
+    if (followUpText && messageId) {
+      try {
+        await sendTelegramTextMessage(followUpText, messageId, config);
+      } catch (txtErr) {
+        console.warn('⚠️ ارسال متن تکمیلی پاسخ‌ها با خطا مواجه شد:', txtErr.message);
+      }
+    }
+
+    return messageId;
+  } finally {
+    // پاکسازی فایل MP4 موقت تبدیل‌شده در صورت وجود
+    if (streamable && streamable.transcoded && streamable.filePath !== filePath) {
+      fs.unlink(streamable.filePath, () => {});
+    }
+  }
 }
 
 async function processOne(send = sendTelegramVideo) {
@@ -121,4 +252,11 @@ function stopQueue() {
   interval = null;
 }
 
-module.exports = { processOne, startQueue, stopQueue, sendTelegramVideo, telegramConfig };
+module.exports = {
+  processOne,
+  startQueue,
+  stopQueue,
+  sendTelegramVideo,
+  sendTelegramTextMessage,
+  telegramConfig
+};
