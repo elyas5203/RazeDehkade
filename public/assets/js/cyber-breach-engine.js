@@ -345,14 +345,8 @@ class CyberBreachEngine {
       }
     });
 
-    const board = this.dom.evidenceBoard;
-    if (board && !document.getElementById('mazdak-board-cover')) {
-      const cover = document.createElement('div');
-      cover.id = 'mazdak-board-cover';
-      cover.className = 'mazdak-board-cover';
-      cover.innerHTML = `<img src="/mazdak.jpg" alt="Mazdak" style="width:100%;height:100%;object-fit:cover;opacity:0.02;pointer-events:none;">`;
-      board.appendChild(cover);
-    }
+    // The evidence grid owns the full-board Mazdak background. Adding another
+    // flex child here collapsed the grid and hid nearly all of the image.
   }
 
   removeMazdakMediaStamps() {
@@ -363,8 +357,6 @@ class CyberBreachEngine {
       card.classList.remove('card-blackout');
     });
     document.querySelectorAll('.evidence-card .evidence-mazdak-glitch-cover').forEach(el => el.remove());
-    const cover = document.getElementById('mazdak-board-cover');
-    if (cover) cover.remove();
   }
 
   // --- افکت‌های صوتی ترکیبی وب‌آدیو (MASTER-13) ---
