@@ -185,7 +185,7 @@ test('Mazdak Cyber Warfare, Tamper Lockdown & Emergency Recovery (MASTER-15)', a
     assert.ok(engineJs.includes('battle-det-4'), 'Detective broadcasts final evacuation');
   });
 
-  await t.test('11. Cinematic Audio Assets, Textless Board Cover, and No "توقیف" wording', () => {
+  await t.test('11. Cinematic Audio Assets, Full-Height Board Background, and No "توقیف" wording', () => {
     const soundsDir = path.join(ROOT_DIR, 'public', 'assets', 'sounds');
     const audioFiles = ['cyber-alarm.mp3', 'cyber-error.mp3', 'cyber-launch.mp3', 'cyber-slam.mp3', 'cyber-click.mp3'];
     audioFiles.forEach(file => {
@@ -193,10 +193,13 @@ test('Mazdak Cyber Warfare, Tamper Lockdown & Emergency Recovery (MASTER-15)', a
     });
 
     const engineJs = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'js', 'cyber-breach-engine.js'), 'utf8');
-    assert.ok(engineJs.includes('mazdak-board-cover'), 'Engine must create mazdak-board-cover image without text overlay');
+    assert.strictEqual(engineJs.includes("cover.id = 'mazdak-board-cover'"), false,
+      'Engine must not append a flex child that collapses the evidence grid');
     assert.strictEqual(engineJs.includes('توقیف'), false, 'cyber-breach-engine.js must NOT use the deprecated word "توقیف"');
 
     const css = fs.readFileSync(path.join(ROOT_DIR, 'public', 'assets', 'css', 'cyber-breach-engine.css'), 'utf8');
+    assert.ok(css.includes("url('/mazdak.jpg') center / cover no-repeat"),
+      'Evidence grid must use the Mazdak image as its full-area background');
     assert.strictEqual(css.includes('توقیف'), false, 'cyber-breach-engine.css must NOT use the deprecated word "توقیف"');
   });
 
