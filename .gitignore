@@ -8,6 +8,7 @@ node_modules/
 public/uploads/*
 !public/uploads/.gitkeep
 storage/emergency-selfies/
+.deploy_backups/
 
 # سیستم فایل‌ها
 Thumbs.db

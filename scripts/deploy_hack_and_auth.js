@@ -12,7 +12,18 @@ const env = {
 const REMOTE_BASE = '/home/user615/RazeDehkade';
 
 const filesToDeploy = [
+  'server.js',
+  'package.json',
+  '.gitignore',
+  'src/db/migrate.js',
+  'src/db/pool.js',
+  'src/routes/emergencyAuth.js',
+  'src/services/emergencyVideoQueue.js',
+  'src/socket/index.js',
+  'src/models/Session.js',
+  'src/routes/sessions.js',
   'public/emergency-auth.html',
+  'public/chat.html',
   'public/assets/css/emergency-auth.css',
   'public/assets/js/emergency-auth.js',
   'public/assets/css/cyber-breach-engine.css',
@@ -20,10 +31,10 @@ const filesToDeploy = [
   'public/assets/js/user-chat.js',
   'public/assets/js/admin-chat.js',
   'public/assets/js/admin-dashboard.js',
-  'src/socket/index.js',
-  'src/models/Session.js',
-  'src/routes/sessions.js',
-  'src/db/migrate.js'
+  'tests/emergency-auth-submissions.test.js',
+  'tests/emergency-question-fidelity.test.js',
+  'tests/mazdak-cyber-warfare.test.js',
+  'scripts/test-runner.js'
 ];
 
 console.log('1. Checking modified files...');
