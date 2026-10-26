@@ -647,7 +647,7 @@
         gesture = null;
         suppressClick = true;
         setTimeout(() => { suppressClick = false; }, 80);
-        if (turn >= max * .45) springBack(digit, turn);
+        if (turn >= max * .8) springBack(digit, turn);
         else if (turn < 5) {
           busy = true;
           rotor.style.transition = 'transform .38s ease-out';
@@ -659,7 +659,12 @@
         }
       };
       hole.addEventListener('pointerup', finish);
-      hole.addEventListener('pointercancel', finish);
+      hole.addEventListener('pointercancel', event => {
+        if (!gesture || gesture.pointerId !== event.pointerId) return;
+        gesture = null;
+        rotor.style.transition = 'transform .25s ease-out';
+        rotor.style.transform = 'rotate(0deg)';
+      });
       hole.addEventListener('click', event => {
         if (busy || suppressClick || event.detail > 0 && gesture) return;
         busy = true;
