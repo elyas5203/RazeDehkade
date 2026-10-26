@@ -38,4 +38,15 @@ test('MASTER-21 cinematic breach sensory contract', async t => {
     assert.match(css, /breachEdgeBreathe 1\.6s/);
     assert.doesNotMatch(css, /breachEdgeBreathe [0-9.]+ms/);
   });
+
+  await t.test('five-act cinematic language is visible, paced and reset-safe', () => {
+    for (const marker of ['breach-letterbox', 'breach-act-card', 'breach-timecode',
+      'cueAct(1', 'cueAct(2', 'cueAct(3', 'cueAct(4', 'cueAct(5', 'updateCinematicTimecode']) {
+      assert.ok(js.includes(marker) || css.includes(marker), `missing cinematic act marker ${marker}`);
+    }
+    assert.match(js, /if \(this\.actCueTimer\) clearTimeout\(this\.actCueTimer\)/);
+    assert.match(js, /ACT 01 \/ 05/);
+    assert.match(css, /breachActVignette \.9s/);
+    assert.match(css, /@media \(max-width: 700px\)/);
+  });
 });

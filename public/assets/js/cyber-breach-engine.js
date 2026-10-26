@@ -194,6 +194,7 @@ class CyberBreachEngine {
     this.ghostTypingTimer = null;
     this.sampleVoices = new Set();
     this.audioUnlocked = false;
+    this.actCueTimer = null;
   }
 
   init() {
@@ -230,8 +231,14 @@ class CyberBreachEngine {
       hud.id = 'breach-cinematic-hud';
       hud.setAttribute('aria-hidden', 'true');
       hud.innerHTML = `
+        <div class="breach-letterbox breach-letterbox--top"></div>
+        <div class="breach-letterbox breach-letterbox--bottom"></div>
         <div class="breach-hud-edge breach-hud-edge--top"></div>
         <div class="breach-hud-edge breach-hud-edge--bottom"></div>
+        <div class="breach-corner breach-corner--tl"></div>
+        <div class="breach-corner breach-corner--tr"></div>
+        <div class="breach-corner breach-corner--bl"></div>
+        <div class="breach-corner breach-corner--br"></div>
         <div class="breach-threat-panel">
           <span class="breach-threat-kicker">UNAUTHORIZED ROOT SIGNAL</span>
           <strong id="breachThreatLabel">اختلال در کانال امن</strong>
@@ -242,6 +249,12 @@ class CyberBreachEngine {
         <div class="breach-wave" aria-hidden="true">${'<i></i>'.repeat(24)}</div>
         <div class="breach-data-shards" aria-hidden="true">${Array.from({ length: 14 }, (_, i) => `<i style="--i:${i}"></i>`).join('')}</div>
         <div class="breach-pulse-ring" aria-hidden="true"></div>
+        <div class="breach-act-card" id="breachActCard" aria-live="polite">
+          <span id="breachActNumber">ACT 01 / 05</span>
+          <strong id="breachActTitle">قطع ارتباط</strong>
+          <small id="breachActSubtitle">مرکز فرماندهی از شبکه خارج شد</small>
+        </div>
+        <div class="breach-timecode" aria-hidden="true"><b>REC</b><span id="breachTimecode">00:00:00</span><i>MAZDAK // LIVE INTRUSION</i></div>
         <div class="breach-hud-caption" id="breachHudCaption">کانال فرماندهی در حال پایش است</div>`;
       document.body.appendChild(hud);
     }
@@ -249,6 +262,11 @@ class CyberBreachEngine {
     this.dom.threatLabel = hud.querySelector('#breachThreatLabel');
     this.dom.threatMeter = hud.querySelector('#breachThreatMeter');
     this.dom.hudCaption = hud.querySelector('#breachHudCaption');
+    this.dom.actCard = hud.querySelector('#breachActCard');
+    this.dom.actNumber = hud.querySelector('#breachActNumber');
+    this.dom.actTitle = hud.querySelector('#breachActTitle');
+    this.dom.actSubtitle = hud.querySelector('#breachActSubtitle');
+    this.dom.timecode = hud.querySelector('#breachTimecode');
   }
 
   playSample(name, volume = 0.55, playbackRate = 1) {
@@ -279,6 +297,34 @@ class CyberBreachEngine {
     if (this.dom.threatLabel) this.dom.threatLabel.textContent = label;
     if (this.dom.threatMeter) this.dom.threatMeter.style.transform = `scaleX(${Math.max(0, Math.min(1, progress))})`;
     if (this.dom.hudCaption && caption) this.dom.hudCaption.textContent = caption;
+  }
+
+  cueAct(number, title, subtitle, intensity = 'hard') {
+    const hud = this.dom.cinematicHud;
+    const card = this.dom.actCard;
+    if (!hud || !card) return;
+    if (this.actCueTimer) clearTimeout(this.actCueTimer);
+    if (this.dom.actNumber) this.dom.actNumber.textContent = `ACT ${String(number).padStart(2, '0')} / 05`;
+    if (this.dom.actTitle) this.dom.actTitle.textContent = title;
+    if (this.dom.actSubtitle) this.dom.actSubtitle.textContent = subtitle;
+    card.classList.remove('is-visible');
+    hud.classList.remove('act-impact');
+    void card.offsetWidth;
+    card.classList.add('is-visible');
+    hud.classList.add('act-impact');
+    this.impact(intensity);
+    this.actCueTimer = setTimeout(() => {
+      card.classList.remove('is-visible');
+      hud.classList.remove('act-impact');
+    }, 3200);
+  }
+
+  updateCinematicTimecode(sec) {
+    if (!this.dom.timecode) return;
+    const mins = Math.floor(sec / 60);
+    const secs = sec % 60;
+    const frames = (sec * 24) % 24;
+    this.dom.timecode.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}:${String(frames).padStart(2, '0')}`;
   }
 
   impact(kind = 'medium') {
@@ -580,6 +626,7 @@ class CyberBreachEngine {
     this.ensureCinematicHud();
     this.setCinematicPhase('power-loss', 'افت توان در مرکز فرماندهی', 0.06, 'CARRIER SIGNAL LOST // تلاش برای حفظ کانال');
     this.dom.cinematicHud?.classList.add('active');
+    this.cueAct(1, 'قطع ارتباط', 'مرکز فرماندهی از شبکه خارج شد', 'hard');
     this.playSample('cyber-intro.wav', 0.38, 1);
     this.impact('hard');
 
@@ -617,6 +664,7 @@ class CyberBreachEngine {
         <div class="blackout-power-grid" aria-hidden="true"></div>
         <div class="blackout-heartbeat-led" aria-hidden="true"></div>
         <div class="blackout-status-stack">
+          <em>ACT 01 / 05</em>
           <span>فرماندهی مرکزی</span>
           <strong>سیگنال حامل قطع شد</strong>
           <small id="blackoutHandshake">HANDSHAKE 01/08 — NO RESPONSE</small>
@@ -947,10 +995,12 @@ class CyberBreachEngine {
   }
 
   renderFrame(sec) {
+    this.updateCinematicTimecode(sec);
     // -------------------------------------------------------------
     // ۱. بلافاصله پس از اتمام ۷ ثانیه پرده سیاه، ترمینال اوج می‌گیرد (ثانیه ۷)
     // -------------------------------------------------------------
     if (sec === 7) {
+      this.cueAct(2, 'شکست پیرامونی', 'لایهٔ دفاعی پایگاه در حال فروپاشی است', 'hard');
       this.elevateTerminal();
     }
 
@@ -995,6 +1045,7 @@ class CyberBreachEngine {
     }
 
     if (sec === 15) {
+      this.cueAct(3, 'تسخیر کانال', 'یک هویت ناشناس وارد خط ارتباطی شد', 'hard');
       this.setCinematicPhase('mazdak', 'مزداک وارد کانال شد', 1, 'UNKNOWN ACTOR ONLINE // DO NOT TRUST THE CHANNEL');
       this.typewriterInTerminal('تمام اطلاعات و کدهای شما رو گرفتم و نمی‌ذارم این پرونده رو حل کنید', () => {});
     }
@@ -1022,6 +1073,7 @@ class CyberBreachEngine {
 
     // ۵. بسته شدن و فرود ترمینال به جایگاه اصلی خود روی گرید (ثانیه ۲۴)
     if (sec === 24) {
+      this.cueAct(4, 'جنگ روانی', 'پیام‌های پایگاه دیگر قابل اعتماد نیستند', 'soft');
       this.restoreToGrid();
       this.dom.cinematicHud?.classList.add('is-docked');
     }
@@ -1109,6 +1161,7 @@ class CyberBreachEngine {
 
     // خط و نشان نهایی مزداک
     if (sec === 130) {
+      this.cueAct(5, 'تخلیه اضطراری', 'کانال امن را ترک کنید', 'hard');
       this.setCinematicPhase('evacuation', 'پروتکل تخلیه اضطراری', 1, 'EVACUATION ORDER // AUTH CHANNEL ONLY');
       this.playSample('tactical-alarm.wav', 0.5, 1);
       this.appendChatMessage({
@@ -1145,6 +1198,8 @@ class CyberBreachEngine {
     if (this.dom.msgInput) this.dom.msgInput.value = '';
     if (this.playbackTimer) clearInterval(this.playbackTimer);
     if (this.ejectionCountdownInterval) clearInterval(this.ejectionCountdownInterval);
+    if (this.actCueTimer) clearTimeout(this.actCueTimer);
+    this.actCueTimer = null;
 
     this.siren.stop();
     this.stopSamples();
