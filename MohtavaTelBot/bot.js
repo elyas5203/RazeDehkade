@@ -25,6 +25,7 @@ const { matchFolderToSession, extractStudentNameFromFilename } = require('../src
 const { isArchiveFilename } = require('../src/utils/archiveExtractor');
 const { query } = require('../src/db/pool');
 const { ensureMp4FastStart } = require('../src/utils/mp4FastStart');
+const { sendTelegramVideo, processOne } = require('../src/services/emergencyVideoQueue');
 
 // اطمینان از وجود پوشه آپلود هفتگی در سرور
 if (!fs.existsSync(UPLOAD_DIR)) {
@@ -58,6 +59,7 @@ const BTN_CONFIRM_CLEAR_ALL = '⚠️ بله، همه پاک شوند';
 
 // کلیدهای بخش عکس دستیاران کارآگاه (کلاس‌ها)
 const BTN_ASSISTANTS_MENU = '🕵️‍♂️ عکس دستیاران (کلاس‌ها)';
+const BTN_EMERGENCY_VIDEOS = '📹 ویدیوهای احراز هویت';
 const BTN_ASSISTANTS_ARCHIVE = '📦 ارسال فایل فشرده (ZIP/RAR) یا لینک';
 const BTN_ASSISTANTS_SELECT_CLASS = '🏫 انتخاب کلاس و ارسال عکس‌ها';
 const BTN_ASSISTANTS_STATS = '📊 آمار عکس‌های کلاس‌ها';
@@ -91,7 +93,7 @@ const WEEK_BUTTON_TO_NUM = {
 function getMainMenuKeyboard() {
   return {
     keyboard: [
-      [{ text: BTN_ASSISTANTS_MENU }],
+      [{ text: BTN_ASSISTANTS_MENU }, { text: BTN_EMERGENCY_VIDEOS }],
       [{ text: BTN_WEEK_1 }, { text: BTN_WEEK_2 }],
       [{ text: BTN_WEEK_3 }, { text: BTN_WEEK_4 }],
       [{ text: BTN_WEEK_5 }, { text: BTN_VIEW_ALL }],
@@ -671,6 +673,16 @@ class MohtavaTelegramBot {
     }
 
     // ۱-ب. منوی مدیریت عکس دستیاران کارآگاه (کلاس‌ها)
+    if (text === BTN_EMERGENCY_VIDEOS || text === '/videos') {
+      await this.handleEmergencyVideosMenu(chatId);
+      return;
+    }
+
+    if (text === '/resend_videos' || text === '🔄 ارسال مجدد ویدیوها') {
+      await this.handleResendLatestVideos(chatId);
+      return;
+    }
+
     if (text === BTN_ASSISTANTS_MENU || text === '/assistants') {
       await this.setState({ mode: 'ASSISTANTS_MENU', week: null, currentTitle: '', titleCounter: 0 });
       await this.sendMessage(
@@ -1486,4 +1498,5 @@ module.exports = {
   BTN_ASSISTANTS_CLEAR_CLASS,
   BTN_ASSISTANTS_LIST_CLASS,
   BTN_ASSISTANTS_CHANGE_CLASS,
+  BTN_EMERGENCY_VIDEOS,
 };

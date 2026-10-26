@@ -32,14 +32,19 @@ const filesToDeploy = [
   'public/assets/js/user-chat.js',
   'public/assets/js/admin-chat.js',
   'public/assets/js/admin-dashboard.js',
+  'MohtavaTelBot/bot.js',
   'tests/emergency-auth-submissions.test.js',
   'tests/emergency-question-fidelity.test.js',
   'tests/mazdak-cyber-warfare.test.js',
   'tests/breach-sensory-overhaul.test.js',
   'tests/rotary-telephone-3d.test.js',
+  'tests/cyber-psychological-warfare-and-telegram-bot.test.js',
   'docs/ai/masters/MASTER_21_CINEMATIC_BREACH_SENSORY_OVERHAUL.md',
   'docs/ai/masters/MASTER_22_ROTARY_TELEPHONE_3D_MINIGAME.md',
+  'docs/ai/masters/MASTER_23_CYBER_BREACH_PSYCHOLOGICAL_WARFARE_AND_TELEGRAM_QUEUE.md',
   'ai-kit/tasks/TASK-007-ROTARY-TELEPHONE-3D.md',
+  'ai-kit/tasks/TASK-008-PSYCHOLOGICAL-WARFARE-AND-TELEGRAM-BOT.md',
+  'ai-kit/memory/STATE.md',
   'scripts/test-runner.js'
 ];
 

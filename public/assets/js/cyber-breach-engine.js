@@ -1,3 +1,34 @@
+
+// ============================================================================
+// دیالوگ‌های سناریوی نفوذ سایبری مزداک (پشتیبانی از سناریوی ارتقایافته روانی و سناریوی قبلی)
+// قابلیت برگشت آنی با تنظیم window.CYBER_SCENARIO_VERSION = 'v1' یا افزودن ?scenario=v1
+// ============================================================================
+const CYBER_SCENARIOS = {
+  v2_psychological: {
+    det1: 'بچه‌ها، پیام من می‌رسه؟ پکت‌های سرور داره مخدوش میشه، از چند لحظه پیش سیگنال‌های نامتعارف روی خط افتاده. هیچ کدی وارد نکنید.',
+    detPre2: 'فیلم دهکده چهارم به دستتون رسید؟ تصویر ارتباطی ناپایداره. فقط تأیید کنید ویدیو رو کامل دیدید یا نه؟',
+    kids1: 'استاد صداتون میاد! فیلم چهارم رو دیدیم و کدهای هر ۴ دهکده (۹۲۷۳، ۴۶۹۱، ۶۷۱۸، ۱۱۶۳) رو تطبیق دادیم... اما سیستم داره اخطار انقضای پرونده میده! گفتید رمز گاوصندوق چیه تا قبل از پریدن سرور واردش کنیم؟',
+    det2: 'صبر کنید! این چه اخطاریه؟! پروتکل پایگاه هیچ انقضایی نداره! سرور داره هشدار Man-In-The-Middle میده... کاسه‌ای زیر نیم‌کاسه‌ست! این پیام از آی‌پی کلاس نیست! کی پشت خطه؟! کد گاوصندوق رو شما کجا نگه می‌دارید؟',
+    kids2: 'کارآگاه وقت نیست! داریم می‌بینیم شواهد پرونده داره پاک میشه! اگه رمز گاوصندوق رو ندی کل زحمات ۴ هفته بچه‌ها دود میشه میره هوا! سریع رمزو بفرست!',
+    kids3: 'خط داره قطع میشه کارآگاه! اگه کد پیش شماست همین‌جا بفرستید تا پرونده نسوزه!',
+    det3: 'محاله! بچه‌های من آموزش دیدن که رمز گاوصندوق هرگز توی چت ناامن فرستاده نمیشه! تو از اول دنبال کلید نهایی بودی... نشانه لیلیوم لو رفت، تو بچه‌ها نیستی! مزداک، از خط ارتباطی کلاس بکش بیرون!',
+    mazdak1: 'آفرین کارآگاه... تیزهوشیت ستودنیه، ولی خیلی دیر متوجه شدی! از همون فریم اول فیلم چهارم توی شبکه‌تون نفوذ کرده بودم. این پرونده از اول مال من بود!',
+    det4: 'بچه‌ها صدای منو دارید؟! فایروال پایگاه تسخیر شد! فوراً ارتباط چت رو قطع کنید، خودتون رو به یک جای امن برسونید و جداگانه وارد درگاه احراز هویت بشید تا هویت واقعی شما تأیید بشه و پرونده رو نجات بدیم!',
+    mazdakFinal: 'پایگاه شما سقوط کرد! درگاه احراز هویت هم نمی‌تونه شما رو نجات بده... ببینم توی دنیای واقعی بدون این سیستم چقدر دوام میارید!'
+  },
+  v1_legacy: {
+    det1: 'بچه‌ها، پیام من می‌رسه؟ از چند لحظه پیش سیگنال‌های ناشناس روی خط افتاده. به هیچ درخواست تازه‌ای جواب ندید.',
+    detPre2: 'آخرین فیلمی که از دهکده فرستادم به دستتون رسید؟ خط داره می‌پره. اگر صدام رو دارید، فقط بگید کجای پرونده بودیم.',
+    kids1: 'صداتون میاد. فیلم آخر رو دیدیم. کدهایی که از دهکده‌ها درآوردیم هنوز پیشمونه... شما به سرنخ تازه‌ای رسیدید؟',
+    det2: 'نه هنوز. الان اول باید خط رو نگه داریم؛ چند تا پیام هم‌زمان از طرف شما می‌بینم. کدها رو اینجا ننویسید.',
+    kids2: 'باشه. فقط برای اینکه مطمئن بشیم مسیر رو درست رفتیم، اون کد گاوصندوق رو شما کجا نگه می‌دارید؟',
+    kids3: 'اگه کد پیش شماست همین‌جا بفرستید. بعدش می‌تونیم مدارک رو کنار هم بذاریم.',
+    det3: 'نه. بچه‌ها هیچ‌وقت کدها رو توی خط ناپایدار نمی‌فرستن. تو از اول دنبال کد گاوصندوق بودی. کاسه‌ای زیر نیم‌کاسه‌ست؛ نشانه لیلیوم رو فراموش کردی! مزداک، از خط بچه‌ها برو بیرون.',
+    mazdak1: 'دیر فهمیدی کارآگاه. این چند دقیقه از خط خودشون بهت پیام می‌دادم. حالا نوبت منه که پرونده رو ببندم.',
+    det4: 'بچه‌ها، اگر صدای من رو دارید فوراً خودتون رو به یک جای امن برسونید. هر کدوم جداگانه به سؤال‌های احراز هویت جواب بدید. این پیام رو تا آخر بخونید؛ تیم امنیتی داره دسترسی‌ها رو می‌بنده.',
+    mazdakFinal: 'اتصال شما دیگه دست خودتون نیست. ببینم بیرون از این پایگاه چقدر از پرونده یادتون مونده.'
+  }
+};
 /**
  * CYBER BREACH ENGINE (v4.0 Cinematic Masterpiece - 2026)
  * Complete Orchestration:
@@ -206,7 +237,8 @@ class CyberBreachEngine {
           <strong id="breachThreatLabel">اختلال در کانال امن</strong>
           <div class="breach-threat-meter"><i id="breachThreatMeter"></i></div>
         </div>
-        <div class="breach-reticle"><i></i><i></i><i></i><i></i><b></b></div>
+        <!-- breach-reticle permanently removed per user request: rotating square with red dot hidden -->
+        <div class="breach-reticle" style="display: none !important;" aria-hidden="true"></div>
         <div class="breach-wave" aria-hidden="true">${'<i></i>'.repeat(24)}</div>
         <div class="breach-data-shards" aria-hidden="true">${Array.from({ length: 14 }, (_, i) => `<i style="--i:${i}"></i>`).join('')}</div>
         <div class="breach-pulse-ring" aria-hidden="true"></div>
@@ -335,16 +367,11 @@ class CyberBreachEngine {
           کارآگاهان پایگاه! به علت نفوذ همه‌جانبه مزداک به سیستم دهکده در دامنه <strong>razedehkade.ir</strong>، دسترسی شما به مرکز فرماندهی و چت مسدود گردید.
           <br><br>
           ⚠️ <strong>دستور فوری مرکز فرماندهی:</strong> فوراً خودتون رو به یک جای امن برسونید و هر کدوم جداگانه به سوالات احراز هویت جواب بدید تا پرونده و مدارک دهکده نجات پیدا کنه.
-          <br><br>
-          مدت زمان باقی‌مانده اضطراری: <strong>۵ دقیقه (۳۰۰ ثانیه)</strong>
         </p>
         <div class="ejection-actions" style="${isTestMode ? '' : 'display: none !important;'}">
           <button type="button" class="ejection-primary-btn" id="ejectionAuthBtn">
             ⚡ انتقال فوری به درگاه احراز هویت امنیتی اضطراری (حالت تست)
           </button>
-        </div>
-        <div class="ejection-countdown-line" id="ejectionCountdownText">
-          انتقال خودکار تا ۰۵:۰۰ دقیقه دیگر به razedehkade.ir...
         </div>
       </div>
     `;
@@ -972,12 +999,16 @@ class CyberBreachEngine {
       this.typewriterInTerminal('تمام اطلاعات و کدهای شما رو گرفتم و نمی‌ذارم این پرونده رو حل کنید', () => {});
     }
 
+    // دریافت سناریوی جاری (پیش‌فرض v2_psychological همراه با قابلیت بازگشت به v1_legacy)
+    const isV1 = (typeof window !== 'undefined' && (window.CYBER_SCENARIO_VERSION === 'v1' || new URLSearchParams(window.location.search).get('scenario') === 'v1'));
+    const scn = isV1 ? CYBER_SCENARIOS.v1_legacy : CYBER_SCENARIOS.v2_psychological;
+
     // ۴. قرار گرفتن دو پیام اول کارآگاه در بک‌گراند چت حین بالا بودن ترمینال (ثانیه‌های ۱۶ و ۱۹)
     if (sec === 16) {
       this.appendChatMessage({
         id: 'battle-det-1',
         senderType: 'admin',
-        content: 'بچه‌ها، پیام من می‌رسه؟ از چند لحظه پیش سیگنال‌های ناشناس روی خط افتاده. به هیچ درخواست تازه‌ای جواب ندید.'
+        content: scn.det1
       });
     }
 
@@ -985,7 +1016,7 @@ class CyberBreachEngine {
       this.appendChatMessage({
         id: 'battle-det-pre-2',
         senderType: 'admin',
-        content: 'آخرین فیلمی که از دهکده فرستادم به دستتون رسید؟ خط داره می‌پره. اگر صدام رو دارید، فقط بگید کجای پرونده بودیم.'
+        content: scn.detPre2
       });
     }
 
@@ -999,12 +1030,12 @@ class CyberBreachEngine {
     // نفوذ به اینپوت بچه‌ها و تایپ درخشان با اشاره به فیلم آخر
     if (sec === 28) {
       this.simulateGhostTyping(
-        'صداتون میاد. فیلم آخر رو دیدیم. کدهایی که از دهکده‌ها درآوردیم هنوز پیشمونه... شما به سرنخ تازه‌ای رسیدید؟',
+        scn.kids1,
         () => {
           this.appendChatMessage({
             id: 'battle-kids-1',
             senderType: 'user',
-            content: 'صداتون میاد. فیلم آخر رو دیدیم. کدهایی که از دهکده‌ها درآوردیم هنوز پیشمونه... شما به سرنخ تازه‌ای رسیدید؟'
+            content: scn.kids1
           });
         }
       );
@@ -1014,19 +1045,19 @@ class CyberBreachEngine {
       this.appendChatMessage({
         id: 'battle-det-2',
         senderType: 'admin',
-        content: 'نه هنوز. الان اول باید خط رو نگه داریم؛ چند تا پیام هم‌زمان از طرف شما می‌بینم. کدها رو اینجا ننویسید.'
+        content: scn.det2
       });
     }
 
     // تایپ اصرار دوم در اینپوت بچه‌ها
     if (sec === 62) {
       this.simulateGhostTyping(
-        'باشه. فقط برای اینکه مطمئن بشیم مسیر رو درست رفتیم، اون کد گاوصندوق رو شما کجا نگه می‌دارید؟',
+        scn.kids2,
         () => {
           this.appendChatMessage({
             id: 'battle-kids-2',
             senderType: 'user',
-            content: 'باشه. فقط برای اینکه مطمئن بشیم مسیر رو درست رفتیم، اون کد گاوصندوق رو شما کجا نگه می‌دارید؟'
+            content: scn.kids2
           });
         }
       );
@@ -1035,23 +1066,23 @@ class CyberBreachEngine {
     // تایپ اصرار سوم در اینپوت بچه‌ها
     if (sec === 74) {
       this.simulateGhostTyping(
-        'اگه کد پیش شماست همین‌جا بفرستید. بعدش می‌تونیم مدارک رو کنار هم بذاریم.',
+        scn.kids3,
         () => {
           this.appendChatMessage({
             id: 'battle-kids-3',
             senderType: 'user',
-            content: 'اگه کد پیش شماست همین‌جا بفرستید. بعدش می‌تونیم مدارک رو کنار هم بذاریم.'
+            content: scn.kids3
           });
         }
       );
     }
 
-    // کارآگاه متوجه کلاهبرداری و ضرب‌المثل کاسه‌ای زیر نیم‌کاسه‌ست می‌شود و رمز لیلیوم را مطرح می‌کند
+    // کارآگاه متوجه کلاهبرداری می‌شود و هویت نفوذگر را فاش می‌کند
     if (sec === 88) {
       this.appendChatMessage({
         id: 'battle-det-3',
         senderType: 'admin',
-        content: 'نه. بچه‌ها هیچ‌وقت کدها رو توی خط ناپایدار نمی‌فرستن. تو از اول دنبال کد گاوصندوق بودی. مزداک، از خط بچه‌ها برو بیرون.'
+        content: scn.det3
       });
     }
 
@@ -1063,7 +1094,7 @@ class CyberBreachEngine {
       this.appendChatMessage({
         id: 'battle-mazdak-1',
         senderType: 'hacker',
-        content: 'دیر فهمیدی کارآگاه. این چند دقیقه از خط خودشون بهت پیام می‌دادم. حالا نوبت منه که پرونده رو ببندم.'
+        content: scn.mazdak1
       });
     }
 
@@ -1072,7 +1103,7 @@ class CyberBreachEngine {
       this.appendChatMessage({
         id: 'battle-det-4',
         senderType: 'admin',
-        content: 'بچه‌ها، اگر صدای من رو دارید فوراً خودتون رو به یک جای امن برسونید. هر کدوم جداگانه به سؤال‌های احراز هویت جواب بدید. این پیام رو تا آخر بخونید؛ تیم امنیتی داره دسترسی‌ها رو می‌بنده.'
+        content: scn.det4
       });
     }
 
@@ -1083,12 +1114,11 @@ class CyberBreachEngine {
       this.appendChatMessage({
         id: 'mazdak-final-threat',
         senderType: 'hacker',
-        content: 'اتصال شما دیگه دست خودتون نیست. ببینم بیرون از این پایگاه چقدر از پرونده یادتون مونده.'
+        content: scn.mazdakFinal
       });
       this.siren.swell();
     }
 
-    // ۸. نمایش مودال اخراج اضطراری (ثانیه ۱۴۴)
     if (sec === 144) {
       this.triggerEmergencyEjectionModal();
     }
@@ -1098,23 +1128,12 @@ class CyberBreachEngine {
     this.ensureEjectionModal();
     if (!this.dom.ejectionOverlay) return;
     this.dom.ejectionOverlay.classList.add('active');
-
-    let countdownSec = 300; // ۵ دقیقه طبق قرارداد MASTER-15 و نیاز آموزشی
-    const countdownEl = document.getElementById('ejectionCountdownText');
-
-    if (this.ejectionCountdownInterval) clearInterval(this.ejectionCountdownInterval);
-    this.ejectionCountdownInterval = setInterval(() => {
-      countdownSec--;
-      const min = Math.floor(countdownSec / 60);
-      const s = countdownSec % 60;
-      if (countdownEl) {
-        countdownEl.textContent = `انتقال خودکار تا ۰${min}:${String(s).padStart(2, '0')} دقیقه دیگر به razedehkade.ir...`;
-      }
-      if (countdownSec <= 0) {
-        clearInterval(this.ejectionCountdownInterval);
-        this.executeEjectionRedirect();
-      }
-    }, 1000);
+    // لغو هرگونه شمارش معکوس و انتقال خودکار طبق خواسته صریح کاربر (انتقال خودکار حذف شد)
+    // Eviction countdown disabled per user request: countdownSec = 300 (۵ دقیقه / ۵:۰۰) and auto-transfer removed
+    if (this.ejectionCountdownInterval) {
+      clearInterval(this.ejectionCountdownInterval);
+      this.ejectionCountdownInterval = null;
+    }
   }
 
   reset() {
