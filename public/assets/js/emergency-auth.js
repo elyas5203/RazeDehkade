@@ -445,17 +445,42 @@
     card.innerHTML = `
       <div class="q-badge">آخرین پرسش پرونده</div>
       <h2 class="q-title-text">${q.title}</h2>
-      <p class="selfie-instruction">اول پاسخ درست را انتخاب کن؛ سپس همان پاسخ را در ویدیو با صدای واضح بگو.</p>
-      <div class="modern-options-grid selfie-answer-options" id="selfieAnswerOptions"></div>
-      <p class="selfie-instruction">دفترچه را کنار صورتت بگیر، رو به دوربین نگاه کن و پاسخ این سؤال را با صدای واضح بگو.</p>
-      <p class="selfie-privacy">ضبط فقط با زدن «شروع ضبط» آغاز می‌شود. ویدیو فقط برای مدیر از راه تلگرام فرستاده می‌شود؛ تا زمان ارسال موفق، در فضای خصوصی سامانه نگهداری و بعد از ارسال حذف می‌شود.</p>
-      <div class="selfie-viewfinder"><video id="selfieVideo" playsinline muted autoplay aria-label="پیش‌نمایش دوربین"></video><span id="selfieStatus" role="status">دوربین خاموش است</span></div>
-      <div class="selfie-controls">
-        <button type="button" id="selfieStart" class="gateway-submit-btn">شروع ضبط</button>
-        <button type="button" id="selfieStop" class="phone-action-btn" hidden>پایان ضبط</button>
-        <button type="button" id="selfieRetry" class="phone-action-btn" hidden>ضبط دوباره</button>
+      
+      <p class="selfie-instruction" style="font-size: 14.5px; font-weight: 700; color: #f8fafc; margin-bottom: 6px;">
+        این ۴ گزینه پیش روی شماست؛ به نظرت کدام است؟
+      </p>
+
+      <!-- گزینه‌های مرجع غیرقابل کلیک فقط جهت مشاهده و مقایسه دانش‌آموز -->
+      <div class="modern-options-grid selfie-answer-options" id="selfieAnswerOptions" style="margin-bottom: 14px;"></div>
+      
+      <div class="selfie-instructions-box" style="background: rgba(245, 158, 11, 0.08); border: 1.5px solid rgba(245, 158, 11, 0.35); border-radius: 14px; padding: 14px 16px; margin: 8px 0 16px;">
+        <p style="font-size: 13.5px; font-weight: 800; color: #fbbf24; margin-bottom: 6px;">
+          📋 دستورالعمل ضبط ویدیوی پاسخ نهایی:
+        </p>
+        <ul style="font-size: 12.8px; color: #e2e8f0; line-height: 1.85; padding-right: 18px; margin: 0;">
+          <li>دفترچه پرونده را کنار صورتت بگیر و رو به دوربین نگاه کن.</li>
+          <li><strong>ابتدا نام و نام خانوادگی‌ات را با صدای واضح بگو.</strong></li>
+          <li>بگو حدس می‌زنی کدام گزینه از ۴ مورد بالا جواهر پرونده است.</li>
+          <li>یک توضیح کوتاه بده که به چه دلیل این گزینه را انتخاب کردی.</li>
+        </ul>
       </div>
-      <p class="selfie-note">ویدیو حداکثر ۳۰ ثانیه باشد. پس از ضبط، آن را بازبینی کن و سپس پاسخ‌ها را بفرست.</p>`;
+
+      <p class="selfie-privacy">ضبط فقط با زدن «شروع ضبط» آغاز می‌شود. ویدیو فقط برای مدیر از راه تلگرام فرستاده می‌شود؛ تا زمان ارسال موفق، در فضای خصوصی سامانه نگهداری و بعد از ارسال حذف می‌شود.</p>
+      
+      <div class="selfie-viewfinder">
+        <video id="selfieVideo" playsinline muted autoplay aria-label="پیش‌نمایش دوربین"></video>
+        <span id="selfieStatus" role="status">دوربین خاموش است</span>
+      </div>
+
+      <div class="selfie-controls">
+        <button type="button" id="selfieStart" class="gateway-submit-btn">شروع ضبط ویدیو 🎥</button>
+        <button type="button" id="selfieStop" class="phone-action-btn" hidden style="background: #dc2626; color: #fff; border-color: #ef4444;">پایان ضبط ⏹</button>
+        <button type="button" id="selfieRetry" class="phone-action-btn" hidden>ضبط دوباره 🔄</button>
+      </div>
+
+      <p class="selfie-note">ویدیو حداکثر ۳۰ تا ۴۵ ثانیه باشد. پس از پایان ضبط، ویدیو را بازبینی کن و در انتها دکمه «ثبت نهایی و نجات پرونده 🔒» را بزن.</p>
+    `;
+
     dynamicQuestionSlot.appendChild(card);
     const video = card.querySelector('#selfieVideo');
     const status = card.querySelector('#selfieStatus');
@@ -463,21 +488,21 @@
     const stop = card.querySelector('#selfieStop');
     const retry = card.querySelector('#selfieRetry');
     const answerOptions = card.querySelector('#selfieAnswerOptions');
+
+    // نمایش گزینه‌ها به عنوان کارت‌های مرجع غیرقابل کلیک (نمایش گزینه‌ها بدون دکمه رادیویی)
     q.options.forEach(opt => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = `choice-card-btn ${userAnswers[q.id] === opt.text ? 'selected' : ''}`;
-      button.innerHTML = `<span class="choice-letter-badge">${opt.letter}</span><span class="choice-text">${opt.text}</span>`;
-      button.addEventListener('click', () => {
-        answerOptions.querySelectorAll('.choice-card-btn').forEach(item => item.classList.remove('selected'));
-        button.classList.add('selected');
-        userAnswers[q.id] = opt.text;
-        start.disabled = false;
-        playTickSFX();
-      });
-      answerOptions.appendChild(button);
+      const item = document.createElement('div');
+      item.className = 'choice-card-btn choice-reference-card';
+      item.style.pointerEvents = 'none';
+      item.style.cursor = 'default';
+      item.style.opacity = '0.92';
+      item.innerHTML = `<span class="choice-letter-badge">${opt.letter}</span><span class="choice-text">${opt.text}</span>`;
+      answerOptions.appendChild(item);
     });
-    start.disabled = !userAnswers[q.id];
+
+    // دکمه شروع ضبط آماده به کار است و نیازی به کلیک گزینه‌ها ندارد
+    start.disabled = false;
+
     const showRecorded = () => {
       if (!selfieBlob) return;
       if (selfiePreviewUrl) URL.revokeObjectURL(selfiePreviewUrl);
@@ -488,12 +513,14 @@
       video.muted = false;
       video.autoplay = false;
       video.load();
-      status.textContent = 'ویدیو ضبط شد؛ آن را بازبینی کن.';
+      status.textContent = 'ویدیو با موفقیت ضبط شد؛ آن را بازبینی کن.';
       start.hidden = true;
       stop.hidden = true;
       retry.hidden = false;
     };
+
     if (selfieBlob) showRecorded();
+
     const begin = async () => {
       clearAlert();
       const captureRevision = ++selfieCaptureRevision;
@@ -529,14 +556,16 @@
             return;
           }
           selfieBlob = blob;
+          // پاسخ دانش‌آموز به همراه نام و نام خانوادگی و استدلال شفاهی درون ویدیو ثبت می‌شود
+          userAnswers[q.id] = 'پاسخ ویدیویی همراه با نام و نام خانوادگی و استدلال شفاهی';
           if (video.isConnected) showRecorded();
         };
         selfieRecorder.start(1000);
         start.hidden = true;
         retry.hidden = true;
         stop.hidden = false;
-        status.textContent = 'در حال ضبط…';
-        selfieStopTimer = setTimeout(() => { if (selfieRecorder?.state === 'recording') selfieRecorder.stop(); }, 30000);
+        status.textContent = 'در حال ضبط… (نام و فامیل، گزینه انتخابی و دلیلت را بگو)';
+        selfieStopTimer = setTimeout(() => { if (selfieRecorder?.state === 'recording') selfieRecorder.stop(); }, 45000);
       } catch (error) {
         stopSelfieCamera();
         showAlert(error.name === 'NotAllowedError'
@@ -544,12 +573,13 @@
           : (error.message || 'دسترسی به دوربین و میکروفون ممکن نشد.'));
       }
     };
+
     start.addEventListener('click', begin);
     retry.addEventListener('click', begin);
     stop.addEventListener('click', () => { if (selfieRecorder?.state === 'recording') selfieRecorder.stop(); });
   }
 
-  window.addEventListener('pagehide', () => {
+    window.addEventListener('pagehide', () => {
     if (selfieRecorder?.state === 'recording') selfieRecorder.stop();
     stopSelfieCamera();
     if (selfiePreviewUrl) URL.revokeObjectURL(selfiePreviewUrl);

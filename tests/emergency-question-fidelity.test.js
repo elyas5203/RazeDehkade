@@ -91,8 +91,8 @@ test('rejected mini-games are plain choices and selfie question is always last',
   assert.match(source, /form\.append\('clientSubmissionId'/);
   assert.match(source, /form\.append\('video'/);
   assert.match(source, /id="selfieAnswerOptions"/);
-  assert.match(source, /userAnswers\[q\.id\] = opt\.text/);
-  assert.doesNotMatch(source, /userAnswers\[q\.id\] = 'پاسخ در ویدیوی سلفی ثبت شد'/);
+  assert.match(source, /choice-reference-card/);
+  assert.match(source, /userAnswers\[q\.id\] = 'پاسخ ویدیویی همراه با نام و نام خانوادگی و استدلال شفاهی'/);
   assert.match(source, /event\.detail !== 0/);
 });
 
