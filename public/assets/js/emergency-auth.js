@@ -693,7 +693,7 @@
   }
 
   // -------------------------------------------------------------------------
-  // Mini-Game 1: 3D Rotary Phone Dialer (MASTER-22)
+  // Mini-Game 1: Rotary Phone Dialer with Dual Support (Click & Drag - MASTER-22)
   // -------------------------------------------------------------------------
   function renderRotaryPhoneGame(q) {
     dialedPhoneDigits = userAnswers[q.id] || '';
@@ -703,29 +703,27 @@
     wrap.innerHTML = `
       <div class="q-badge">کفش فروشی تنها</div>
       <h2 class="q-title-text">${q.title}</h2>
-      <p class="rotary-help">انگشتت را داخل حلقه عدد بگذار، صفحه را واقعاً تا گیره فلزی بچرخان و بعد رها کن.</p>
+      <p class="rotary-help">انگشتت را داخل حلقه عدد بگذار و بچرخان، یا روی هر عدد کلیک کن تا صفحه بچرخد و شماره گرفته شود.</p>
     `;
 
     const phoneContainer = document.createElement('div');
     phoneContainer.className = 'rotary-phone-container';
     phoneContainer.innerHTML = `
-      <div class="rotary-phone-chassis">
-        <div class="phone-display-screen">
-          <div class="phone-display-label">شماره گرفته‌شده</div>
-          <div class="phone-display-digits ${dialedPhoneDigits ? '' : 'placeholder'}" id="phoneDisplayDigits" aria-live="polite">
-            ${dialedPhoneDigits || '—'}
-          </div>
+      <div class="rotary-handset" aria-hidden="true"><span></span><span></span></div>
+      
+      <div class="phone-display-screen">
+        <div class="phone-display-label">شماره گرفته‌شده</div>
+        <div class="phone-display-digits ${dialedPhoneDigits ? '' : 'placeholder'}" id="phoneDisplayDigits" aria-live="polite">
+          ${dialedPhoneDigits || '—'}
         </div>
+      </div>
 
-        <div class="rotary-wheel-wrapper">
-          <div class="rotary-base-plate">
-            <div class="rotary-dial-face" id="rotaryDialFace"></div>
-          </div>
-          <div class="rotary-finger-stop" aria-hidden="true"></div>
-          <div class="rotary-dial-rotor" id="rotaryRotor">
-            <div class="rotary-center-hub" aria-hidden="true">
-              <span>کفش فروشی تنها</span>
-            </div>
+      <div class="rotary-wheel-wrapper">
+        <div class="rotary-base-plate"></div>
+        <div class="rotary-finger-stop" aria-hidden="true"></div>
+        <div class="rotary-dial-rotor" id="rotaryRotor">
+          <div class="rotary-center-hub" aria-hidden="true">
+            <span>کفش فروشی تنها</span>
           </div>
         </div>
       </div>
@@ -744,37 +742,21 @@
     dynamicQuestionSlot.appendChild(phoneContainer);
 
     const rotor = document.getElementById('rotaryRotor');
-    const face = document.getElementById('rotaryDialFace');
-
-    if (rotor && face) {
+    if (rotor) {
       const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
-      const radius = 37;
-      const stopAngle = 35; // Finger stop at 4 o'clock (35 deg)
-
+      const startAngle = -115;
+      const stepAngle = 29;
       numbers.forEach((num, idx) => {
-        const angleDeg = -30 - (idx * 30);
-        const angleRad = (angleDeg * Math.PI) / 180;
-        const x = 50 + radius * Math.cos(angleRad);
-        const y = 50 + radius * Math.sin(angleRad);
-        const travel = stopAngle - angleDeg;
-
-        // Static dial face number under the rotor
-        const numEl = document.createElement('div');
-        numEl.className = 'rotary-face-num';
-        numEl.textContent = String(num);
-        numEl.style.left = `${x}%`;
-        numEl.style.top = `${y}%`;
-        face.appendChild(numEl);
-
-        // Transparent acrylic rotor hole button
         const hole = document.createElement('button');
         hole.type = 'button';
         hole.className = 'rotary-hole';
-        hole.dataset.num = num;
-        hole.dataset.travel = String(travel);
-        hole.dataset.initAngle = String(angleDeg);
-        hole.style.left = `${x}%`;
-        hole.style.top = `${y}%`;
+        hole.dataset.num = String(num);
+        hole.dataset.travel = String(42 + idx * 28);
+        hole.textContent = String(num);
+        const angleDeg = startAngle + (idx * stepAngle);
+        const angleRad = (angleDeg * Math.PI) / 180;
+        hole.style.left = `${50 + 36 * Math.cos(angleRad)}%`;
+        hole.style.top = `${50 + 36 * Math.sin(angleRad)}%`;
         hole.setAttribute('aria-label', `شماره‌گیری ${num}`);
         rotor.appendChild(hole);
       });
@@ -786,7 +768,10 @@
 
     const angleAt = event => {
       const rect = rotor.getBoundingClientRect();
-      return Math.atan2(event.clientY - (rect.top + rect.height / 2), event.clientX - (rect.left + rect.width / 2)) * 180 / Math.PI;
+      return Math.atan2(
+        event.clientY - (rect.top + rect.height / 2),
+        event.clientX - (rect.left + rect.width / 2)
+      ) * 180 / Math.PI;
     };
 
     const appendDigit = digit => {
@@ -803,25 +788,19 @@
 
     const springBack = (digit, travel) => {
       busy = true;
-      rotor.style.transition = 'transform .52s cubic-bezier(.15,.75,.2,1)';
+      rotor.style.transition = 'transform 0.46s cubic-bezier(0.15, 0.72, 0.18, 1)';
       rotor.style.transform = 'rotate(0deg)';
-
-      const ticksCount = Math.min(8, Math.max(2, Math.round(travel / 40)));
-      const tickInterval = 520 / (ticksCount + 1);
-      for (let i = 1; i <= ticksCount; i++) {
-        setTimeout(() => playTickSFX(), i * tickInterval);
-      }
-
       setTimeout(() => {
         if (rotor.isConnected) {
           appendDigit(digit);
           rotor.style.transition = '';
         }
         busy = false;
-      }, 540);
+      }, Math.max(340, Math.min(520, 280 + travel)));
     };
 
     rotor.querySelectorAll('.rotary-hole').forEach(hole => {
+      // 1. پشتیبانی کامل از کشیدن با انگشت یا ماوس (Touch / Drag Rotation)
       hole.addEventListener('pointerdown', event => {
         if (busy) return;
         gesture = {
@@ -830,14 +809,21 @@
           max: Number(hole.dataset.travel),
           start: angleAt(event),
           last: angleAt(event),
-          turn: 0
+          turn: 0,
+          dragged: false,
+          startX: event.clientX,
+          startY: event.clientY
         };
-        hole.setPointerCapture(event.pointerId);
+        try { hole.setPointerCapture(event.pointerId); } catch(e) {}
         rotor.style.transition = 'none';
       });
 
       hole.addEventListener('pointermove', event => {
         if (!gesture || gesture.pointerId !== event.pointerId) return;
+        const dist = Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY);
+        if (dist > 6) {
+          gesture.dragged = true;
+        }
         const current = angleAt(event);
         let delta = current - gesture.last;
         if (delta < -180) delta += 360;
@@ -847,36 +833,53 @@
         rotor.style.transform = `rotate(${gesture.turn}deg)`;
       });
 
-      const finish = event => {
+      const handlePointerEnd = event => {
         if (!gesture || gesture.pointerId !== event.pointerId) return;
-        const { digit, turn, max } = gesture;
+        const { digit, turn, max, dragged } = gesture;
         gesture = null;
-        suppressClick = true;
-        setTimeout(() => { suppressClick = false; }, 80);
+        try { hole.releasePointerCapture(event.pointerId); } catch(e) {}
 
-        if (turn >= max * 0.75) {
-          springBack(digit, turn);
+        if (dragged) {
+          suppressClick = true;
+          setTimeout(() => { suppressClick = false; }, 350);
+
+          if (turn >= max * 0.70) {
+            springBack(digit, turn);
+          } else {
+            rotor.style.transition = 'transform 0.25s ease-out';
+            rotor.style.transform = 'rotate(0deg)';
+          }
         } else {
-          rotor.style.transition = 'transform .25s ease-out';
+          rotor.style.transition = 'none';
           rotor.style.transform = 'rotate(0deg)';
         }
       };
 
-      hole.addEventListener('pointerup', finish);
+      hole.addEventListener('pointerup', handlePointerEnd);
       hole.addEventListener('pointercancel', event => {
         if (!gesture || gesture.pointerId !== event.pointerId) return;
         gesture = null;
-        rotor.style.transition = 'transform .25s ease-out';
+        try { hole.releasePointerCapture(event.pointerId); } catch(e) {}
+        rotor.style.transition = 'transform 0.25s ease-out';
         rotor.style.transform = 'rotate(0deg)';
       });
 
-      hole.addEventListener('click', event => {
-        // کلیک ماوس جای حرکت فیزیکی صفحه را نمی‌گیرد؛ فقط فعال‌سازی صفحه‌کلید برای دسترس‌پذیری مجاز است.
-        if (busy || suppressClick || event.detail !== 0) return;
+      // 2. پشتیبانی کامل از کلیک یا تپ ساده (Click / Tap Auto-Rotation)
+      hole.addEventListener('click', () => {
+        if (busy || suppressClick) return;
         busy = true;
-        rotor.style.transition = 'transform .35s ease-out';
-        rotor.style.transform = `rotate(${hole.dataset.travel}deg)`;
-        setTimeout(() => springBack(hole.dataset.num, Number(hole.dataset.travel)), 360);
+        const travel = Number(hole.dataset.travel);
+        const digit = hole.dataset.num;
+
+        // چرخش روان صفحه به سمت گیره
+        rotor.style.transition = 'transform 0.36s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        rotor.style.transform = `rotate(${travel}deg)`;
+        playTickSFX();
+
+        // بازگشت فنری و ثبت عدد
+        setTimeout(() => {
+          springBack(digit, travel);
+        }, 380);
       });
     });
 
