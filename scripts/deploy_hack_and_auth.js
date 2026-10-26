@@ -34,6 +34,8 @@ const filesToDeploy = [
   'tests/emergency-auth-submissions.test.js',
   'tests/emergency-question-fidelity.test.js',
   'tests/mazdak-cyber-warfare.test.js',
+  'tests/breach-sensory-overhaul.test.js',
+  'docs/ai/masters/MASTER_21_CINEMATIC_BREACH_SENSORY_OVERHAUL.md',
   'scripts/test-runner.js'
 ];
 
