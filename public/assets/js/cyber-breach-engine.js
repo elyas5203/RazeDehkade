@@ -161,6 +161,8 @@ class CyberBreachEngine {
     this.deliveredTerminalThreats = new Set();
     this.sceneGeneration = 0;
     this.ghostTypingTimer = null;
+    this.sampleVoices = new Set();
+    this.audioUnlocked = false;
   }
 
   init() {
@@ -168,6 +170,7 @@ class CyberBreachEngine {
     this.ensureBlackoutCurtain();
     this.ensureBackdropAndGhostSlot();
     this.ensureEjectionModal();
+    this.ensureCinematicHud();
 
     window.addEventListener('resize', () => {
       if (this.isElevated) {
@@ -177,6 +180,7 @@ class CyberBreachEngine {
 
     const unlockHandler = () => {
       this.siren.init();
+      this.audioUnlocked = true;
       document.removeEventListener('click', unlockHandler);
       document.removeEventListener('keydown', unlockHandler);
       document.removeEventListener('touchstart', unlockHandler);
@@ -186,6 +190,71 @@ class CyberBreachEngine {
     document.addEventListener('touchstart', unlockHandler);
 
     console.log('[CyberBreachEngine] Initialized Cinematic v4.0 Engine.');
+  }
+
+  ensureCinematicHud() {
+    let hud = document.getElementById('breach-cinematic-hud');
+    if (!hud) {
+      hud = document.createElement('div');
+      hud.id = 'breach-cinematic-hud';
+      hud.setAttribute('aria-hidden', 'true');
+      hud.innerHTML = `
+        <div class="breach-hud-edge breach-hud-edge--top"></div>
+        <div class="breach-hud-edge breach-hud-edge--bottom"></div>
+        <div class="breach-threat-panel">
+          <span class="breach-threat-kicker">UNAUTHORIZED ROOT SIGNAL</span>
+          <strong id="breachThreatLabel">اختلال در کانال امن</strong>
+          <div class="breach-threat-meter"><i id="breachThreatMeter"></i></div>
+        </div>
+        <div class="breach-reticle"><i></i><i></i><i></i><i></i><b></b></div>
+        <div class="breach-wave" aria-hidden="true">${'<i></i>'.repeat(24)}</div>
+        <div class="breach-data-shards" aria-hidden="true">${Array.from({ length: 14 }, (_, i) => `<i style="--i:${i}"></i>`).join('')}</div>
+        <div class="breach-pulse-ring" aria-hidden="true"></div>
+        <div class="breach-hud-caption" id="breachHudCaption">کانال فرماندهی در حال پایش است</div>`;
+      document.body.appendChild(hud);
+    }
+    this.dom.cinematicHud = hud;
+    this.dom.threatLabel = hud.querySelector('#breachThreatLabel');
+    this.dom.threatMeter = hud.querySelector('#breachThreatMeter');
+    this.dom.hudCaption = hud.querySelector('#breachHudCaption');
+  }
+
+  playSample(name, volume = 0.55, playbackRate = 1) {
+    if (!this.audioUnlocked) return;
+    try {
+      const audio = new Audio(`/assets/sounds/${name}`);
+      audio.volume = Math.max(0, Math.min(1, volume));
+      audio.playbackRate = playbackRate;
+      this.sampleVoices.add(audio);
+      const cleanup = () => this.sampleVoices.delete(audio);
+      audio.addEventListener('ended', cleanup, { once: true });
+      audio.addEventListener('error', cleanup, { once: true });
+      audio.play().catch(cleanup);
+    } catch (_) {}
+  }
+
+  stopSamples() {
+    this.sampleVoices.forEach(audio => {
+      try { audio.pause(); audio.currentTime = 0; } catch (_) {}
+    });
+    this.sampleVoices.clear();
+  }
+
+  setCinematicPhase(phase, label, progress, caption = '') {
+    const hud = this.dom.cinematicHud;
+    if (!hud) return;
+    hud.dataset.phase = phase;
+    if (this.dom.threatLabel) this.dom.threatLabel.textContent = label;
+    if (this.dom.threatMeter) this.dom.threatMeter.style.transform = `scaleX(${Math.max(0, Math.min(1, progress))})`;
+    if (this.dom.hudCaption && caption) this.dom.hudCaption.textContent = caption;
+  }
+
+  impact(kind = 'medium') {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.body.classList.remove('breach-impact-soft', 'breach-impact-hard');
+    void document.body.offsetWidth;
+    document.body.classList.add(kind === 'hard' ? 'breach-impact-hard' : 'breach-impact-soft');
+    setTimeout(() => document.body.classList.remove('breach-impact-soft', 'breach-impact-hard'), kind === 'hard' ? 620 : 340);
   }
 
   cacheDom() {
@@ -382,6 +451,7 @@ class CyberBreachEngine {
   }
 
   playHydraulicLaunchSFX() {
+    this.playSample('cyber-launch.mp3', 0.72, 0.92);
     try {
       this.siren.init();
       const ctx = this.siren.ctx;
@@ -402,6 +472,7 @@ class CyberBreachEngine {
   }
 
   playGeigerTickSFX() {
+    if (Math.random() > 0.68) this.playSample('cyber-click.mp3', 0.14, 0.88 + Math.random() * 0.24);
     try {
       this.siren.init();
       const ctx = this.siren.ctx;
@@ -421,6 +492,7 @@ class CyberBreachEngine {
   }
 
   playHydraulicSlamSFX() {
+    this.playSample('cyber-slam.mp3', 0.82, 0.86);
     try {
       this.siren.init();
       const ctx = this.siren.ctx;
@@ -441,6 +513,7 @@ class CyberBreachEngine {
   }
 
   playElectricArcZap() {
+    this.playSample('cyber-error.mp3', 0.54, 1.05);
     try {
       this.siren.init();
       const ctx = this.siren.ctx;
@@ -477,6 +550,11 @@ class CyberBreachEngine {
     this.deliveredBattleMessages.clear();
     this.deliveredTerminalErrors.clear();
     this.deliveredTerminalThreats.clear();
+    this.ensureCinematicHud();
+    this.setCinematicPhase('power-loss', 'افت توان در مرکز فرماندهی', 0.06, 'CARRIER SIGNAL LOST // تلاش برای حفظ کانال');
+    this.dom.cinematicHud?.classList.add('active');
+    this.playSample('cyber-intro.wav', 0.38, 1);
+    this.impact('hard');
 
     if (window.liveTerminal && typeof window.liveTerminal.stop === 'function') {
       window.liveTerminal.stop();
@@ -507,7 +585,25 @@ class CyberBreachEngine {
       curtain.classList.remove('fade-out');
       curtain.style.display = 'flex';
       curtain.style.opacity = '1';
+      curtain.dataset.stage = 'power-loss';
+      curtain.innerHTML = `
+        <div class="blackout-power-grid" aria-hidden="true"></div>
+        <div class="blackout-heartbeat-led" aria-hidden="true"></div>
+        <div class="blackout-status-stack">
+          <span>فرماندهی مرکزی</span>
+          <strong>سیگنال حامل قطع شد</strong>
+          <small id="blackoutHandshake">HANDSHAKE 01/08 — NO RESPONSE</small>
+        </div>`;
     }
+
+    let handshake = 1;
+    const handshakeTimer = setInterval(() => {
+      if (!this.isPlaying || generation !== this.sceneGeneration || handshake >= 8) return clearInterval(handshakeTimer);
+      handshake++;
+      const line = document.getElementById('blackoutHandshake');
+      if (line) line.textContent = `HANDSHAKE ${String(handshake).padStart(2, '0')}/08 — ${handshake < 8 ? 'NO RESPONSE' : 'ROOT SIGNATURE DETECTED'}`;
+      this.playSample('cyber-click.mp3', 0.12, 0.75 + handshake * 0.035);
+    }, 720);
 
     // دقیقاً پس از ۷ ثانیه پرده سیاه کنار می‌رود و هاله قرمز و نویز پدیدار می‌شود
     setTimeout(() => {
@@ -519,6 +615,8 @@ class CyberBreachEngine {
         }, 800);
       }
       this.applyRedCompromisedOverlay();
+      this.setCinematicPhase('breach', 'امضای ناشناس در سطح ریشه', 0.32, 'ROOT SIGNATURE MATCH // MAZDAK NODE');
+      this.impact('hard');
     }, 7000);
   }
 
@@ -538,6 +636,7 @@ class CyberBreachEngine {
 
     // شروع آژیر نرم با Web Audio سینث‌سایزر
     this.siren.start();
+    this.playSample('cyber-alarm.mp3', 0.48, 0.96);
   }
 
   simulateGhostTyping(text, onComplete) {
@@ -830,6 +929,8 @@ class CyberBreachEngine {
 
     // ۲. نمایش لاگ‌های شکست لایه‌های امنیتی در ترمینال بالاآمده (ثانیه‌های ۹ تا ۱۳)
     if (sec === 9) {
+      this.setCinematicPhase('kernel', 'لایه کرنل شکسته شد', 0.46, 'KERNEL PANIC // ROOT CHANNEL OPEN');
+      this.impact('soft');
       this.appendTerminalBilingualLine({
         en: '[KERNEL_PANIC] 0x80F2A4 // ROOT ACCESS BREACHED',
         fa: 'شکست لایه‌های امنیتی سرور مرکزی. دسترسی ریشه در کنترل نفوذگر.',
@@ -838,6 +939,8 @@ class CyberBreachEngine {
     }
 
     if (sec === 11) {
+      this.setCinematicPhase('firewall', 'فایروال اصلی دور زده شد', 0.63, 'FIREWALL BYPASS // PORT COMPROMISED');
+      this.playSample('cyber-error.mp3', 0.42, 0.9);
       this.appendTerminalBilingualLine({
         en: '[FIREWALL_BYPASS] PORT 8443 COMPROMISED // MAZDAK_NODE',
         fa: 'فایروال پایگاه دهکده دور زده شد. تزریق بسته‌های مخرب مزداک.',
@@ -846,6 +949,8 @@ class CyberBreachEngine {
     }
 
     if (sec === 13) {
+      this.setCinematicPhase('takeover', 'کنترل نشست در حال تصاحب', 0.84, 'SESSION OVERRIDE // IDENTITY CHANNEL HIJACKED');
+      this.impact('hard');
       this.appendTerminalBilingualLine({
         en: '[SESSION_OVERRIDE] CRYPTO SIGNATURE HIJACKED',
         fa: 'کلید رمزنگاری جلسات تصاحب گردید. نفوذ کامل به ورودی و خروجی‌ها.',
@@ -863,6 +968,7 @@ class CyberBreachEngine {
     }
 
     if (sec === 15) {
+      this.setCinematicPhase('mazdak', 'مزداک وارد کانال شد', 1, 'UNKNOWN ACTOR ONLINE // DO NOT TRUST THE CHANNEL');
       this.typewriterInTerminal('تمام اطلاعات و کدهای شما رو گرفتم و نمی‌ذارم این پرونده رو حل کنید', () => {});
     }
 
@@ -886,6 +992,7 @@ class CyberBreachEngine {
     // ۵. بسته شدن و فرود ترمینال به جایگاه اصلی خود روی گرید (ثانیه ۲۴)
     if (sec === 24) {
       this.restoreToGrid();
+      this.dom.cinematicHud?.classList.add('is-docked');
     }
 
     // ۶. چت‌بازی طبیعی بین مزداک (با هویت بچه‌ها) و کارآگاه (ثانیه‌های ۲۸ تا ۱۴۰)
@@ -950,6 +1057,9 @@ class CyberBreachEngine {
 
     // مزداک نقاب برمی‌دارد
     if (sec === 102) {
+      this.setCinematicPhase('identity', 'هویت نفوذگر تأیید شد: مزداک', 1, 'HOSTILE IDENTITY CONFIRMED');
+      this.playSample('tactical-scan.wav', 0.36, 1);
+      this.impact('hard');
       this.appendChatMessage({
         id: 'battle-mazdak-1',
         senderType: 'hacker',
@@ -968,6 +1078,8 @@ class CyberBreachEngine {
 
     // خط و نشان نهایی مزداک
     if (sec === 130) {
+      this.setCinematicPhase('evacuation', 'پروتکل تخلیه اضطراری', 1, 'EVACUATION ORDER // AUTH CHANNEL ONLY');
+      this.playSample('tactical-alarm.wav', 0.5, 1);
       this.appendChatMessage({
         id: 'mazdak-final-threat',
         senderType: 'hacker',
@@ -1016,6 +1128,7 @@ class CyberBreachEngine {
     if (this.ejectionCountdownInterval) clearInterval(this.ejectionCountdownInterval);
 
     this.siren.stop();
+    this.stopSamples();
 
     if (this.dom.blackoutCurtain) {
       this.dom.blackoutCurtain.classList.add('fade-out');
@@ -1023,6 +1136,11 @@ class CyberBreachEngine {
     }
 
     document.body.classList.remove('system-compromised-red', 'cyber-breach-active');
+    document.body.classList.remove('breach-impact-soft', 'breach-impact-hard');
+    if (this.dom.cinematicHud) {
+      this.dom.cinematicHud.classList.remove('active', 'is-docked');
+      this.dom.cinematicHud.removeAttribute('data-phase');
+    }
 
     if (this.dom.messagesBox) {
       this.dom.messagesBox.classList.remove('mazdak-bg');
