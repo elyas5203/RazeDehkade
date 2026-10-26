@@ -7,6 +7,10 @@ const source = fs.readFileSync(
   path.join(__dirname, '../public/assets/js/emergency-auth.js'),
   'utf8'
 );
+const page = fs.readFileSync(
+  path.join(__dirname, '../public/emergency-auth.html'),
+  'utf8'
+);
 
 const requiredVerbatimText = [
   'چجوری روزی صد بار به حج قبول شده بریم ولی از مشهد خارج نشیم؟',
@@ -55,9 +59,9 @@ const requiredVerbatimText = [
   "{ letter: 'ج', text: 'مشهد' }",
   'جواهر ارزشمند داخل پرونده چه بود ؟',
   'محبت و ولایت امیرالمومنین حضرت علی علیه السلام و فرزندانشان',
-  'قرآن',
-  'پیامبر',
-  'امام زمان'
+  'قرآن مجید',
+  'پیامبر صلی الله علیه و آله و سلم',
+  'امام زمان علیه السلام'
 ];
 
 test('approved emergency questions and choices stay verbatim', () => {
@@ -72,4 +76,25 @@ test('last-village question intentionally has exactly three supplied choices', (
   assert.ok(start >= 0 && end > start, 'last-village question block must exist');
   const block = source.slice(start, end);
   assert.equal((block.match(/letter:/g) || []).length, 3);
+});
+
+test('rejected mini-games are plain choices and selfie question is always last', () => {
+  for (const id of ['q_padari', 'q_invest_2026', 'q_oil_painting', 'q_letter_translators',
+    'q_migration_reason', 'q_gem_feature', 'q_police_shoe_store']) {
+    const start = source.indexOf(`id: '${id}'`);
+    const block = source.slice(start, source.indexOf('\n    },', start) + 7);
+    assert.match(block, /type: 'choice'/, `${id} must be a plain choice`);
+  }
+  assert.match(source, /filter\(q => q\.id !== 'q_precious_gem'\)[\s\S]*QUESTIONS_DATABASE\.find\(q => q\.id === 'q_precious_gem'\)/);
+  assert.match(source, /navigator\.mediaDevices\.getUserMedia/);
+  assert.match(source, /new MediaRecorder/);
+  assert.match(source, /form\.append\('clientSubmissionId'/);
+  assert.match(source, /form\.append\('video'/);
+});
+
+test('success screen contains only status content and no navigation link or button', () => {
+  const start = page.indexOf('<section id="step3Section"');
+  const end = page.indexOf('</section>', start);
+  const block = page.slice(start, end);
+  assert.equal(/<(?:a|button)\b/i.test(block), false);
 });

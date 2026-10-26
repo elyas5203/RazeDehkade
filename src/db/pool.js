@@ -28,6 +28,7 @@ class InMemoryDatabase {
       bot_state: [],
       session_assistants: [],
       emergency_auth_submissions: [],
+      emergency_auth_videos: [],
     };
     this.autoIds = {
       admins: 1,
@@ -41,6 +42,7 @@ class InMemoryDatabase {
       weekly_content: 1,
       session_assistants: 1,
       emergency_auth_submissions: 1,
+      emergency_auth_videos: 1,
     };
   }
 
@@ -61,6 +63,69 @@ class InMemoryDatabase {
       const id = this.autoIds.emergency_auth_submissions++;
       this.tables.emergency_auth_submissions.push({ id, reference_code, session_id, phone, answers_json, created_at: new Date() });
       return [{ affectedRows: 1, insertId: id }, []];
+    }
+
+    if (/^INSERT INTO emergency_auth_videos/i.test(cleanSql)) {
+      const [reference_code, client_submission_id, session_id, phone, file_path, mime_type, file_size] = params;
+      if (this.tables.emergency_auth_videos.some(v => v.client_submission_id === client_submission_id)) throw new Error('Duplicate entry');
+      const id = this.autoIds.emergency_auth_videos++;
+      this.tables.emergency_auth_videos.push({ id, reference_code, client_submission_id, session_id, phone, file_path, mime_type, file_size,
+        status: 'pending', attempt_count: 0, next_attempt_at: null, last_error: null, telegram_message_id: null,
+        created_at: new Date(), sent_at: null });
+      return [{ affectedRows: 1, insertId: id }, []];
+    }
+    if (/^SELECT reference_code FROM emergency_auth_videos WHERE client_submission_id = \? AND session_id = \?/i.test(cleanSql)) {
+      const row = this.tables.emergency_auth_videos.find(v => v.client_submission_id === params[0] && Number(v.session_id) === Number(params[1]));
+      return [row ? [{ reference_code: row.reference_code }] : [], []];
+    }
+    if (/^DELETE FROM emergency_auth_submissions WHERE reference_code = \?/i.test(cleanSql)) {
+      const before = this.tables.emergency_auth_submissions.length;
+      this.tables.emergency_auth_submissions = this.tables.emergency_auth_submissions.filter(v => v.reference_code !== params[0]);
+      return [{ affectedRows: before - this.tables.emergency_auth_submissions.length }, []];
+    }
+    if (/^SELECT \* FROM emergency_auth_videos WHERE status IN/i.test(cleanSql)) {
+      const max = Number(params[0]);
+      const rows = this.tables.emergency_auth_videos.filter(v =>
+        ['pending', 'failed'].includes(v.status) && (!v.next_attempt_at || new Date(v.next_attempt_at) <= new Date()) && v.attempt_count < max
+      ).sort((a, b) => a.id - b.id).slice(0, 1);
+      return [rows, []];
+    }
+    if (/^UPDATE emergency_auth_videos SET status = 'sending'/i.test(cleanSql)) {
+      const row = this.tables.emergency_auth_videos.find(v => v.id == params[0] && ['pending', 'failed'].includes(v.status));
+      if (!row) return [{ affectedRows: 0 }, []];
+      row.status = 'sending'; row.attempt_count++; row.last_error = null;
+      return [{ affectedRows: 1 }, []];
+    }
+    if (/^UPDATE emergency_auth_videos SET status = 'sent'/i.test(cleanSql)) {
+      const row = this.tables.emergency_auth_videos.find(v => v.id == params[1] && v.status === 'sending');
+      if (!row) return [{ affectedRows: 0 }, []];
+      row.status = 'sent'; row.telegram_message_id = params[0]; row.sent_at = new Date(); row.next_attempt_at = null;
+      return [{ affectedRows: 1 }, []];
+    }
+    if (/^UPDATE emergency_auth_videos SET status = 'failed'/i.test(cleanSql)) {
+      const row = this.tables.emergency_auth_videos.find(v => v.id == params[2] && v.status === 'sending');
+      if (!row) return [{ affectedRows: 0 }, []];
+      row.status = 'failed'; row.last_error = params[0]; row.next_attempt_at = params[1] ? new Date(params[1]) : null;
+      return [{ affectedRows: 1 }, []];
+    }
+    if (/^UPDATE emergency_auth_videos SET status = 'pending' WHERE status = 'sending'/i.test(cleanSql)) {
+      let count = 0;
+      for (const row of this.tables.emergency_auth_videos) if (row.status === 'sending') { row.status = 'pending'; count++; }
+      return [{ affectedRows: count }, []];
+    }
+    if (/^SELECT v\.id, v\.reference_code, v\.session_id, s\.name AS session_name/i.test(cleanSql)) {
+      const sessionId = params.length ? Number(params[0]) : null;
+      const rows = this.tables.emergency_auth_videos.filter(v => !sessionId || Number(v.session_id) === sessionId)
+        .sort((a, b) => b.id - a.id).slice(0, 500).map(v => ({ ...v,
+          session_name: this.tables.sessions.find(s => Number(s.id) === Number(v.session_id))?.name || null }));
+      return [rows, []];
+    }
+    if (/^UPDATE emergency_auth_videos SET status = 'pending', next_attempt_at = NULL/i.test(cleanSql)) {
+      let count = 0;
+      for (const row of this.tables.emergency_auth_videos) if (Number(row.session_id) === Number(params[0]) && ['failed', 'pending'].includes(row.status)) {
+        row.status = 'pending'; row.next_attempt_at = null; row.last_error = null; row.attempt_count = 0; count++;
+      }
+      return [{ affectedRows: count }, []];
     }
 
     // 2. INSERT INTO admins

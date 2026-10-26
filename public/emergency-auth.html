@@ -7,7 +7,7 @@
   
   <link rel="preload" href="/assets/scene/vazirmatn.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/gateway.css?v=2.0">
-  <link rel="stylesheet" href="/assets/css/emergency-auth.css?v=5.1">
+  <link rel="stylesheet" href="/assets/css/emergency-auth.css?v=5.2">
 </head>
 <body class="gateway-page emergency-auth-page">
 
@@ -29,18 +29,6 @@
 
   <!-- کارت اصلی احراز هویت و مینی‌گیم‌های معما -->
   <main class="gateway-main emergency-main" id="emergencyContainer" role="main">
-
-    <!-- بنر اطلاع‌رسانی لغو نفوذ و بازگشت به چت کلاس (در صورت بازگشایی توسط ادمین) -->
-    <div id="unhackBanner" class="unhack-notification-banner" style="display: none;">
-      <div style="display: flex; align-items: center; gap: 8px;">
-        <span style="font-size: 20px;">🔓</span>
-        <span>نفوذ سایبری مهار شد! وضعیت پایگاه به حالت عادی بازگشت.</span>
-      </div>
-      <a href="/chat.html" class="unhack-return-btn">
-        <span>ورود به چت کلاس</span>
-        <span aria-hidden="true">➔</span>
-      </a>
-    </div>
 
     <div class="gateway-card emergency-card" id="emergencyCard">
       
@@ -165,10 +153,10 @@
   </main>
 
   <footer class="gateway-footer">
-    سامانه امنیت سایبری پایگاه کارآگاهی راز دهکده · <a href="/">razedehkade.ir</a>
+    سامانه امنیت سایبری پایگاه کارآگاهی راز دهکده · razedehkade.ir
   </footer>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/assets/js/emergency-auth.js?v=5.1"></script>
+  <script src="/assets/js/emergency-auth.js?v=5.2"></script>
 </body>
 </html>

@@ -162,8 +162,7 @@
       options: [
         { letter: 'الف', text: 'مکه' },
         { letter: 'ب', text: 'مدینه' },
-        { letter: 'ج', text: 'مشهد' },
-        { letter: 'د', text: 'قم' }
+        { letter: 'ج', text: 'مشهد' }
       ]
     },
     {
@@ -173,9 +172,9 @@
       title: 'جواهر ارزشمند داخل پرونده چه بود ؟',
       options: [
         { letter: 'الف', text: 'محبت و ولایت امیرالمومنین حضرت علی علیه السلام و فرزندانشان' },
-        { letter: 'ب', text: 'قرآن' },
-        { letter: 'ج', text: 'پیامبر' },
-        { letter: 'د', text: 'حضرت امام زمان عجل الله تعالی فرجه الشریف' }
+        { letter: 'ب', text: 'قرآن مجید' },
+        { letter: 'ج', text: 'پیامبر صلی الله علیه و آله و سلم' },
+        { letter: 'د', text: 'امام زمان علیه السلام' }
       ]
     }
   ];
@@ -321,11 +320,7 @@
       }
     } catch (_) {}
 
-    if (step3Section?.style.display === 'block') return;
-    if (unhackBanner) {
-      unhackBanner.style.display = 'flex';
-    }
-    showAlert('مرکز فرماندهی نفوذ مزداک را لغو کرد! می‌توانید به چت کلاس بازگردید.', 'success');
+    // این درگاه تا پایان بررسی پرونده مستقل می‌ماند؛ اعلان بازگشت به چت در این صفحه نمایش داده نمی‌شود.
   }
 
   // =========================================================================
@@ -450,7 +445,7 @@
     card.innerHTML = `
       <div class="q-badge">آخرین پرسش پرونده</div>
       <h2 class="q-title-text">${q.title}</h2>
-      <p class="selfie-instruction">دفترچه‌ات را باز کن و پاسخ را روی آن بنویس. بعد دوربین را روبه‌روی خودت بگیر و در یک ویدیوی کوتاه، دفترچه را نشان بده و پاسخ را با صدای خودت بگو.</p>
+      <p class="selfie-instruction">دفترچه را کنار صورتت بگیر، رو به دوربین نگاه کن و پاسخ این سؤال را با صدای واضح بگو.</p>
       <p class="selfie-privacy">ضبط فقط با زدن «شروع ضبط» آغاز می‌شود. ویدیو فقط برای مدیر از راه تلگرام فرستاده می‌شود؛ تا زمان ارسال موفق، در فضای خصوصی سامانه نگهداری و بعد از ارسال حذف می‌شود.</p>
       <div class="selfie-viewfinder"><video id="selfieVideo" playsinline muted autoplay aria-label="پیش‌نمایش دوربین"></video><span id="selfieStatus" role="status">دوربین خاموش است</span></div>
       <div class="selfie-controls">

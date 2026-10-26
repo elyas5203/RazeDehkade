@@ -136,6 +136,29 @@ async function runMigrations() {
     `);
 
     await query(`
+      CREATE TABLE IF NOT EXISTS emergency_auth_videos (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        reference_code VARCHAR(32) NOT NULL UNIQUE,
+        client_submission_id VARCHAR(64) NOT NULL UNIQUE,
+        session_id INT NOT NULL,
+        phone VARCHAR(20) NOT NULL,
+        file_path VARCHAR(700) NOT NULL,
+        mime_type VARCHAR(80) NOT NULL,
+        file_size BIGINT NOT NULL,
+        status ENUM('pending','sending','sent','failed') NOT NULL DEFAULT 'pending',
+        attempt_count INT NOT NULL DEFAULT 0,
+        next_attempt_at DATETIME NULL,
+        last_error VARCHAR(500) NULL,
+        telegram_message_id BIGINT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        sent_at DATETIME NULL,
+        INDEX idx_emergency_video_queue (status, next_attempt_at, id),
+        INDEX idx_emergency_video_session (session_id, id),
+        FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await query(`
       CREATE TABLE IF NOT EXISTS app_migrations (
         migration_key VARCHAR(100) PRIMARY KEY,
         applied_at DATETIME DEFAULT CURRENT_TIMESTAMP

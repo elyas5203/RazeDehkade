@@ -190,6 +190,7 @@ app.set('io', io);
 setupSocketIO(io);
 
 const { startMohtavaBot } = require('./MohtavaTelBot');
+const { startQueue: startEmergencyVideoQueue } = require('./src/services/emergencyVideoQueue');
 
 const PORT = process.env.PORT || 3000;
 
@@ -216,6 +217,10 @@ async function startServer() {
         startMohtavaBot({ io }).catch(err => {
           console.error('⚠️ خطا در راه‌اندازی بات تلگرام MohtavaTelBot:', err.message);
         });
+      }
+      if (process.env.NODE_ENV !== 'test' && process.env.DISABLE_EMERGENCY_VIDEO_QUEUE !== 'true' &&
+          (process.platform === 'linux' || process.env.ENABLE_EMERGENCY_VIDEO_QUEUE === 'true')) {
+        startEmergencyVideoQueue().catch(err => console.error('Emergency video queue startup:', err.message));
       }
     });
   } catch (err) {
