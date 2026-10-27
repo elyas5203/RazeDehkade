@@ -377,7 +377,7 @@
       throw new Error(verificationResult.message || 'شماره برای این کلاس ثبت نشده است.');
     }
 
-    if (trustedHandoff) {
+    if (trustedHandoff && securityBriefing) {
       // Briefing must remain readable long enough to explain why the quiz opened automatically.
       await new Promise(resolve => setTimeout(resolve, 1900));
     }

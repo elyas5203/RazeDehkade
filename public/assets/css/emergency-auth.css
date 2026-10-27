@@ -1469,9 +1469,7 @@ body.emergency-auth-page::before {
 .easel-art__canvas i { position: absolute; width: 24px; height: 24px; border-radius: 50%; bottom: 17%; box-shadow: inset 0 2px 5px #0006; }
 .easel-art__canvas i:nth-of-type(1) { right: 27%; background: #a13e48; }
 
-/* ==========================================================================
-   MASTER-27 — responsive incident-response dossier redesign
-   ========================================================================== */
+/* MASTER-27 redesign disabled: restored the previous emergency-auth appearance.
 body.emergency-auth-page {
   --incident-red: #ff3b57;
   --incident-cyan: #60d9ff;
@@ -1609,6 +1607,7 @@ body.emergency-auth-page::before {
   .emergency-rail::after, .rail-threat i, .briefing-status i { animation: none !important; }
   .choice-card-btn:hover, .clue-scene__choice:hover { transform: none; }
 }
+*/
 .easel-art__canvas i:nth-of-type(2) { right: 45%; background: #c79a42; }
 .easel-art__canvas i:nth-of-type(3) { right: 63%; background: #477c87; }
 .easel-art__beam { position: absolute; bottom: 17%; left: 50%; transform: translateX(-50%); width: min(78%,340px); height: 12px; background: #8c5936; box-shadow: 0 3px 6px #000a; z-index: 2; }

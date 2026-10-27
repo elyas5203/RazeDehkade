@@ -13,7 +13,7 @@ const authCss = read('public/assets/css/emergency-auth.css');
 const landing = read('public/index.html');
 const golhaLanding = read('public/golha/index.html');
 
-test('MASTER-27 natural breach dialogue and zero-repeat auth handoff', async t => {
+test('natural breach dialogue and zero-repeat auth handoff', async t => {
   await t.test('dialogue has a believable multi-turn escalation', () => {
     for (const marker of ['detProbe1', 'detWarning', 'kids4', 'detChallenge', 'mazdak2']) {
       assert.match(engine, new RegExp(marker));
@@ -37,14 +37,11 @@ test('MASTER-27 natural breach dialogue and zero-repeat auth handoff', async t =
     assert.match(authJs, /enterQuestionnaire\(phone, verificationResult\)/);
   });
 
-  await t.test('redesigned portal is responsive and keeps a safe manual fallback', () => {
-    assert.match(authHtml, /class="emergency-rail"/);
-    assert.match(authHtml, /id="securityBriefing"/);
+  await t.test('classic portal appearance is restored and keeps a safe manual fallback', () => {
+    assert.doesNotMatch(authHtml, /class="emergency-rail"/);
+    assert.doesNotMatch(authHtml, /id="securityBriefing"/);
     assert.match(authHtml, /id="authPhoneForm"/);
-    assert.match(authCss, /MASTER-27/);
-    assert.match(authCss, /grid-template-columns: minmax\(210px, 260px\) minmax\(0, 1fr\)/);
-    for (const width of ['900', '600', '380']) assert.match(authCss, new RegExp(`max-width: ${width}px`));
-    assert.match(authCss, /env\(safe-area-inset-bottom\)/);
-    assert.match(authCss, /prefers-reduced-motion: reduce/);
+    assert.match(authCss, /MASTER-27 redesign disabled/);
+    assert.match(authHtml, /emergency-auth\.css\?v=20261027_0330/);
   });
 });
