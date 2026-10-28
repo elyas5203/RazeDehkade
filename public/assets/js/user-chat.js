@@ -1489,6 +1489,9 @@ function openEvidence(msg) {
   if (window.cyberBreachEngine && window.cyberBreachEngine.isPlaying) {
     return;
   }
+  if (document.body.classList.contains('cyber-breach-active') || (window.sessionData && window.sessionData.is_hacked)) {
+    return;
+  }
   const dialog = document.getElementById('evidence-dialog');
   if (dialog && msg) {
     dialog.dataset.currentEvidenceId = String(msg.id);
@@ -3193,6 +3196,9 @@ function updateAssistantLightboxContent() {
 
 async function openAssistantsPhotoPopup() {
   if (window.cyberBreachEngine && window.cyberBreachEngine.isPlaying) {
+    return;
+  }
+  if (document.body.classList.contains('cyber-breach-active') || (window.sessionData && window.sessionData.is_hacked)) {
     return;
   }
   const dlg = document.getElementById('assistants-photo-dialog');

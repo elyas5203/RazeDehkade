@@ -528,7 +528,9 @@ class CyberBreachEngine {
     if (msgInput) {
       msgInput.disabled = true;
       msgInput.setAttribute('readonly', 'true');
-      msgInput.placeholder = 'دسترسی ارسال پیام به علت نفوذ امنیتی مسدود گردید...';
+      msgInput.placeholder = '';
+      msgInput.style.color = '#ffffff';
+      msgInput.style.opacity = '1';
     }
     document.querySelectorAll('.composer-controls button, .composer-controls input, .composer-controls textarea').forEach(el => {
       if (el.id !== 'ejectionAuthBtn') {
@@ -536,6 +538,16 @@ class CyberBreachEngine {
         el.classList.add('is-locked-cyber-breach');
       }
     });
+    const asstBtn = document.getElementById('open-assistants-popup-btn') || document.querySelector('.assistants-popup-btn');
+    if (asstBtn) {
+      asstBtn.setAttribute('disabled', 'disabled');
+      asstBtn.classList.add('is-locked-cyber-breach');
+      asstBtn.style.pointerEvents = 'none';
+    }
+    const asstDialog = document.getElementById('assistants-photo-dialog');
+    if (asstDialog && asstDialog.open) {
+      asstDialog.close();
+    }
   }
 
   unlockChatInput() {
@@ -554,7 +566,7 @@ class CyberBreachEngine {
   }
 
   // --- مدیریت پوشش و مهرهای تصاویر مزداک (MASTER-15) ---
-  applyMazdakMediaStamps() {
+    applyMazdakMediaStamps() {
     const fieldChat = document.querySelector('.field-chat') || this.dom.fieldChat;
     if (fieldChat) {
       fieldChat.classList.add('mazdak-bg');
@@ -569,19 +581,15 @@ class CyberBreachEngine {
         watermark.style.display = 'flex';
       }
     }
-    if (this.dom.messagesBox) {
-      this.dom.messagesBox.classList.add('mazdak-bg');
-    }
-    if (this.dom.evidenceBoard) {
-      this.dom.evidenceBoard.classList.add('mazdak-bg');
-    }
-    if (this.dom.evidenceGrid) {
-      this.dom.evidenceGrid.classList.add('mazdak-bg');
-    }
-    // تمام مدارک هم تصویرشان این می‌شود (/mazdak.jpg)
+    if (this.dom.messagesBox) this.dom.messagesBox.classList.add('mazdak-bg');
+    if (this.dom.evidenceBoard) this.dom.evidenceBoard.classList.add('mazdak-bg');
+    if (this.dom.evidenceGrid) this.dom.evidenceGrid.classList.add('mazdak-bg');
+
+    // تصاحب کلیه مدارک واقعی ارسالی در جلسه بدون تزریق کارت‌های ساختگی
     const cards = document.querySelectorAll('.evidence-card');
     cards.forEach(card => {
       card.classList.add('card-blackout');
+      card.style.pointerEvents = 'none';
       const img = card.querySelector('img');
       if (img) {
         if (!img.dataset.origSrc) img.dataset.origSrc = img.src;
@@ -591,28 +599,14 @@ class CyberBreachEngine {
       if (!card.querySelector('.evidence-mazdak-glitch-cover')) {
         const cover = document.createElement('div');
         cover.className = 'evidence-mazdak-glitch-cover';
-        cover.innerHTML = `<img src="/mazdak.jpg" alt="Mazdak" loading="eager"><div class="mazdak-corrupt-scanline"></div>`;
+        cover.innerHTML = '<img src="/mazdak.jpg" alt="Mazdak" loading="eager"><div class="mazdak-corrupt-scanline"></div>';
         card.appendChild(cover);
       }
     });
 
-    if (this.dom.evidenceGrid && !cards.length && !this.dom.evidenceGrid.querySelector('.evidence-mazdak-injected')) {
-      for (let i = 1; i <= 3; i++) {
-        const fakeCard = document.createElement('div');
-        fakeCard.className = 'evidence-card card-blackout evidence-mazdak-injected';
-        fakeCard.dataset.fakeEvidence = 'true';
-        fakeCard.innerHTML = `
-          <div class="evidence-mazdak-glitch-cover">
-            <img src="/mazdak.jpg" alt="Mazdak Compromised Clue" loading="eager">
-            <div class="mazdak-corrupt-scanline"></div>
-          </div>
-          <div class="evidence-meta">
-            <span class="evidence-tag" style="color: #ef4444;">پرونده تصاحب‌شده #${i}</span>
-            <span class="evidence-title">مدرک نفوذ سایبری مزداک</span>
-          </div>
-        `;
-        this.dom.evidenceGrid.appendChild(fakeCard);
-      }
+    const countBadge = document.querySelector('.evidence-count-badge') || document.querySelector('.evidence-meta-pill');
+    if (countBadge) {
+      countBadge.textContent = `${cards.length} مدرک مخدوش‌شده (سیگنال مفقود)`;
     }
   }
 
@@ -888,6 +882,9 @@ class CyberBreachEngine {
     if (this.ghostTypingTimer) clearTimeout(this.ghostTypingTimer);
     input.classList.add('ghost-typing-active');
     input.value = '';
+    input.placeholder = '';
+    input.disabled = false;
+    input.setAttribute('readonly', 'true');
 
     const adjustHeight = () => {
       input.style.height = 'auto';
@@ -903,15 +900,14 @@ class CyberBreachEngine {
         input.value += textToRead[idx];
         idx++;
         adjustHeight();
-        const delay = 40 + Math.floor(Math.sin(idx) * 15 + 15);
+        const delay = 45 + Math.floor(Math.random() * 30);
         this.ghostTypingTimer = setTimeout(typeFirstText, delay);
       } else {
         adjustHeight();
-        // زمان خواندن پیام در کامپوزر (بهینه‌سازی شده برای هیجان و عدم وقفه طولانی - سازگار با 7500 و 5000)
-        const readTime = Math.max(Number(holdMs) || 0, 4800);
+        // مهلت خواندن متن در چت‌باکس برای دانش‌آموزان
+        const readTime = Math.max(Number(holdMs) || 0, 7500);
         this.ghostTypingTimer = setTimeout(() => {
           if (!this.isPlaying || generation !== this.sceneGeneration) return;
-          // پاک کردن تدریجی و واقعی کامپوزر با کلید بک‌اسپیس حرف به حرف
           let eraseIdx = textToRead.length;
           const eraseNext = () => {
             if (!this.isPlaying || generation !== this.sceneGeneration) return;
@@ -923,12 +919,12 @@ class CyberBreachEngine {
               this.ghostTypingTimer = setTimeout(eraseNext, eraseDelay);
             } else {
               input.value = '';
+              input.placeholder = '';
               adjustHeight();
-              // مکث کوتاه قبل از شروع پیام ارسالی (بهینه‌سازی شده از ۱۲۰۰ به ۸۰۰ میلی‌ثانیه)
               this.ghostTypingTimer = setTimeout(() => {
                 if (!this.isPlaying || generation !== this.sceneGeneration) return;
                 this.simulateGhostTyping(nextTextToSend, onComplete);
-              }, 800);
+              }, 1000);
             }
           };
           eraseNext();
@@ -951,6 +947,9 @@ class CyberBreachEngine {
     if (this.ghostTypingTimer) clearTimeout(this.ghostTypingTimer);
     input.classList.add('ghost-typing-active');
     input.value = '';
+    input.placeholder = '';
+    input.disabled = false;
+    input.setAttribute('readonly', 'true');
 
     const adjustHeight = () => {
       input.style.height = 'auto';
@@ -966,11 +965,11 @@ class CyberBreachEngine {
         input.value += text[index];
         index++;
         adjustHeight();
-        const delay = 35 + Math.floor(Math.sin(index) * 15 + 15);
+        const delay = 40 + Math.floor(Math.random() * 30);
         this.ghostTypingTimer = setTimeout(typeNextChar, delay);
       } else {
         adjustHeight();
-        // مکث جهت خوانده شدن پیام در کامپوزر قبل از ارسال خودکار (بهینه‌سازی شده از 2200 به 1500 میلی‌ثانیه)
+        // مهلت خواندن پیام در چت‌باکس توسط دانش‌آموزان قبل از ارسال
         this.ghostTypingTimer = setTimeout(() => {
           if (!this.isPlaying || generation !== this.sceneGeneration) return;
           const sendBtn = form ? form.querySelector('button[type="submit"], #send-btn, .send-button') : null;
@@ -979,19 +978,36 @@ class CyberBreachEngine {
             setTimeout(() => sendBtn.classList.remove('ghost-send-pulse'), 350);
           }
           input.value = '';
+          input.placeholder = '';
           input.style.height = '';
           input.classList.remove('ghost-typing-active');
           if (typeof onComplete === 'function') onComplete();
-        }, 1500);
+        }, 11500);
       }
     };
 
     typeNextChar();
   }
 
+  
+  setDetectiveTyping(isTyping) {
+    const el = this.dom.typingIndicator || document.getElementById('typing-indicator');
+    if (!el) return;
+    if (isTyping && this.isPlaying) {
+      el.style.display = 'flex';
+      const textSpan = el.querySelector('span');
+      if (textSpan) textSpan.textContent = 'کارآگاه در حال نوشتن است...';
+      const box = this.dom.messagesBox || document.getElementById('messages-box');
+      if (box) box.scrollTop = box.scrollHeight;
+    } else {
+      el.style.display = 'none';
+    }
+  }
+
   appendChatMessage({ id, senderType, senderName, content, extraClass = '' }) {
     if (this.deliveredBattleMessages.has(id)) return;
     this.deliveredBattleMessages.add(id);
+    if (senderType === 'admin') this.setDetectiveTyping(false);
 
     const box = this.dom.messagesBox;
     if (!box) return;
@@ -1260,20 +1276,20 @@ class CyberBreachEngine {
     });
   }
 
-  async runPostBlackoutSequence() {
+    async runPostBlackoutSequence() {
     const gen = this.sceneGeneration;
     const scn = CYBER_SCENARIOS.v3_cinematic_story;
     if (this.storylineActive) return;
     this.storylineActive = true;
 
-    // ۱. مکث آرام پس از کنار رفتن پرده سیاه و استقرار لوگوی مزداک (۳ ثانیه)
+    // ۱. مکث اولیه آرام پس از کنار رفتن پرده سیاه و استقرار لوگوی مزداک
     await this.delay(3000);
     if (!this.checkSceneAlive(gen)) return;
 
-    // ۲. تایپ متن اعتراض مزداک در کامپوزر بچه‌ها، ۸.۵ ثانیه مکث خواندن برای دانش‌آموزان کلاس، پاک کردن تدریجی و تایپ پیام نفوذی
+    // ۲. تایپ رجزخوانی مزداک در چت‌باکس، مهلت خواندن دانش‌آموزان، پاک شدن و ارسال پیام به کارآگاه
     await this.simulateGhostTypingWithErasePromise(
       scn.mazdakGhostBoast1,
-      8500, // فرصت کامل خواندن متن اول در کامپوزر
+      8500, // مهلت کامل خواندن متن اول در چت‌باکس برای دانش‌آموزان
       scn.mazdakSpoofedMsg1
     );
     if (!this.checkSceneAlive(gen)) return;
@@ -1285,9 +1301,11 @@ class CyberBreachEngine {
       content: scn.mazdakSpoofedMsg1
     });
 
-    // ۳. مکث خواندن و تأمل کارآگاه در مرکز فرماندهی و سپس ارسال پاسخ کارآگاه (۱۲ ثانیه)
-    // سازگار با تأخیر 2200 برای تست‌ها
+    // ۳. پاسخ کارآگاه: اطلاع از نفوذ و احوالپرسی از دستیاران
     await this.delay(12000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(4500);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-infiltrator-ack',
@@ -1295,26 +1313,29 @@ class CyberBreachEngine {
       content: scn.detInfiltratorAck
     });
 
-    // ۴. مکث ۸ ثانیه‌ای پس از پاسخ کارآگاه و سپس شروع تایپ کری‌خوانی و درخواست رمز گاوصندوق
-    await this.delay(8000);
+    // ۴. کری‌خوانی دوم مزداک در چت‌باکس و سپس پاک شدن و درخواست رمز گاوصندوق
+    await this.delay(10000);
     if (!this.checkSceneAlive(gen)) return;
 
     await this.simulateGhostTypingWithErasePromise(
       scn.mazdakGhostBoast2,
-      8000, // ۸ ثانیه فرصت خواندن متن تمسخر در کامپوزر
+      8000, // مهلت خواندن متن تمسخر در چت‌باکس
       scn.mazdakSpoofedVaultReq
     );
     if (!this.checkSceneAlive(gen)) return;
 
-    // ارسال قطعی درخواست رمز گاوصندوق به چت
+    // ارسال قطعی پیام درخواست رمز گاوصندوق به چت
     this.appendChatMessage({
       id: 'battle-kids-spoofed-vault-request',
       senderType: 'user',
       content: scn.mazdakSpoofedVaultReq
     });
 
-    // ۵. مکث واکنش و شوک کارآگاه (۹ ثانیه) و پاسخ‌های امتناع از لو دادن رمز
-    await this.delay(9000);
+    // ۵. پاسخ کارآگاه: امتناع قاطع از گفتن رمز گاوصندوق (دقیقاً پس از ارسال پیام بچه‌ها)
+    await this.delay(10000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(4500);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-refuse-vault',
@@ -1322,7 +1343,10 @@ class CyberBreachEngine {
       content: scn.detRefuseVault
     });
 
-    await this.delay(6000);
+    await this.delay(8000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(4500);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-refuse-confidential',
@@ -1330,8 +1354,8 @@ class CyberBreachEngine {
       content: scn.detRefuseConfidential
     });
 
-    // ۶. اصرار مزداک با هویت جعلی برای دریافت رمز (با فواصل آرام ۷ و ۶.۵ ثانیه‌ای)
-    await this.delay(7000);
+    // ۶. اصرار مزداک با هویت جعلی در چت‌باکس برای دریافت رمز گاوصندوق
+    await this.delay(8000);
     if (!this.checkSceneAlive(gen)) return;
     await this.simulateGhostTypingPromise(scn.mazdakSpoofedUrgent);
     if (!this.checkSceneAlive(gen)) return;
@@ -1341,7 +1365,7 @@ class CyberBreachEngine {
       content: scn.mazdakSpoofedUrgent
     });
 
-    await this.delay(6500);
+    await this.delay(8000);
     if (!this.checkSceneAlive(gen)) return;
     await this.simulateGhostTypingPromise(scn.mazdakSpoofedDataWipe);
     if (!this.checkSceneAlive(gen)) return;
@@ -1352,8 +1376,10 @@ class CyberBreachEngine {
     });
 
     // ۷. شک کارآگاه به تغییر لحن و استعلام کدهای پروتکل
-    // کد شناسایی دستیار من 7500 هستش
-    await this.delay(9000);
+    await this.delay(12000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(4500);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-voice-changed',
@@ -1361,7 +1387,10 @@ class CyberBreachEngine {
       content: scn.detVoiceChanged
     });
 
-    await this.delay(6500);
+    await this.delay(10000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(4500);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-unmask-infiltrator',
@@ -1369,7 +1398,10 @@ class CyberBreachEngine {
       content: scn.detUnmaskInfiltrator
     });
 
-    await this.delay(6000);
+    await this.delay(10000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(4000);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-protocol-check',
@@ -1377,7 +1409,10 @@ class CyberBreachEngine {
       content: scn.detProtocolCheck
     });
 
-    await this.delay(5500);
+    await this.delay(8000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(3500);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-not-my-assistant',
@@ -1385,8 +1420,8 @@ class CyberBreachEngine {
       content: scn.detNotMyAssistant
     });
 
-    // ۸. افشای هویت مزداک: لرزش شدید صفحه (Screen Jump) + صدای گلیچ + اعتراف مستقیم مزداک
-    await this.delay(3500);
+    // ۸. افشای هویت مزداک: پرش تصویر + افکت صوتی شوک + پیام‌های خشم مزداک
+    await this.delay(5000);
     if (!this.checkSceneAlive(gen)) return;
     this.triggerBreachScreenJump();
     this.appendChatMessage({
@@ -1395,7 +1430,7 @@ class CyberBreachEngine {
       content: scn.mazdakUnmasked1
     });
 
-    await this.delay(6000);
+    await this.delay(10000);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-mazdak-unmasked-2',
@@ -1403,8 +1438,11 @@ class CyberBreachEngine {
       content: scn.mazdakUnmasked2
     });
 
-    // ۹. دیالوگ رودرروی کارآگاه
-    await this.delay(7000);
+    // ۹. پاسخ کارآگاه به مزداک
+    await this.delay(12000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(4000);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-mazdak-identified',
@@ -1412,7 +1450,10 @@ class CyberBreachEngine {
       content: scn.detMazdakIdentified
     });
 
-    await this.delay(5500);
+    await this.delay(10000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(4000);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-how-infiltrated',
@@ -1421,7 +1462,7 @@ class CyberBreachEngine {
     });
 
     // ۱۰. کری‌خوانی‌های مزداک
-    await this.delay(6500);
+    await this.delay(14000);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-mazdak-boast-easy-bypass',
@@ -1429,7 +1470,7 @@ class CyberBreachEngine {
       content: scn.mazdakBoastEasyBypass
     });
 
-    await this.delay(6500);
+    await this.delay(14000);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-mazdak-warning-history',
@@ -1437,7 +1478,7 @@ class CyberBreachEngine {
       content: scn.mazdakWarningHistory
     });
 
-    await this.delay(6500);
+    await this.delay(14000);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-mazdak-all-clues-accessed',
@@ -1446,7 +1487,10 @@ class CyberBreachEngine {
     });
 
     // ۱۱. پاتک کارآگاه و قفل کردن سیستم
-    await this.delay(8000);
+    await this.delay(15000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(5000);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-lockdown-declaration',
@@ -1454,7 +1498,10 @@ class CyberBreachEngine {
       content: scn.detLockdownDeclaration
     });
 
-    await this.delay(7000);
+    await this.delay(15000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(5000);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-ejection-warning',
@@ -1462,8 +1509,11 @@ class CyberBreachEngine {
       content: scn.detEjectionWarning
     });
 
-    // ۱۲. شمارش معکوس اخراج با تعلیق سینمایی (۵، ۴، رجزخوانی مزداک، ۳، ۲، ۱)
-    await this.delay(3500);
+    // ۱۲. شمارش معکوس اخراج
+    await this.delay(8000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(2500);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-count-5',
@@ -1471,7 +1521,10 @@ class CyberBreachEngine {
       content: scn.detCount5
     });
 
-    await this.delay(3000);
+    await this.delay(6000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(2500);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-count-4',
@@ -1479,7 +1532,7 @@ class CyberBreachEngine {
       content: scn.detCount4
     });
 
-    await this.delay(2500);
+    await this.delay(5000);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-mazdak-interruption',
@@ -1487,7 +1540,10 @@ class CyberBreachEngine {
       content: scn.mazdakInterruption
     });
 
-    await this.delay(2500);
+    await this.delay(5000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(2000);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-count-3',
@@ -1495,7 +1551,10 @@ class CyberBreachEngine {
       content: scn.detCount3
     });
 
-    await this.delay(2500);
+    await this.delay(5000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(2000);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-count-2',
@@ -1503,7 +1562,10 @@ class CyberBreachEngine {
       content: scn.detCount2
     });
 
-    await this.delay(2500);
+    await this.delay(5000);
+    if (!this.checkSceneAlive(gen)) return;
+    this.setDetectiveTyping(true);
+    await this.delay(2000);
     if (!this.checkSceneAlive(gen)) return;
     this.appendChatMessage({
       id: 'battle-det-count-1',
@@ -1511,8 +1573,8 @@ class CyberBreachEngine {
       content: scn.detCount1
     });
 
-    // ۱۳. سر یک ثانیه: بالا آمدن مودال اخراج اضطراری
-    await this.delay(2000);
+    // ۱۳. سر یک ثانیه: بالا آمدن مودال اخراج اضطراری (۱۰ ثانیه معکوس)
+    await this.delay(4000);
     if (!this.checkSceneAlive(gen)) return;
     this.triggerEmergencyEjectionModal();
   }
@@ -1630,7 +1692,7 @@ class CyberBreachEngine {
     }
   }
 
-    renderFrame(sec) {
+      renderFrame(sec) {
     this.updateCinematicTimecode(sec);
 
     const isV1 = (typeof window !== 'undefined' && (window.CYBER_SCENARIO_VERSION === 'v1' || new URLSearchParams(window.location.search).get('scenario') === 'v1'));
@@ -1641,9 +1703,6 @@ class CyberBreachEngine {
       return;
     }
 
-    // =========================================================================
-    // سناریوی پیش‌فرض MASTER-28: کرئوگرافی کامل و دقیق طبق سناریوی روایی کاربر
-    // =========================================================================
     const scn = CYBER_SCENARIOS.v3_cinematic_story;
 
     // ۱. شروع هک: پیام اول کارآگاه (ارسال در ثانیه ۰)
@@ -1655,8 +1714,12 @@ class CyberBreachEngine {
       });
     }
 
-    // ۲. بعد بیست ثانیه: پیام دوم کارآگاه + تغییر رنگ تدریجی کدهای باکس سمت چپ (ترمینال) به قرمز
-    if (sec === 20) {
+    // ایزتایپینگ قبل از پیام دوم
+    if (sec === 26) {
+      this.setDetectiveTyping(true);
+    }
+    // ۲. بعد سی ثانیه: پیام دوم کارآگاه + تغییر رنگ تدریجی کدهای باکس سمت چپ (ترمینال) به قرمز
+    if (sec === 30) {
       this.appendChatMessage({
         id: 'battle-det-no-reply',
         senderType: 'admin',
@@ -1667,8 +1730,12 @@ class CyberBreachEngine {
       }
     }
 
-    // ۳. بعد بیست ثانیه: پیام سوم و چهارم کارآگاه + پر پر کردن تصاویر برد اسناد
-    if (sec === 40) {
+    // ایزتایپینگ قبل از پیام سوم
+    if (sec === 56) {
+      this.setDetectiveTyping(true);
+    }
+    // ۳. پیام سوم کارآگاه
+    if (sec === 60) {
       this.appendChatMessage({
         id: 'battle-det-wait-answer',
         senderType: 'admin',
@@ -1676,7 +1743,11 @@ class CyberBreachEngine {
       });
     }
 
-    if (sec === 41) {
+    if (sec === 66) {
+      this.setDetectiveTyping(true);
+    }
+    // پیام چهارم کارآگاه + پر پر کردن تصاویر برد اسناد
+    if (sec === 70) {
       this.appendChatMessage({
         id: 'battle-det-reply-now',
         senderType: 'admin',
@@ -1690,8 +1761,11 @@ class CyberBreachEngine {
       }
     }
 
-    // ۴. بعد ده ثانیه: پیام‌های اعلام نفوذ کارآگاه
-    if (sec === 51) {
+    // ۴. پیام‌های اعلام نفوذ کارآگاه
+    if (sec === 86) {
+      this.setDetectiveTyping(true);
+    }
+    if (sec === 90) {
       this.appendChatMessage({
         id: 'battle-det-what-happened',
         senderType: 'admin',
@@ -1699,7 +1773,10 @@ class CyberBreachEngine {
       });
     }
 
-    if (sec === 53) {
+    if (sec === 97) {
+      this.setDetectiveTyping(true);
+    }
+    if (sec === 100) {
       this.appendChatMessage({
         id: 'battle-det-security-altered',
         senderType: 'admin',
@@ -1707,7 +1784,10 @@ class CyberBreachEngine {
       });
     }
 
-    if (sec === 55) {
+    if (sec === 107) {
+      this.setDetectiveTyping(true);
+    }
+    if (sec === 110) {
       this.appendChatMessage({
         id: 'battle-det-something-up',
         senderType: 'admin',
@@ -1715,7 +1795,10 @@ class CyberBreachEngine {
       });
     }
 
-    if (sec === 57) {
+    if (sec === 117) {
+      this.setDetectiveTyping(true);
+    }
+    if (sec === 120) {
       this.appendChatMessage({
         id: 'battle-det-infiltrator-alert',
         senderType: 'admin',
@@ -1724,22 +1807,14 @@ class CyberBreachEngine {
     }
 
     // ۵. بلافاصله بعد این پیام: تصویر سیگنال قطع شد (پرده سیاه با نقطه قرمز تپنده)
-    if (sec === 60) {
+    if (sec === 122) {
       this.triggerInitialBlackout(() => {
-        // بعد از کنار رفتن پرده سیاه:
-        // - قفل شدن چت بچه‌ها
         this.lockChatInput();
-        // - توقف گلیچ برد و اعمال تصاویر و پس‌زمینه مزداک
         if (this.dom.evidenceBoard) this.dom.evidenceBoard.classList.remove('evidence-flickering');
         if (this.dom.evidenceGrid) this.dom.evidenceGrid.classList.remove('evidence-flickering');
-        // اجرای زنجیره روایی دقیقاً به صورت متوالی (تا هر پیام ارسال نشود پیام بعدی هرگز ارسال نخواهد شد)
         this.runPostBlackoutSequence();
       });
     }
-
-    // تمام پیام‌ها و دیالوگ‌های پس از بلک‌اوت در تابع runPostBlackoutSequence به صورت زنجیره‌ای
-    // و Promise متوالی اجرا می‌شوند تا تحت هیچ شرایطی پاسخ کارآگاه یا مزداک قبل از ارسال پیام قبلی ظاهر نشود
-    // و مودال تخلیه اضطراری دقیقاً در پایان شمارش معکوس نهایی (سر عدد ۱) فراخوانی می‌شود.
   }
 
   triggerEmergencyEjectionModal() {
