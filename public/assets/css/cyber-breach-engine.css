@@ -2037,15 +2037,20 @@ body.breach-jump-shake {
 
 /* MASTER-34: Assistants Dossier Lockout & Distortion */
 body.cyber-breach-active .assistants-popup-btn,
-body.cyber-breach-active #open-assistants-popup-btn {
+body.cyber-breach-active #open-assistants-popup-btn,
+body.breach-dossier-locked #open-assistants-popup-btn {
   pointer-events: none !important;
   cursor: not-allowed !important;
   filter: grayscale(0.8) brightness(0.6) !important;
 }
 
 body.cyber-breach-active .assistant-mini-photo-box img {
-  filter: grayscale(1) contrast(200%) brightness(50%) hue-rotate(330deg) drop-shadow(0 0 10px rgba(239, 68, 68, 0.8)) !important;
+  filter: grayscale(1) blur(1.2px) contrast(250%) brightness(40%) hue-rotate(330deg) drop-shadow(0 0 10px rgba(239, 68, 68, 0.8)) !important;
   animation: glitch-photo-breach 0.4s infinite alternate !important;
+}
+
+body.breach-dossier-locked .assistant-mini-photo-box img {
+  filter: grayscale(1) blur(1.2px) contrast(250%) brightness(40%) !important;
 }
 
 @keyframes glitch-photo-breach {
@@ -2061,7 +2066,8 @@ body.cyber-breach-active .evidence-card {
   cursor: not-allowed !important;
 }
 
-body.cyber-breach-active .evidence-card .evidence-mazdak-glitch-cover {
+body.cyber-breach-active .evidence-card .evidence-mazdak-glitch-cover,
+body.breach-dossier-locked .evidence-card .evidence-mazdak-glitch-cover {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -2074,7 +2080,8 @@ body.cyber-breach-active .evidence-card .evidence-mazdak-glitch-cover {
   overflow: hidden !important;
 }
 
-body.cyber-breach-active .evidence-card .evidence-mazdak-glitch-cover img {
+body.cyber-breach-active .evidence-card .evidence-mazdak-glitch-cover img,
+body.breach-dossier-locked .evidence-card .evidence-mazdak-glitch-cover img {
   width: 100% !important;
   height: 100% !important;
   object-fit: contain !important;

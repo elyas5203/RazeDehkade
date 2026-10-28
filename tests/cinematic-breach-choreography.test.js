@@ -76,8 +76,8 @@ test('MASTER-28: Choreographed Cyber Breach Cinematics & Storyline Verification'
     assert.match(engineJs, /battle-kids-spoofed-urgent/);
     assert.match(engineJs, /battle-kids-spoofed-data-wipe/);
     assert.match(engineJs, /eraseIdx--/);
-    assert.match(engineJs, /(7500|10000|12000)/);
-    assert.match(engineJs, /(2200|11500)/);
+    assert.match(engineJs, /7500/);
+    assert.match(engineJs, /Math\.max\(Number\(holdMs\) \|\| 0, 7500\)/);
     assert.match(engineCss, /min-height:\s*68px/);
   });
 

@@ -41,8 +41,8 @@ test('MASTER-34: Cyber Breach Typing Indicator, Timing Expansion, Dossier Lockou
     assert.ok(idxRefuseConf < idxUrgent, 'Detective refusal must precede urgent insistence');
   });
 
-  await t.test('3. simulateGhostTyping holds for 11500ms (+10s delay) before submitting to chat', () => {
-    assert.match(engineJs, /11500\s*\);/, 'Composer hold time must be at least 11500ms for thorough reading');
+  await t.test('3. simulateGhostTypingWithErase keeps a minimum reading interval', () => {
+    assert.match(engineJs, /Math\.max\(Number\(holdMs\) \|\| 0, 7500\)/);
   });
 
   await t.test('4. lockChatInput disables assistants popup and closes dialog', () => {
@@ -67,16 +67,16 @@ test('MASTER-34: Cyber Breach Typing Indicator, Timing Expansion, Dossier Lockou
   });
 
   await t.test('8. Emergency Auth q_padari question replacement fidelity', () => {
-    assert.match(authJs, /آقای پادری گوینده اخبار چه نسبتی با اقایان پادری‌ها که به دهکده های مرموز رفتن داشت؟/);
-    assert.match(authJs, /ارواح عمه اش ، خالش بود بابا/);
-    assert.match(authJs, /بابا این پادری حموم بود اونها پادری دستشویی، نسبتی نداشتن/);
+    assert.match(authJs, /بهترین زمان برای دیدن اخبار کی هست که خوابمون نبره؟/);
+    assert.match(authJs, /چهار صبح با پادری/);
+    assert.match(authJs, /صبح شنبه ۱ مهر😭😭😭/);
   });
 
   await t.test('9. Emergency Auth q_gem_feature options fidelity', () => {
-    assert.match(authJs, /برامون صبح‌ها نون می‌گیره/);
+    assert.match(authJs, /برامون صبح‌ها نون تازه می‌گیره/);
     assert.match(authJs, /موقع امتحان بهمون تقلب می‌رسونه/);
     assert.match(authJs, /هر کس از آن جواهر داشته باشد، خوشبخت می‌شود\./);
-    assert.match(authJs, /تو دنیا خیلی ازش زیاد هست/);
+    assert.match(authJs, /تو کل دنیا همه جا ازش خیلی زیاد هست/);
   });
 
   await t.test('10. Emergency Auth q_terrorist_newspaper separates مز and داک', () => {

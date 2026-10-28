@@ -533,6 +533,7 @@ function initSocket() {
 
   socket.on('user_typing', (data) => {
     const typingEl = document.getElementById('typing-indicator');
+    if (window.cyberBreachEngine?.isPlaying) return;
     if (typingEl && data.senderType === 'admin') {
       typingEl.innerText = data.isTyping ? 'مرکز در حال نوشتن است…' : '';
     }
@@ -1160,8 +1161,9 @@ function renderEvidence(msg, options = {}) {
   if (badgeEl) badgeEl.textContent = totalCards.toLocaleString('fa-IR');
 
   if (typeof applyEvidenceFilter === 'function') applyEvidenceFilter();
-  if (document.body.classList.contains('cyber-breach-active')) {
+  if (window.cyberBreachEngine?.isPlaying || document.body.classList.contains('cyber-breach-active')) {
     card.classList.add('card-blackout');
+    card.style.pointerEvents = 'none';
     const cardImg = card.querySelector('img');
     if (cardImg) {
       if (!cardImg.dataset.origSrc) cardImg.dataset.origSrc = cardImg.src;

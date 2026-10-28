@@ -14,7 +14,6 @@ const { runMigrations } = require('./src/db/migrate');
 const setupSocketIO = require('./src/socket');
 
 const compression = require('compression');
-const { ensureMp4FastStart, optimizeVideosInDirectories } = require('./src/utils/mp4FastStart');
 const logger = require('./src/utils/logger');
 
 // ثبت لحظه‌ای کرش‌ها و خطاهای غیرمنتظره جهت عیب‌یابی سرور
@@ -31,7 +30,6 @@ const server = http.createServer(app);
 
 const MEDIA_STREAM_REGEX = /\.(mp4|webm|mov|mkv|3gp|m4v|avi|mp3|wav|ogg|oga|m4a|aac|flac|opus)$/i;
 const STATIC_CACHE_REGEX = /\.(webp|jpg|jpeg|jfif|png|apng|gif|svg|avif|bmp|ico|woff2|woff|ttf|mp4|webm|mov|mkv|3gp|m4v|avi|mp3|wav|ogg|oga|m4a|aac|flac|opus|pdf)$/i;
-const checkedFastStartFiles = new Set();
 
 // پیکربندی Middlewareها
 app.disable('x-powered-by');
@@ -62,25 +60,6 @@ app.use(compression({
 app.use(cors({ origin: process.env.CORS_ORIGIN || true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// بهینه‌سازی آنی FastStart (انتقال اتم moov به ابتدای ویدیو) پیش از استریم فایل‌های ویدیویی آپلودشده
-app.use(['/uploads', '/media-library'], (req, res, next) => {
-  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
-  try {
-    const cleanRel = decodeURIComponent(req.path || '').replace(/^\/+/, '');
-    if (/\.(mp4|mov|m4a|m4v)$/i.test(cleanRel)) {
-      const baseFolder = req.baseUrl.includes('media-library') ? 'media-library' : 'uploads';
-      // در محیط تست یا لوکال به فایل نمونه داخل گیت دست نزنیم تا git status تمیز بماند، اما در سرور و پوشه uploads همیشه بهینه شود
-      const isTrackedSample = baseFolder === 'media-library' && cleanRel === 'videos/first.mp4' && process.platform === 'win32';
-      const fullPath = path.join(__dirname, 'public', baseFolder, cleanRel);
-      if (!isTrackedSample && !checkedFastStartFiles.has(fullPath)) {
-        checkedFastStartFiles.add(fullPath);
-        ensureMp4FastStart(fullPath);
-      }
-    }
-  } catch (_) {}
-  next();
-});
 
 // سرو کردن بهینه فایل‌های استاتیک پوشه public (استریم آنی HTTP 206 بدون بافر Nginx/Cloudflare برای ویدیو و صوت)
 app.use(express.static(path.join(__dirname, 'public'), {
@@ -198,13 +177,7 @@ const PORT = process.env.PORT || 3000;
 async function startServer() {
   try {
     await runMigrations();
-    // بهینه‌سازی خودکار تمام ویدیوهای آپلودشده قبلی در پوشه uploads و weekly برای استریم آنی
     server.listen(PORT, () => {
-      setImmediate(() => {
-        try {
-          optimizeVideosInDirectories([path.join(__dirname, 'public', 'uploads')]);
-        } catch (_) {}
-      });
       console.log(`==================================================`);
       console.log(`🚀 سرور با موفقیت روی پورت ${PORT} اجرا شد.`);
       console.log(`🌐 آدرس تست پنل: http://localhost:${PORT}`);

@@ -120,7 +120,7 @@ test('Mazdak Cyber Warfare, Tamper Lockdown & Emergency Recovery (MASTER-15)', a
     assert.ok(engineJs.includes('احراز هویت'), 'Detective final message must instruct to use emergency authentication');
 
     // Student input locked
-    assert.ok(engineJs.includes('msgInput.disabled = true'), 'Must lock student composer input');
+    assert.ok(engineJs.includes("msgInput.setAttribute('readonly', 'true')"), 'Must lock student composer input');
   });
 
   await t.test('6. Emergency Authentication Portal: Single-input (Mobile only, NO Class Code)', () => {

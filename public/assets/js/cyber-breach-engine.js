@@ -526,7 +526,7 @@ class CyberBreachEngine {
   lockChatInput() {
     const msgInput = this.dom.msgInput;
     if (msgInput) {
-      msgInput.disabled = true;
+      msgInput.disabled = false;
       msgInput.setAttribute('readonly', 'true');
       msgInput.placeholder = '';
       msgInput.style.color = '#ffffff';
@@ -628,8 +628,12 @@ class CyberBreachEngine {
     });
     document.querySelectorAll('.evidence-card').forEach(card => {
       card.classList.remove('card-blackout');
+      card.style.removeProperty('pointer-events');
     });
     document.querySelectorAll('.evidence-card .evidence-mazdak-glitch-cover').forEach(el => el.remove());
+    if (this.dom.evidenceCount) {
+      this.dom.evidenceCount.textContent = `${document.querySelectorAll('#evidence-grid .evidence-card').length.toLocaleString('fa-IR')} مدرک`;
+    }
   }
 
   // --- افکت‌های صوتی ترکیبی وب‌آدیو (MASTER-13) ---
@@ -748,6 +752,9 @@ class CyberBreachEngine {
   start(payload = {}) {
     if (this.isPlaying) return;
     this.isPlaying = true;
+    document.body.classList.add('breach-dossier-locked');
+    const assistantsDialog = document.getElementById('assistants-photo-dialog');
+    if (assistantsDialog?.open) assistantsDialog.close();
     this.sceneGeneration++;
     this.currentSecond = 0;
     this.lastSecond = -1;
@@ -785,7 +792,7 @@ class CyberBreachEngine {
       // حالت پیش‌فرض MASTER-28: شروع طبیعی بدون پاپ‌آپ‌های ناگهانی مزاحم (شروع هک حذف شد)
       this.duration = 185; // کل زمان سکانس سینمایی طبق MASTER-15
       this.setCinematicPhase('surveillance', 'ارتباط با دستیاران دهکده', 0.05, 'CHANNEL OPEN // DETECTIVE BROADCAST');
-      this.unlockChatInput();
+      this.applyMazdakMediaStamps();
       this.renderFrame(0); // ارسال فوری اولین پیام در همان لحظه استارت هک
     }
 
@@ -853,9 +860,7 @@ class CyberBreachEngine {
 
     this.applyMazdakMediaStamps();
 
-    if (this.dom.evidenceCount) {
-      this.dom.evidenceCount.textContent = '۰ مدرک در دسترس (سیگنال مفقود)';
-    }
+    if (this.dom.evidenceCount) this.dom.evidenceCount.textContent = `${document.querySelectorAll('#evidence-grid .evidence-card').length.toLocaleString('fa-IR')} مدرک مخدوش‌شده`;
 
     // شروع آژیر واقعی استودیویی سایبری
     this.siren.start();
@@ -982,7 +987,7 @@ class CyberBreachEngine {
           input.style.height = '';
           input.classList.remove('ghost-typing-active');
           if (typeof onComplete === 'function') onComplete();
-        }, 11500);
+        }, 5500);
       }
     };
 
@@ -995,11 +1000,11 @@ class CyberBreachEngine {
     if (!el) return;
     if (isTyping && this.isPlaying) {
       el.style.display = 'flex';
-      const textSpan = el.querySelector('span');
-      if (textSpan) textSpan.textContent = 'کارآگاه در حال نوشتن است...';
+      el.textContent = 'کارآگاه در حال نوشتن است...';
       const box = this.dom.messagesBox || document.getElementById('messages-box');
       if (box) box.scrollTop = box.scrollHeight;
     } else {
+      el.textContent = '';
       el.style.display = 'none';
     }
   }
@@ -1854,6 +1859,7 @@ class CyberBreachEngine {
   reset() {
     console.log('[CyberBreachEngine] Resetting cyber breach state...');
     this.isPlaying = false;
+    document.body.classList.remove('breach-dossier-locked');
     this.sceneGeneration++;
     this.storylineActive = false;
     this.ejectionModalTriggered = false;
