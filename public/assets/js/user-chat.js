@@ -113,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // راه‌اندازی ساعت دیجیتالی نئونی دقیق در هدر چت
   initNeonDigitalClock();
+  initClientVersionGuard();
 
   // بارگذاری فوری از کش مرورگر برای نمایش آنی و بدون تاخیر پیام‌ها
   try {
@@ -337,6 +338,67 @@ function initNeonDigitalClock() {
   };
   tick();
   setInterval(tick, 1000);
+}
+
+function clientAssetFingerprint(doc) {
+  return [...doc.querySelectorAll('link[rel="stylesheet"][href], script[src]')]
+    .map(element => element.getAttribute('href') || element.getAttribute('src'))
+    .filter(url => url && url.startsWith('/assets/'))
+    .join('|');
+}
+
+function initClientVersionGuard() {
+  const loadedFingerprint = clientAssetFingerprint(document);
+  if (!loadedFingerprint) return;
+  let pendingUpdate = false;
+  let checking = false;
+  let lastInteractionAt = Date.now();
+  const markInteraction = () => { lastInteractionAt = Date.now(); };
+  window.addEventListener('pointerdown', markInteraction, { passive: true });
+  window.addEventListener('keydown', markInteraction);
+
+  const canReload = () => {
+    if (!pendingUpdate || window.cyberBreachEngine?.isPlaying || sessionData.is_hacked) return false;
+    if (activeUserUpload || liveAudioRequested) return false;
+    if (document.getElementById('msg-input')?.value.trim()) return false;
+    if (document.querySelector('dialog[open]')) return false;
+    if ([...document.querySelectorAll('audio, video')].some(media => !media.paused && !media.ended)) return false;
+    const idleMs = Date.now() - lastInteractionAt;
+    return idleMs >= (document.hidden ? 30000 : 180000);
+  };
+
+  const applyIfSafe = () => {
+    if (canReload()) window.location.reload();
+  };
+
+  const checkVersion = async () => {
+    if (checking) return;
+    if (pendingUpdate) return applyIfSafe();
+    checking = true;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    try {
+      const response = await fetch('/chat.html', { cache: 'no-store', signal: controller.signal });
+      if (!response.ok) return;
+      const latestPage = new DOMParser().parseFromString(await response.text(), 'text/html');
+      const latestFingerprint = clientAssetFingerprint(latestPage);
+      if (latestFingerprint && latestFingerprint !== loadedFingerprint) {
+        pendingUpdate = true;
+        applyIfSafe();
+      }
+    } catch (_) {
+      // A transient network failure should not interrupt the current session.
+    } finally {
+      clearTimeout(timeout);
+      checking = false;
+    }
+  };
+
+  setInterval(checkVersion, 120000);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) checkVersion();
+    else applyIfSafe();
+  });
 }
 
 // مقداردهی اولیه سوکت

@@ -9,12 +9,13 @@
   'use strict';
 
   const ASSET_VERSION = '10.0';
-  const CACHE_STORAGE_NAME = 'raze-dehkade-assets-v10';
-
-  const CRITICAL_VAULT_AND_KRAFT_ASSETS = [
+  const VISIBLE_VAULT_ASSETS = [
     `/assets/vault/real-vault-door-body.jpg?v=${ASSET_VERSION}`,
     `/assets/vault/real-vault-bolts-strip.png?v=${ASSET_VERSION}`,
-    `/assets/vault/real-chrome-handle.png?v=${ASSET_VERSION}`,
+    `/assets/vault/real-chrome-handle.png?v=${ASSET_VERSION}`
+  ];
+
+  const DEFERRED_VAULT_ASSETS = [
     `/assets/vault/real-vault-interior.jpg?v=${ASSET_VERSION}`,
     `/assets/vault/real-kraft-closed-top.png?v=${ASSET_VERSION}`,
     `/assets/vault/real-kraft-pocket-front.png?v=${ASSET_VERSION}`,
@@ -42,10 +43,12 @@
   // وضعیت فعال‌سازی گاوصندوق توسط ادمین در هفته خاص (پیش‌فرض: قفل و غیرفعال)
   let isVaultAdminUnlocked = false;
   let vaultTargetWeek = 5;
+  let deferredVaultWarmStarted = false;
 
   function setVaultAdminUnlocked(unlocked, targetWeek = 5) {
     isVaultAdminUnlocked = Boolean(unlocked);
     if (targetWeek) vaultTargetWeek = Number(targetWeek);
+    if (isVaultAdminUnlocked) warmDeferredVaultAssets();
   }
 
   // نگهداری رفرنس تصاویر در حافظه مرورگر تا هرگز Garbage Collect نشوند و در لحظه رندر شوند
@@ -92,52 +95,22 @@
     });
   }
 
-  async function warmBrowserAssetCacheOnFirstVisit() {
-    // ۱. پیش‌بارگذاری فوری تمام تصاویر گاوصندوق، دستگیره، زبانه‌ها، پاکت کاهی و دعوت‌نامه در حافظه و کش مرورگر
-    await Promise.all(CRITICAL_VAULT_AND_KRAFT_ASSETS.map(preloadSingleImageIntoMemory));
-
-    // ۲. ذخیره در CacheStorage مرورگر (در صورت پشتیبانی) برای ماندگاری کامل در کش دیسک
-    if ('caches' in window) {
-      try {
-        const cache = await window.caches.open(CACHE_STORAGE_NAME);
-        await Promise.all(
-          CRITICAL_VAULT_AND_KRAFT_ASSETS.map(async (url) => {
-            const match = await cache.match(url);
-            if (!match) {
-              await cache.add(url).catch(() => {});
-            }
-          })
-        );
-      } catch (_) {}
-    }
-
-    // ۳. پیش‌بارگذاری تدریجی تصاویر WebP دستیاران در پس‌زمینه (Idle Batching) تا گالری دستیاران هم از کش باز شود
-    const scheduleIdle = window.requestIdleCallback || ((cb) => setTimeout(cb, 250));
+  function warmDeferredVaultAssets() {
+    if (deferredVaultWarmStarted) return;
+    deferredVaultWarmStarted = true;
+    const scheduleIdle = window.requestIdleCallback || ((callback) => setTimeout(callback, 250));
     scheduleIdle(async () => {
-      try {
-        const res = await fetch('/assets/assistants/portraits-manifest.json');
-        if (!res.ok) return;
-        const manifest = await res.json();
-        const classes = manifest && manifest.classes ? Object.values(manifest.classes) : [];
-        const allWebpUrls = [];
-        for (const cls of classes) {
-          if (cls && Array.isArray(cls.students)) {
-            for (const st of cls.students) {
-              if (st && st.url) {
-                allWebpUrls.push(st.url);
-              }
-            }
-          }
-        }
-        // دانلود دسته‌ای (۴ تصویر در هر نوبت) در پس‌زمینه تا پهنای باند چت اشغال نشود ولی همه در کش مرورگر ذخیره شوند
-        const batchSize = 4;
-        for (let i = 0; i < allWebpUrls.length; i += batchSize) {
-          const batch = allWebpUrls.slice(i, i + batchSize);
-          await Promise.all(batch.map(preloadSingleImageIntoMemory));
-          await new Promise((r) => setTimeout(r, 90));
-        }
-      } catch (_) {}
-    });
+      for (let i = 0; i < DEFERRED_VAULT_ASSETS.length; i += 2) {
+        await Promise.all(DEFERRED_VAULT_ASSETS.slice(i, i + 2).map(preloadSingleImageIntoMemory));
+        if (i + 2 < DEFERRED_VAULT_ASSETS.length) await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }, { timeout: 8000 });
+  }
+
+  function warmBrowserAssetCacheOnFirstVisit() {
+    // The visible door is needed immediately; the large kraft assets wait for vault access.
+    Promise.all(VISIBLE_VAULT_ASSETS.map(preloadSingleImageIntoMemory));
+    if (isVaultAdminUnlocked) warmDeferredVaultAssets();
   }
 
   function normalizeVaultCode(raw) {
