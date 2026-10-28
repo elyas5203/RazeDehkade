@@ -178,7 +178,7 @@ async function ensureBrowserCompatibleImage(filePath) {
   }
 }
 
-const { ensureMp4FastStart } = require('../utils/mp4FastStart');
+const { ensureMp4FastStartAsync } = require('../utils/mp4FastStart');
 const VIDEO_EXTENSIONS = new Set(['mp4', 'webm', '3gp', 'mov', 'mkv', 'm4v']);
 
 /**
@@ -202,7 +202,7 @@ router.post('/', authenticateToken, (req, res) => {
 
     const fullUploadedPath = path.join(uploadDir, req.file.filename);
     await ensureBrowserCompatibleImage(fullUploadedPath);
-    ensureMp4FastStart(fullUploadedPath);
+    await ensureMp4FastStartAsync(fullUploadedPath);
 
     const fileUrl = `/uploads/${req.file.filename}`;
     const fileName = decodeOriginalFilename(req.file.originalname);
@@ -339,7 +339,7 @@ async function processChunkUpload(payload = {}) {
       const finalPath = path.join(uploadDir, finalFilename);
       fs.renameSync(tempPath, finalPath);
       await ensureBrowserCompatibleImage(finalPath);
-      ensureMp4FastStart(finalPath);
+      await ensureMp4FastStartAsync(finalPath);
       const finalStat = fs.statSync(finalPath);
 
       return {

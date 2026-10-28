@@ -7,7 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { execFile } = require('child_process');
-const { ensureMp4FastStart } = require('./mp4FastStart');
+const { ensureMp4FastStartAsync } = require('./mp4FastStart');
 
 const CANDIDATE_FFMPEG_PATHS = [
   process.env.FFMPEG_PATH,
@@ -155,7 +155,7 @@ async function ensureStreamableVideo(filePath, mimeType) {
   if (isMp4) {
     // برای MP4 موجود، اتم moov را به ابتدای فایل می‌بریم تا پخش آنی شود
     try {
-      ensureMp4FastStart(filePath);
+      await ensureMp4FastStartAsync(filePath);
     } catch (_) {}
     return {
       filePath,

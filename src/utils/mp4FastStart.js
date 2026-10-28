@@ -7,6 +7,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 
 const CONTAINER_ATOMS = new Set(['moov', 'trak', 'edts', 'mdia', 'minf', 'dinf', 'stbl']);
 const FASTSTART_EXTS = new Set(['.mp4', '.mov', '.m4a', '.m4v']);
@@ -262,6 +263,59 @@ function ensureMp4FastStart(filePath) {
   }
 }
 
+// Uploads must not copy MP4 data on the HTTP/Socket.IO event loop.
+// Two workers bound both disk contention and memory use during concurrent uploads.
+const fastStartQueue = [];
+let activeFastStartWorkers = 0;
+const MAX_FASTSTART_WORKERS = 2;
+
+function pumpFastStartQueue() {
+  while (activeFastStartWorkers < MAX_FASTSTART_WORKERS && fastStartQueue.length) {
+    const { filePath, resolve } = fastStartQueue.shift();
+    activeFastStartWorkers++;
+    let result = null;
+    let workerError = null;
+    let worker;
+    try {
+      worker = new Worker(__filename, { workerData: { mode: 'faststart', filePath } });
+    } catch (error) {
+      activeFastStartWorkers--;
+      resolve({ optimized: false, reason: error.message });
+      continue;
+    }
+    worker.once('message', value => { result = value; });
+    worker.once('error', error => { workerError = error; });
+    worker.once('exit', code => {
+      activeFastStartWorkers--;
+      if (workerError || code !== 0 || !result) {
+        const reason = workerError?.message || `worker_exit_${code}`;
+        console.warn(`[mp4FastStart] Worker failed for ${path.basename(filePath)}: ${reason}`);
+        resolve({ optimized: false, reason });
+      } else {
+        resolve(result);
+      }
+      pumpFastStartQueue();
+    });
+  }
+}
+
+function ensureMp4FastStartAsync(filePath) {
+  if (!filePath || typeof filePath !== 'string') {
+    return Promise.resolve({ optimized: false, reason: 'invalid_path' });
+  }
+  if (!FASTSTART_EXTS.has(path.extname(filePath).toLowerCase())) {
+    return Promise.resolve({ optimized: false, reason: 'unsupported_ext' });
+  }
+  return new Promise(resolve => {
+    fastStartQueue.push({ filePath, resolve });
+    pumpFastStartQueue();
+  });
+}
+
+if (!isMainThread && workerData?.mode === 'faststart') {
+  parentPort.postMessage(ensureMp4FastStart(workerData.filePath));
+}
+
 /**
  * اسکن و بهینه‌سازی تمام ویدیوهای موجود در پوشه‌های آپلود هنگام بالا آمدن سرور
  * @param {string[]} dirPaths
@@ -291,5 +345,6 @@ function optimizeVideosInDirectories(dirPaths = []) {
 
 module.exports = {
   ensureMp4FastStart,
+  ensureMp4FastStartAsync,
   optimizeVideosInDirectories,
 };
