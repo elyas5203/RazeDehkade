@@ -766,7 +766,7 @@ function renderMessage(msg, options = {}) {
     `;
   } else if (isUser && msg.message_type === 'video' && fileUrl !== '#') {
     div.classList.add('has-user-media');
-    bodyContent = `<video controls playsinline preload="auto" src="${fileUrl}" class="user-chat-video"></video>`;
+    bodyContent = `<video controls playsinline preload="none" src="${fileUrl}" class="user-chat-video"></video>`;
   } else if (isUser && (msg.message_type === 'file' || msg.message_type === 'voice') && fileUrl !== '#') {
     const cleanLabel = fixMojibakeText(msg.file_name || msg.content || 'فایل پیوست');
     bodyContent = `<a href="${fileUrl}" download target="_blank" rel="noopener" class="user-chat-file-chip">📎 <span>${escapeHtml(cleanLabel)}</span></a>`;
@@ -1098,7 +1098,7 @@ function evidenceMediaMarkup(msg, expanded = false) {
           <span class="media-loading-spinner"></span>
           <span id="mediaLoadingText">در حال اتصال آنی به استریم ویدیو…</span>
         </div>
-        <video id="evidenceMediaPlayer" controls playsinline webkit-playsinline preload="auto" autoplay src="${url}" data-original-url="${url}"></video>
+        <video id="evidenceMediaPlayer" controls playsinline webkit-playsinline preload="metadata" autoplay src="${url}" data-original-url="${url}"></video>
         <div class="media-stream-bar" id="mediaStreamBar">
           <div class="media-stream-info">
             <span class="media-stream-status" id="mediaBufferStatus">⚡ پخش آنلاین (استریم زنده) — در حال دریافت و بافر هم‌زمان…</span>
@@ -1119,7 +1119,7 @@ function evidenceMediaMarkup(msg, expanded = false) {
           <span class="media-loading-spinner"></span>
           <span id="mediaLoadingText">در حال اتصال آنی به استریم صوتی…</span>
         </div>
-        <audio id="evidenceMediaPlayer" controls playsinline webkit-playsinline preload="auto" autoplay src="${url}" data-original-url="${url}"></audio>
+        <audio id="evidenceMediaPlayer" controls playsinline webkit-playsinline preload="metadata" autoplay src="${url}" data-original-url="${url}"></audio>
         <div class="media-stream-bar" id="mediaStreamBar">
           <div class="media-stream-info">
             <span class="media-stream-status" id="mediaBufferStatus">⚡ پخش آنلاین (استریم زنده) — در حال دریافت و بافر هم‌زمان…</span>

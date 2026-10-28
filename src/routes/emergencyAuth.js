@@ -25,10 +25,12 @@ const videoUpload = multer({
   fileFilter: (_req, file, cb) => cb(null, ['video/webm', 'video/mp4'].includes(file.mimetype))
 });
 const questionIds = new Set([
+  'q_student_name',
   'q_shoe_rotary', 'q_terrorist_newspaper', 'q_hajj', 'q_padari',
   'q_invest_2026', 'q_oil_painting', 'q_letter_translators',
   'q_migration_reason', 'q_gem_feature', 'q_police_shoe_store',
-  'q_last_village_city', 'q_precious_gem'
+  'q_last_village_city', 'q_precious_gem',
+  'q_final_video_message'
 ]);
 
 const normalizePhone = value => String(value || '').replace(/[^0-9]/g, '');
@@ -182,9 +184,9 @@ router.post('/submissions', authenticateToken, requireStudent, videoUpload.singl
       return res.status(400).json({ success: false, message: 'ویدیو معتبر نیست. دوباره ضبط کنید.' });
     }
     const duration = await videoDurationSeconds(req.file.path);
-    if (duration !== null && duration > 45) {
+    if (duration !== null && duration > 65) {
       fs.unlink(req.file.path, () => {});
-      return res.status(400).json({ success: false, message: 'ویدیو باید حداکثر ۴۵ ثانیه باشد.' });
+      return res.status(400).json({ success: false, message: 'ویدیو باید حداکثر ۱ دقیقه باشد.' });
     }
     if (!await phoneMatchesSession(req.user.sessionId, phone)) {
       fs.unlink(req.file.path, () => {});

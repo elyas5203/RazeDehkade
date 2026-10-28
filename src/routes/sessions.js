@@ -67,6 +67,19 @@ router.post('/', requireAdmin, async (req, res) => {
  * GET /api/sessions/:id/messages
  * دریافت تاریخچه پیام‌های یک جلسه (ادمین یا کاربر همان جلسه)
  */
+router.get('/:id/hack-status', authenticateToken, async (req, res) => {
+  try {
+    const sessionId = parseInt(req.params.id, 10);
+    if (req.user.role !== 'admin' && Number(req.user.sessionId) !== sessionId) {
+      return res.status(403).json({ success: false, message: 'عدم دسترسی' });
+    }
+    const isHacked = await Session.isHacked(sessionId);
+    res.json({ success: true, sessionId, is_hacked: isHacked ? 1 : 0 });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 router.get('/:id/messages', authenticateToken, async (req, res) => {
   try {
     const sessionId = parseInt(req.params.id, 10);

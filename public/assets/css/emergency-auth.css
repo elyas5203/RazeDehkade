@@ -529,17 +529,7 @@ body.emergency-auth-page {
 }
 
 .q-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  border-radius: 20px;
-  color: var(--gold);
-  font-size: 12px;
-  font-weight: 800;
-  margin-bottom: 12px;
+  display: none !important;
 }
 
 .q-title-text {
@@ -879,8 +869,7 @@ body.emergency-auth-page {
 }
 
 .newspaper-header-banner {
-  background: #1c150c;
-  border: 1px solid #785020;
+  display: none !important;
   border-radius: 12px;
   padding: 16px;
   width: 100%;

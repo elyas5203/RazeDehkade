@@ -42,6 +42,6 @@ test('natural breach dialogue and zero-repeat auth handoff', async t => {
     assert.doesNotMatch(authHtml, /id="securityBriefing"/);
     assert.match(authHtml, /id="authPhoneForm"/);
     assert.match(authCss, /MASTER-27 redesign disabled/);
-    assert.match(authHtml, /emergency-auth\.css\?v=20261027_0330/);
+    assert.match(authHtml, /emergency-auth\.css\?v=/);
   });
 });

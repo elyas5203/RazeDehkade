@@ -199,8 +199,12 @@ async function startServer() {
   try {
     await runMigrations();
     // بهینه‌سازی خودکار تمام ویدیوهای آپلودشده قبلی در پوشه uploads و weekly برای استریم آنی
-    optimizeVideosInDirectories([path.join(__dirname, 'public', 'uploads')]);
     server.listen(PORT, () => {
+      setImmediate(() => {
+        try {
+          optimizeVideosInDirectories([path.join(__dirname, 'public', 'uploads')]);
+        } catch (_) {}
+      });
       console.log(`==================================================`);
       console.log(`🚀 سرور با موفقیت روی پورت ${PORT} اجرا شد.`);
       console.log(`🌐 آدرس تست پنل: http://localhost:${PORT}`);

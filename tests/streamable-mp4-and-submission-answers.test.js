@@ -11,34 +11,40 @@ const clientJs = fs.readFileSync(path.join(root, 'public/assets/js/emergency-aut
 const botJs = fs.readFileSync(path.join(root, 'MohtavaTelBot/bot.js'), 'utf8');
 
 test('MASTER-24: Streamable MP4 Dispatch & Complete Submission Answers Transmission', async t => {
-  await t.test('1. QUESTION_LABELS maps all 12 questions in exact order', () => {
+  await t.test('1. QUESTION_LABELS maps all 14 questions in exact order', () => {
     const expectedIds = [
+      'q_student_name',
       'q_shoe_rotary', 'q_terrorist_newspaper', 'q_hajj', 'q_padari',
       'q_invest_2026', 'q_oil_painting', 'q_letter_translators',
       'q_migration_reason', 'q_gem_feature', 'q_police_shoe_store',
-      'q_last_village_city', 'q_precious_gem'
+      'q_last_village_city', 'q_precious_gem',
+      'q_final_video_message'
     ];
     const keys = Object.keys(transcoderJs.QUESTION_LABELS);
     assert.deepEqual(keys, expectedIds);
+    assert.match(transcoderJs.QUESTION_LABELS.q_student_name, /نام و نام خانوادگی/);
     assert.match(transcoderJs.QUESTION_LABELS.q_shoe_rotary, /کفش‌فروشی تنها/);
     assert.match(transcoderJs.QUESTION_LABELS.q_terrorist_newspaper, /گروه تروریستی/);
     assert.match(transcoderJs.QUESTION_LABELS.q_precious_gem, /جواهر ارزشمند/);
+    assert.match(transcoderJs.QUESTION_LABELS.q_final_video_message, /دهکده آخر/);
   });
 
   await t.test('2. formatAnswersReport formats Persian summary with metadata and all answers', () => {
     const sampleAnswers = {
+      q_student_name: 'علیرضا حسینی',
       q_shoe_rotary: '05138440000',
       q_terrorist_newspaper: 'مزداک',
       q_hajj: 'از روی رحمت به پدر و مادر نگاه کنیم',
-      q_padari: 'داداش بودند',
+      q_padari: 'چهار صبح با پادری',
       q_invest_2026: 'نیکی به پدر و مادر طبق حدیث امام صادق (ع)',
       q_oil_painting: 'چون باید سه پایه داشته باشیم',
       q_letter_translators: 'تاریخ شناسان',
       q_migration_reason: 'خشکسالی و کمبود غذا و آب آشامیدنی',
-      q_gem_feature: 'این جواهر می‌تواند حافظه انسان‌ها را تغییر دهد',
+      q_gem_feature: 'هر کس از آن جواهر داشته باشد، خوشبخت می‌شود.',
       q_police_shoe_store: 'در مغازه بسته بود و صاحب آن به دلیل گاز سمی بیهوش شده بود',
       q_last_village_city: 'مشهد',
-      q_precious_gem: 'محبت و ولایت امیرالمومنین حضرت علی علیه السلام'
+      q_precious_gem: 'محبت و ولایت امیرالمومنین حضرت علی علیه السلام',
+      q_final_video_message: 'پاسخ ویدیویی همراه با نام و نام خانوادگی و استدلال شفاهی'
     };
     const report = transcoderJs.formatAnswersReport(sampleAnswers, {
       className: 'کلاس کارآگاهان جوان',
@@ -52,7 +58,8 @@ test('MASTER-24: Streamable MP4 Dispatch & Complete Submission Answers Transmiss
     assert.match(report, /SEC-A1B2C3D4/);
     assert.match(report, /۱\. شماره کفش‌فروشی تنها:\s*«05138440000»/);
     assert.match(report, /۲\. اسم گروه تروریستی \(پازل روزنامه\):\s*«مزداک»/);
-    assert.match(report, /۱۲\. جواهر ارزشمند پرونده \(پاسخ شفاهی سلفی\):\s*«محبت و ولایت امیرالمومنین حضرت علی علیه السلام»/);
+    assert.match(report, /۱۲\. جواهر ارزشمند پرونده:\s*«محبت و ولایت امیرالمومنین حضرت علی علیه السلام»/);
+    assert.match(report, /۱۳\. ویدیوی تشریح رخدادهای دهکده آخر \(ویدیومسیج\):\s*«پاسخ ویدیویی همراه با نام و نام خانوادگی و استدلال شفاهی»/);
   });
 
   await t.test('3. Client MediaRecorder prioritizes MP4 container before WebM', () => {

@@ -50,9 +50,15 @@
   const trackingIdDisplay = document.getElementById('trackingIdDisplay');
 
   // =========================================================================
-  // Question Bank (12 Specialized Questions + Mini-Games)
+  // Question Bank (14 Specialized Questions + Mini-Games - MASTER-33)
   // =========================================================================
   const QUESTIONS_DATABASE = [
+    {
+      id: 'q_student_name',
+      type: 'text_input',
+      title: 'نام و نام خانوادگی‌تان را بنویسید.',
+      placeholder: 'نام و نام خانوادگی خود را بنویسید...'
+    },
     {
       id: 'q_shoe_rotary',
       type: 'rotary_phone',
@@ -64,7 +70,7 @@
       type: 'newspaper_puzzle',
       title: 'اسم گروه تروریستی چه بود؟',
       subtitle: 'تکه‌های نام را کنار هم بگذار.',
-      pieces: ['مز', 'داک', 'ده', 'کده', 'کار', 'آگاه']
+      pieces: ['مز', 'ده', 'کده', 'داک', 'کار', 'آگاه']
     },
     {
       id: 'q_hajj',
@@ -80,13 +86,12 @@
     {
       id: 'q_padari',
       type: 'choice',
-      scene: 'family',
-      title: 'آقای پادری گوینده اخبار چه نسبتی با اقایان پادری‌ها که به دهکده های مرموز رفتن داشت؟',
+      title: 'بهترین زمان برای دیدن اخبار کی هست که خوابمون نبره؟',
       options: [
-        { letter: 'الف', text: 'عمه' },
-        { letter: 'ب', text: 'ارواح عمه اش ، خالش بود بابا' },
-        { letter: 'ج', text: 'اخه عمه و خاله که زن ان، داداش بودن' },
-        { letter: 'د', text: 'بابا این پادری حموم بود اونها پادری دستشویی، نسبتی نداشتن' }
+        { letter: 'الف', text: 'چهار صبح با پادری' },
+        { letter: 'ب', text: 'بعد آبگوشت با دوغ آبعلی' },
+        { letter: 'ج', text: 'وسط کلاس علوم رو صندلی' },
+        { letter: 'د', text: 'صبح شنبه ۱ مهر😭😭😭' }
       ]
     },
     {
@@ -143,10 +148,10 @@
       scene: 'gem',
       title: 'ویژگی خاص این جواهر از نظر تاریخ‌شناسان چه بود؟',
       options: [
-        { letter: 'الف', text: 'هر کس آن را داشته باشد، همیشه ثروتمند می‌ماند.' },
-        { letter: 'ب', text: 'این جواهر می‌تواند بیماری‌های جسمی را درمان کند.' },
+        { letter: 'الف', text: 'برامون صبح‌ها نون تازه می‌گیره' },
+        { letter: 'ب', text: 'موقع امتحان بهمون تقلب می‌رسونه' },
         { letter: 'ج', text: 'هر کس از آن جواهر داشته باشد، خوشبخت می‌شود.' },
-        { letter: 'د', text: 'این جواهر می‌تواند حافظه انسان‌ها را تغییر دهد.' }
+        { letter: 'د', text: 'تو کل دنیا همه جا ازش خیلی زیاد هست' }
       ]
     },
     {
@@ -183,6 +188,11 @@
         { letter: 'ج', text: 'پیامبر صلی الله علیه و آله و سلم' },
         { letter: 'د', text: 'امام زمان علیه السلام' }
       ]
+    },
+    {
+      id: 'q_final_video_message',
+      type: 'video_message',
+      title: 'در دهکده اخر چه اتفاقی افتاد و دشمنان چه کارهایی کردن؟به صورت خلاصه توضیح دهید.'
     }
   ];
 
@@ -304,12 +314,12 @@
       try {
         const token = sessionStorage.getItem('userToken');
         if (!token) return;
-        const res = await fetch(`/api/sessions/${sessionId}/messages`, {
+        const res = await fetch(`/api/sessions/${sessionId}/hack-status`, {
           headers: { 'Authorization': 'Bearer ' + token }
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.session && !data.session.is_hacked) {
+          if (data && !data.is_hacked) {
             handleUnhackSuccess();
           }
         }
@@ -344,10 +354,15 @@
     if (verificationResult.session) sessionStorage.setItem('userSession', JSON.stringify(verificationResult.session));
     sessionStorage.setItem('emergency_user_phone', phone);
     clientSubmissionId = createSubmissionIdentity();
+    const firstNameQ = QUESTIONS_DATABASE.find(q => q.id === 'q_student_name');
+    const lastVideoQ = QUESTIONS_DATABASE.find(q => q.id === 'q_final_video_message');
+    const middleQuestions = QUESTIONS_DATABASE.filter(q => q.id !== 'q_student_name' && q.id !== 'q_final_video_message');
+
     activeQuestions = [
-      ...shuffleArray(QUESTIONS_DATABASE.filter(q => q.id !== 'q_precious_gem')),
-      QUESTIONS_DATABASE.find(q => q.id === 'q_precious_gem')
-    ];
+      firstNameQ,
+      ...shuffleArray(middleQuestions),
+      lastVideoQ
+    ].filter(Boolean);
     currentQuestionIndex = 0;
 
     if (securityBriefing) securityBriefing.hidden = true;
@@ -439,9 +454,9 @@
     const total = activeQuestions.length;
     const currentNum = currentQuestionIndex + 1;
     const q = activeQuestions[currentQuestionIndex];
-    if (q.id !== 'q_precious_gem') stopSelfieCamera();
+    if (q.id !== 'q_final_video_message') stopSelfieCamera();
     const railSteps = document.querySelectorAll('.rail-protocol li');
-    if (railSteps.length === 3 && q.id === 'q_precious_gem') {
+    if (railSteps.length === 3 && q.id === 'q_final_video_message') {
       railSteps[1].classList.remove('is-active');
       railSteps[1].classList.add('is-done');
       railSteps[2].classList.add('is-active');
@@ -465,8 +480,10 @@
 
     dynamicQuestionSlot.innerHTML = '';
 
-    if (q.id === 'q_precious_gem') {
+    if (q.id === 'q_final_video_message' || q.type === 'video_message') {
       renderSelfieQuestion(q);
+    } else if (q.type === 'text_input') {
+      renderTextInputQuestion(q);
     } else if (q.type === 'rotary_phone') {
       renderRotaryPhoneGame(q);
     } else if (q.type === 'newspaper_puzzle') {
@@ -495,32 +512,65 @@
     selfieStream = null;
   }
 
+  function renderTextInputQuestion(q) {
+    const wrap = document.createElement('div');
+    wrap.className = 'q-card-header';
+    wrap.innerHTML = `
+      <h2 class="q-title-text">${q.title}</h2>
+    `;
+
+    const inputWrap = document.createElement('div');
+    inputWrap.className = 'student-name-input-container';
+    inputWrap.style.cssText = 'margin: 24px auto 16px; max-width: 440px; width: 100%; box-sizing: border-box;';
+    const currentVal = userAnswers[q.id] || '';
+    inputWrap.innerHTML = `
+      <div style="position: relative;">
+        <input type="text" id="studentNameField" class="emergency-text-input" 
+          placeholder="${q.placeholder || 'نام و نام خانوادگی خود را بنویسید...'}" 
+          value="${currentVal.replace(/"/g, '&quot;')}" 
+          autocomplete="name" 
+          style="width: 100%; box-sizing: border-box; background: rgba(15, 23, 42, 0.7); border: 1.5px solid rgba(245, 158, 11, 0.45); border-radius: 12px; padding: 14px 16px; color: #fff; font-size: 15px; font-weight: 700; text-align: center; outline: none; transition: all 0.2s;" />
+      </div>
+      <p style="text-align: center; color: #94a3b8; font-size: 13px; margin-top: 12px; line-height: 1.6;">
+        لطفاً نام و نام خانوادگی خود را کامل وارد کنید و سپس دکمه «ثبت و گام بعد» را لمس کنید.
+      </p>
+    `;
+
+    dynamicQuestionSlot.appendChild(wrap);
+    dynamicQuestionSlot.appendChild(inputWrap);
+
+    const field = inputWrap.querySelector('#studentNameField');
+    if (field) {
+      setTimeout(() => field.focus(), 150);
+      field.addEventListener('input', (e) => {
+        userAnswers[q.id] = e.target.value.trim();
+      });
+      field.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          advanceToNextQuestion();
+        }
+      });
+    }
+  }
+
   function renderSelfieQuestion(q) {
     const card = document.createElement('section');
     card.className = 'selfie-question';
     card.innerHTML = `
-      <div class="q-badge">آخرین پرسش پرونده</div>
       <h2 class="q-title-text">${q.title}</h2>
       
       <div class="selfie-instructions-box" style="background: rgba(245, 158, 11, 0.08); border: 1.5px solid rgba(245, 158, 11, 0.35); border-radius: 14px; padding: 14px 16px; margin: 12px 0 16px;">
         <p style="font-size: 13.5px; font-weight: 800; color: #fbbf24; margin-bottom: 6px;">
-          📋 دستورالعمل ضبط ویدیوی پاسخ نهایی:
+          📋 دستورالعمل ضبط ویدیو مسیج:
         </p>
         <ul style="font-size: 12.8px; color: #e2e8f0; line-height: 1.85; padding-right: 18px; margin: 0;">
-          <li>دفترچه پرونده را کنار صورتت بگیر و رو به دوربین نگاه کن.</li>
-          <li><strong>ابتدا نام و نام خانوادگی‌ات را با صدای واضح بگو.</strong></li>
-          <li>بگو حدس می‌زنی کدام گزینه از گزینه‌های زیر جواهر پرونده است.</li>
-          <li>یک توضیح کوتاه بده که به چه دلیل این گزینه را انتخاب کردی.</li>
+          <li>رو به دوربین نگاه کن و صدای دستگاهت را بررسی کن.</li>
+          <li>به صورت خلاصه توضیح بده در دهکده آخر چه اتفاقی افتاد و دشمنان چه کارهایی کردند.</li>
+          <li>نام و نام خانوادگی‌ات را هم در ابتدای ویدیو بگو.</li>
         </ul>
       </div>
 
-      <p class="selfie-instruction" style="font-size: 14.5px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">
-        این ۴ گزینه پیش روی شماست؛ به نظرت کدام است؟
-      </p>
-
-      <!-- گزینه‌های مرجع غیرقابل کلیک فقط جهت مشاهده و مقایسه دانش‌آموز -->
-      <div class="modern-options-grid selfie-answer-options" id="selfieAnswerOptions" style="margin-bottom: 16px;"></div>
-      
       <div class="selfie-viewfinder">
         <video id="selfieVideo" playsinline muted autoplay aria-label="پیش‌نمایش دوربین"></video>
         <span id="selfieStatus" role="status">دوربین خاموش است</span>
@@ -532,7 +582,7 @@
         <button type="button" id="selfieRetry" class="phone-action-btn" hidden>ضبط دوباره 🔄</button>
       </div>
 
-      <p class="selfie-note">ویدیو حداکثر ۳۰ تا ۴۵ ثانیه باشد. پس از پایان ضبط، ویدیو را بازبینی کن و در انتها دکمه «ثبت احراز هویت 🔒» را بزن.</p>
+      <p class="selfie-note">ویدیو حداکثر ۱ دقیقه باشد. پس از پایان ضبط، ویدیو را بازبینی کن و در انتها دکمه «ثبت احراز هویت 🔒» را بزن.</p>
     `;
 
     dynamicQuestionSlot.appendChild(card);
@@ -541,20 +591,7 @@
     const start = card.querySelector('#selfieStart');
     const stop = card.querySelector('#selfieStop');
     const retry = card.querySelector('#selfieRetry');
-    const answerOptions = card.querySelector('#selfieAnswerOptions');
 
-    // نمایش گزینه‌ها به عنوان کارت‌های مرجع غیرقابل کلیک (نمایش گزینه‌ها بدون دکمه رادیویی)
-    q.options.forEach(opt => {
-      const item = document.createElement('div');
-      item.className = 'choice-card-btn choice-reference-card';
-      item.style.pointerEvents = 'none';
-      item.style.cursor = 'default';
-      item.style.opacity = '0.92';
-      item.innerHTML = `<span class="choice-letter-badge">${opt.letter}</span><span class="choice-text">${opt.text}</span>`;
-      answerOptions.appendChild(item);
-    });
-
-    // دکمه شروع ضبط آماده به کار است و نیازی به کلیک گزینه‌ها ندارد
     start.disabled = false;
 
     const showRecorded = () => {
@@ -627,8 +664,8 @@
         start.hidden = true;
         retry.hidden = true;
         stop.hidden = false;
-        status.textContent = 'در حال ضبط… (نام و فامیل، گزینه انتخابی و دلیلت را بگو)';
-        selfieStopTimer = setTimeout(() => { if (selfieRecorder?.state === 'recording') selfieRecorder.stop(); }, 45000);
+        status.textContent = 'در حال ضبط… (توضیح خلاصه دهکده آخر و نام خود را بگو)';
+        selfieStopTimer = setTimeout(() => { if (selfieRecorder?.state === 'recording') selfieRecorder.stop(); }, 60000);
       } catch (error) {
         stopSelfieCamera();
         showAlert(error.name === 'NotAllowedError'
@@ -660,7 +697,7 @@
     const [label, instruction] = scenes[q.scene];
     const header = document.createElement('div');
     header.className = 'q-card-header';
-    header.innerHTML = `<div class="q-badge">${label}</div><h2 class="q-title-text">${q.title}</h2><p class="scene-instruction">${instruction}</p>`;
+    header.innerHTML = `<h2 class="q-title-text">${q.title}</h2><p class="scene-instruction">${instruction}</p>`;
     const scene = document.createElement('div');
     scene.className = `clue-scene clue-scene--${q.scene}`;
     const art = {
@@ -764,7 +801,6 @@
     const wrap = document.createElement('div');
     wrap.className = 'q-card-header';
     wrap.innerHTML = `
-      <div class="q-badge">کفش فروشی تنها</div>
       <h2 class="q-title-text">${q.title}</h2>
       <p class="rotary-help">انگشتت را داخل حلقه عدد بگذار و بچرخان، یا روی هر عدد کلیک کن تا صفحه بچرخد و شماره گرفته شود.</p>
     `;
@@ -785,10 +821,9 @@
       <div class="rotary-wheel-wrapper" style="position: relative !important; width: min(68vw, 240px) !important; height: min(68vw, 240px) !important; margin: 6px auto 16px !important; top: auto !important; left: auto !important; transform: none !important; aspect-ratio: 1 !important;">
         <div class="rotary-base-plate"></div>
         <div class="rotary-finger-stop" aria-hidden="true"></div>
-        <div class="rotary-dial-rotor" id="rotaryRotor">
-          <div class="rotary-center-hub" aria-hidden="true">
-            <span>کفش فروشی تنها</span>
-          </div>
+        <div class="rotary-dial-rotor" id="rotaryRotor"></div>
+        <div class="rotary-center-hub" id="rotaryCenterHub" aria-hidden="true">
+          <span>کفش فروشی تنها</span>
         </div>
       </div>
 
@@ -973,20 +1008,12 @@
     const wrap = document.createElement('div');
     wrap.className = 'q-card-header';
     wrap.innerHTML = `
-      <div class="q-badge">بریده روزنامه</div>
       <h2 class="q-title-text">${q.title}</h2>
       <p class="scene-instruction">${q.subtitle}</p>
     `;
 
     const container = document.createElement('div');
     container.className = 'newspaper-puzzle-wrap';
-
-    // Banner
-    const banner = document.createElement('div');
-    banner.className = 'newspaper-header-banner';
-    banner.innerHTML = `
-      <p class="newspaper-clue-quote">گزارش حمله به دهکده</p>
-    `;
 
     // Target Slots
     const slots = document.createElement('div');
@@ -1020,7 +1047,7 @@
       bank.appendChild(btn);
     });
 
-    container.appendChild(banner);
+    // MASTER-33: container.appendChild(banner) removed per user instruction
     container.appendChild(slots);
     container.appendChild(resultBanner);
     container.appendChild(bank);
@@ -1110,7 +1137,6 @@
     const wrap = document.createElement('div');
     wrap.className = 'q-card-header';
     wrap.innerHTML = `
-      <div class="q-badge">کارگاه رنگ روغن</div>
       <h2 class="q-title-text">${q.title}</h2>
       <p style="font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.6;">${q.subtitle}</p>
     `;
@@ -1194,7 +1220,6 @@
     const wrap = document.createElement('div');
     wrap.className = 'q-card-header q-sacred';
     wrap.innerHTML = `
-      <div class="q-badge">🗺️ مینی‌گیم نقشه تاکتیکی پایگاه</div>
       <h2 class="q-title-text">${q.title}</h2>
       <p style="font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.6;">${q.subtitle}</p>
     `;
@@ -1232,7 +1257,6 @@
     const wrap = document.createElement('div');
     wrap.className = 'q-card-header q-sacred';
     wrap.innerHTML = `
-      <div class="q-badge">✨ گشایش صندوقچه اسرار پرونده</div>
       <h2 class="q-title-text">${q.title}</h2>
       <p style="font-size: 13px; color: var(--muted); margin-top: 6px; line-height: 1.6;">${q.subtitle}</p>
     `;
@@ -1270,7 +1294,6 @@
     const wrap = document.createElement('div');
     wrap.className = `q-card-header ${q.sacred ? 'q-sacred' : ''}`;
     wrap.innerHTML = `
-      <div class="q-badge">${q.sacred ? '✨ سوال ویژه پرونده' : '🔍 پرسش کارآگاهی'}</div>
       <h2 class="q-title-text">${q.title}</h2>
     `;
 
@@ -1310,7 +1333,13 @@
   function advanceToNextQuestion() {
     clearAlert();
     const q = activeQuestions[currentQuestionIndex];
-    if (!userAnswers[q.id]) {
+    if (q.id === 'q_student_name') {
+      const val = (userAnswers[q.id] || '').trim();
+      if (!val || val.length < 2) {
+        showAlert('لطفاً نام و نام خانوادگی خود را کامل وارد کنید.');
+        return;
+      }
+    } else if (!userAnswers[q.id]) {
       showAlert('برای ادامه، یک پاسخ ثبت کن.');
       return;
     }

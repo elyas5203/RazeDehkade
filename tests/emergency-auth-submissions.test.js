@@ -16,10 +16,12 @@ const route = require('../src/routes/emergencyAuth');
 const { processOne } = require('../src/services/emergencyVideoQueue');
 
 const ids = [
+  'q_student_name',
   'q_shoe_rotary', 'q_terrorist_newspaper', 'q_hajj', 'q_padari',
   'q_invest_2026', 'q_oil_painting', 'q_letter_translators',
   'q_migration_reason', 'q_gem_feature', 'q_police_shoe_store',
-  'q_last_village_city', 'q_precious_gem'
+  'q_last_village_city', 'q_precious_gem',
+  'q_final_video_message'
 ];
 const answers = Object.fromEntries(ids.map(id => [id, 'انتخاب دانش‌آموز']));
 const webm = new Blob([Buffer.from('1a45dfa30000000000000000', 'hex')], { type: 'video/webm' });
