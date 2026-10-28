@@ -606,9 +606,9 @@ class CyberBreachEngine {
       }
     });
 
-    const countBadge = document.querySelector('.evidence-count-badge') || document.querySelector('.evidence-meta-pill');
+    const countBadge = document.getElementById('evidence-count');
     if (countBadge) {
-      countBadge.textContent = `${cards.length} مدرک مخدوش‌شده (سیگنال مفقود)`;
+      countBadge.textContent = `${cards.length.toLocaleString('fa-IR')} مدرک مخدوش‌شده`;
     }
   }
 
