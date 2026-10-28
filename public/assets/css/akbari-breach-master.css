@@ -303,8 +303,8 @@
 }
 
 .evidence-card.card-blackout .evidence-photo-box img {
-  filter: contrast(180%) brightness(35%) grayscale(90%) !important;
-  opacity: 0.25 !important;
+  filter: none !important;
+  opacity: 1 !important;
 }
 
 .card-glitch-overlay {
@@ -316,7 +316,7 @@
 }
 
 .evidence-card.card-blackout .card-glitch-overlay {
-  display: flex !important;
+  display: none !important;
   align-items: center;
   justify-content: center;
   flex-direction: column;

@@ -171,11 +171,22 @@ body.cyber-breach-active::after {
    4. EVIDENCE BOARD BLACKOUT & ELECTRIC THREAD ARCS
    ========================================================================== */
 .evidence-card.card-blackout {
-  filter: grayscale(1) brightness(0.25) contrast(1.8) !important;
-  border-color: rgba(255, 0, 60, 0.4) !important;
-  box-shadow: inset 0 0 20px rgba(255, 0, 60, 0.5) !important;
+  border: 1.5px solid rgba(255, 0, 60, 0.85) !important;
+  box-shadow: 0 0 18px rgba(255, 0, 60, 0.55), inset 0 0 15px rgba(255, 0, 60, 0.3) !important;
   pointer-events: none;
   transition: all 0.4s ease;
+  background: #110508 !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.evidence-card.card-blackout .evidence-photo-box img {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+.evidence-card.card-blackout .card-glitch-overlay {
+  display: none !important;
 }
 
 .board-health-compromised {
@@ -1485,29 +1496,57 @@ body.system-compromised-red::after {
   100% { transform: translateY(100vh); }
 }
 
-/* 3. واترمارک ماندگار تصویر مزداک در پس‌زمینه ستون چت */
+/* 3. واترمارک ماندگار و مشخص لوگوی مزداک در ستون چت */
+.field-chat.mazdak-bg,
 #messages-box.mazdak-bg {
-  position: relative;
+  position: relative !important;
 }
 
+.field-chat.mazdak-bg::before,
 #messages-box.mazdak-bg::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: url('/mazdak.jpg');
-  background-position: center 30%;
-  background-repeat: no-repeat;
-  background-size: cover;
-  opacity: 0.14;
-  filter: contrast(1.4) brightness(0.65) sepia(0.6) hue-rotate(305deg);
-  pointer-events: none;
-  z-index: 0;
-  transition: opacity 1.2s ease;
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background-image: url('/mazdak.jpg') !important;
+  background-position: center 38% !important;
+  background-repeat: no-repeat !important;
+  background-size: min(300px, 75%) auto !important;
+  opacity: 0.40 !important;
+  filter: contrast(1.15) brightness(1.0) !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  transition: opacity 1s ease !important;
 }
 
 #messages-box.mazdak-bg > * {
-  position: relative;
-  z-index: 1;
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+.mazdak-chat-watermark {
+  position: absolute !important;
+  top: 48% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: min(280px, 70%) !important;
+  max-width: 320px !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  opacity: 0.40 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  transition: opacity 0.8s ease-in-out !important;
+}
+
+.mazdak-chat-watermark img {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 280px !important;
+  object-fit: contain !important;
+  border-radius: 12px !important;
+  box-shadow: 0 0 30px rgba(255, 0, 60, 0.5) !important;
+  border: 1.5px solid rgba(255, 0, 60, 0.6) !important;
 }
 
 /* 4. استایل تایپ حرف‌به‌حرف روح مزداک در اینپوت کامپوزر بچه‌ها (کنتراست نئونی فوق‌العاده بالا و درخشان) */
@@ -1528,6 +1567,14 @@ body.system-compromised-red::after {
   caret-color: #00ffcc !important;
   letter-spacing: 0.5px !important;
   animation: ghostInputPulse 1.2s infinite alternate ease-in-out !important;
+  min-height: 68px !important;
+  max-height: 220px !important;
+  line-height: 1.6 !important;
+  overflow-y: hidden !important;
+  padding: 10px 12px !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  box-sizing: border-box !important;
 }
 
 @keyframes ghostInputPulse {
@@ -1619,26 +1666,28 @@ body.debug-test-mode .emergency-ejection-modal .ejection-actions {
 
 /* 4.6. روکش مخدوش مزداک روی تمام کارت‌های مدارک و اسناد بورد */
 .evidence-card .evidence-mazdak-glitch-cover {
-  position: absolute;
-  inset: 0;
-  z-index: 25;
-  background: #0d0205;
-  border-radius: inherit;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(255, 0, 60, 0.7);
-  box-shadow: 0 0 15px rgba(255, 0, 60, 0.5);
-  pointer-events: none;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 100 !important;
+  background: #0d0205 !important;
+  border-radius: inherit !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 1.5px solid rgba(255, 0, 60, 0.85) !important;
+  box-shadow: 0 0 18px rgba(255, 0, 60, 0.6) !important;
+  pointer-events: none !important;
 }
 
 .evidence-card .evidence-mazdak-glitch-cover img {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
-  filter: contrast(1.4) brightness(0.85) sepia(0.6) hue-rotate(310deg) saturate(2.5) !important;
-  opacity: 0.92 !important;
+  filter: contrast(1.15) brightness(1.05) !important;
+  opacity: 1 !important;
+  display: block !important;
 }
 
 .evidence-card .evidence-mazdak-glitch-cover .mazdak-corrupt-scanline {
@@ -1836,6 +1885,10 @@ body.cyber-breach-active #msg-input.ghost-typing-active {
   border: 2px solid #8bdbc4 !important;
   box-shadow: 0 0 0 3px #8bdbc444, 0 0 28px #9bffd544 !important;
   text-shadow: none !important; font-size: 16px !important;
+  min-height: 68px !important;
+  line-height: 1.6 !important;
+  white-space: pre-wrap !important;
+  overflow-y: hidden !important;
 }
 .emergency-ejection-modal {
   max-height: calc(100dvh - 28px); overflow-y: auto;
@@ -1860,3 +1913,123 @@ body.cyber-breach-active #msg-input.ghost-typing-active {
   body.cyber-breach-active #evidence-grid::after { animation: none !important; }
 }
 
+
+
+/* ==========================================================================
+   MASTER-28: CHOREOGRAPHED CYBER BREACH CINEMATICS & STORYLINE ENHANCEMENTS
+   ========================================================================== */
+
+/* 1. کدهای باکس سمت چپ (ترمینال امنیتی) کم‌کم رنگشان قرمز می‌شود */
+#security-terminal.breach-warming-up {
+  border-color: #ff3344 !important;
+  box-shadow: 0 0 25px rgba(255, 51, 68, 0.45) !important;
+  transition: border-color 3s ease, box-shadow 3s ease !important;
+}
+
+#security-terminal.breach-warming-up #live-terminal-content,
+#security-terminal.breach-warming-up .term-line,
+#security-terminal.breach-warming-up .term-line * {
+  color: #ff3344 !important;
+  text-shadow: 0 0 10px rgba(255, 51, 68, 0.75) !important;
+  transition: color 4s ease, text-shadow 4s ease !important;
+}
+
+/* 2. پر پر کردن و گلیچ تصاویر برد اسناد و مدارک */
+.evidence-flickering,
+.evidence-flickering .evidence-card,
+.evidence-flickering .evidence-card img,
+.evidence-flickering #evidence-grid {
+  animation: evidenceFlickerGlitch 0.45s infinite alternate ease-in-out !important;
+}
+
+@keyframes evidenceFlickerGlitch {
+  0% { opacity: 1; filter: none; }
+  20% { opacity: 0.28; filter: contrast(1.8) brightness(1.3) hue-rotate(60deg); }
+  45% { opacity: 0.95; filter: none; }
+  70% { opacity: 0.35; filter: invert(0.8) hue-rotate(180deg); }
+  100% { opacity: 0.8; filter: contrast(2.2) brightness(0.65); }
+}
+
+/* 3. واترمارک بزرگ و شفاف نشان مزداک در پس‌زمینه برد اسناد */
+.evidence-board.mazdak-bg,
+#evidence-grid.mazdak-bg {
+  position: relative !important;
+}
+
+.evidence-board.mazdak-bg::before,
+#evidence-grid.mazdak-bg::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background-image: url('/mazdak.jpg') !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+  opacity: 0.22 !important;
+  filter: contrast(1.5) brightness(0.65) sepia(0.7) hue-rotate(305deg) !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+  transition: opacity 1.2s ease !important;
+}
+
+.evidence-board.mazdak-bg > *,
+#evidence-grid.mazdak-bg > * {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* 4. کارت‌های تزریق‌شده مدارک هک‌شده مزداک روی برد خالی */
+.evidence-card.evidence-mazdak-injected {
+  position: relative;
+  min-height: 140px;
+  background: #0f0306 !important;
+  border: 1px solid #ff003c !important;
+  box-shadow: 0 0 15px rgba(255, 0, 60, 0.4) !important;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 5. پرش ناگهانی و لرزش صفحه هم‌زمان با اولین پیام مزداک و افشای هویت */
+@keyframes breachJumpShake {
+  0% { transform: translate(0, 0) scale(1); filter: none; }
+  12% { transform: translate(-10px, 8px) scale(1.025); filter: invert(0.35) hue-rotate(90deg) contrast(1.8); }
+  25% { transform: translate(10px, -8px) scale(0.975); filter: contrast(2) brightness(1.3); }
+  40% { transform: translate(-8px, -5px) scale(1.015); filter: hue-rotate(280deg); }
+  60% { transform: translate(6px, 5px) scale(0.99); filter: none; }
+  80% { transform: translate(-3px, 2px); }
+  100% { transform: translate(0, 0) scale(1); filter: none; }
+}
+
+body.breach-jump-shake {
+  animation: breachJumpShake 0.75s cubic-bezier(0.36, 0.07, 0.19, 0.97) !important;
+}
+
+/* 6. استایل شمارش معکوس ۱۰ ثانیه‌ای در پیام خروج اضطراری «کانال امن را ترک کنید» */
+.ejection-countdown-box {
+  margin: 18px 0;
+  padding: 14px 20px;
+  background: rgba(255, 0, 60, 0.12);
+  border: 1px solid rgba(255, 0, 60, 0.4);
+  border-radius: 8px;
+  text-align: center;
+  font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #f2e8e4;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.ejection-countdown-number {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #ff003c;
+  display: inline-block;
+  min-width: 48px;
+  animation: countdownPulse 1s infinite alternate ease-in-out;
+}
+
+@keyframes countdownPulse {
+  0% { transform: scale(1); opacity: 0.85; }
+  100% { transform: scale(1.15); opacity: 1; text-shadow: 0 0 20px #ff003c; }
+}

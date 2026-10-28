@@ -1160,6 +1160,21 @@ function renderEvidence(msg, options = {}) {
   if (badgeEl) badgeEl.textContent = totalCards.toLocaleString('fa-IR');
 
   if (typeof applyEvidenceFilter === 'function') applyEvidenceFilter();
+  if (document.body.classList.contains('cyber-breach-active')) {
+    card.classList.add('card-blackout');
+    const cardImg = card.querySelector('img');
+    if (cardImg) {
+      if (!cardImg.dataset.origSrc) cardImg.dataset.origSrc = cardImg.src;
+      cardImg.src = '/mazdak.jpg';
+      cardImg.classList.add('media-corrupted');
+    }
+    if (!card.querySelector('.evidence-mazdak-glitch-cover')) {
+      const cover = document.createElement('div');
+      cover.className = 'evidence-mazdak-glitch-cover';
+      cover.innerHTML = `<img src="/mazdak.jpg" alt="Mazdak" loading="eager"><div class="mazdak-corrupt-scanline"></div>`;
+      card.appendChild(cover);
+    }
+  }
   if (!options.skipThreads) {
     requestAnimationFrame(updateEvidenceThreads);
     setTimeout(() => requestAnimationFrame(updateEvidenceThreads), 380);
