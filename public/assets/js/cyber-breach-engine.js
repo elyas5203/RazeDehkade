@@ -242,6 +242,8 @@ class CyberBreachEngine {
 
     // ره‌گیری یکتا برای جلوگیری از پرش و افزودن تکراری در فریم‌ها
     this.deliveredBattleMessages = new Set();
+    this.pendingDetectiveMessages = new Set();
+    this.detectiveTypingStartedAt = 0;
     this.deliveredTerminalErrors = new Set();
     this.deliveredTerminalThreats = new Set();
     this.sceneGeneration = 0;
@@ -765,6 +767,8 @@ class CyberBreachEngine {
       this.storyTimers = [];
     }
     this.deliveredBattleMessages.clear();
+    this.pendingDetectiveMessages.clear();
+    this.detectiveTypingStartedAt = 0;
     this.deliveredTerminalErrors.clear();
     this.deliveredTerminalThreats.clear();
     this.ensureCinematicHud();
@@ -999,18 +1003,36 @@ class CyberBreachEngine {
     const el = this.dom.typingIndicator || document.getElementById('typing-indicator');
     if (!el) return;
     if (isTyping && this.isPlaying) {
+      if (!this.detectiveTypingStartedAt) this.detectiveTypingStartedAt = Date.now();
       el.style.display = 'flex';
       el.textContent = 'کارآگاه در حال نوشتن است...';
       const box = this.dom.messagesBox || document.getElementById('messages-box');
       if (box) box.scrollTop = box.scrollHeight;
     } else {
+      this.detectiveTypingStartedAt = 0;
       el.textContent = '';
-      el.style.display = 'none';
+      el.style.removeProperty('display');
     }
   }
 
-  appendChatMessage({ id, senderType, senderName, content, extraClass = '' }) {
+  appendChatMessage({ id, senderType, senderName, content, extraClass = '', afterTyping = false }) {
     if (this.deliveredBattleMessages.has(id)) return;
+    if (senderType === 'admin' && this.isPlaying && !afterTyping) {
+      if (this.pendingDetectiveMessages.has(id)) return;
+      const alreadyTypingMs = this.detectiveTypingStartedAt ? Date.now() - this.detectiveTypingStartedAt : 0;
+      const waitMs = Math.max(0, 2200 - alreadyTypingMs);
+      if (waitMs > 0) {
+        const generation = this.sceneGeneration;
+        this.pendingDetectiveMessages.add(id);
+        this.setDetectiveTyping(true);
+        setTimeout(() => {
+          this.pendingDetectiveMessages.delete(id);
+          if (!this.isPlaying || generation !== this.sceneGeneration) return;
+          this.appendChatMessage({ id, senderType, senderName, content, extraClass, afterTyping: true });
+        }, waitMs);
+        return;
+      }
+    }
     this.deliveredBattleMessages.add(id);
     if (senderType === 'admin') this.setDetectiveTyping(false);
 
@@ -1859,6 +1881,8 @@ class CyberBreachEngine {
   reset() {
     console.log('[CyberBreachEngine] Resetting cyber breach state...');
     this.isPlaying = false;
+    this.pendingDetectiveMessages.clear();
+    this.setDetectiveTyping(false);
     document.body.classList.remove('breach-dossier-locked');
     this.sceneGeneration++;
     this.storylineActive = false;

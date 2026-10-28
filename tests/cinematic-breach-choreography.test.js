@@ -108,7 +108,7 @@ test('MASTER-28: Choreographed Cyber Breach Cinematics & Storyline Verification'
   });
 
   await t.test('9. chat.html links fresh cache-busted assets', () => {
-    assert.match(chatHtml, /cyber-breach-engine\.css\?v=20261028_1050/);
-    assert.match(chatHtml, /cyber-breach-engine\.js\?v=20261028_1050/);
+    assert.match(chatHtml, /cyber-breach-engine\.css\?v=20261028_typing_fix/);
+    assert.match(chatHtml, /cyber-breach-engine\.js\?v=20261028_typing_fix/);
   });
 });
