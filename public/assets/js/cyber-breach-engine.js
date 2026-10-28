@@ -796,7 +796,6 @@ class CyberBreachEngine {
       // حالت پیش‌فرض MASTER-28: شروع طبیعی بدون پاپ‌آپ‌های ناگهانی مزاحم (شروع هک حذف شد)
       this.duration = 185; // کل زمان سکانس سینمایی طبق MASTER-15
       this.setCinematicPhase('surveillance', 'ارتباط با دستیاران دهکده', 0.05, 'CHANNEL OPEN // DETECTIVE BROADCAST');
-      this.applyMazdakMediaStamps();
       this.renderFrame(0); // ارسال فوری اولین پیام در همان لحظه استارت هک
     }
 
@@ -1773,19 +1772,13 @@ class CyberBreachEngine {
     if (sec === 66) {
       this.setDetectiveTyping(true);
     }
-    // پیام چهارم کارآگاه + پر پر کردن تصاویر برد اسناد
+    // پیام چهارم کارآگاه؛ برد تا پس از پرده سیاه دست نخورده می‌ماند
     if (sec === 70) {
       this.appendChatMessage({
         id: 'battle-det-reply-now',
         senderType: 'admin',
         content: scn.detReplyNow
       });
-      if (this.dom.evidenceBoard) {
-        this.dom.evidenceBoard.classList.add('evidence-flickering');
-      }
-      if (this.dom.evidenceGrid) {
-        this.dom.evidenceGrid.classList.add('evidence-flickering');
-      }
     }
 
     // ۴. پیام‌های اعلام نفوذ کارآگاه

@@ -9,7 +9,7 @@ const jwt = require('jsonwebtoken');
 
 process.env.NODE_ENV = 'test';
 process.env.USE_IN_MEMORY_DB = 'true';
-process.env.JWT_SECRET = 'fifteen_session_isolation_test_secret';
+process.env.JWT_SECRET = 'twenty_session_isolation_test_secret';
 
 const Session = require('../src/models/Session');
 const setupSocketIO = require('../src/socket');
@@ -29,7 +29,7 @@ function emitAck(socket, event, payload) {
   });
 }
 
-test('15 independent users can stream, chat, and receive only their own hack event', { timeout: 30000 }, async () => {
+test('20 independent users can stream, chat, and receive only their own hack event', { timeout: 30000 }, async () => {
   const app = express();
   app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
   app.use('/media-library', express.static(path.join(__dirname, '../public/media-library')));
@@ -41,7 +41,7 @@ test('15 independent users can stream, chat, and receive only their own hack eve
   const sockets = [];
   try {
     const sessions = [];
-    for (let i = 0; i < 15; i++) sessions.push(await Session.create({ name: `Load session ${i}` }));
+    for (let i = 0; i < 20; i++) sessions.push(await Session.create({ name: `Load session ${i}` }));
     const adminToken = jwt.sign({ role: 'admin', id: 1 }, process.env.JWT_SECRET);
     const admin = client(url, { auth: { token: adminToken }, transports: ['websocket'] });
     sockets.push(admin);
@@ -61,11 +61,11 @@ test('15 independent users can stream, chat, and receive only their own hack eve
     const media = await Promise.all(sessions.map(async () => {
       const [health, video] = await Promise.all([
         fetch(`${url}/api/health`),
-        fetch(`${url}/media-library/videos/first.mp4`, { headers: { Range: 'bytes=0-1023' } }),
+        fetch(`${url}/media-library/videos/first.mp4`, { headers: { Range: 'bytes=0-262143' } }),
       ]);
       return { health: health.status, video: video.status, size: (await video.arrayBuffer()).byteLength };
     }));
-    assert.ok(media.every(item => item.health === 200 && item.video === 206 && item.size === 1024));
+    assert.ok(media.every(item => item.health === 200 && item.video === 206 && item.size === 262144));
 
     const messages = await Promise.all(users.map((socket, i) =>
       emitAck(socket, 'send_message', { sessionId: sessions[i].id, content: `Concurrent user message ${i}` })));

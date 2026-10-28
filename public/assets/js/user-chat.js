@@ -202,6 +202,15 @@ function applyChatLock(isLocked) {
   sessionData.is_chat_locked = isLocked ? 1 : 0;
   sessionStorage.setItem('userSession', JSON.stringify(sessionData));
 
+  // During the cinematic sequence the composer belongs to the ghost typing engine.
+  // Keep the server lock state, without replacing its text or showing the lock banner.
+  if (window.cyberBreachEngine?.isPlaying) {
+    const banner = document.getElementById('chat-lock-banner');
+    if (banner) banner.style.display = 'none';
+    window.cyberBreachEngine.lockChatInput();
+    return;
+  }
+
   const msgInput = document.getElementById('msg-input');
   const sendBtn = document.querySelector('.send-button');
   const attachBtn = document.querySelector('.attach-button');
@@ -1137,7 +1146,7 @@ function renderEvidence(msg, options = {}) {
   if (badgeEl) badgeEl.textContent = totalCards.toLocaleString('fa-IR');
 
   if (typeof applyEvidenceFilter === 'function') applyEvidenceFilter();
-  if (window.cyberBreachEngine?.isPlaying || document.body.classList.contains('cyber-breach-active')) {
+  if (document.body.classList.contains('cyber-breach-active')) {
     card.classList.add('card-blackout');
     card.style.pointerEvents = 'none';
     const cardImg = card.querySelector('img');

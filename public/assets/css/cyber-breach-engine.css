@@ -2041,6 +2041,10 @@ body.cyber-breach-active #open-assistants-popup-btn,
 body.breach-dossier-locked #open-assistants-popup-btn {
   pointer-events: none !important;
   cursor: not-allowed !important;
+}
+
+body.cyber-breach-active .assistants-popup-btn,
+body.cyber-breach-active #open-assistants-popup-btn {
   filter: grayscale(0.8) brightness(0.6) !important;
 }
 
@@ -2049,8 +2053,15 @@ body.cyber-breach-active .assistant-mini-photo-box img {
   animation: glitch-photo-breach 0.4s infinite alternate !important;
 }
 
-body.breach-dossier-locked .assistant-mini-photo-box img {
-  filter: grayscale(1) blur(1.2px) contrast(250%) brightness(40%) !important;
+body.breach-dossier-locked:not(.cyber-breach-active) .assistant-mini-photo-box img {
+  filter: none !important;
+}
+
+/* The dossier stays locked from the start, while its portraits remain intact until blackout. */
+body.breach-dossier-locked .chat-lock-banner { display: none !important; }
+
+body.cyber-breach-active #security-terminal .terminal-body {
+  background: linear-gradient(rgba(3, 7, 12, .56), rgba(3, 7, 12, .72)), url('/mazdak.jpg') center / cover no-repeat !important;
 }
 
 @keyframes glitch-photo-breach {
@@ -2066,8 +2077,7 @@ body.cyber-breach-active .evidence-card {
   cursor: not-allowed !important;
 }
 
-body.cyber-breach-active .evidence-card .evidence-mazdak-glitch-cover,
-body.breach-dossier-locked .evidence-card .evidence-mazdak-glitch-cover {
+body.cyber-breach-active .evidence-card .evidence-mazdak-glitch-cover {
   position: absolute !important;
   inset: 0 !important;
   width: 100% !important;
@@ -2080,8 +2090,7 @@ body.breach-dossier-locked .evidence-card .evidence-mazdak-glitch-cover {
   overflow: hidden !important;
 }
 
-body.cyber-breach-active .evidence-card .evidence-mazdak-glitch-cover img,
-body.breach-dossier-locked .evidence-card .evidence-mazdak-glitch-cover img {
+body.cyber-breach-active .evidence-card .evidence-mazdak-glitch-cover img {
   width: 100% !important;
   height: 100% !important;
   object-fit: contain !important;

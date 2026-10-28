@@ -40,14 +40,13 @@ test('MASTER-28: Choreographed Cyber Breach Cinematics & Storyline Verification'
     assert.match(engineJs, /نمیتونی این کار رو بکنی اطلاعات این پرونده بالاخره از بین میره/);
   });
 
-  await t.test('2. Dynamic visual cues: Left terminal red warming and evidence board flickering', () => {
+  await t.test('2. Terminal warms before blackout while evidence stays intact', () => {
     assert.match(engineJs, /terminal\.classList\.add\('breach-warming-up'\)/);
     assert.match(engineCss, /#security-terminal\.breach-warming-up/);
     assert.match(engineCss, /transition:\s*color 4s ease/);
 
-    assert.match(engineJs, /evidenceBoard\.classList\.add\('evidence-flickering'\)/);
-    assert.match(engineCss, /\.evidence-flickering/);
-    assert.match(engineCss, /@keyframes evidenceFlickerGlitch/);
+    assert.doesNotMatch(engineJs, /evidenceBoard\.classList\.add\('evidence-flickering'\)/);
+    assert.match(engineJs, /applyRedCompromisedOverlay\(\)/);
   });
 
   await t.test('3. Signal Lost Blackout with pulsating red LED dot triggers immediately after infiltrator alert', () => {
@@ -108,7 +107,7 @@ test('MASTER-28: Choreographed Cyber Breach Cinematics & Storyline Verification'
   });
 
   await t.test('9. chat.html links fresh cache-busted assets', () => {
-    assert.match(chatHtml, /cyber-breach-engine\.css\?v=20261028_typing_fix/);
-    assert.match(chatHtml, /cyber-breach-engine\.js\?v=20261028_board_count/);
+    assert.match(chatHtml, /cyber-breach-engine\.css\?v=20261028_blackout_order/);
+    assert.match(chatHtml, /cyber-breach-engine\.js\?v=20261028_blackout_order/);
   });
 });

@@ -55,6 +55,6 @@ test('every scripted detective message displays typing before delivery', () => {
 test('student page has no microphone warning or activation button', () => {
   assert.doesNotMatch(page, /microphone-help|microphone-enable-btn|فعال‌سازی میکروفون/);
   assert.doesNotMatch(chatSource, /updateMicrophoneHelp|microphone-enable-btn/);
-  assert.match(page, /cyber-breach-engine\.js\?v=20261028_board_count/);
-  assert.match(page, /user-chat\.js\?v=20261028_typing_fix/);
+  assert.match(page, /cyber-breach-engine\.js\?v=20261028_blackout_order/);
+  assert.match(page, /user-chat\.js\?v=20261028_blackout_order/);
 });
