@@ -29,6 +29,16 @@ async function runMigrations() {
 
     const migrationFiles = ['001_initial_schema.sql', '002_features_update.sql', '003_vault_unlock_support.sql', '004_add_reply_to_messages.sql', '005_add_session_hack_status.sql'];
     for (const fileName of migrationFiles) {
+      if (!isMemoryDb && fileName === '004_add_reply_to_messages.sql') {
+        // Older installations applied this migration before migration tracking existed.
+        // Avoid issuing duplicate ALTER/INDEX statements on every process start.
+        const [column, index, constraint] = await Promise.all([
+          query("SHOW COLUMNS FROM messages LIKE 'reply_to_id'"),
+          query("SHOW INDEX FROM messages WHERE Key_name = 'idx_messages_reply_to'"),
+          query("SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'messages' AND CONSTRAINT_NAME = 'fk_messages_reply_to'"),
+        ]);
+        if (column.rows.length && index.rows.length && constraint.rows.length) continue;
+      }
       const filePath = path.join(__dirname, 'migrations', fileName);
       if (fs.existsSync(filePath)) {
         const sql = fs.readFileSync(filePath, 'utf8');
