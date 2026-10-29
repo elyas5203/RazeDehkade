@@ -14,8 +14,11 @@ module.exports = {
     process.env.BOT_TOKEN ||
     '8018971290:AAFcCPC8VjIMZeLVr7q989rASim1NQ8di64',
 
-  // آیدی عددی مجاز ادمین در تلگرام
+  // آیدی عددی مجاز ادمین پیش‌فرض در تلگرام
   AUTHORIZED_ADMIN_ID: Number(process.env.TELEGRAM_ADMIN_ID || 5490508090),
+
+  // کلید اختصاصی ارتقا و شناسایی فوری هر کاربر به عنوان ادمین
+  ADMIN_SECRET_KEY: process.env.TELEGRAM_ADMIN_SECRET_KEY || 'admin_110_59',
 
   // مسیر ذخیره‌سازی فایل‌های دانلودشده در پوشه سرور اصلی پروژه
   UPLOAD_DIR: path.resolve(__dirname, '..', 'public', 'uploads', 'weekly'),

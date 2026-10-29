@@ -8,7 +8,9 @@ node_modules/
 public/uploads/*
 !public/uploads/.gitkeep
 storage/emergency-selfies/
+storage/telegram_authorized_admins.json
 .deploy_backups/
+*.stable_backup
 
 # سیستم فایل‌ها
 Thumbs.db

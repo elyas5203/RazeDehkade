@@ -13,6 +13,7 @@ const { execFile } = require('child_process');
 const {
   BOT_TOKEN,
   AUTHORIZED_ADMIN_ID,
+  ADMIN_SECRET_KEY,
   UPLOAD_DIR,
   PUBLIC_URL_PREFIX,
   WEEK_NAMES,
@@ -30,6 +31,36 @@ const { sendTelegramVideo, processOne } = require('../src/services/emergencyVide
 // اطمینان از وجود پوشه آپلود هفتگی در سرور
 if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
+const STORAGE_DIR = path.resolve(__dirname, '..', 'storage');
+const ADMINS_FILE = path.join(STORAGE_DIR, 'telegram_authorized_admins.json');
+
+function normalizeAdminPasscode(str = '') {
+  return String(str || '')
+    .replace(/[۰٠]/g, '0')
+    .replace(/[۱١]/g, '1')
+    .replace(/[۲٢]/g, '2')
+    .replace(/[۳٣]/g, '3')
+    .replace(/[۴٤]/g, '4')
+    .replace(/[۵٥]/g, '5')
+    .replace(/[۶٦]/g, '6')
+    .replace(/[۷٧]/g, '7')
+    .replace(/[۸٨]/g, '8')
+    .replace(/[۹٩]/g, '9')
+    .trim()
+    .toLowerCase();
+}
+
+function isMatchingAdminPasscode(text, secretKey = ADMIN_SECRET_KEY) {
+  if (!text) return false;
+  const norm = normalizeAdminPasscode(text);
+  const secret = normalizeAdminPasscode(secretKey || 'admin_110_59');
+  return (
+    norm === secret ||
+    norm === `/start ${secret}` ||
+    norm === `/admin ${secret}`
+  );
 }
 
 const PID_LOCK_FILE = path.join(__dirname, '.bot.pid');
@@ -297,11 +328,17 @@ class MohtavaTelegramBot {
   constructor(options = {}) {
     this.token = options.token || BOT_TOKEN;
     this.adminId = Number(options.adminId || AUTHORIZED_ADMIN_ID);
+    this.adminSecretKey = options.adminSecretKey || ADMIN_SECRET_KEY || 'admin_110_59';
     this.io = options.io || null;
     this.apiBase = `https://api.telegram.org/bot${this.token}`;
     this.fileBase = `https://api.telegram.org/file/bot${this.token}`;
     this.offset = 0;
     this.running = false;
+
+    // مجموعه شناسه‌های عددی ادمین‌های مجاز سامانه
+    this.authorizedAdminIds = new Set([this.adminId]);
+    this.currentUserId = this.adminId;
+    this.adminStates = new Map();
 
     // وضعیت مکالمه ادمین (همگام با دیتابیس MySQL)
     this.adminState = {
@@ -312,12 +349,123 @@ class MohtavaTelegramBot {
     };
   }
 
-  async syncStateFromDb() {
+  /**
+   * بارگذاری لیست ادمین‌های تایید شده از فایل JSON محلی و دیتابیس MySQL
+   */
+  async loadAuthorizedAdmins() {
+    this.authorizedAdminIds.add(this.adminId);
+
+    // ۱. بارگذاری از فایل لوکال جهت پایداری مستقل از دیتابیس
     try {
-      const res = await query('SELECT * FROM bot_state WHERE admin_id = ?', [this.adminId]);
-      if (res.rows && res.rows.length > 0) {
+      if (fs.existsSync(ADMINS_FILE)) {
+        const raw = fs.readFileSync(ADMINS_FILE, 'utf8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            const id = Number(typeof item === 'object' ? item.userId || item.adminId : item);
+            if (id && !isNaN(id)) {
+              this.authorizedAdminIds.add(id);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ [MohtavaTelBot] خطا در خواندن فایل ادمین‌ها:', e.message);
+    }
+
+    // ۲. بارگذاری از جدول ادمین‌های مجاز در MySQL
+    try {
+      const res = await query('SELECT admin_id FROM bot_authorized_admins');
+      if (res && res.rows && Array.isArray(res.rows)) {
+        for (const row of res.rows) {
+          const id = Number(row.admin_id);
+          if (id && !isNaN(id)) {
+            this.authorizedAdminIds.add(id);
+          }
+        }
+      }
+    } catch (_) {}
+
+    // ۳. بارگذاری از شناسه‌های موجود در bot_state
+    try {
+      const resState = await query('SELECT DISTINCT admin_id FROM bot_state');
+      if (resState && resState.rows && Array.isArray(resState.rows)) {
+        for (const row of resState.rows) {
+          const id = Number(row.admin_id);
+          if (id && !isNaN(id)) {
+            this.authorizedAdminIds.add(id);
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  /**
+   * بررسی آیا یک کاربر ادمین مجاز است یا خیر
+   */
+  isAuthorizedAdmin(userId) {
+    const id = Number(userId);
+    if (!id || isNaN(id)) return false;
+    return id === this.adminId || this.authorizedAdminIds.has(id);
+  }
+
+  /**
+   * ارتقا و ثبت دائمی هویت کاربر به عنوان ادمین
+   */
+  async authorizeAdmin(userId, meta = {}) {
+    const id = Number(userId);
+    if (!id || isNaN(id)) return;
+
+    this.authorizedAdminIds.add(id);
+
+    // ۱. ذخیره در فایل JSON دیسک
+    try {
+      if (!fs.existsSync(STORAGE_DIR)) {
+        fs.mkdirSync(STORAGE_DIR, { recursive: true });
+      }
+      let list = [];
+      if (fs.existsSync(ADMINS_FILE)) {
+        try {
+          const parsed = JSON.parse(fs.readFileSync(ADMINS_FILE, 'utf8'));
+          if (Array.isArray(parsed)) list = parsed;
+        } catch (_) {}
+      }
+      const existing = list.find(item => Number(typeof item === 'object' ? item.userId || item.adminId : item) === id);
+      if (!existing) {
+        list.push({
+          userId: id,
+          username: meta.username || null,
+          firstName: meta.firstName || '',
+          chatId: meta.chatId || null,
+          authorizedAt: new Date().toISOString(),
+        });
+        fs.writeFileSync(ADMINS_FILE, JSON.stringify(list, null, 2), 'utf8');
+      }
+    } catch (e) {
+      console.warn('⚠️ [MohtavaTelBot] خطا در ذخیره فایل ادمین‌ها:', e.message);
+    }
+
+    // ۲. ذخیره در دیتابیس MySQL
+    try {
+      await query(
+        `INSERT INTO bot_authorized_admins (admin_id, username, first_name)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE username = VALUES(username), first_name = VALUES(first_name)`,
+        [id, meta.username || null, meta.firstName || '']
+      );
+    } catch (_) {}
+
+    console.log(`🔑 [MohtavaTelBot] کاربر ${id} (${meta.firstName || meta.username || 'بدون نام'}) به عنوان ادمین تایید شد.`);
+  }
+
+  async syncStateFromDb(targetUserId = null) {
+    const uid = targetUserId ? Number(targetUserId) : (this.currentUserId || this.adminId);
+    let loadedState = null;
+    try {
+      const res = await query('SELECT * FROM bot_state WHERE admin_id = ?', [uid]);
+      if (res && res.rows && res.rows.length > 0) {
         const row = res.rows[0];
-        this.adminState = {
+        loadedState = {
           mode: row.mode || 'IDLE',
           week: row.active_week ? Number(row.active_week) : null,
           currentTitle: row.base_title || '',
@@ -325,10 +473,28 @@ class MohtavaTelegramBot {
         };
       }
     } catch (_) {}
+
+    if (loadedState) {
+      this.adminState = loadedState;
+      this.adminStates.set(uid, { ...loadedState });
+    } else if (this.adminStates.has(uid)) {
+      this.adminState = { ...this.adminStates.get(uid) };
+    } else {
+      this.adminState = {
+        mode: 'IDLE',
+        week: null,
+        currentTitle: '',
+        titleCounter: 0,
+      };
+      this.adminStates.set(uid, { ...this.adminState });
+    }
+    return this.adminState;
   }
 
-  async setState(patch) {
+  async setState(patch, targetUserId = null) {
+    const uid = targetUserId ? Number(targetUserId) : (this.currentUserId || this.adminId);
     this.adminState = { ...this.adminState, ...patch };
+    this.adminStates.set(uid, { ...this.adminState });
     try {
       await query(
         `INSERT INTO bot_state (admin_id, mode, active_week, base_title, title_counter)
@@ -339,7 +505,7 @@ class MohtavaTelegramBot {
            base_title = VALUES(base_title),
            title_counter = VALUES(title_counter)`,
         [
-          this.adminId,
+          uid,
           this.adminState.mode || 'IDLE',
           this.adminState.week || null,
           this.adminState.currentTitle || '',
@@ -656,20 +822,49 @@ class MohtavaTelegramBot {
 
     const chatId = msg.chat.id;
     const userId = Number(msg.from.id);
+    this.currentUserId = userId;
 
-    // بررسی امنیتی آیدی عددی ادمین (فقط 5490508090)
-    if (userId !== this.adminId) {
+    const rawText = typeof msg.text === 'string' ? msg.text : '';
+    const text = rawText.trim();
+    const isSecretAdminCode = isMatchingAdminPasscode(text, this.adminSecretKey);
+
+    // ۱. بررسی احراز هویت ادمین یا ورود با کد مخفی (admin_110_59)
+    if (!this.isAuthorizedAdmin(userId)) {
+      if (isSecretAdminCode) {
+        await this.authorizeAdmin(userId, {
+          username: msg.from.username || null,
+          firstName: msg.from.first_name || '',
+          chatId,
+        });
+        await this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 }, userId);
+        await this.sendMessage(
+          chatId,
+          `✅ هویت شما به عنوان ادمین با موفقیت تایید شد!\nشناسه تلگرام شما (${userId}) به عنوان ادمین مجاز سامانه «راز دهکده» ثبت گردید.\n\nبه بات مدیریت خوش آمدید. لطفاً گزینه مورد نظر را انتخاب نمایید:`,
+          getMainMenuKeyboard()
+        );
+        return;
+      }
+
       await this.sendMessage(
         chatId,
-        `⛔️ دسترسی غیرمجاز!\nاین ربات فقط برای ادمین اصلی سامانه (${this.adminId}) فعال است.`
+        `⛔️ دسترسی غیرمجاز!\nاین بات ویژه ادمین‌های سامانه «راز دهکده» است.\nبرای ورود و دسترسی به امکانات مدیریت، لطفاً کد احراز هویت ادمین را ارسال فرمایید.`
       );
       return;
     }
 
-    // همگام‌سازی وضعیت با دیتابیس MySQL
-    await this.syncStateFromDb();
+    // اگر ادمین از قبل تایید شده و مجدداً کد را ارسال کند
+    if (isSecretAdminCode) {
+      await this.setState({ mode: 'IDLE', week: null, currentTitle: '', titleCounter: 0 }, userId);
+      await this.sendMessage(
+        chatId,
+        `✅ شما به عنوان ادمین تایید شده‌اید.\nمنوی مدیریت «راز دهکده»:`,
+        getMainMenuKeyboard()
+      );
+      return;
+    }
 
-    const text = typeof msg.text === 'string' ? msg.text.trim() : '';
+    // همگام‌سازی وضعیت این ادمین با دیتابیس MySQL
+    await this.syncStateFromDb(userId);
 
     // ۱. دستور شروع یا بازگشت به منوی اصلی
     if (text === '/start' || text === '/menu' || text === BTN_BACK_MAIN) {
@@ -1514,8 +1709,9 @@ class MohtavaTelegramBot {
     }
 
     this.running = true;
-    await this.syncStateFromDb();
-    console.log(`🤖 [MohtavaTelBot] بات تلگرام فعال شد (PID: ${process.pid} | محدود به آیدی ادمین: ${this.adminId})`);
+    await this.loadAuthorizedAdmins();
+    await this.syncStateFromDb(this.adminId);
+    console.log(`🤖 [MohtavaTelBot] بات تلگرام فعال شد (PID: ${process.pid} | ادمین اصلی: ${this.adminId} | تعداد ادمین‌های مجاز: ${this.authorizedAdminIds.size})`);
 
     const pollLoop = async () => {
       while (this.running) {
@@ -1569,6 +1765,8 @@ class MohtavaTelegramBot {
 }
 
 module.exports = {
+  normalizeAdminPasscode,
+  isMatchingAdminPasscode,
   MohtavaTelegramBot,
   normalizeBaseTitle,
   WEEK_BUTTON_TO_NUM,

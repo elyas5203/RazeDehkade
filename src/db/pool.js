@@ -26,6 +26,7 @@ class InMemoryDatabase {
       weekly_content: [],
       app_migrations: [],
       bot_state: [],
+      bot_authorized_admins: [],
       session_assistants: [],
       emergency_auth_submissions: [],
       emergency_auth_videos: [],
@@ -719,6 +720,26 @@ class InMemoryDatabase {
       const key = params[0];
       if (!this.tables.app_migrations.some(m => m.migration_key === key)) {
         this.tables.app_migrations.push({ migration_key: key, applied_at: new Date() });
+      }
+      return [{ affectedRows: 1 }, []];
+    }
+
+    // 16-b. Bot Authorized Admins
+    if (/^SELECT .* FROM bot_authorized_admins/i.test(cleanSql)) {
+      return [this.tables.bot_authorized_admins || [], []];
+    }
+    if (/^INSERT INTO bot_authorized_admins/i.test(cleanSql)) {
+      const [admin_id, username, first_name] = params;
+      if (!this.tables.bot_authorized_admins) this.tables.bot_authorized_admins = [];
+      let rec = this.tables.bot_authorized_admins.find(b => Number(b.admin_id) === Number(admin_id));
+      if (!rec) {
+        rec = {
+          admin_id: Number(admin_id),
+          username: username || null,
+          first_name: first_name || null,
+          authorized_at: new Date(),
+        };
+        this.tables.bot_authorized_admins.push(rec);
       }
       return [{ affectedRows: 1 }, []];
     }

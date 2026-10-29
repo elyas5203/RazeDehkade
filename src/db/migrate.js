@@ -118,6 +118,16 @@ async function runMigrations() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // ساخت جدول ادمین‌های مجاز بات تلگرام
+    await query(`
+      CREATE TABLE IF NOT EXISTS bot_authorized_admins (
+        admin_id BIGINT PRIMARY KEY,
+        username VARCHAR(100) NULL,
+        first_name VARCHAR(150) NULL,
+        authorized_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     // ساخت جدول نگهداری عکس‌های کارآگاهی دستیاران هر کلاس/جلسه
     await query(`
       CREATE TABLE IF NOT EXISTS session_assistants (
