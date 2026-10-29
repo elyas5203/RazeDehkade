@@ -88,19 +88,28 @@ const QUESTION_LABELS = {
  * قالب‌بندی مشخصات و تمام ۱۲ پاسخ دانش‌آموز به متن خوانا و مرتب برای تلگرام
  */
 function formatAnswersReport(answers, meta = {}) {
+  const ansObj = answers && typeof answers === 'object' ? answers : {};
+  const studentName = ansObj.q_student_name ? String(ansObj.q_student_name).trim() : null;
+
   const lines = [
     '📹 پاسخ ویدیویی احراز هویت پرونده',
-    `🏫 کلاس: ${meta.className || 'نامشخص'}`,
-    `📞 شماره تماس: ${meta.phone || 'نامشخص'}`,
-    `📂 کد پرونده: ${meta.referenceCode || 'نامشخص'}`
+    '━━━━━━━━━━━━━━━━━━━━'
   ];
 
-  lines.push('\n📋 پاسخ‌های ثبت‌شده به ۱۲ معما:');
+  if (studentName) {
+    lines.push(`👤 دانش‌آموز: ${studentName}`);
+  }
 
-  const ansObj = answers && typeof answers === 'object' ? answers : {};
+  lines.push(`🏫 کلاس: ${meta.className || 'نامشخص'}`);
+  lines.push(`📞 شماره تماس: ${meta.phone || 'نامشخص'}`);
+  lines.push(`📂 کد پرونده: ${meta.referenceCode || 'نامشخص'}`);
+  lines.push('━━━━━━━━━━━━━━━━━━━━');
+  lines.push('📋 پاسخ‌های ثبت‌شده به ۱۲ معما:');
+
   for (const [id, label] of Object.entries(QUESTION_LABELS)) {
+    if (id === 'q_student_name') continue;
     const val = ansObj[id] ? String(ansObj[id]).trim() : '—';
-    lines.push(`▫️ ${label}:\n   «${val}»`);
+    lines.push(`\n🔹 ${label}: «${val}»`);
   }
 
   return lines.join('\n');

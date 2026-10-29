@@ -187,15 +187,31 @@ async function sendTelegramVideo(job, config = telegramConfig()) {
   // محدودیت کپشن تلگرام ۱۰۲۴ نویسه است
   let captionText = fullAnswersReport;
   let followUpText = null;
-  if (Buffer.byteLength(fullAnswersReport, 'utf8') > 1000 || fullAnswersReport.length > 950) {
+  if (fullAnswersReport.length > 1000) {
+    const studentName = studentAnswers?.q_student_name ? String(studentAnswers.q_student_name).trim() : null;
     captionText = [
       '📹 پاسخ ویدیویی احراز هویت پرونده',
+      '━━━━━━━━━━━━━━━━━━━━',
+      studentName ? `👤 دانش‌آموز: ${studentName}` : null,
       `🏫 کلاس: ${className}`,
       `📞 شماره تماس: ${job.phone}`,
       `📂 کد پرونده: ${job.reference_code}`,
+      '━━━━━━━━━━━━━━━━━━━━',
       '📋 متن کامل پاسخ‌های ۱۲ سؤال در پیام بعدی پیوست شد ⬇️'
+    ].filter(Boolean).join('\n');
+
+    const followUpHeader = [
+      `📋 پاسخ‌های ۱۲ معما | پرونده: ${job.reference_code}`,
+      studentName ? `👤 دانش‌آموز: ${studentName} (کلاس ${className})` : `🏫 کلاس: ${className}`,
+      '━━━━━━━━━━━━━━━━━━━━'
     ].join('\n');
-    followUpText = fullAnswersReport;
+
+    const puzzlePartIdx = fullAnswersReport.indexOf('📋 پاسخ‌های ثبت‌شده به ۱۲ معما:');
+    if (puzzlePartIdx !== -1) {
+      followUpText = `${followUpHeader}\n\n${fullAnswersReport.slice(puzzlePartIdx)}`;
+    } else {
+      followUpText = fullAnswersReport;
+    }
   }
 
   // تبدیل به MP4 استریم‌شونده (H.264/AAC با اتم FastStart در ابتدا) در صورت نیاز

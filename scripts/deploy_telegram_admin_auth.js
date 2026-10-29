@@ -20,6 +20,7 @@ const filesToDeploy = [
   'MohtavaTelBot/bot.js',
   'MohtavaTelBot/config.js',
   'src/services/emergencyVideoQueue.js',
+  'src/utils/videoTranscoder.js',
   'src/db/migrate.js',
   'src/db/pool.js',
   'tests/telegram-bot-admin-auth.test.js',
@@ -39,7 +40,7 @@ filesToDeploy.forEach(f => {
 
 console.log('\n2. Verifying remote stable backup on VPS...');
 execSync(
-  `ssh -o StrictHostKeyChecking=no user615@95.217.95.111 "cd ${REMOTE_BASE} && if [ ! -f MohtavaTelBot/bot.js.stable_backup ]; then cp MohtavaTelBot/bot.js MohtavaTelBot/bot.js.stable_backup; fi && if [ ! -f MohtavaTelBot/config.js.stable_backup ]; then cp MohtavaTelBot/config.js MohtavaTelBot/config.js.stable_backup; fi && if [ ! -f src/services/emergencyVideoQueue.js.stable_backup ]; then cp src/services/emergencyVideoQueue.js src/services/emergencyVideoQueue.js.stable_backup; fi && ls -lh MohtavaTelBot/*.stable_backup src/services/*.stable_backup"`,
+  `ssh -o StrictHostKeyChecking=no user615@95.217.95.111 "cd ${REMOTE_BASE} && if [ ! -f MohtavaTelBot/bot.js.stable_backup ]; then cp MohtavaTelBot/bot.js MohtavaTelBot/bot.js.stable_backup; fi && if [ ! -f MohtavaTelBot/config.js.stable_backup ]; then cp MohtavaTelBot/config.js MohtavaTelBot/config.js.stable_backup; fi && if [ ! -f src/services/emergencyVideoQueue.js.stable_backup ]; then cp src/services/emergencyVideoQueue.js src/services/emergencyVideoQueue.js.stable_backup; fi && if [ ! -f src/utils/videoTranscoder.js.stable_backup ]; then cp src/utils/videoTranscoder.js src/utils/videoTranscoder.js.stable_backup; fi && ls -lh MohtavaTelBot/*.stable_backup src/services/*.stable_backup src/utils/*.stable_backup"`,
   { env, stdio: 'inherit' }
 );
 
