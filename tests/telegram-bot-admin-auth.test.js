@@ -12,6 +12,7 @@ const {
 } = require('../MohtavaTelBot/bot');
 const { ADMIN_SECRET_KEY, AUTHORIZED_ADMIN_ID } = require('../MohtavaTelBot/config');
 const { query } = require('../src/db/pool');
+const { getAllAuthorizedAdminChatIds } = require('../src/services/emergencyVideoQueue');
 
 test('MASTER-ADMIN-AUTH: MohtavaTelBot Universal Admin Authorization via admin_110_59', async t => {
   await t.test('1. normalizeAdminPasscode converts Persian and Arabic digits to English and trims', () => {
@@ -115,5 +116,12 @@ test('MASTER-ADMIN-AUTH: MohtavaTelBot Universal Admin Authorization via admin_1
     await bot.syncStateFromDb(admin2);
     assert.equal(bot.adminState.mode, 'ASSISTANTS_MENU');
     assert.equal(bot.adminState.week, null);
+  });
+
+  await t.test('7. getAllAuthorizedAdminChatIds includes primary admin, storage file, and database admins', async () => {
+    const ids = await getAllAuthorizedAdminChatIds('5490508090');
+    assert.ok(Array.isArray(ids));
+    assert.ok(ids.includes('5490508090'), 'Primary admin must be in the list');
+    assert.ok(ids.includes('888456'), 'Promoted admin 888456 must be in the broadcast list');
   });
 });

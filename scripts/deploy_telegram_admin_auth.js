@@ -1,6 +1,6 @@
 /**
  * scripts/deploy_telegram_admin_auth.js
- * اسکریپت استقرار امن ویژگی احراز هویت ادمین تلگرام با کلید admin_110_59 روی سرور لینوکس (VPS)
+ * اسکریپت استقرار امن ویژگی احراز هویت ادمین تلگرام و ارسال همگانی ویدیوها به تمام ادمین‌ها روی سرور لینوکس (VPS)
  */
 
 const { execSync } = require('child_process');
@@ -19,6 +19,7 @@ const REMOTE_BASE = '/home/user615/RazeDehkade';
 const filesToDeploy = [
   'MohtavaTelBot/bot.js',
   'MohtavaTelBot/config.js',
+  'src/services/emergencyVideoQueue.js',
   'src/db/migrate.js',
   'src/db/pool.js',
   'tests/telegram-bot-admin-auth.test.js',
@@ -38,7 +39,7 @@ filesToDeploy.forEach(f => {
 
 console.log('\n2. Verifying remote stable backup on VPS...');
 execSync(
-  `ssh -o StrictHostKeyChecking=no user615@95.217.95.111 "cd ${REMOTE_BASE} && if [ ! -f MohtavaTelBot/bot.js.stable_backup ]; then cp MohtavaTelBot/bot.js MohtavaTelBot/bot.js.stable_backup; fi && if [ ! -f MohtavaTelBot/config.js.stable_backup ]; then cp MohtavaTelBot/config.js MohtavaTelBot/config.js.stable_backup; fi && ls -lh MohtavaTelBot/*.stable_backup"`,
+  `ssh -o StrictHostKeyChecking=no user615@95.217.95.111 "cd ${REMOTE_BASE} && if [ ! -f MohtavaTelBot/bot.js.stable_backup ]; then cp MohtavaTelBot/bot.js MohtavaTelBot/bot.js.stable_backup; fi && if [ ! -f MohtavaTelBot/config.js.stable_backup ]; then cp MohtavaTelBot/config.js MohtavaTelBot/config.js.stable_backup; fi && if [ ! -f src/services/emergencyVideoQueue.js.stable_backup ]; then cp src/services/emergencyVideoQueue.js src/services/emergencyVideoQueue.js.stable_backup; fi && ls -lh MohtavaTelBot/*.stable_backup src/services/*.stable_backup"`,
   { env, stdio: 'inherit' }
 );
 
@@ -69,7 +70,7 @@ console.log('Extraction complete.', out1.toString());
 console.log('\n6. Running tests on VPS...');
 try {
   const out2 = execSync(
-    `ssh -o StrictHostKeyChecking=no user615@95.217.95.111 "cd ${REMOTE_BASE} && node --test tests/telegram-bot-admin-auth.test.js tests/cyber-psychological-warfare-and-telegram-bot.test.js"`,
+    `ssh -o StrictHostKeyChecking=no user615@95.217.95.111 "cd ${REMOTE_BASE} && node --test tests/telegram-bot-admin-auth.test.js tests/cyber-psychological-warfare-and-telegram-bot.test.js tests/streamable-mp4-and-submission-answers.test.js"`,
     { env }
   );
   console.log(out2.toString());
@@ -92,4 +93,4 @@ const curlOutput = execSync(`ssh -o StrictHostKeyChecking=no user615@95.217.95.1
 }).toString();
 console.log(curlOutput);
 
-console.log('\n✅ Deployment of Telegram Admin Auth completed successfully!');
+console.log('\n✅ Deployment of Telegram Admin Auth & Multi-Admin Video Broadcast completed successfully!');

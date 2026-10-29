@@ -59,6 +59,90 @@ function sendTelegramTextMessage(text, replyToId = null, config = telegramConfig
   });
 }
 
+
+/**
+ * دریافت لیست تمام شناسه‌های تلگرام ادمین‌های مجاز سامانه
+ */
+async function getAllAuthorizedAdminChatIds(primaryFallbackId = null) {
+  const ids = new Set();
+  const primary = primaryFallbackId || process.env.TELEGRAM_ADMIN_ID || '5490508090';
+  if (primary && /^\d+$/.test(String(primary))) {
+    ids.add(String(primary));
+  }
+
+  // ۱. خواندن از فایل محلی پایدار
+  try {
+    const jsonPath = path.resolve(__dirname, '..', '..', 'storage', 'telegram_authorized_admins.json');
+    if (fs.existsSync(jsonPath)) {
+      const parsed = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      if (Array.isArray(parsed)) {
+        for (const item of parsed) {
+          const cid = typeof item === 'object' ? item.chatId || item.userId || item.adminId : item;
+          if (cid && /^\d+$/.test(String(cid))) {
+            ids.add(String(cid));
+          }
+        }
+      }
+    }
+  } catch (_) {}
+
+  // ۲. خواندن از جدول MySQL ادمین‌ها
+  try {
+    const res = await query('SELECT admin_id FROM bot_authorized_admins');
+    if (res && res.rows && Array.isArray(res.rows)) {
+      for (const row of res.rows) {
+        if (row.admin_id && /^\d+$/.test(String(row.admin_id))) {
+          ids.add(String(row.admin_id));
+        }
+      }
+    }
+  } catch (_) {}
+
+  return Array.from(ids);
+}
+
+/**
+ * ارسال سریع ویدیوی آپلودشده به سایر ادمین‌ها با استفاده از شناسه تلگرامی فایل
+ */
+function sendExistingTelegramMedia(token, chatId, method, fileId, captionText, isMp4) {
+  const payload = JSON.stringify({
+    chat_id: String(chatId),
+    [isMp4 ? 'video' : 'document']: fileId,
+    caption: captionText || undefined,
+    supports_streaming: isMp4 ? true : undefined
+  });
+
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: 'api.telegram.org',
+      path: `/bot${token}/${method}`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload)
+      },
+      timeout: 30000
+    }, res => {
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { body += chunk; });
+      res.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          if (res.statusCode !== 200 || !data.ok || !data.result?.message_id) {
+            return reject(new Error(data.description || `Telegram HTTP ${res.statusCode}`));
+          }
+          resolve(data.result.message_id);
+        } catch (e) { reject(e); }
+      });
+    });
+    req.on('error', reject);
+    req.on('timeout', () => req.destroy(new Error('Telegram sendExistingTelegramMedia timed out')));
+    req.write(payload);
+    req.end();
+  });
+}
+
 /**
  * ارسال ویدیوی استریم MP4 احراز هویت به همراه پاسخ کامل ۱۲ سؤال دانش‌آموز به ادمین در تلگرام
  */
@@ -134,11 +218,15 @@ async function sendTelegramVideo(job, config = telegramConfig()) {
   const isMp4 = targetMime === 'video/mp4';
   const method = isMp4 ? 'sendVideo' : 'sendDocument';
 
+  const allAdminChatIds = await getAllAuthorizedAdminChatIds(config?.chatId);
+  const targetChatIds = Array.from(new Set([String(config?.chatId || '5490508090'), ...allAdminChatIds])).filter(id => /^\d+$/.test(id));
+  const primaryChatId = targetChatIds[0] || String(config?.chatId || '5490508090');
+
   const boundary = `----Raze${crypto.randomBytes(12).toString('hex')}`;
   const field = (name, value) => Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`);
 
   const prelude = [
-    field('chat_id', config.chatId),
+    field('chat_id', primaryChatId),
     field('caption', captionText)
   ];
 
@@ -155,7 +243,7 @@ async function sendTelegramVideo(job, config = telegramConfig()) {
   const contentLength = prelude.reduce((n, b) => n + b.length, 0) + targetStat.size + ending.length;
 
   try {
-    const messageId = await new Promise((resolve, reject) => {
+    const uploadResult = await new Promise((resolve, reject) => {
       const req = https.request({
         hostname: 'api.telegram.org',
         path: `/bot${config.token}/${method}`,
@@ -178,7 +266,10 @@ async function sendTelegramVideo(job, config = telegramConfig()) {
             if (res.statusCode !== 200 || !data.ok || !data.result?.message_id) {
               throw new Error(data.description || `Telegram HTTP ${res.statusCode}`);
             }
-            resolve(data.result.message_id);
+            resolve({
+              messageId: data.result.message_id,
+              fileId: data.result.video?.file_id || data.result.document?.file_id || null
+            });
           } catch (error) { reject(error); }
         });
       });
@@ -191,12 +282,40 @@ async function sendTelegramVideo(job, config = telegramConfig()) {
       stream.pipe(req, { end: false });
     });
 
-    // اگر متن کامل پاسخ‌ها بیش از حجم مجاز کپشن بود، در پیامی بلافاصله بعد از ویدیو ارسال می‌شود
+    const messageId = typeof uploadResult === 'object' ? uploadResult.messageId : uploadResult;
+    const fileId = typeof uploadResult === 'object' ? uploadResult.fileId : null;
+
+    // ارسال متن تکمیلی برای ادمین اول در صورت نیاز
     if (followUpText && messageId) {
       try {
-        await sendTelegramTextMessage(followUpText, messageId, config);
+        await sendTelegramTextMessage(followUpText, messageId, { token: config.token, chatId: primaryChatId });
       } catch (txtErr) {
         console.warn('⚠️ ارسال متن تکمیلی پاسخ‌ها با خطا مواجه شد:', txtErr.message);
+      }
+    }
+
+    // ارسال خودکار برای تمام ادمین‌های مجاز دیگر سامانه (با استفاده از شناسه فایل آپلودشده)
+    const otherAdmins = targetChatIds.slice(1);
+    for (const otherChatId of otherAdmins) {
+      try {
+        if (fileId) {
+          const otherMsgId = await sendExistingTelegramMedia(
+            config.token,
+            otherChatId,
+            method,
+            fileId,
+            captionText,
+            isMp4
+          );
+          if (followUpText && otherMsgId) {
+            await sendTelegramTextMessage(followUpText, otherMsgId, {
+              token: config.token,
+              chatId: otherChatId
+            }).catch(() => {});
+          }
+        }
+      } catch (adminErr) {
+        console.warn(`⚠️ [emergencyVideoQueue] خطا در ارسال ویدیو به ادمین ${otherChatId}:`, adminErr.message);
       }
     }
 
@@ -253,6 +372,7 @@ function stopQueue() {
 }
 
 module.exports = {
+  getAllAuthorizedAdminChatIds,
   processOne,
   startQueue,
   stopQueue,

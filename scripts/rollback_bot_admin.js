@@ -14,12 +14,13 @@ const env = {
   DISPLAY: '1',
 };
 
-console.log('🔄 [Rollback] در حال بازگردانی فایل‌های بات تلگرام به حالت پایدار قبلی...');
+console.log('🔄 [Rollback] در حال بازگردانی فایل‌های بات تلگرام و صف ویدیو به حالت پایدار قبلی...');
 
 // ۱. بازگردانی فایل‌های محلی
 try {
   const localBotBak = path.resolve(__dirname, '..', 'MohtavaTelBot', 'bot.js.stable_backup');
   const localConfigBak = path.resolve(__dirname, '..', 'MohtavaTelBot', 'config.js.stable_backup');
+  const localQueueBak = path.resolve(__dirname, '..', 'src', 'services', 'emergencyVideoQueue.js.stable_backup');
   if (fs.existsSync(localBotBak)) {
     fs.copyFileSync(localBotBak, path.resolve(__dirname, '..', 'MohtavaTelBot', 'bot.js'));
     console.log('  ✓ فایل محلی bot.js از بکاپ بازگردانی شد.');
@@ -27,6 +28,10 @@ try {
   if (fs.existsSync(localConfigBak)) {
     fs.copyFileSync(localConfigBak, path.resolve(__dirname, '..', 'MohtavaTelBot', 'config.js'));
     console.log('  ✓ فایل محلی config.js از بکاپ بازگردانی شد.');
+  }
+  if (fs.existsSync(localQueueBak)) {
+    fs.copyFileSync(localQueueBak, path.resolve(__dirname, '..', 'src', 'services', 'emergencyVideoQueue.js'));
+    console.log('  ✓ فایل محلی emergencyVideoQueue.js از بکاپ بازگردانی شد.');
   }
 } catch (e) {
   console.warn('  ⚠️ هشدار در بازگردانی فایل‌های محلی:', e.message);
@@ -38,6 +43,7 @@ try {
     'cd /home/user615/RazeDehkade',
     'if [ -f MohtavaTelBot/bot.js.stable_backup ]; then cp MohtavaTelBot/bot.js.stable_backup MohtavaTelBot/bot.js; fi',
     'if [ -f MohtavaTelBot/config.js.stable_backup ]; then cp MohtavaTelBot/config.js.stable_backup MohtavaTelBot/config.js; fi',
+    'if [ -f src/services/emergencyVideoQueue.js.stable_backup ]; then cp src/services/emergencyVideoQueue.js.stable_backup src/services/emergencyVideoQueue.js; fi',
     'pm2 reload raze-dehkade',
   ].join(' && ');
 
