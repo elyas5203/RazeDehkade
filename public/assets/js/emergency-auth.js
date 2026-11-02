@@ -192,7 +192,7 @@
     {
       id: 'q_final_video_message',
       type: 'video_message',
-      title: 'در دهکده اخر چه اتفاقی افتاد و دشمنان چه کارهایی کردن؟به صورت خلاصه توضیح دهید.'
+      title: 'طبق اخرین ویدیو اخبار، اولین دهکده کدوم شهر بود و در اونجا چه اتفاقاتی افتاد و دشمنان چه کارهایی کردند؟'
     }
   ];
 
@@ -259,6 +259,8 @@
   let selfieStream = null;
   let selfiePreviewUrl = null;
   let selfieStopTimer = null;
+  let selfieIntervalTimer = null;
+  let selfieRecordingSeconds = 0;
   let selfieCaptureRevision = 0;
   let clientSubmissionId = null;
 
@@ -312,6 +314,9 @@
     // 2. Periodic Polling check (every 5 seconds)
     setInterval(async () => {
       try {
+        if (submitting || (selfieRecorder && selfieRecorder.state === 'recording')) {
+          return;
+        }
         const token = sessionStorage.getItem('userToken');
         if (!token) return;
         const res = await fetch(`/api/sessions/${sessionId}/hack-status`, {
@@ -321,6 +326,13 @@
           const data = await res.json();
           if (data && !data.is_hacked) {
             handleUnhackSuccess();
+          } else if (data && data.recovery_phase === 'LIVE') {
+            sessionStorage.removeItem('userToken');
+            sessionStorage.removeItem('userSession');
+            sessionStorage.removeItem('prefillCode');
+            window.location.replace('/enter-code.html');
+          } else if (data && data.recovery_phase && data.recovery_phase !== 'DORMANT') {
+            window.location.replace('/chat.html');
           }
         }
       } catch (_) {}
@@ -389,6 +401,12 @@
     });
     const verificationResult = await verification.json();
     if (!verification.ok || !verificationResult.success) {
+      if (verificationResult.recoveryLive) {
+        sessionStorage.removeItem('userToken');
+        sessionStorage.removeItem('userSession');
+        window.location.replace('/enter-code.html');
+        return;
+      }
       throw new Error(verificationResult.message || 'شماره برای این کلاس ثبت نشده است.');
     }
 
@@ -507,9 +525,24 @@
   function stopSelfieCamera() {
     if (selfieStopTimer) clearTimeout(selfieStopTimer);
     selfieStopTimer = null;
-    if (selfieRecorder?.state === 'recording') selfieRecorder.stop();
-    selfieStream?.getTracks().forEach(track => track.stop());
-    selfieStream = null;
+    if (selfieIntervalTimer) clearInterval(selfieIntervalTimer);
+    selfieIntervalTimer = null;
+    if (selfieRecorder?.state === 'recording') {
+      try { selfieRecorder.stop(); } catch (_) {}
+    }
+    const video = document.getElementById('selfieVideo');
+    if (video && video.srcObject) {
+      try { video.pause(); } catch (_) {}
+      video.srcObject = null;
+    }
+    if (selfieStream) {
+      try {
+        selfieStream.getTracks().forEach(track => {
+          try { track.stop(); } catch (_) {}
+        });
+      } catch (_) {}
+      selfieStream = null;
+    }
   }
 
   function renderTextInputQuestion(q) {
@@ -566,13 +599,17 @@
         </p>
         <ul style="font-size: 12.8px; color: #e2e8f0; line-height: 1.85; padding-right: 18px; margin: 0;">
           <li>رو به دوربین نگاه کن و صدای دستگاهت را بررسی کن.</li>
-          <li>به صورت خلاصه توضیح بده در دهکده آخر چه اتفاقی افتاد و دشمنان چه کارهایی کردند.</li>
+          <li>به صورت خلاصه توضیح بده طبق اخرین ویدیو اخبار، اولین دهکده کدوم شهر بود و در اونجا چه اتفاقاتی افتاد و دشمنان چه کارهایی کردند.</li>
           <li>نام و نام خانوادگی‌ات را هم در ابتدای ویدیو بگو.</li>
         </ul>
       </div>
 
       <div class="selfie-viewfinder">
         <video id="selfieVideo" playsinline muted autoplay aria-label="پیش‌نمایش دوربین"></video>
+        <div id="selfieTimerBadge" class="selfie-timer-badge" hidden>
+          <span class="selfie-timer-dot"></span>
+          <span id="selfieTimerValue">00:00</span>
+        </div>
         <span id="selfieStatus" role="status">دوربین خاموش است</span>
       </div>
 
@@ -587,6 +624,8 @@
 
     dynamicQuestionSlot.appendChild(card);
     const video = card.querySelector('#selfieVideo');
+    const timerBadge = card.querySelector('#selfieTimerBadge');
+    const timerValue = card.querySelector('#selfieTimerValue');
     const status = card.querySelector('#selfieStatus');
     const start = card.querySelector('#selfieStart');
     const stop = card.querySelector('#selfieStop');
@@ -598,16 +637,25 @@
       if (!selfieBlob) return;
       if (selfiePreviewUrl) URL.revokeObjectURL(selfiePreviewUrl);
       selfiePreviewUrl = URL.createObjectURL(selfieBlob);
+      try {
+        video.pause();
+      } catch (_) {}
       video.srcObject = null;
-      video.src = selfiePreviewUrl;
+      video.removeAttribute('autoplay');
       video.controls = true;
       video.muted = false;
-      video.autoplay = false;
-      video.load();
-      status.textContent = 'ویدیو با موفقیت ضبط شد؛ آن را بازبینی کن.';
+      video.playsInline = true;
+      video.src = selfiePreviewUrl;
+      if (timerBadge) timerBadge.hidden = true;
+      const mins = String(Math.floor(selfieRecordingSeconds / 60)).padStart(2, '0');
+      const secs = String(selfieRecordingSeconds % 60).padStart(2, '0');
+      status.textContent = selfieRecordingSeconds > 0
+        ? `ویدیو با موفقیت ضبط شد (${mins}:${secs})؛ آن را بازبینی کن.`
+        : 'ویدیو با موفقیت ضبط شد؛ آن را بازبینی کن.';
       start.hidden = true;
       stop.hidden = true;
       retry.hidden = false;
+      retry.disabled = false;
     };
 
     if (selfieBlob) showRecorded();
@@ -621,18 +669,39 @@
       }
       try {
         stopSelfieCamera();
-        selfieStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true });
+        
+        let stream;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: 'user',
+              width: { ideal: 640, max: 1280 },
+              height: { ideal: 480, max: 720 },
+              frameRate: { ideal: 24, max: 30 }
+            },
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true
+            }
+          });
+        } catch (_) {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'user' },
+            audio: true
+          });
+        }
+        selfieStream = stream;
+
         const candidateTypes = [
           'video/mp4;codecs=avc1,mp4a.40.2',
           'video/mp4;codecs=avc1',
           'video/mp4',
           'video/webm;codecs=vp8,opus',
-          'video/webm;codecs=vp9,opus',
           'video/webm'
         ];
         const mimeType = candidateTypes.find(type => {
           try { return MediaRecorder.isTypeSupported(type); } catch (_) { return false; }
-        });
+        }) || '';
         if (!mimeType) throw new Error('ضبط ویدیو در این مرورگر پشتیبانی نمی‌شود.');
         if (selfiePreviewUrl) URL.revokeObjectURL(selfiePreviewUrl);
         selfiePreviewUrl = null;
@@ -641,17 +710,41 @@
         video.removeAttribute('src');
         video.controls = false;
         video.muted = true;
+        video.playsInline = true;
         video.srcObject = selfieStream;
         await video.play();
+
         const chunks = [];
-        selfieRecorder = new MediaRecorder(selfieStream, { mimeType });
-        selfieRecorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+        const recorderOptions = mimeType ? { mimeType } : {};
+        try {
+          recorderOptions.videoBitsPerSecond = 1000000;
+          recorderOptions.audioBitsPerSecond = 64000;
+          selfieRecorder = new MediaRecorder(selfieStream, recorderOptions);
+        } catch (_) {
+          selfieRecorder = mimeType ? new MediaRecorder(selfieStream, { mimeType }) : new MediaRecorder(selfieStream);
+        }
+        selfieRecorder.ondataavailable = event => { if (event.data?.size) chunks.push(event.data); };
+        
+        const MAX_RECORD_SECONDS = 300; // ۵ دقیقه (۳۰۰ ثانیه)
+        selfieRecordingSeconds = 0;
+
         selfieRecorder.onstop = () => {
+          if (selfieIntervalTimer) clearInterval(selfieIntervalTimer);
+          selfieIntervalTimer = null;
+          if (selfieStopTimer) clearTimeout(selfieStopTimer);
+          selfieStopTimer = null;
+          if (timerBadge) timerBadge.hidden = true;
           if (captureRevision !== selfieCaptureRevision) return;
+
+          if (video && video.srcObject) {
+            try { video.pause(); } catch (_) {}
+            video.srcObject = null;
+          }
           stopSelfieCamera();
-          const blob = new Blob(chunks, { type: mimeType.split(';')[0] });
-          if (!blob.size || blob.size > 25 * 1024 * 1024) {
-            showAlert('ویدیو ثبت نشد یا حجم آن بیش از ۲۵ مگابایت است. دوباره ضبط کن.');
+
+          const blob = new Blob(chunks, { type: (mimeType || 'video/webm').split(';')[0] });
+          if (!blob.size || blob.size > 100 * 1024 * 1024) {
+            showAlert('ویدیو ثبت نشد یا حجم آن بیش از ۱۰۰ مگابایت است. دوباره ضبط کن.');
             start.hidden = false; stop.hidden = true; retry.hidden = true;
             return;
           }
@@ -660,12 +753,41 @@
           userAnswers[q.id] = 'پاسخ ویدیویی همراه با نام و نام خانوادگی و استدلال شفاهی';
           if (video.isConnected) showRecorded();
         };
+
+        if (timerValue) timerValue.textContent = '00:00';
+        if (timerBadge) timerBadge.hidden = false;
+
         selfieRecorder.start(1000);
         start.hidden = true;
         retry.hidden = true;
         stop.hidden = false;
-        status.textContent = 'در حال ضبط… (توضیح خلاصه دهکده آخر و نام خود را بگو)';
-        selfieStopTimer = setTimeout(() => { if (selfieRecorder?.state === 'recording') selfieRecorder.stop(); }, 60000);
+        stop.disabled = false;
+        stop.textContent = 'پایان ضبط ⏹ (00:00)';
+        status.textContent = 'در حال ضبط… (00:00) - پاسخ به سوال و نام خود را بگو';
+
+        if (selfieIntervalTimer) clearInterval(selfieIntervalTimer);
+        selfieIntervalTimer = setInterval(() => {
+          selfieRecordingSeconds++;
+          const mins = String(Math.floor(selfieRecordingSeconds / 60)).padStart(2, '0');
+          const secs = String(selfieRecordingSeconds % 60).padStart(2, '0');
+          const timeFormatted = `${mins}:${secs}`;
+          if (timerValue) timerValue.textContent = timeFormatted;
+          if (stop && !stop.hidden && !stop.disabled) stop.textContent = `پایان ضبط ⏹ (${timeFormatted})`;
+          if (status) status.textContent = `در حال ضبط… (${timeFormatted})`;
+
+          if (selfieRecordingSeconds >= MAX_RECORD_SECONDS) {
+            if (selfieIntervalTimer) clearInterval(selfieIntervalTimer);
+            selfieIntervalTimer = null;
+            if (selfieRecorder?.state === 'recording') {
+              selfieRecorder.stop();
+            }
+          }
+        }, 1000);
+
+        if (selfieStopTimer) clearTimeout(selfieStopTimer);
+        selfieStopTimer = setTimeout(() => {
+          if (selfieRecorder?.state === 'recording') selfieRecorder.stop();
+        }, MAX_RECORD_SECONDS * 1000);
       } catch (error) {
         stopSelfieCamera();
         showAlert(error.name === 'NotAllowedError'
@@ -676,7 +798,18 @@
 
     start.addEventListener('click', begin);
     retry.addEventListener('click', begin);
-    stop.addEventListener('click', () => { if (selfieRecorder?.state === 'recording') selfieRecorder.stop(); });
+    stop.addEventListener('click', () => {
+      if (selfieIntervalTimer) clearInterval(selfieIntervalTimer);
+      selfieIntervalTimer = null;
+      if (selfieStopTimer) clearTimeout(selfieStopTimer);
+      selfieStopTimer = null;
+      if (timerBadge) timerBadge.hidden = true;
+      if (selfieRecorder?.state === 'recording') {
+        stop.disabled = true;
+        stop.textContent = 'در حال پردازش ویدیو... ⏳';
+        selfieRecorder.stop();
+      }
+    });
   }
 
     window.addEventListener('pagehide', () => {
@@ -1377,7 +1510,10 @@
     if (submitting) return;
     if (!selfieBlob) return showAlert('ابتدا ویدیوی پاسخ آخر را ضبط کن.');
     submitting = true;
-    if (nextQuestionBtn) nextQuestionBtn.disabled = true;
+    if (nextQuestionBtn) {
+      nextQuestionBtn.disabled = true;
+      nextQuestionBtn.innerHTML = 'در حال ارسال ویدیو... (۰٪) ⏳';
+    }
     try {
       const phone = sessionStorage.getItem('emergency_user_phone');
       const token = sessionStorage.getItem('userToken');
@@ -1386,14 +1522,49 @@
       form.append('phone', phone);
       form.append('answers', JSON.stringify(userAnswers));
       form.append('clientSubmissionId', clientSubmissionId);
-      form.append('video', selfieBlob, selfieBlob.type === 'video/mp4' ? 'answer.mp4' : 'answer.webm');
-      const response = await fetch('/api/emergency-auth/submissions', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: form
+      const isMp4 = selfieBlob.type === 'video/mp4' || (selfieBlob.type && selfieBlob.type.includes('mp4'));
+      form.append('video', selfieBlob, isMp4 ? 'answer.mp4' : 'answer.webm');
+
+      const result = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/emergency-auth/submissions');
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable && nextQuestionBtn) {
+            const percent = Math.min(99, Math.round((event.loaded / event.total) * 100));
+            nextQuestionBtn.innerHTML = `در حال ارسال ویدیو... (${percent}٪) ⏳`;
+          }
+        };
+
+        xhr.onload = () => {
+          if (nextQuestionBtn) {
+            nextQuestionBtn.innerHTML = 'در حال اعتبارسنجی نهایی... ⏳';
+          }
+          try {
+            const data = JSON.parse(xhr.responseText || '{}');
+            if (xhr.status >= 200 && xhr.status < 300 && data.success) {
+              resolve(data);
+            } else {
+              reject(new Error(data.message || 'ثبت پاسخ‌ها انجام نشد.'));
+            }
+          } catch (_) {
+            reject(new Error('خطا در دریافت پاسخ از سرور.'));
+          }
+        };
+
+        xhr.onerror = () => {
+          reject(new Error('خطای شبکه در ارسال ویدیو. اتصال اینترنت را بررسی کنید.'));
+        };
+
+        xhr.ontimeout = () => {
+          reject(new Error('زمان ارسال ویدیو به پایان رسید. لطفاً دوباره تلاش کنید.'));
+        };
+        xhr.timeout = 120000;
+
+        xhr.send(form);
       });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.message || 'ثبت پاسخ‌ها انجام نشد.');
+
       if (trackingIdDisplay) trackingIdDisplay.textContent = result.reference;
       step2Section.style.display = 'none';
       step3Section.style.display = 'block';
@@ -1407,7 +1578,10 @@
       showAlert(error.message || 'ثبت پاسخ‌ها انجام نشد. دوباره تلاش کنید.');
     } finally {
       submitting = false;
-      if (nextQuestionBtn) nextQuestionBtn.disabled = false;
+      if (nextQuestionBtn) {
+        nextQuestionBtn.disabled = false;
+        nextQuestionBtn.innerHTML = 'ثبت احراز هویت 🔒';
+      }
     }
   }
 

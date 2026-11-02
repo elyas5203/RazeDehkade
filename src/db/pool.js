@@ -30,6 +30,11 @@ class InMemoryDatabase {
       session_assistants: [],
       emergency_auth_submissions: [],
       emergency_auth_videos: [],
+      session_recovery: [],
+      collective_submissions: [],
+      recovery_runs: [],
+      recovery_video_links: [],
+      recovery_cues: [],
     };
     this.autoIds = {
       admins: 1,
@@ -44,6 +49,8 @@ class InMemoryDatabase {
       session_assistants: 1,
       emergency_auth_submissions: 1,
       emergency_auth_videos: 1,
+      collective_submissions: 1,
+      recovery_runs: 1,
     };
   }
 
@@ -57,6 +64,78 @@ class InMemoryDatabase {
     // 1. CREATE TABLE
     if (/^CREATE TABLE/i.test(cleanSql)) {
       return [{ affectedRows: 0, insertId: 0 }, []];
+    }
+
+    if (/^SELECT .* FROM session_recovery WHERE session_id = \?/i.test(cleanSql)) {
+      const row = this.tables.session_recovery.find(x => Number(x.session_id) === Number(params[0]));
+      return [row ? [row] : [], []];
+    }
+    if (/^INSERT INTO session_recovery/i.test(cleanSql)) {
+      const [session_id, phase, updated_by] = params;
+      if (this.tables.session_recovery.some(x => Number(x.session_id) === Number(session_id))) throw new Error('Duplicate entry');
+      this.tables.session_recovery.push({ session_id, phase, revision: 1, updated_by, latitude: null, longitude: null,
+        map_label: null, sequence_started_at: null, started_at: new Date(), released_at: null, completed_at: null });
+      return [{ affectedRows: 1 }, []];
+    }
+    if (/^UPDATE session_recovery SET/i.test(cleanSql)) {
+      const id = /previous_phase = phase|phase = previous_phase/i.test(cleanSql) ? params[0] :
+        /latitude = \?/i.test(cleanSql) ? params[4] :
+        /phase = 'REVIEWING'/i.test(cleanSql) ? params[0] :
+        /phase = 'RESTORED'/i.test(cleanSql) ? params[0] :
+        /revision = revision \+ 1 WHERE/i.test(cleanSql) ? params[0] : params[params.length - 3];
+      const row = this.tables.session_recovery.find(x => Number(x.session_id) === Number(id));
+      if (!row) return [{ affectedRows: 0 }, []];
+      if (/previous_phase = phase/i.test(cleanSql)) {
+        if (row.phase !== params[2] || row.revision !== params[1]) return [{ affectedRows: 0 }, []];
+        row.previous_phase = row.phase; row.phase = 'PAUSED';
+      } else if (/phase = previous_phase/i.test(cleanSql)) {
+        if (row.phase !== 'PAUSED' || row.revision !== params[1]) return [{ affectedRows: 0 }, []];
+        row.phase = row.previous_phase; row.previous_phase = null;
+      } else if (/latitude = \?/i.test(cleanSql)) {
+        if (Number(row.revision) !== Number(params[5])) return [{ affectedRows: 0 }, []];
+        row.latitude = params[0]; row.longitude = params[1]; row.map_label = params[2];
+      } else if (/phase = 'REVIEWING'/i.test(cleanSql)) {
+        if (row.phase !== 'COLLECTING') return [{ affectedRows: 0 }, []]; row.phase = 'REVIEWING';
+      } else if (/phase = 'RESTORED'/i.test(cleanSql)) {
+        if (row.phase !== 'CINEMATIC' || Number(row.revision) !== Number(params[1])) return [{ affectedRows: 0 }, []];
+        row.phase = 'RESTORED'; row.completed_at = new Date();
+      } else if (/^UPDATE session_recovery SET revision = revision \+ 1/i.test(cleanSql)) {
+        // Approval updates only the revision.
+      } else {
+        if (Number(row.revision) !== Number(params[params.length - 2]) || row.phase !== params[params.length - 1]) return [{ affectedRows: 0 }, []];
+        row.phase = params[0];
+        if (/released_at = CURRENT_TIMESTAMP/i.test(cleanSql)) row.released_at = new Date();
+        if (/sequence_started_at = CURRENT_TIMESTAMP/i.test(cleanSql)) row.sequence_started_at = new Date();
+      }
+      row.revision++;
+      return [{ affectedRows: 1 }, []];
+    }
+    if (/^INSERT INTO collective_submissions/i.test(cleanSql)) {
+      const [session_id, phone_normalized, client_submission_id, file_path, mime_type, file_size, duration_seconds] = params;
+      if (this.tables.collective_submissions.some(x => Number(x.session_id) === Number(session_id) && x.client_submission_id === client_submission_id)) {
+        const e = new Error('Duplicate entry'); e.code = 'ER_DUP_ENTRY'; throw e;
+      }
+      const id = this.autoIds.collective_submissions++;
+      this.tables.collective_submissions.push({ id, session_id, phone_normalized, client_submission_id, file_path, mime_type,
+        file_size, duration_seconds, status: 'pending', telegram_status: 'pending', telegram_attempt_count: 0, created_at: new Date() });
+      return [{ affectedRows: 1, insertId: id }, []];
+    }
+    if (/^SELECT COUNT\(\*\) AS count FROM collective_submissions/i.test(cleanSql)) {
+      return [[{ count: this.tables.collective_submissions.filter(x => Number(x.session_id) === Number(params[0]) && x.status === 'approved').length }], []];
+    }
+    if (/^SELECT .* FROM collective_submissions WHERE session_id = \?/i.test(cleanSql)) {
+      const approvedOnly = /AND status = 'approved'/i.test(cleanSql);
+      return [this.tables.collective_submissions.filter(x => Number(x.session_id) === Number(params[0]) && (!approvedOnly || x.status === 'approved')).sort((a,b) => a.id-b.id), []];
+    }
+    if (/^SELECT file_path, mime_type, file_size, status FROM collective_submissions/i.test(cleanSql)) {
+      const row = this.tables.collective_submissions.find(x => Number(x.id) === Number(params[0]) && Number(x.session_id) === Number(params[1]));
+      return [row ? [row] : [], []];
+    }
+    if (/^UPDATE collective_submissions SET status = \?/i.test(cleanSql)) {
+      const row = this.tables.collective_submissions.find(x => Number(x.id) === Number(params[2]) && Number(x.session_id) === Number(params[3]) && x.status === 'pending');
+      if (!row) return [{ affectedRows: 0 }, []];
+      row.status = params[0]; row.approved_by = params[1]; row.approved_at = new Date();
+      return [{ affectedRows: 1 }, []];
     }
 
     if (/^INSERT INTO emergency_auth_submissions/i.test(cleanSql)) {
@@ -127,6 +206,21 @@ class InMemoryDatabase {
         row.status = 'pending'; row.next_attempt_at = null; row.last_error = null; row.attempt_count = 0; count++;
       }
       return [{ affectedRows: count }, []];
+    }
+
+    if (/FROM emergency_auth_submissions sub/i.test(cleanSql)) {
+      const rows = this.tables.emergency_auth_submissions.map(sub => {
+        const session = this.tables.sessions.find(s => Number(s.id) === Number(sub.session_id));
+        return {
+          session_id: sub.session_id,
+          class_name: session?.name || null,
+          reference_code: sub.reference_code,
+          phone: sub.phone,
+          created_at: sub.created_at,
+          answers_json: sub.answers_json
+        };
+      });
+      return [rows, []];
     }
 
     // 2. INSERT INTO admins

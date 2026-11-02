@@ -9,6 +9,7 @@ const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_detective_game_2025';
 const { query } = require('../db/pool');
 const Session = require('../models/Session');
+const recoveryLive = require('../services/recoveryLiveStore');
 
 const router = express.Router();
 const privateVideoDir = path.resolve(__dirname, '..', '..', 'storage', 'emergency-selfies');
@@ -21,7 +22,7 @@ const videoUpload = multer({
       cb(null, `${Date.now()}-${crypto.randomBytes(12).toString('hex')}${ext}`);
     }
   }),
-  limits: { fileSize: 25 * 1024 * 1024, files: 1 },
+  limits: { fileSize: 100 * 1024 * 1024, files: 1 },
   fileFilter: (_req, file, cb) => cb(null, ['video/webm', 'video/mp4'].includes(file.mimetype))
 });
 const questionIds = new Set([
@@ -55,13 +56,13 @@ function validVideoSignature(file) {
 
 function videoDurationSeconds(filePath) {
   if (process.env.NODE_ENV === 'test') return Promise.resolve(null);
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     execFile('ffprobe', ['-v', 'error', '-show_entries', 'format=duration',
       '-of', 'default=noprint_wrappers=1:nokey=1', filePath], { timeout: 5000 }, (error, stdout) => {
-      if (error?.code === 'ENOENT') return resolve(null); // Optional host tool; browser also caps recording.
-      if (error) return reject(error);
-      const seconds = Number(stdout.trim());
-      if (!Number.isFinite(seconds) || seconds <= 0) return reject(new Error('Invalid video duration'));
+      if (error) return resolve(null); // Optional host tool; streaming WebM from browser MediaRecorder lacks duration metadata
+      const raw = stdout ? stdout.trim() : '';
+      const seconds = Number(raw);
+      if (!Number.isFinite(seconds) || seconds <= 0) return resolve(null);
       resolve(seconds);
     });
   });
@@ -137,6 +138,11 @@ router.post('/verify-phone', optionalToken, async (req, res) => {
       return res.status(403).json({ success: false, message: 'این شماره برای کلاس شما ثبت نشده است.' });
     }
 
+    if (await recoveryLive.active(targetSession.id)) {
+      return res.status(409).json({ success: false, recoveryLive: true,
+        redirectUrl: '/enter-code.html', message: 'مرحله جلسه فعال است؛ کد ورود جلسه را وارد کنید.' });
+    }
+
     // صدور یا تجدید توکن احراز هویت برای ادامه فرآیند درگاه اضطراری
     const token = generateToken({
       sessionId: targetSession.id,
@@ -184,9 +190,9 @@ router.post('/submissions', authenticateToken, requireStudent, videoUpload.singl
       return res.status(400).json({ success: false, message: 'ویدیو معتبر نیست. دوباره ضبط کنید.' });
     }
     const duration = await videoDurationSeconds(req.file.path);
-    if (duration !== null && duration > 65) {
+    if (duration !== null && duration > 310) {
       fs.unlink(req.file.path, () => {});
-      return res.status(400).json({ success: false, message: 'ویدیو باید حداکثر ۱ دقیقه باشد.' });
+      return res.status(400).json({ success: false, message: 'ویدیو بیش از حد مجاز طولانی است.' });
     }
     if (!await phoneMatchesSession(req.user.sessionId, phone)) {
       fs.unlink(req.file.path, () => {});
@@ -210,6 +216,7 @@ router.post('/submissions', authenticateToken, requireStudent, videoUpload.singl
     );
     return res.status(201).json({ success: true, reference });
   } catch (error) {
+    console.error('🚨 Error in /api/emergency-auth/submissions:', error);
     if (req.file) fs.unlink(req.file.path, () => {});
     if (reference) await query('DELETE FROM emergency_auth_submissions WHERE reference_code = ?', [reference]).catch(() => {});
     if (/Duplicate entry/i.test(error.message)) {

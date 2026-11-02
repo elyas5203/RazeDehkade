@@ -169,6 +169,7 @@ function initAdminSocket() {
     transports: ['websocket', 'polling'],
     tryAllTransports: true,
   });
+  window.socket = socket;
 
   const statusEl = document.getElementById('admin-socket-status');
 
@@ -2372,8 +2373,13 @@ function unlockHackSequence() {
 }
 
 function triggerHackSequence() {
-  if (!activeSessionId || document.getElementById('hack-confirm-dialog')) return;
-  const target = activeSessionId;
+  if (document.getElementById('hack-confirm-dialog')) return;
+  const urlSessionId = parseInt(new URLSearchParams(window.location.search).get('session'), 10) || null;
+  const target = Number(activeSessionId) || urlSessionId;
+  if (!target) {
+    alert('کلاس مشخص نیست؛ ابتدا یک کلاس را انتخاب کنید.');
+    return;
+  }
   const dialog = document.createElement('dialog');
   dialog.id = 'hack-confirm-dialog';
   dialog.style.cssText = 'margin:auto;padding:32px;background:#111b27;color:#ecf0f4;border:1px solid #785056;max-width:440px;width:90%;';
@@ -2393,7 +2399,16 @@ function triggerHackSequence() {
       status.textContent = 'سکانس اجرا شد.'; setTimeout(close, 900);
     });
   };
-  dialog.append(title, description, status, confirmButton, cancelButton); document.body.append(dialog); dialog.showModal(); cancelButton.focus();
+  dialog.append(title, description, status, confirmButton, cancelButton);
+  document.body.append(dialog);
+  try {
+    dialog.showModal();
+    cancelButton.focus();
+  } catch (error) {
+    dialog.remove();
+    alert('پنجره اجرای سکانس باز نشد؛ صفحه را تازه‌سازی و دوباره امتحان کنید.');
+    console.error('Unable to open hack sequence confirmation dialog', error);
+  }
 }
 
 function formatBytes(bytes) {

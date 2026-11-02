@@ -135,6 +135,9 @@ const uploadRoutes = require('./src/routes/upload');
 const mediaLibraryRoutes = require('./src/routes/mediaLibrary');
 const weeklyContentRoutes = require('./src/routes/weeklyContent');
 const emergencyAuthRoutes = require('./src/routes/emergencyAuth');
+let recoveryRoutes = null;
+try { recoveryRoutes = require('./src/routes/recovery'); } catch (_) {}
+const recoveryLiveRoutes = require('./src/routes/recoveryLive');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/sessions', sessionRoutes);
@@ -144,6 +147,8 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/media-library', mediaLibraryRoutes);
 app.use('/api/weekly-content', weeklyContentRoutes);
 app.use('/api/emergency-auth', emergencyAuthRoutes);
+if (recoveryRoutes) app.use('/api/recovery', recoveryRoutes);
+app.use('/api/recovery-live', recoveryLiveRoutes);
 
 // مسیر تست سلامت API
 app.get('/api/health', (req, res) => {
@@ -170,6 +175,7 @@ setupSocketIO(io);
 
 const { startMohtavaBot } = require('./MohtavaTelBot');
 const { startQueue: startEmergencyVideoQueue } = require('./src/services/emergencyVideoQueue');
+const { startQueue: startCollectiveVideoQueue } = require('./src/services/collectiveVideoQueue');
 
 const PORT = process.env.PORT || 3000;
 
@@ -198,6 +204,7 @@ async function startServer() {
       if (process.env.NODE_ENV !== 'test' && process.env.DISABLE_EMERGENCY_VIDEO_QUEUE !== 'true' &&
           (process.platform === 'linux' || process.env.ENABLE_EMERGENCY_VIDEO_QUEUE === 'true')) {
         startEmergencyVideoQueue().catch(err => console.error('Emergency video queue startup:', err.message));
+        if (typeof startCollectiveVideoQueue === 'function') { try { startCollectiveVideoQueue().catch(err => console.error('Collective video queue startup:', err.message)); } catch (_) {} }
       }
     });
   } catch (err) {

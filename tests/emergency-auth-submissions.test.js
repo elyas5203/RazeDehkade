@@ -61,9 +61,12 @@ test('emergency upload validates identity, deduplicates and queues without expos
     assert.equal(await processOne(async () => 654321), true);
     assert.equal(pool.tables.emergency_auth_videos[0].status, 'sent');
     assert.equal(pool.tables.emergency_auth_videos[0].telegram_message_id, 654321);
-    await new Promise(resolve => setTimeout(resolve, 30));
-    assert.equal(fs.existsSync(filePath), false);
-  } finally { server.close(); }
+    assert.equal(fs.existsSync(filePath), true);
+  } finally {
+    const filePath = pool.tables.emergency_auth_videos[0]?.file_path;
+    if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    server.close();
+  }
 });
 
 test('queue retries after backoff and recovers interrupted sending jobs', async () => {

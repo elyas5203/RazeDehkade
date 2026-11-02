@@ -35,6 +35,7 @@ if (!fs.existsSync(UPLOAD_DIR)) {
 
 const STORAGE_DIR = path.resolve(__dirname, '..', 'storage');
 const ADMINS_FILE = path.join(STORAGE_DIR, 'telegram_authorized_admins.json');
+const GROUPS_FILE = path.join(STORAGE_DIR, 'telegram_authorized_groups.json');
 
 function normalizeAdminPasscode(str = '') {
   return String(str || '')
@@ -91,6 +92,7 @@ const BTN_CONFIRM_CLEAR_ALL = '⚠️ بله، همه پاک شوند';
 // کلیدهای بخش عکس دستیاران کارآگاه (کلاس‌ها)
 const BTN_ASSISTANTS_MENU = '🕵️‍♂️ عکس دستیاران (کلاس‌ها)';
 const BTN_EMERGENCY_VIDEOS = '📹 ویدیوهای احراز هویت';
+const BTN_AUTH_STUDENTS_LIST = '👥 اسامی احراز هویت کلاس‌ها';
 const BTN_ASSISTANTS_ARCHIVE = '📦 ارسال فایل فشرده (ZIP/RAR) یا لینک';
 const BTN_ASSISTANTS_SELECT_CLASS = '🏫 انتخاب کلاس و ارسال عکس‌ها';
 const BTN_ASSISTANTS_STATS = '📊 آمار عکس‌های کلاس‌ها';
@@ -125,6 +127,7 @@ function getMainMenuKeyboard() {
   return {
     keyboard: [
       [{ text: BTN_ASSISTANTS_MENU }, { text: BTN_EMERGENCY_VIDEOS }],
+      [{ text: BTN_AUTH_STUDENTS_LIST }],
       [{ text: BTN_WEEK_1 }, { text: BTN_WEEK_2 }],
       [{ text: BTN_WEEK_3 }, { text: BTN_WEEK_4 }],
       [{ text: BTN_WEEK_5 }, { text: BTN_VIEW_ALL }],
@@ -148,6 +151,7 @@ function getAssistantsMenuKeyboard() {
 function getEmergencyVideosKeyboard() {
   return {
     keyboard: [
+      [{ text: BTN_AUTH_STUDENTS_LIST }],
       [{ text: '🔄 ارسال مجدد ویدیوها' }],
       [{ text: BTN_BACK_MAIN }],
     ],
@@ -340,6 +344,12 @@ class MohtavaTelegramBot {
     this.currentUserId = this.adminId;
     this.adminStates = new Map();
 
+    // گروه‌های تلگرام مقصد ارسال مستقیم ویدیوهای احراز هویت
+    this.authorizedGroupIds = new Set();
+    this.authorizedGroups = new Map();
+    this.botId = Number(this.token && this.token.includes(':') ? this.token.split(':')[0] : 8018971290);
+    this.botUsername = 'ares_project_bot';
+
     // وضعیت مکالمه ادمین (همگام با دیتابیس MySQL)
     this.adminState = {
       mode: 'IDLE', // 'IDLE' | 'WAIT_TITLE' | 'WAIT_CONTENT' | 'WAIT_CLEAR_WEEK' | 'WAIT_CONFIRM_CLEAR_ALL'
@@ -456,6 +466,145 @@ class MohtavaTelegramBot {
     } catch (_) {}
 
     console.log(`🔑 [MohtavaTelBot] کاربر ${id} (${meta.firstName || meta.username || 'بدون نام'}) به عنوان ادمین تایید شد.`);
+  }
+
+  /**
+   * اطمینان از وجود جدول bot_authorized_groups در دیتابیس
+   */
+  async ensureGroupsTable() {
+    try {
+      await query(`
+        CREATE TABLE IF NOT EXISTS bot_authorized_groups (
+          group_id VARCHAR(64) PRIMARY KEY,
+          title VARCHAR(255) NULL,
+          thread_id VARCHAR(64) NULL,
+          registered_by VARCHAR(64) NULL,
+          registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+    } catch (_) {}
+  }
+
+  /**
+   * بارگذاری لیست گروه‌های مجاز از متغیر محیطی، فایل محلی و دیتابیس MySQL
+   */
+  async loadAuthorizedGroups() {
+    await this.ensureGroupsTable();
+
+    // ۰. متغیر محیطی در صورت وجود
+    if (process.env.TELEGRAM_GROUP_ID) {
+      const gid = String(process.env.TELEGRAM_GROUP_ID).trim();
+      if (gid && /^-?\d+$/.test(gid)) {
+        this.authorizedGroupIds.add(gid);
+        this.authorizedGroups.set(gid, {
+          groupId: gid,
+          title: 'گروه متغیر محیطی',
+          threadId: process.env.TELEGRAM_GROUP_THREAD_ID ? String(process.env.TELEGRAM_GROUP_THREAD_ID).trim() : null,
+        });
+      }
+    }
+
+    // ۱. خواندن از فایل محلی پایدار
+    try {
+      if (fs.existsSync(GROUPS_FILE)) {
+        const raw = fs.readFileSync(GROUPS_FILE, 'utf8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            const gid = String(typeof item === 'object' ? item.groupId || item.chatId || item.id : item);
+            if (gid && /^-?\d+$/.test(gid)) {
+              this.authorizedGroupIds.add(gid);
+              this.authorizedGroups.set(gid, typeof item === 'object' ? item : { groupId: gid });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('⚠️ [MohtavaTelBot] خطا در خواندن فایل گروه‌ها:', e.message);
+    }
+
+    // ۲. بارگذاری از دیتابیس MySQL
+    try {
+      const res = await query('SELECT * FROM bot_authorized_groups');
+      if (res && res.rows && Array.isArray(res.rows)) {
+        for (const row of res.rows) {
+          const gid = String(row.group_id);
+          if (gid && /^-?\d+$/.test(gid)) {
+            this.authorizedGroupIds.add(gid);
+            this.authorizedGroups.set(gid, {
+              groupId: gid,
+              title: row.title || null,
+              threadId: row.thread_id || null,
+              registeredBy: row.registered_by || null,
+              registeredAt: row.registered_at || null,
+            });
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  /**
+   * بررسی آیا یک شناسه چت متعلق به یک گروه تاییدشده است یا خیر
+   */
+  isAuthorizedGroup(groupId) {
+    const gid = String(groupId);
+    return this.authorizedGroupIds.has(gid);
+  }
+
+  /**
+   * ثبت و تایید دائمی یک گروه برای ارسال مستقیم ویدیوهای احراز هویت
+   */
+  async authorizeGroup(groupId, meta = {}) {
+    const gid = String(groupId);
+    if (!gid || !/^-?\d+$/.test(gid)) return;
+
+    const groupRecord = {
+      groupId: gid,
+      title: meta.title || null,
+      threadId: meta.threadId ? String(meta.threadId) : null,
+      registeredBy: meta.registeredBy ? String(meta.registeredBy) : null,
+      registeredAt: new Date().toISOString(),
+    };
+
+    this.authorizedGroupIds.add(gid);
+    this.authorizedGroups.set(gid, groupRecord);
+
+    // ۱. ذخیره در فایل JSON دیسک
+    try {
+      if (!fs.existsSync(STORAGE_DIR)) {
+        fs.mkdirSync(STORAGE_DIR, { recursive: true });
+      }
+      let list = [];
+      if (fs.existsSync(GROUPS_FILE)) {
+        try {
+          const parsed = JSON.parse(fs.readFileSync(GROUPS_FILE, 'utf8'));
+          if (Array.isArray(parsed)) list = parsed;
+        } catch (_) {}
+      }
+      const idx = list.findIndex(item => String(typeof item === 'object' ? item.groupId || item.chatId || item.id : item) === gid);
+      if (idx >= 0) {
+        list[idx] = { ...list[idx], ...groupRecord };
+      } else {
+        list.push(groupRecord);
+      }
+      fs.writeFileSync(GROUPS_FILE, JSON.stringify(list, null, 2), 'utf8');
+    } catch (e) {
+      console.warn('⚠️ [MohtavaTelBot] خطا در ذخیره فایل گروه‌ها:', e.message);
+    }
+
+    // ۲. ذخیره در دیتابیس MySQL
+    try {
+      await this.ensureGroupsTable();
+      await query(
+        `INSERT INTO bot_authorized_groups (group_id, title, thread_id, registered_by)
+         VALUES (?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE title = VALUES(title), thread_id = VALUES(thread_id), registered_by = VALUES(registered_by)`,
+        [gid, groupRecord.title, groupRecord.threadId, groupRecord.registeredBy]
+      );
+    } catch (_) {}
+
+    console.log(`📌 [MohtavaTelBot] گروه «${meta.title || gid}» (${gid}) به عنوان مقصد ارسال مستقیم ویدیوها ثبت گردید.`);
   }
 
   async syncStateFromDb(targetUserId = null) {
@@ -597,11 +746,14 @@ class MohtavaTelegramBot {
     }
   }
 
-  async sendMessage(chatId, text, replyMarkup = null) {
+  async sendMessage(chatId, text, replyMarkup = null, threadId = null) {
     const payload = {
       chat_id: chatId,
       text,
     };
+    if (threadId) {
+      payload.message_thread_id = Number(threadId);
+    }
     if (replyMarkup) {
       payload.reply_markup = replyMarkup;
     }
@@ -815,6 +967,42 @@ class MohtavaTelegramBot {
   }
 
   /**
+   * پردازش رویداد افزوده‌شدن بات به گروه یا ارتقا به عنوان ادمین
+   */
+  async handleMyChatMember(update) {
+    if (!update || !update.chat) return;
+    const chat = update.chat;
+    const isGroup = chat.type === 'group' || chat.type === 'supergroup';
+    if (!isGroup) return;
+
+    const newStatus = update.new_chat_member?.status;
+    const fromUserId = Number(update.from?.id);
+    const fromName = update.from?.first_name || 'ادمین';
+
+    if (newStatus === 'administrator' || newStatus === 'member') {
+      console.log(`🤖 [MohtavaTelBot] وضعیت بات در گروه «${chat.title}» (${chat.id}) تغییر یافت به: ${newStatus}`);
+
+      // اگر کاربر اضافه کننده ادمین تاییدشده باشد، گروه مستقیماً ثبت می‌شود
+      if (this.isAuthorizedAdmin(fromUserId)) {
+        await this.authorizeGroup(chat.id, {
+          title: chat.title || 'کارآگاه و راز دهکده متروک',
+          registeredBy: fromUserId,
+        });
+
+        await this.sendMessage(
+          chat.id,
+          `👋 سلام به اعضای محترم گروه!\n🤖 ربات «راز دهکده» توسط ادمین گرامی (${fromName}) به گروه متصل شد.\n\n🎥 این گروه با موفقیت به عنوان مقصد اختصاصی و مستقیم ارسال ویدیوهای احراز هویت دانش‌آموزان ثبت گردید.\n\nاز این پس ویدیوهای ارسالی مستقیماً در این گروه قرار خواهند گرفت (پاسخ‌های ۱۲ معما فقط به پیوی ادمین‌ها ارسال می‌شود تا گروه خلوت بماند).`
+        );
+      } else {
+        await this.sendMessage(
+          chat.id,
+          `👋 سلام به اعضای محترم گروه!\n🤖 ربات «راز دهکده» به گروه اضافه شد.\n\n🔑 برای ثبت رسمی این گروه جهت دریافت مستقیم ویدیوهای احراز هویت، یکی از ادمین‌ها لطفاً عبارت admin_110_59 (یا دستور /setgroup) را در این گروه ارسال فرماید.`
+        );
+      }
+    }
+  }
+
+  /**
    * پردازش پیام دریافتی از تلگرام (به‌صورت ترتیبی و صف‌بندی‌شده)
    */
   async handleMessage(msg) {
@@ -822,11 +1010,104 @@ class MohtavaTelegramBot {
 
     const chatId = msg.chat.id;
     const userId = Number(msg.from.id);
+    const isGroup = msg.chat.type === 'group' || msg.chat.type === 'supergroup';
     this.currentUserId = userId;
 
     const rawText = typeof msg.text === 'string' ? msg.text : '';
     const text = rawText.trim();
     const isSecretAdminCode = isMatchingAdminPasscode(text, this.adminSecretKey);
+
+    // ۱. رسیدگی اختصاصی به پیام‌های داخل گروه
+    if (isGroup) {
+      const isSetGroupCmd = text.startsWith('/setgroup') || text.startsWith('/connect_group');
+      const isGroupInfoCmd = text === '/group_info' || text === '/group_id' || text === '/status' || (this.botUsername && text === `/status@${this.botUsername}`);
+
+      if (isSecretAdminCode || (isSetGroupCmd && this.isAuthorizedAdmin(userId))) {
+        // اگر فرستنده کد مخفی را فرستاده و خودش هنوز در لیست ادمین‌ها نبود، ارتقا یابد
+        if (isSecretAdminCode && !this.isAuthorizedAdmin(userId)) {
+          await this.authorizeAdmin(userId, {
+            username: msg.from.username || null,
+            firstName: msg.from.first_name || '',
+            chatId: userId,
+          });
+        }
+
+        const threadId = msg.message_thread_id || null;
+        await this.authorizeGroup(chatId, {
+          title: msg.chat.title || 'کارآگاه و راز دهکده متروک',
+          threadId,
+          registeredBy: userId,
+        });
+
+        const topicNotice = threadId
+          ? `\n\n📌 تاپیک اختصاصی با موفقیت ثبت شد! از این پس تمام ویدیوهای احراز هویت مستقیماً داخل همین تاپیک فرستاده می‌شوند.`
+          : '\n\n📌 مقصد فعلی: تاپیک عمومی (General). اگر می‌خواهید ویدیوها به تاپیک خاصی بروند، کافی است همین دستور /setgroup را داخل همان تاپیک ارسال فرمایید.';
+
+        await this.sendMessage(
+          chatId,
+          `✅ گروه «${msg.chat.title || 'کارآگاه و راز دهکده'}» با موفقیت برای ارسال مستقیم ویدیوهای احراز هویت ثبت شد!${topicNotice}\n\n🎥 از این پس ویدیوهای ارسالی دانش‌آموزان به صورت مستقیم و آنی در این بخش قرار می‌گیرند.\n\nℹ️ پاسخ‌های ۱۲ معما فقط به صورت خصوصی (پیوی) برای ادمین‌ها فرستاده می‌شود تا نظم و خلوتی گروه حفظ شود.`,
+          null,
+          threadId
+        );
+        return;
+      }
+
+      if (isGroupInfoCmd) {
+        const isReg = this.isAuthorizedGroup(chatId);
+        await this.sendMessage(
+          chatId,
+          `📊 وضعیت اتصال گروه به ربات «راز دهکده»:\n🏷 نام گروه: ${msg.chat.title || 'نامشخص'}\n🆔 شناسه گروه: ${chatId}\n${isReg ? '✅ وضعیت: متصل به سیستم ارسال خودکار ویدیوها' : '❌ وضعیت: هنوز ثبت نشده است (برای اتصال کد ادمین را بفرستید)'}`,
+          null,
+          msg.message_thread_id || null
+        );
+        return;
+      }
+
+      // دستور مشاهده لیست اسامی احراز هویت شده کلاس‌ها در گروه توسط ادمین
+      const isAuthListCmd = text === BTN_AUTH_STUDENTS_LIST || text.startsWith('/students') || text.startsWith('/auth_list') || text.startsWith('/submissions') || text === 'کیا فرستادن' || text === 'لیست احراز هویت';
+      if (isAuthListCmd && this.isAuthorizedAdmin(userId)) {
+        const parts = text.split(/\s+/);
+        const filter = (text.startsWith('/students') || text.startsWith('/auth_list') || text.startsWith('/submissions')) && parts.length > 1
+          ? parts.slice(1).join(' ').trim()
+          : '';
+        await this.handleAuthStudentsList(chatId, msg.message_thread_id || null, filter);
+        return;
+      }
+
+      // اگر اعضای جدید اضافه شدند و بات در میان آن‌هاست
+      if (msg.new_chat_members && Array.isArray(msg.new_chat_members)) {
+        const botAdded = msg.new_chat_members.some(
+          m => m.is_bot && (Number(m.id) === Number(this.botId) || (this.botUsername && m.username === this.botUsername))
+        );
+        if (botAdded) {
+          if (this.isAuthorizedAdmin(userId)) {
+            await this.authorizeGroup(chatId, {
+              title: msg.chat.title || 'کارآگاه و راز دهکده متروک',
+              threadId: msg.message_thread_id || null,
+              registeredBy: userId,
+            });
+            await this.sendMessage(
+              chatId,
+              `👋 سلام به اعضای محترم گروه!\n🤖 ربات «راز دهکده» توسط ادمین گرامی (${msg.from.first_name || 'ادمین'}) اضافه شد.\n\n✅ این گروه با موفقیت جهت ارسال مستقیم ویدیوهای احراز هویت ثبت گردید.`,
+              null,
+              msg.message_thread_id || null
+            );
+            return;
+          } else {
+            await this.sendMessage(
+              chatId,
+              `👋 سلام به اعضای محترم گروه!\n🤖 ربات «راز دهکده» به گروه اضافه شد.\n\n🔑 برای تایید و ثبت نهایی گروه، لطفاً یکی از ادمین‌ها کد امنیتی admin_110_59 را در گروه ارسال فرماید.`,
+              null,
+              msg.message_thread_id || null
+            );
+            return;
+          }
+        }
+      }
+
+      // پیام‌های عادی داخل گروه کاملاً نادیده گرفته می‌شوند تا مزاحمتی ایجاد نشود
+      return;
+    }
 
     // ۱. بررسی احراز هویت ادمین یا ورود با کد مخفی (admin_110_59)
     if (!this.isAuthorizedAdmin(userId)) {
@@ -880,6 +1161,15 @@ class MohtavaTelegramBot {
     // ۱-ب. منوی مدیریت عکس دستیاران کارآگاه (کلاس‌ها)
     if (text === BTN_EMERGENCY_VIDEOS || text === '/videos') {
       await this.handleEmergencyVideosMenu(chatId);
+      return;
+    }
+
+    if (text === BTN_AUTH_STUDENTS_LIST || text.startsWith('/students') || text.startsWith('/auth_list') || text.startsWith('/submissions') || text === 'کیا فرستادن' || text === 'لیست احراز هویت') {
+      const parts = text.split(/\s+/);
+      const filter = (text.startsWith('/students') || text.startsWith('/auth_list') || text.startsWith('/submissions')) && parts.length > 1
+        ? parts.slice(1).join(' ').trim()
+        : '';
+      await this.handleAuthStudentsList(chatId, null, filter);
       return;
     }
 
@@ -1470,6 +1760,143 @@ class MohtavaTelegramBot {
   }
 
   /**
+   * گزارش کامل اسامی دانش‌آموزان ثبت‌شده در احراز هویت به تفکیک کلاس
+   */
+  async handleAuthStudentsList(chatId, threadId = null, filterQuery = '') {
+    try {
+      const res = await query(`
+        SELECT 
+          s.id AS session_id,
+          s.name AS class_name,
+          sub.reference_code,
+          sub.phone,
+          sub.created_at,
+          sub.answers_json
+        FROM emergency_auth_submissions sub
+        LEFT JOIN sessions s ON sub.session_id = s.id
+        ORDER BY s.name ASC, sub.id ASC
+      `);
+
+      if (!res || !res.rows || res.rows.length === 0) {
+        await this.sendMessage(
+          chatId,
+          '📭 تاکنون هیچ احراز هویتی در سامانه ثبت نشده است.',
+          chatId > 0 ? getEmergencyVideosKeyboard() : null,
+          threadId
+        );
+        return;
+      }
+
+      const grouped = new Map();
+      let totalSubmissions = 0;
+      const normalizedFilter = filterQuery ? String(filterQuery).trim().toLowerCase() : '';
+
+      for (const row of res.rows) {
+        const className = row.class_name ? String(row.class_name).trim() : `کلاس ${row.session_id || 'نامشخص'}`;
+        if (className === 'تست سرور') continue;
+
+        if (normalizedFilter && !className.toLowerCase().includes(normalizedFilter)) {
+          continue;
+        }
+
+        let studentName = '';
+        try {
+          const ans = typeof row.answers_json === 'string' ? JSON.parse(row.answers_json) : row.answers_json;
+          studentName = ans?.q_student_name ? String(ans.q_student_name).trim() : '';
+        } catch (_) {}
+
+        if (!studentName) studentName = 'بدون نام مشخص';
+
+        if (!grouped.has(className)) {
+          grouped.set(className, []);
+        }
+        grouped.get(className).push({
+          name: studentName,
+          phone: row.phone,
+          code: row.reference_code,
+          date: row.created_at
+        });
+        totalSubmissions++;
+      }
+
+      if (grouped.size === 0) {
+        const msgText = normalizedFilter
+          ? `📭 هیچ احراز هویتی مطابق با عبارت «${filterQuery}» پیدا نشد.`
+          : '📭 هیچ پاسخی از کلاس‌های رسمی ثبت نشده است.';
+        await this.sendMessage(
+          chatId,
+          msgText,
+          chatId > 0 ? getEmergencyVideosKeyboard() : null,
+          threadId
+        );
+        return;
+      }
+
+      const header = [
+        '📋 «اسامی دانش‌آموزان احراز هویت‌شده به تفکیک کلاس»',
+        normalizedFilter ? `🔍 فیلتر جستجو: «${filterQuery}»` : null,
+        '━━━━━━━━━━━━━━━━━━━━',
+        ''
+      ].filter(Boolean);
+
+      const classBlocks = [];
+      let totalUniqueStudents = 0;
+
+      const toFaDigits = n => String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+
+      for (const [clsName, students] of grouped.entries()) {
+        const nameCount = new Map();
+        for (const st of students) {
+          nameCount.set(st.name, (nameCount.get(st.name) || 0) + 1);
+        }
+        totalUniqueStudents += nameCount.size;
+
+        const lines = [
+          `🏫 کلاس: ${clsName} (${toFaDigits(nameCount.size)} نفر | ${toFaDigits(students.length)} ارسال)`
+        ];
+        let idx = 1;
+        for (const [name, count] of nameCount.entries()) {
+          const repeatNotice = count > 1 ? ` (🔄 ${toFaDigits(count)} بار)` : '';
+          lines.push(`  ${toFaDigits(idx)}. ${name}${repeatNotice}`);
+          idx++;
+        }
+        lines.push('');
+        classBlocks.push(lines.join('\n'));
+      }
+
+      const footer = [
+        '━━━━━━━━━━━━━━━━━━━━',
+        `📊 مجموع: ${toFaDigits(totalUniqueStudents)} دانش‌آموز (${toFaDigits(totalSubmissions)} بار ارسال احراز هویت در ${toFaDigits(grouped.size)} کلاس)`
+      ].join('\n');
+
+      let currentMsg = header.join('\n') + '\n';
+      for (const block of classBlocks) {
+        if ((currentMsg + block).length > 3500) {
+          await this.sendMessage(chatId, currentMsg, null, threadId);
+          currentMsg = '';
+        }
+        currentMsg += block;
+      }
+
+      currentMsg += '\n' + footer;
+      await this.sendMessage(
+        chatId,
+        currentMsg,
+        chatId > 0 ? getEmergencyVideosKeyboard() : null,
+        threadId
+      );
+    } catch (err) {
+      console.error('❌ خطا در دریافت لیست دانش‌آموزان احراز هویت:', err);
+      await this.sendMessage(
+        chatId,
+        `❌ خطا در دریافت اطلاعات احراز هویت: ${err.message}`,
+        chatId > 0 ? getEmergencyVideosKeyboard() : null,
+        threadId
+      );
+    }
+  }
+
+  /**
    * پردازش فایل فشرده (ZIP/RAR) یا لینک مستقیم دانلود یا مسیر سرور و تخصیص خودکار عکس‌ها به کلاس‌ها
    */
   async handleAssistantsArchiveMessage(chatId, msg, fallbackSessionId = null) {
@@ -1710,8 +2137,18 @@ class MohtavaTelegramBot {
 
     this.running = true;
     await this.loadAuthorizedAdmins();
+    await this.loadAuthorizedGroups();
     await this.syncStateFromDb(this.adminId);
-    console.log(`🤖 [MohtavaTelBot] بات تلگرام فعال شد (PID: ${process.pid} | ادمین اصلی: ${this.adminId} | تعداد ادمین‌های مجاز: ${this.authorizedAdminIds.size})`);
+
+    try {
+      const meRes = await this.apiCall('getMe', {}, 10000);
+      if (meRes && meRes.ok && meRes.result) {
+        this.botId = meRes.result.id;
+        this.botUsername = meRes.result.username;
+      }
+    } catch (_) {}
+
+    console.log(`🤖 [MohtavaTelBot] بات تلگرام فعال شد (PID: ${process.pid} | ادمین اصلی: ${this.adminId} | ادمین‌ها: ${this.authorizedAdminIds.size} | گروه‌ها: ${this.authorizedGroupIds.size})`);
 
     const pollLoop = async () => {
       while (this.running) {
@@ -1721,7 +2158,7 @@ class MohtavaTelegramBot {
             {
               offset: this.offset,
               timeout: 25,
-              allowed_updates: ['message'],
+              allowed_updates: ['message', 'my_chat_member'],
             },
             35000
           );
@@ -1738,6 +2175,8 @@ class MohtavaTelegramBot {
               this.offset = Math.max(this.offset, update.update_id + 1);
               if (update.message) {
                 await this.handleMessage(update.message);
+              } else if (update.my_chat_member) {
+                await this.handleMyChatMember(update.my_chat_member);
               }
             }
           } else if (data && !data.ok) {
@@ -1792,4 +2231,5 @@ module.exports = {
   BTN_ASSISTANTS_LIST_CLASS,
   BTN_ASSISTANTS_CHANGE_CLASS,
   BTN_EMERGENCY_VIDEOS,
+  BTN_AUTH_STUDENTS_LIST,
 };

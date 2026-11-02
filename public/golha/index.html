@@ -366,10 +366,19 @@
           }
 
           if (data.isHacked) {
+            if (data.recoveryLive) {
+              sessionStorage.removeItem('userToken');
+              sessionStorage.removeItem('userSession');
+              sessionStorage.removeItem('prefillCode');
+              feedback.style.color = '#22c55e';
+              feedback.textContent = 'شماره تأیید شد. کد ورود جلسه را وارد کنید.';
+              setTimeout(() => { window.location.href = '/enter-code.html'; }, 500);
+              return;
+            }
             feedback.style.color = '#ef4444';
             feedback.innerHTML = `⚠️ <strong>رخنهٔ امنیتی شناسایی شد.</strong><br>به‌دلیل نفوذ دشمن به سایت، باید هویت شما تأیید شود. پرونده و سرنخ‌هایی را که همراهتان است کنار دستتان بگذارید؛ مستقیم به سؤال اول منتقل می‌شوید…`;
             setTimeout(() => {
-              window.location.href = data.redirectUrl || '/emergency-auth.html';
+              window.location.href = data.recoveryLive ? '/enter-code.html' : (data.redirectUrl || '/emergency-auth.html');
             }, 2400);
             return;
           }

@@ -10,6 +10,7 @@ const Message = require('../models/Message');
 const SessionLog = require('../models/SessionLog');
 const SessionAssistant = require('../models/SessionAssistant');
 const { requireAdmin, authenticateToken } = require('../middleware/auth');
+const { query } = require('../db/pool');
 
 /**
  * GET /api/sessions
@@ -74,7 +75,11 @@ router.get('/:id/hack-status', authenticateToken, async (req, res) => {
       return res.status(403).json({ success: false, message: 'عدم دسترسی' });
     }
     const isHacked = await Session.isHacked(sessionId);
-    res.json({ success: true, sessionId, is_hacked: isHacked ? 1 : 0 });
+    const liveRun = await require('../services/recoveryLiveStore').active(sessionId);
+    if (liveRun) return res.json({ success: true, sessionId, is_hacked: isHacked ? 1 : 0,
+      recovery_phase: 'LIVE', recovery_revision: liveRun.revision });
+    const recovery = await query('SELECT phase, revision FROM session_recovery WHERE session_id = ?', [sessionId]);
+    res.json({ success: true, sessionId, is_hacked: isHacked ? 1 : 0, recovery_phase: recovery.rows[0]?.phase || 'DORMANT', recovery_revision: recovery.rows[0]?.revision || 0 });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -92,6 +97,19 @@ router.get('/:id/messages', authenticateToken, async (req, res) => {
       });
     }
 
+    if (req.user.role === 'user') {
+      const liveRun = await require('../services/recoveryLiveStore').active(sessionId);
+      if (liveRun && ['WAITING_FOR_CLASS', 'MATCHING', 'PAUSED'].includes(liveRun.phase)) {
+        return res.status(423).json({ success: false, recovery_phase: 'LIVE', message: 'ارتباط کلاس در حال آماده‌سازی است.' });
+      }
+      if (!await require('../services/recoveryLiveStore').latest(sessionId)) {
+        const gate = await query('SELECT phase FROM session_recovery WHERE session_id = ?', [sessionId]);
+        if (gate.rows[0] && ['COLLECTING', 'REVIEWING', 'READY', 'PAUSED'].includes(gate.rows[0].phase)) {
+          return res.status(423).json({ success: false, recovery_phase: gate.rows[0].phase, message: 'ارتباط کلاس در حال آماده‌سازی است.' });
+        }
+      }
+    }
+
     const messages = await Message.findBySessionId(sessionId);
 
     // اگر ادمین پیام‌ها را دریافت کرد، پیام‌های کاربر علامت خوانده شده بخورند
@@ -100,16 +118,22 @@ router.get('/:id/messages', authenticateToken, async (req, res) => {
     }
 
     const session = await Session.findById(sessionId);
+    const recovery = await query('SELECT phase, revision FROM session_recovery WHERE session_id = ?', [sessionId]);
+    const liveRun = await require('../services/recoveryLiveStore').latest(sessionId);
+    const visibleMessages = await require('../services/recoveryLiveStore').messagesForLatestRun(sessionId, liveRun, messages);
 
     return res.json({
       success: true,
-      data: req.user.role === 'admin' ? messages : messages.filter(message => !(message.sender_type === 'system' && message.sender_id == null && message.content.startsWith('📦 سفارش گل جدید ثبت شد.'))),
+      data: req.user.role === 'admin' ? visibleMessages : visibleMessages.filter(message => !(message.sender_type === 'system' && message.sender_id == null && message.content.startsWith('📦 سفارش گل جدید ثبت شد.'))),
       session: {
         id: sessionId,
         is_chat_locked: Boolean(session && session.is_chat_locked),
         is_vault_unlocked: Boolean(session && session.is_vault_unlocked),
         vault_target_week: (session && session.vault_target_week) || 5,
         is_hacked: Boolean(session && session.is_hacked),
+        recovery_phase: liveRun ? (liveRun.phase === 'RESTORED' ? 'RESTORED' : 'LIVE') : recovery.rows[0]?.phase || 'DORMANT',
+        recovery_revision: liveRun ? liveRun.revision : recovery.rows[0]?.revision || 0,
+        recovery_run_id: liveRun ? Number(liveRun.id) : null,
       },
     });
   } catch (error) {
@@ -387,6 +411,9 @@ router.post('/:id/trigger-hack', requireAdmin, async (req, res) => {
       return res.status(400).json({ success: false, message: 'شناسه جلسه معتبر نیست.' });
     }
 
+    const existingRecovery = await query('SELECT phase FROM session_recovery WHERE session_id = ?', [sessionId]);
+    if (existingRecovery.rows[0]) return res.status(409).json({ success: false, message: 'این جلسه وارد بازپس‌گیری شده و اجرای دوباره نفوذ مجاز نیست.' });
+
     const session = await Session.findById(sessionId);
     if (!session) {
       return res.status(404).json({ success: false, message: 'جلسه پیدا نشد.' });
@@ -446,6 +473,10 @@ router.post('/:id/trigger-hack', requireAdmin, async (req, res) => {
 router.post('/:id/unlock-hack', requireAdmin, async (req, res) => {
   try {
     const sessionId = parseInt(req.params.id, 10);
+    const recovery = await query('SELECT phase FROM session_recovery WHERE session_id = ?', [sessionId]);
+    if (recovery.rows[0] && recovery.rows[0].phase !== 'RESTORED') {
+      return res.status(409).json({ success: false, message: 'بازگشایی این جلسه از بخش بازپس‌گیری کنترل می‌شود.' });
+    }
     if (!sessionId || sessionId <= 0) {
       return res.status(400).json({ success: false, message: 'شناسه جلسه معتبر نیست.' });
     }

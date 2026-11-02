@@ -185,12 +185,14 @@ class SessionAssistant {
 
     const fileUrl = `/uploads/assistants/session_${sid}/${destFileName}`;
 
-    if (existing) {
-      unlinkSafe(existing.file_url);
-      await query(`DELETE FROM session_assistants WHERE id = ?`, [existing.id]);
-    }
-
     const orderVal = existing ? existing.display_order : (display_order || existingList.length + 1);
+    if (existing) {
+      // Keep the portrait ID stable: recovery video links refer to this row.
+      await query('UPDATE session_assistants SET student_name = ?, file_url = ?, file_name = ? WHERE id = ?',
+        [cleanName, fileUrl, destFileName, existing.id]);
+      if (existing.file_url !== fileUrl) unlinkSafe(existing.file_url);
+      return { record: await SessionAssistant.findById(existing.id), action: 'updated' };
+    }
     const res = await query(
       `INSERT INTO session_assistants (session_id, student_name, file_url, file_name, display_order)
        VALUES (?, ?, ?, ?, ?)`,
@@ -200,7 +202,7 @@ class SessionAssistant {
     const created = await SessionAssistant.findById(res.insertId);
     return {
       record: created,
-      action: existing ? 'updated' : 'inserted',
+      action: 'inserted',
     };
   }
 

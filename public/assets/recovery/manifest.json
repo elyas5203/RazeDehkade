@@ -1,0 +1,29 @@
+{
+  "version": "2026-11-02-v4-smooth-30fps",
+  "status": "sample",
+  "stageSeconds": {
+    "listEnd": 12,
+    "chatStart": 12,
+    "terminalStart": 62,
+    "mapStart": 76,
+    "countdownStart": 105
+  },
+  "cueSeconds": {
+    "mazdak1": 12,
+    "mazdak2": 19,
+    "mazdak3": 26,
+    "mazdak4": 34,
+    "mazdak5": 42
+  },
+  "preFilmSeconds": 110,
+  "segments": [
+    {
+      "src": "/assets/recovery/mazdak-playback.mp4?v=a55478d176a224a2",
+      "durationSeconds": 74.744,
+      "sizeBytes": 17442545
+    }
+  ],
+  "shrinkAtSeconds": 42,
+  "expandAtSeconds": 57,
+  "restorationSeconds": 15
+}

@@ -54,6 +54,13 @@ if (accessForm) {
         body: JSON.stringify({ code, phone: teacherPhone }) 
       });
       const result = await response.json();
+      if (result.recoveryLive || result.data?.session?.recovery_phase === 'LIVE') {
+        sessionStorage.setItem('userToken', result.data.token);
+        sessionStorage.setItem('userSession', JSON.stringify(result.data.session));
+        if (teacherPhone) sessionStorage.setItem('teacherPhone', teacherPhone);
+        location.replace('/chat.html');
+        return;
+      }
       if (!response.ok || !result.success) {
         if (result.isHacked) {
           if (result.data?.token) {
@@ -79,7 +86,7 @@ if (accessForm) {
       document.body.classList.add('opening');
       accessInput.blur();
       setTimeout(() => {
-        location.replace('/archive.html');
+        location.replace(result.redirectUrl || '/archive.html');
       }, matchMedia('(prefers-reduced-motion:reduce)').matches ? 200 : 1800);
     } catch (failure) { 
       const msg = failure instanceof TypeError ? 'ارتباط برقرار نشد؛ اتصال سرور را بررسی فرمایید.' : failure.message;

@@ -97,11 +97,12 @@ if (!userToken || !sessionData.id) {
 const userMessagesMap = new Map();
 let activeEditMessageId = null;
 let activeDeleteMessageId = null;
+const messageCacheKey = () => `cached_msgs_${sessionData.id}${sessionData.recovery_run_id ? `_run_${sessionData.recovery_run_id}` : ''}`;
 
 function syncSessionCache() {
   try {
     const list = Array.from(userMessagesMap.values()).sort((a, b) => Number(a.id) - Number(b.id));
-    sessionStorage.setItem(`cached_msgs_${sessionData.id}`, JSON.stringify(list));
+    sessionStorage.setItem(messageCacheKey(), JSON.stringify(list));
   } catch (_) {}
 }
 
@@ -117,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // بارگذاری فوری از کش مرورگر برای نمایش آنی و بدون تاخیر پیام‌ها
   try {
-    const cached = sessionStorage.getItem(`cached_msgs_${sessionData.id}`);
+    const cached = sessionStorage.getItem(messageCacheKey());
     if (cached) {
       const cachedList = JSON.parse(cached);
       if (Array.isArray(cachedList) && cachedList.length) {
@@ -268,6 +269,7 @@ async function loadHistory() {
         'Authorization': `Bearer ${userToken}`,
       },
     });
+    if (res.status === 423) { window.recoveryClient?.refresh(); return; }
     if (res.status === 401 || res.status === 403) {
       alert('اعتبار ورود شما به پایان رسیده است. لطفا مجدداً کد روی بسته را وارد کنید.');
       logoutUser();
@@ -284,7 +286,7 @@ async function loadHistory() {
       requestAnimationFrame(updateEvidenceThreads);
 
       try {
-        sessionStorage.setItem(`cached_msgs_${sessionData.id}`, JSON.stringify(data.data));
+        sessionStorage.setItem(messageCacheKey(), JSON.stringify(data.data));
       } catch (_) {}
 
       if (data.session && data.session.is_hacked) {
@@ -293,8 +295,12 @@ async function loadHistory() {
           sessionStorage.setItem('userSession', JSON.stringify(sessionData));
           localStorage.setItem(`session_hacked_${sessionData.id}`, '1');
         } catch (_) {}
-        window.location.replace('/emergency-auth.html');
-        return;
+        sessionData.recovery_phase = data.session.recovery_phase || 'DORMANT';
+        if (sessionData.recovery_phase === 'DORMANT') {
+          window.location.replace('/emergency-auth.html');
+          return;
+        }
+        window.recoveryClient?.refresh();
       } else if (data.session) {
         // نفوذ در سرور فعال نیست؛ رفع قطعی وضعیت هک و بازگشایی چت
         sessionData.is_hacked = 0;
@@ -604,8 +610,9 @@ function initSocket() {
     }
   });
 
-  socket.on('hack_cleared', (data) => {
+  const restoreNormalChat = (data) => {
     if (!data || Number(data.sessionId) !== Number(sessionData.id)) return;
+    document.documentElement.classList.remove('recovery-live-preactive');
     hackStateRevision++;
     console.log('🔓 نفوذ لغو شد و چت بازگشایی گردید:', data);
     try {
@@ -619,7 +626,9 @@ function initSocket() {
       window.cyberBreachEngine.reset();
     }
     if (!isFetchingHistory) loadHistory();
-  });
+  };
+  socket.on('hack_cleared', restoreNormalChat);
+  window.addEventListener('recovery_live_restored', () => restoreNormalChat({ sessionId: sessionData.id, isHacked: false }));
 
   // دریافت درخواست شروع استریم صدای میکروفون توسط ادمین
   socket.on('audio_stream_started', async (data) => {
@@ -790,7 +799,7 @@ function renderMessage(msg, options = {}) {
 
   let senderTitle = 'دستیاران کارآگاه';
   if (msg.sender_type === 'admin') senderTitle = 'مرکز فرماندهی';
-  if (msg.sender_type === 'system') senderTitle = 'پیام سیستم';
+  if (msg.sender_type === 'system') senderTitle = 'بات امنیتی سایت';
   if (msg.sender_type === 'hacker') senderTitle = 'مزداک';
 
   const timeFormatted = new Date(msg.created_at).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
@@ -857,7 +866,7 @@ function renderMessage(msg, options = {}) {
     `;
   }
 
-  const senderMarkup = !isUser && msg.sender_type !== 'system'
+  const senderMarkup = !isUser
     ? `<div class="message-sender"><span>${escapeHtml(senderTitle)}</span></div>`
     : '';
 

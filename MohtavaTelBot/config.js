@@ -20,6 +20,9 @@ module.exports = {
   // کلید اختصاصی ارتقا و شناسایی فوری هر کاربر به عنوان ادمین
   ADMIN_SECRET_KEY: process.env.TELEGRAM_ADMIN_SECRET_KEY || 'admin_110_59',
 
+  // آیدی گروه تلگرام مقصد برای ارسال مستقیم ویدیوهای احراز هویت
+  TELEGRAM_GROUP_ID: process.env.TELEGRAM_GROUP_ID || null,
+
   // مسیر ذخیره‌سازی فایل‌های دانلودشده در پوشه سرور اصلی پروژه
   UPLOAD_DIR: path.resolve(__dirname, '..', 'public', 'uploads', 'weekly'),
 

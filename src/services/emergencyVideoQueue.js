@@ -102,15 +102,19 @@ async function getAllAuthorizedAdminChatIds(primaryFallbackId = null) {
 }
 
 /**
- * ارسال سریع ویدیوی آپلودشده به سایر ادمین‌ها با استفاده از شناسه تلگرامی فایل
+ * ارسال سریع ویدیوی آپلودشده به سایر ادمین‌ها یا گروه‌ها با استفاده از شناسه تلگرامی فایل
  */
-function sendExistingTelegramMedia(token, chatId, method, fileId, captionText, isMp4) {
-  const payload = JSON.stringify({
+function sendExistingTelegramMedia(token, chatId, method, fileId, captionText, isMp4, threadId = null) {
+  const payloadObj = {
     chat_id: String(chatId),
     [isMp4 ? 'video' : 'document']: fileId,
     caption: captionText || undefined,
     supports_streaming: isMp4 ? true : undefined
-  });
+  };
+  if (threadId) {
+    payloadObj.message_thread_id = Number(threadId);
+  }
+  const payload = JSON.stringify(payloadObj);
 
   return new Promise((resolve, reject) => {
     const req = https.request({
@@ -141,6 +145,61 @@ function sendExistingTelegramMedia(token, chatId, method, fileId, captionText, i
     req.write(payload);
     req.end();
   });
+}
+
+/**
+ * دریافت لیست تمام گروه‌های تلگرام مقصد ارسال مستقیم ویدیوها
+ */
+async function getAllAuthorizedGroupDestinations() {
+  const groupMap = new Map(); // chatId -> { chatId, threadId }
+
+  // ۰. از متغیر محیطی
+  if (process.env.TELEGRAM_GROUP_ID) {
+    const envGid = String(process.env.TELEGRAM_GROUP_ID).trim();
+    if (envGid && /^-?\d+$/.test(envGid)) {
+      groupMap.set(envGid, {
+        chatId: envGid,
+        threadId: process.env.TELEGRAM_GROUP_THREAD_ID ? String(process.env.TELEGRAM_GROUP_THREAD_ID).trim() : null
+      });
+    }
+  }
+
+  // ۱. از فایل محلی پایدار storage/telegram_authorized_groups.json
+  try {
+    const jsonPath = path.resolve(__dirname, '..', '..', 'storage', 'telegram_authorized_groups.json');
+    if (fs.existsSync(jsonPath)) {
+      const parsed = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+      if (Array.isArray(parsed)) {
+        for (const item of parsed) {
+          const gid = typeof item === 'object' ? item.groupId || item.chatId || item.id : item;
+          if (gid && /^-?\d+$/.test(String(gid))) {
+            const threadId = typeof item === 'object' ? item.threadId : null;
+            groupMap.set(String(gid), {
+              chatId: String(gid),
+              threadId: threadId ? String(threadId) : null
+            });
+          }
+        }
+      }
+    }
+  } catch (_) {}
+
+  // ۲. از جدول دیتابیس bot_authorized_groups
+  try {
+    const res = await query('SELECT group_id, thread_id FROM bot_authorized_groups');
+    if (res && res.rows && Array.isArray(res.rows)) {
+      for (const row of res.rows) {
+        if (row.group_id && /^-?\d+$/.test(String(row.group_id))) {
+          groupMap.set(String(row.group_id), {
+            chatId: String(row.group_id),
+            threadId: row.thread_id ? String(row.thread_id) : null
+          });
+        }
+      }
+    }
+  } catch (_) {}
+
+  return Array.from(groupMap.values());
 }
 
 /**
@@ -184,11 +243,23 @@ async function sendTelegramVideo(job, config = telegramConfig()) {
     referenceCode: job.reference_code
   });
 
+  const studentName = studentAnswers?.q_student_name ? String(studentAnswers.q_student_name).trim() : null;
+
+  // متن کپشن ویژه گروه‌های تلگرام (فقط مشخصات دانش‌آموز، کلاس و پرونده بدون ارسال پاسخ‌های ۱۲ معما در گروه)
+  const groupCaptionText = [
+    '📹 پاسخ ویدیویی احراز هویت پرونده',
+    '━━━━━━━━━━━━━━━━━━━━',
+    studentName ? `👤 دانش‌آموز: ${studentName}` : null,
+    `🏫 کلاس: ${className}`,
+    `📞 شماره تماس: ${job.phone}`,
+    `📂 کد پرونده: ${job.reference_code}`,
+    '━━━━━━━━━━━━━━━━━━━━'
+  ].filter(Boolean).join('\n');
+
   // محدودیت کپشن تلگرام ۱۰۲۴ نویسه است
   let captionText = fullAnswersReport;
   let followUpText = null;
   if (fullAnswersReport.length > 1000) {
-    const studentName = studentAnswers?.q_student_name ? String(studentAnswers.q_student_name).trim() : null;
     captionText = [
       '📹 پاسخ ویدیویی احراز هویت پرونده',
       '━━━━━━━━━━━━━━━━━━━━',
@@ -237,6 +308,7 @@ async function sendTelegramVideo(job, config = telegramConfig()) {
   const allAdminChatIds = await getAllAuthorizedAdminChatIds(config?.chatId);
   const targetChatIds = Array.from(new Set([String(config?.chatId || '5490508090'), ...allAdminChatIds])).filter(id => /^\d+$/.test(id));
   const primaryChatId = targetChatIds[0] || String(config?.chatId || '5490508090');
+  const groupDestinations = await getAllAuthorizedGroupDestinations();
 
   const boundary = `----Raze${crypto.randomBytes(12).toString('hex')}`;
   const field = (name, value) => Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`);
@@ -335,6 +407,26 @@ async function sendTelegramVideo(job, config = telegramConfig()) {
       }
     }
 
+    // ارسال مستقیم ویدیو به گروه‌های مجاز (فقط ویدیو با مشخصات پرونده، بدون ارسال متن پاسخ‌های ۱۲ معما)
+    for (const group of groupDestinations) {
+      try {
+        if (fileId) {
+          await sendExistingTelegramMedia(
+            config.token,
+            group.chatId,
+            method,
+            fileId,
+            groupCaptionText,
+            isMp4,
+            group.threadId
+          );
+          console.log(`🎥 [emergencyVideoQueue] ویدیو پرونده ${job.reference_code} با موفقیت به گروه ${group.chatId} ارسال شد.`);
+        }
+      } catch (groupErr) {
+        console.warn(`⚠️ [emergencyVideoQueue] خطا در ارسال مستقیم ویدیو به گروه ${group.chatId}:`, groupErr.message);
+      }
+    }
+
     return messageId;
   } finally {
     // پاکسازی فایل MP4 موقت تبدیل‌شده در صورت وجود
@@ -362,7 +454,8 @@ async function processOne(send = sendTelegramVideo) {
       const messageId = await send(job);
       await query(`UPDATE emergency_auth_videos SET status = 'sent', telegram_message_id = ?,
         sent_at = CURRENT_TIMESTAMP, next_attempt_at = NULL WHERE id = ? AND status = 'sending'`, [messageId, job.id]);
-      fs.unlink(job.file_path, () => {});
+      // The local copy is the source for the later, session-specific recovery screening.
+      // Telegram delivery must not make an approved weekly submission unplayable.
     } catch (error) {
       const attempt = Number(job.attempt_count || 0) + 1;
       const retryAt = attempt >= MAX_ATTEMPTS ? null : new Date(Date.now() + Math.min(15 * 60_000, 15_000 * 2 ** (attempt - 1)));
@@ -389,10 +482,12 @@ function stopQueue() {
 
 module.exports = {
   getAllAuthorizedAdminChatIds,
+  getAllAuthorizedGroupDestinations,
   processOne,
   startQueue,
   stopQueue,
   sendTelegramVideo,
   sendTelegramTextMessage,
+  sendExistingTelegramMedia,
   telegramConfig
 };

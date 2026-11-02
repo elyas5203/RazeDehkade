@@ -179,6 +179,104 @@ async function runMigrations() {
     `);
 
     await query(`
+      CREATE TABLE IF NOT EXISTS session_recovery (
+        session_id INT NOT NULL PRIMARY KEY,
+        phase ENUM('COLLECTING','REVIEWING','READY','HACKED_CHAT','CINEMATIC','RESTORED','PAUSED') NOT NULL DEFAULT 'COLLECTING',
+        previous_phase VARCHAR(24) NULL,
+        revision INT NOT NULL DEFAULT 1,
+        latitude DECIMAL(12,9) NULL,
+        longitude DECIMAL(12,9) NULL,
+        map_label VARCHAR(150) NULL,
+        started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        released_at DATETIME NULL,
+        sequence_started_at DATETIME NULL,
+        completed_at DATETIME NULL,
+        updated_by INT NULL,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT fk_recovery_session FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await query(`
+      CREATE TABLE IF NOT EXISTS collective_submissions (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        session_id INT NOT NULL,
+        phone_normalized VARCHAR(20) NOT NULL,
+        client_submission_id VARCHAR(64) NOT NULL,
+        file_path VARCHAR(700) NOT NULL,
+        mime_type VARCHAR(80) NOT NULL,
+        file_size BIGINT NOT NULL,
+        duration_seconds DECIMAL(7,2) NOT NULL,
+        status ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+        approved_by INT NULL,
+        approved_at DATETIME NULL,
+        telegram_status ENUM('pending','sending','sent','failed') NOT NULL DEFAULT 'pending',
+        telegram_attempt_count INT NOT NULL DEFAULT 0,
+        telegram_next_attempt_at DATETIME NULL,
+        telegram_last_error VARCHAR(500) NULL,
+        telegram_message_id BIGINT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_collective_submission (session_id, client_submission_id),
+        INDEX idx_collective_session (session_id, id),
+        INDEX idx_collective_telegram (telegram_status, telegram_next_attempt_at, id),
+        CONSTRAINT fk_collective_session FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // The new weekly recovery is separate from the archived collective recording flow.
+    // A nullable active_slot permits history while enforcing one live run per class.
+    await query(`
+      CREATE TABLE IF NOT EXISTS recovery_runs (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        session_id INT NOT NULL,
+        run_no INT NOT NULL,
+        active_slot TINYINT NULL DEFAULT 1,
+        phase ENUM('WAITING_FOR_CLASS','MATCHING','RUNNING','PAUSED','RESTORING','RESTORED') NOT NULL DEFAULT 'WAITING_FOR_CLASS',
+        previous_phase VARCHAR(24) NULL,
+        revision INT NOT NULL DEFAULT 1,
+        class_latitude DECIMAL(12,9) NULL,
+        class_longitude DECIMAL(12,9) NULL,
+        map_label VARCHAR(150) NULL,
+        activated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        started_at DATETIME NULL,
+        paused_at DATETIME NULL,
+        paused_ms BIGINT NOT NULL DEFAULT 0,
+        completed_at DATETIME NULL,
+        updated_by INT NULL,
+        UNIQUE KEY uq_recovery_run_no (session_id, run_no),
+        UNIQUE KEY uq_recovery_active (session_id, active_slot),
+        INDEX idx_recovery_phase (phase, id),
+        CONSTRAINT fk_recovery_run_session FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    await query(`
+      CREATE TABLE IF NOT EXISTS recovery_video_links (
+        run_id BIGINT NOT NULL,
+        session_id INT NOT NULL,
+        assistant_id INT NOT NULL,
+        emergency_video_id BIGINT NOT NULL,
+        linked_by INT NULL,
+        linked_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (run_id, assistant_id),
+        UNIQUE KEY uq_recovery_video (run_id, emergency_video_id),
+        INDEX idx_recovery_link_session (session_id, run_id),
+        CONSTRAINT fk_recovery_link_run FOREIGN KEY (run_id) REFERENCES recovery_runs(id) ON DELETE CASCADE,
+        CONSTRAINT fk_recovery_link_assistant FOREIGN KEY (assistant_id) REFERENCES session_assistants(id) ON DELETE CASCADE,
+        CONSTRAINT fk_recovery_link_video FOREIGN KEY (emergency_video_id) REFERENCES emergency_auth_videos(id) ON DELETE RESTRICT
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    await query(`
+      CREATE TABLE IF NOT EXISTS recovery_cues (
+        run_id BIGINT NOT NULL,
+        cue_key VARCHAR(80) NOT NULL,
+        fired_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        message_id BIGINT NULL,
+        PRIMARY KEY (run_id, cue_key),
+        CONSTRAINT fk_recovery_cue_run FOREIGN KEY (run_id) REFERENCES recovery_runs(id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    await query(`
       CREATE TABLE IF NOT EXISTS app_migrations (
         migration_key VARCHAR(100) PRIMARY KEY,
         applied_at DATETIME DEFAULT CURRENT_TIMESTAMP

@@ -9,6 +9,8 @@ const { JWT_SECRET } = require('../middleware/auth');
 const Message = require('../models/Message');
 const Session = require('../models/Session');
 const SessionLog = require('../models/SessionLog');
+const { query } = require('../db/pool');
+const recoveryLiveStore = require('../services/recoveryLiveStore');
 const uploadRoutes = require('../routes/upload');
 const { createTurnIceServer } = require('../utils/turnCredentials');
 
@@ -22,6 +24,10 @@ function setupSocketIO(io) {
   const recentMessagesMap = new Map();
   // نگاشت بلادرنگ کاربران آنلاین بر اساس شناسه جلسه (sessionId -> Set of socket.ids)
   const sessionOnlineUsers = new Map();
+  const offlinePauseTimers = new Map();
+  const configuredOfflineGrace = Number(process.env.RECOVERY_LIVE_OFFLINE_GRACE_MS);
+  const offlineGraceMs = Number.isFinite(configuredOfflineGrace) && configuredOfflineGrace >= 100
+    ? configuredOfflineGrace : 5000;
   const liveAudioListeners = new Map(); // admin socket ID -> session ID
   const liveAudioVersions = new Map();
   const audioRelaySubscribers = new Set(); // admin socket IDs currently needing fallback
@@ -91,10 +97,13 @@ function setupSocketIO(io) {
   io.updateSessionPhase = updateSessionPhase;
   io.clearSessionPhase = clearSessionPhase;
   io.getSessionLifecyclePhases = () => Object.fromEntries(sessionLifecyclePhases);
+  io.isSessionOnline = sessionId => (sessionOnlineUsers.get(Number(sessionId))?.size || 0) > 0;
 
   function trackUserOnline(sessionId, socketId) {
     const sId = Number(sessionId);
     if (!sId) return;
+    const pendingPause = offlinePauseTimers.get(sId);
+    if (pendingPause) { clearTimeout(pendingPause); offlinePauseTimers.delete(sId); }
     if (!sessionOnlineUsers.has(sId)) {
       sessionOnlineUsers.set(sId, new Set());
     }
@@ -122,6 +131,20 @@ function setupSocketIO(io) {
         isOnline: false,
         onlineCount: 0,
       });
+      if (offlinePauseTimers.has(sId)) clearTimeout(offlinePauseTimers.get(sId));
+      const timer = setTimeout(async () => {
+        offlinePauseTimers.delete(sId);
+        if (io.isSessionOnline(sId)) return;
+        try {
+          const run = await recoveryLiveStore.pauseForOffline(sId);
+          if (!run) return;
+          const event = { sessionId: sId, runId: Number(run.id), revision: Number(run.revision), phase: 'PAUSED' };
+          io.to(`session_${sId}`).emit('recovery_live_updated', event);
+          io.to('admins').emit('recovery_live_updated', event);
+        } catch (error) { console.error('Recovery offline pause failed:', error); }
+      }, offlineGraceMs);
+      timer.unref?.();
+      offlinePauseTimers.set(sId, timer);
     }
   }
 
@@ -403,6 +426,12 @@ function setupSocketIO(io) {
 
         // بررسی قفل بودن چت جلسه در صورتی که فرستنده دانش‌آموز باشد
         if (effectiveSenderType === 'user') {
+          const recovery = await query('SELECT phase FROM session_recovery WHERE session_id = ?', [targetSessionId]);
+          if (recovery.rows[0] && !['HACKED_CHAT', 'RESTORED'].includes(recovery.rows[0].phase)) {
+            const gateMsg = 'ارتباط کلاس هنوز آماده نشده است.';
+            if (typeof ack === 'function') ack({ success: false, message: gateMsg, code: 'RECOVERY_GATE' });
+            return socket.emit('error_message', { message: gateMsg, code: 'RECOVERY_GATE' });
+          }
           const isLocked = await Session.isChatLocked(targetSessionId);
           if (isLocked) {
             const lockMsg = 'خط ارتباطی با مرکز فرماندهی موقتاً مسدود شده است.';
@@ -809,6 +838,10 @@ function setupSocketIO(io) {
       const sessionId = parseInt(data.sessionId, 10);
       if (!sessionId) return;
 
+      // بازنشانی ران بازپس‌گیری فعال و سوابق تا سکانس هک و احراز هویت بتواند نامحدود دوباره اجرا شود
+      await query('UPDATE recovery_runs SET active_slot = NULL WHERE session_id = ? AND active_slot = 1', [sessionId]);
+      await query('DELETE FROM session_recovery WHERE session_id = ?', [sessionId]);
+
       const roomName = `session_${sessionId}`;
       console.log(`☠️ سکانس هک مزداک برای جلسه ${sessionId} توسط ادمین فعال شد.`);
 
@@ -886,6 +919,11 @@ function setupSocketIO(io) {
         }
         const sessionId = parseInt(data && data.sessionId, 10);
         if (!sessionId) return;
+
+        const recovery = await query('SELECT phase FROM session_recovery WHERE session_id = ?', [sessionId]);
+        if (recovery.rows[0] && recovery.rows[0].phase !== 'RESTORED') {
+          return ack({ success: false, message: 'بازگشایی این جلسه از بخش بازپس‌گیری کنترل می‌شود.' });
+        }
 
         await Session.setHackState(sessionId, false);
         const session = await Session.findById(sessionId);

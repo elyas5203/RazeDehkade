@@ -1,7 +1,23 @@
 # 🧭 شاخص و رادار جستجوی سریع معماری (INDEX.md)
 
+> **تحویل جاری سناریوی بازپس‌گیری:** `docs/ai/masters/MASTER_41_RECOVERY_HANDOFF_AND_OPEN_WORK.md` — وضعیت واقعی کد محلی، آزمون‌ها، خواسته‌های کارفرما و کارهای باز. برای اجرای سناریوی تازه، این سند را پیش از مسترهای قدیمی ۳۶/۳۷ بخوانید.
+
 > **قانون آدرس‌دهی صریح و میکروسکوپی (Microscopic Deterministic Index):**  
 > این سند نگاشت فوری و دقیق میان کلیدواژه‌ها، مفاهیم بیزینسی، مسیرهای فایل، شماره خطوط و نمادها (کلاس‌ها و توابع) را فراهم می‌آورد.
+
+---
+
+## بازپس‌گیری جمعی هر جلسه (MASTER-36، فقط لوکال)
+
+| مفهوم | مسیر و نماد فعلی |
+|---|---|
+| قرارداد کامل و وضعیت | `docs/ai/masters/MASTER_36_COLLECTIVE_AUTH_AND_SESSION_RECOVERY.md`، `MASTER-36` |
+| وضعیت، آپلود، تأیید، پخش و پایان | `src/routes/recovery.js#L1-L315`، `snapshot`, `transition`, `probeDuration` و `/api/recovery` |
+| داده‌ها | `src/db/migrate.js#L180-L225`، `session_recovery` و `collective_submissions` |
+| صف تلگرام | `src/services/collectiveVideoQueue.js#L1-L110`، `send`, `processOne` |
+| ضبط و سکانس دانش‌آموز | `public/assets/js/recovery-client.js#L1-L220`، `record`, `refresh`, `runCinematic` |
+| پنل بدون خروج از صفحه | `public/assets/js/recovery-admin.js#L1-L100`، `open`, `draw` |
+| آزمون دو کلاس | `tests/recovery-session-flow.test.js#L1-L80`، انتقال مرحله و ایزولاسیون |
 
 ---
 
@@ -106,3 +122,11 @@
 | `MSTR-15` | [`docs/ai/masters/MASTER_14_VISUAL_THEME_UNIFICATION_AND_PORTAL_POLISH.md`](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_14_VISUAL_THEME_UNIFICATION_AND_PORTAL_POLISH.md) | `ROOT_MASTER` | سند جامع وحدت بصری درگاه احراز هویت اضطراری و مودال خروج سایبری با تم Warm Noir |
 | `MSTR-16` | [`docs/ai/masters/MASTER_15_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md`](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_15_MAZDAK_CYBER_WARFARE_AND_LOCKDOWN.md) | `ROOT_MASTER` | سند جامع نبرد سایبری مزداک، قفل تامپر ابزارها، استامپ رسانه‌ها، رفع پرش لاگ‌ها، نبرد فیک چت، تمدید مودال خروج به ۵ دقیقه و فرم تک‌فیلدی احراز هویت |
 | `MSTR-17` | [`docs/ai/masters/MASTER_16_MAZDAK_CYBER_WARFARE_POLISH.md`](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_16_MAZDAK_CYBER_WARFARE_POLISH.md) | `ROOT_MASTER` | سند جامع پولیش نبرد سایبری مزداک، حفظ دیده شدن عکس‌ها با فیلتر گلیچ، توقف استریم روتین، حذف لرزش ترمینال صعودیافته، استریم راست‌چین هکری و سناریوی باورپذیر نبرد چت |
+
+
+## ۴. اسناد مستر جامع کارایی و عملکرد (Performance & Master Audits)
+
+| شناسه مستر | عنوان سند | دامنه و تمرکز | وضعیت |
+|---|---|---|---|
+| MASTER-35 | [`MASTER_35_PERFORMANCE_DATABASE_CONCURRENCY_AND_CACHE_AUDIT.md`](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_35_PERFORMANCE_DATABASE_CONCURRENCY_AND_CACHE_AUDIT.md) | ریشه‌کنی خطای N+1، ایندکس‌های طلایی، کش ردیس، همزمانی و رفع نشت حافظه | PASS / COMPLETED |
+| MASTER-39 | [`MASTER_39_EMERGENCY_VIDEO_QUESTION_TEXT_UPDATE.md`](file:///e:/projects/RazeDehkade/docs/ai/masters/MASTER_39_EMERGENCY_VIDEO_QUESTION_TEXT_UPDATE.md) | اصلاح و تثبیت متن پرسش پایانی ویدیومسیج احراز هویت اضطراری | PASS / COMPLETED |

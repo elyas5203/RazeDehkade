@@ -10,6 +10,9 @@ const Session = require('../models/Session');
 const SessionLog = require('../models/SessionLog');
 const Teacher = require('../models/Teacher');
 const { generateToken } = require('../middleware/auth');
+const { query } = require('../db/pool');
+const recoveryLive = require('../services/recoveryLiveStore');
+const normalizedPhone = value => String(value || '').replace(/\D/g, '').replace(/^98(?=9\d{9}$)/, '0').replace(/^9(?=\d{9}$)/, '09');
 
 /**
  * POST /api/auth/admin/login
@@ -101,8 +104,24 @@ router.post('/user/join', async (req, res) => {
       });
     }
 
+    const liveRun = await recoveryLive.active(session.id);
+    if (liveRun) {
+      const phone = normalizedPhone(req.body.phone);
+      const registered = await Session.findByTeacherPhone(phone);
+      if (!phone || Number(registered?.id) !== Number(session.id)) {
+        return res.status(403).json({ success: false, message: 'شماره و کد به یک کلاس تعلق ندارند.' });
+      }
+      const token = generateToken({ sessionId: session.id, sessionCode: session.chat_code || session.code,
+        role: 'user', name: 'دستیاران کارآگاه', activeCase: session.active_case, recoveryRunId: liveRun.id });
+      return res.json({ success: true, redirectUrl: '/chat.html', recoveryLive: true,
+        data: { token, session: { id: session.id, code: session.chat_code || session.code,
+          name: session.name, is_hacked: session.is_hacked ? 1 : 0, recovery_phase: 'LIVE', recovery_run_id: liveRun.id } } });
+    }
+
     // اگر کلاس مورد حمله سایبری مزداک قرار گرفته باشد، دسترسی به چت مسدود است و باید به درگاه احراز هویت اضطراری هدایت شوند
     if (session.is_hacked) {
+      const recoveryResult = await query('SELECT phase FROM session_recovery WHERE session_id = ?', [session.id]);
+      const recoveryPhase = recoveryResult.rows[0]?.phase || 'DORMANT';
       const token = generateToken({
         sessionId: session.id,
         sessionCode: session.chat_code || session.code,
@@ -115,7 +134,7 @@ router.post('/user/join', async (req, res) => {
         success: false,
         isHacked: true,
         message: '⚠️ هشدار فوق‌امنیتی: این پایگاه تحت نفوذ سایبری دشمن قرار گرفته و تمام دسترسی‌ها مسدود است! برای نجات پرونده فوراً به درگاه احراز هویت امنیتی مراجعه کنید.',
-        redirectUrl: '/emergency-auth.html',
+        redirectUrl: recoveryPhase === 'DORMANT' ? '/emergency-auth.html' : '/chat.html',
         sessionName: session.name,
         data: {
           token,
@@ -123,7 +142,8 @@ router.post('/user/join', async (req, res) => {
             id: session.id,
             code: session.chat_code || session.code,
             name: session.name,
-            is_hacked: 1
+            is_hacked: 1,
+            recovery_phase: recoveryPhase
           }
         }
       });
@@ -215,6 +235,42 @@ router.post('/teacher/check', async (req, res) => {
 
     const targetSession = session || (teacher?.session_id ? await Session.findById(teacher.session_id) : null);
     const isHacked = Boolean(targetSession && targetSession.is_hacked);
+    const recoveryResult = isHacked ? await query('SELECT phase FROM session_recovery WHERE session_id = ?', [targetSession.id]) : { rows: [] };
+    const recoveryPhase = recoveryResult.rows[0]?.phase || 'DORMANT';
+
+    const liveRun = targetSession ? await recoveryLive.active(targetSession.id) : null;
+    if (liveRun) {
+      const token = generateToken({
+        sessionId: targetSession.id,
+        sessionCode: targetSession.chat_code || targetSession.code,
+        role: 'user',
+        name: 'دستیاران کارآگاه',
+        activeCase: targetSession.active_case,
+        recoveryRunId: liveRun.id
+      });
+      return res.json({
+        success: true,
+        registered: true,
+        isHacked: true,
+        recoveryLive: true,
+        redirectUrl: '/chat.html',
+        message: 'شماره تأیید شد. در حال انتقال به خط بازپس‌گیری کلاس…',
+        data: {
+          token,
+          phone: cleanPhone,
+          sessionName: targetSession.name,
+          chatCode: targetSession.chat_code || targetSession.code,
+          session: {
+            id: targetSession.id,
+            code: targetSession.chat_code || targetSession.code,
+            name: targetSession.name,
+            is_hacked: 1,
+            recovery_phase: 'LIVE',
+            recovery_run_id: liveRun.id
+          }
+        }
+      });
+    }
 
     // اگر کلاس مورد حمله سایبری مزداک قرار گرفته باشد، مستقیم به درگاه احراز هویت اضطراری هدایت شوند
     if (isHacked && targetSession) {
@@ -230,6 +286,7 @@ router.post('/teacher/check', async (req, res) => {
         success: true,
         registered: true,
         isHacked: true,
+        recoveryLive: false,
         redirectUrl: '/emergency-auth.html',
         message: '⚠️ هشدار فوق‌امنیتی: کلاس شما تحت نفوذ سایبری است. در حال انتقال مستقیم به درگاه احراز هویت اضطراری...',
         data: {
@@ -241,7 +298,8 @@ router.post('/teacher/check', async (req, res) => {
             id: targetSession.id,
             code: targetSession.chat_code || targetSession.code,
             name: targetSession.name,
-            is_hacked: 1
+            is_hacked: 1,
+            recovery_phase: 'DORMANT'
           }
         }
       });
